@@ -86,6 +86,8 @@ ProyectoSodaBambu/
 
 ## 🏪 Sobre el Cliente
 
+<img src="assets/images/logo-bambu.png" alt="Logo El Bambú" align="left" width="90"/>
+
 **Soda y Restaurante El Bambú** es un negocio ubicado en Cariari, Pococí, Limón, Costa Rica. Su principal objetivo es ofrecer un servicio de comidas, con una variada selección de platillos y bebidas tipo soda, con un enfoque en ofrecer un servicio accesible, rápido y de calidad a la comunidad.
 
 ### 🔍 Problemática Actual
@@ -127,6 +129,8 @@ Para consultas sobre el uso de este software o derechos de autor:
 **© 2025 - Equipo de Desarrollo, Universidad Nacional de Costa Rica. Todos los derechos reservados.**
 
 ---
+
+<img src="assets/images/logo-una.png" alt="Logo Universidad Nacional de Costa Rica" align="left" width="85"/>
 
 **Universidad Nacional de Costa Rica**  
 **Escuela de Informática**  
