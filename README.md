@@ -7,6 +7,7 @@
 - [📚 Documentación](#-documentación)
 - [🔧 Tecnologías](#-tecnologías)
 - [🚀 Instalación y Configuración](#-instalación-y-configuración)
+- [🌿 Flujo de Trabajo con Git y Gitflow](#-flujo-de-trabajo-con-git-y-gitflow)
 - [👥 Equipo de Desarrollo](#-equipo-de-desarrollo)
 - [🏪 Sobre el Cliente](#-sobre-el-cliente)
 - [⚖️ Derechos de Autor y Términos de Uso](#️-derechos-de-autor-y-términos-de-uso)
@@ -25,11 +26,15 @@ Sistema de información desarrollado para la gestión integral de Soda y Restaur
 
 ```
 ProyectoSodaBambu/
+├── assets/                            # Recursos estáticos
+│   ├── icons/                         # Iconos del proyecto
+│   └── images/                        # Imágenes y logos
 ├── docs/                              # Documentación del proyecto
 │   ├── Documento de Casos de Uso.docx
 │   ├── Documento de Especificación de Requisitos de Software.docx
 │   ├── Documento de Reglas de Negocio.docx
-│   └── Documento de Visión y Alcance.docx
+│   ├── Documento de Visión y Alcance.docx
+│   └── IngenieriaII/                  # Documentación específica del ciclo II
 ├── legal/                             # Documentos legales y contratos
 │   ├── Carta de Intenciones (contrato).docx
 │   ├── Carta de Intenciones (firmado).pdf
@@ -38,14 +43,22 @@ ProyectoSodaBambu/
 ├── scripts/                           # Scripts de automatización
 │   ├── database/                      # Scripts de base de datos
 │   └── deployment/                    # Scripts de despliegue
-├── source_code/                       # Código fuente del sistema
+├── source_code/                       # Código fuente Laravel
+│   ├── app/                           # Lógica de la aplicación
+│   ├── config/                        # Archivos de configuración
+│   ├── database/                      # Migraciones y seeders
+│   ├── public/                        # Archivos públicos
+│   ├── resources/                     # Vistas y assets
+│   ├── routes/                        # Definición de rutas
+│   ├── .env.example                   # Plantilla de variables de entorno
+│   └── artisan                        # CLI de Laravel
 ├── uml/                               # Diagramas UML
-│   ├── activity_diagrams/
-│   ├── class_diagrams/
-│   ├── sequence_diagrams/
-│   ├── state_diagrams/
-│   └── use_case_diagrams/
-└── README.md
+│   ├── activity_diagrams/             # Diagramas de actividad
+│   ├── class_diagrams/                # Diagramas de clases
+│   ├── sequence_diagrams/             # Diagramas de secuencia
+│   ├── state_diagrams/                # Diagramas de estado
+│   └── use_case_diagrams/             # Diagramas de casos de uso
+└── README.md                          # Este archivo
 ```
 
 ## 📚 Documentación
@@ -62,11 +75,243 @@ ProyectoSodaBambu/
 
 ## 🔧 Tecnologías
 
-*Pendiente de definir según los requisitos del sistema*
+### Backend
+- **PHP**: >= 8.2
+- **Framework**: Laravel ^12.x (PHP)
+- **Base de datos**: MySQL/SQLite
+- **Servidor web**: Apache/Nginx
+- **Autenticación**: Laravel-UI/Bootstrap-Auth
+
+### Frontend
+- **Templates**: Laravel Blade
+- **CSS Framework**: Bootstrap 5
+- **JavaScript**: Vanilla JS
+
+### Herramientas de Desarrollo
+- **Control de versiones**: Git + Gitflow
+- **Gestor de dependencias PHP**: Composer
+- **Gestor de dependencias JS**: npm
+- **Entorno de desarrollo**: XAMPP / Laragon
+- **IDE recomendado**: Visual Studio Code / PHPStorm
 
 ## 🚀 Instalación y Configuración
 
-*Instrucciones de instalación se agregarán una vez definidas las tecnologías*
+### Requisitos Previos
+- PHP >= 8.2
+- Composer
+- Node.js y NPM
+- MySQL/SQLite
+- Git
+
+### Pasos de Instalación
+
+1. **Clonar el repositorio**
+   ```bash
+   git clone [URL-del-repositorio]
+   cd ProyectoSodaBambu
+   ```
+
+2. **Instalar dependencias del backend**
+   ```bash
+   cd source_code
+   composer install
+   ```
+
+3. **Instalar dependencias del frontend**
+   ```bash
+   npm install
+   ```
+
+4. **Configurar variables de entorno**
+   ```bash
+   copy .env.example .env
+   php artisan key:generate
+   ```
+   
+   Edita el archivo `.env` con tus credenciales de base de datos:
+   ```
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=nombre_base_datos
+   DB_USERNAME=tu_usuario
+   DB_PASSWORD=tu_contraseña
+   ```
+
+5. **Ejecutar migraciones**
+   ```bash
+   php artisan migrate
+   ```
+
+6. **Compilar assets**
+   ```bash
+   npm run dev
+   # O para producción:
+   npm run build
+   ```
+
+7. **Iniciar el servidor de desarrollo**
+   ```bash
+   composer run dev
+   ```
+
+8. **Acceder a la aplicación**
+   
+   Abre tu navegador en: `http://localhost:8000`
+
+   > **Nota:** Asegúrate de que el servidor web (Apache/Nginx) y XAMPP/Laragon estén configurados correctamente y en ejecución si no usas el servidor de desarrollo integrado.
+
+### Scripts Disponibles
+
+Revisa la carpeta [scripts/](scripts/) para:
+- **scripts/database/**: Scripts de base de datos (backups)
+- **scripts/deployment/**: Scripts de despliegue y configuración de producción
+
+## 🌿 Flujo de Trabajo con Git y Gitflow
+
+### Configuración Inicial de Gitflow
+
+Si es tu primera vez trabajando en el proyecto, configura Gitflow:
+
+```bash
+git flow init
+```
+
+- **Rama de producción**: `main`
+- **Rama de desarrollo**: `dev`
+- Acepta los nombres por defecto para features, releases y hotfixes
+
+### Comandos Principales
+
+#### 1. Trabajar en una Nueva Funcionalidad (Feature)
+
+```bash
+# Crear una nueva feature
+git flow feature start nombre-de-la-feature
+
+# Trabajar en tus cambios
+git add .
+git commit -m "Descripción del cambio"
+
+# Subir la feature a GitHub
+git push origin feature/nombre-de-la-feature
+```
+
+**Importante**: Crea un **Pull Request** en GitHub de `feature/nombre-de-la-feature` → `dev`
+
+#### 2. Lanzar una Nueva Versión (Release)
+
+```bash
+# Iniciar una release
+git flow release start v1.0.0
+
+# Hacer ajustes finales (versiones, documentación, etc.)
+git add .
+git commit -m "Preparar release v1.0.0"
+
+# Subir y crear PR
+git push origin release/v1.0.0
+```
+
+Crea Pull Requests de `release/v1.0.0` → `main` y `dev`
+
+#### 3. Correcciones Urgentes En Main (Hotfix)
+
+```bash
+# Iniciar un hotfix desde main
+git flow hotfix start fix-descripcion
+
+# Hacer correcciones
+git add .
+git commit -m "Fix: descripción del problema"
+
+# Subir y crear PR
+git push origin hotfix/fix-descripcion
+```
+
+Crea Pull Requests de `hotfix/fix-descripcion` → `main` y `dev`
+
+### Reglas de Oro del Proyecto
+
+1. ✅ **SIEMPRE** trabaja en una rama feature/release/hotfix
+2. ❌ **NUNCA** hagas push directo a `main` o `dev`
+3. ✅ **TODOS** los cambios deben pasar por Pull Request
+4. ✅ **ESPERA** la aprobación del PR antes de hacer merge
+5. ✅ Mantén tu rama actualizada con `dev`:
+   ```bash
+   git checkout dev
+   git pull origin dev
+   git checkout feature/tu-feature
+   git merge dev
+   ```
+
+### Convenciones de Commits
+
+Usa mensajes descriptivos en **inglés**:
+
+```bash
+# Buenos ejemplos
+git commit -m "Add user authentication"
+git commit -m "Fix total calculation error"
+git commit -m "Update installation documentation"
+
+# Evitar
+git commit -m "fix"
+git commit -m "cambios"
+git commit -m "update"
+```
+
+### Eliminación de Ramas
+
+Después de hacer `merge` a un PR, elimina la rama:
+
+```bash
+# Eliminar localmente
+git branch -d feature/nombre-de-la-feature
+
+# Eliminar en GitHub
+git push origin --delete feature/nombre-de-la-feature
+```
+
+### Comandos Útiles de Git
+
+```bash
+# Ver estado actual
+git status
+
+# Ver ramas locales
+git branch
+
+# Ver ramas remotas
+git branch -r
+
+# Cambiar de rama
+git checkout nombre-rama
+
+# Actualizar desde remoto
+git pull origin nombre-rama
+
+# Ver historial de commits
+git log --oneline --graph --all
+
+# Deshacer cambios no commiteados
+git checkout -- .
+
+# Ver diferencias
+git diff
+```
+
+### Resolución de Conflictos
+
+Si encuentras conflictos al hacer merge:
+
+1. Abre los archivos en conflicto en VS Code
+2. Resuelve los conflictos manualmente (VS Code te ayudará)
+3. Marca como resuelto:
+   ```bash
+   git add .
+   git commit -m "Resolver conflictos de merge"
+   ```
 
 ## 👥 Equipo de Desarrollo
 
@@ -81,7 +326,7 @@ ProyectoSodaBambu/
 
 ### 👨‍🏫 Supervisión Académica
 - **Ingeniería en Sistemas I**: M.Sc. Olivier Blanco Sandí
-- **Ingeniería en Sistemas II**: Adán Carranza Alfaro
+- **Ingeniería en Sistemas II**: Prof. Adán Carranza Alfaro
 - **Ingeniería en Sistemas III**: *Por definir*
 
 ## 🏪 Sobre el Cliente
@@ -103,8 +348,8 @@ Este sistema fue desarrollado como proyecto académico del curso de **Ingenierí
 
 ### 👥 Autoría y Desarrollo
 - **Desarrollado por**: Equipo de estudiantes de Ingeniería en Sistemas (ver sección "Equipo de Desarrollo").
-- **Supervisión académica**: M.Sc. Olivier Blanco Sandí (Ingeniería I) y Adán Carranza Alfaro (Ingeniería II).
-- **Institución**: Universidad Nacional de Costa Rica.
+- **Supervisión académica**: M.Sc. Olivier Blanco Sandí (Ingeniería I), Prof. Adán Carranza Alfaro (Ingeniería II) y Prof. [Nombre por definir] (Ingeniería III).
+- **Institución**: Universidad Nacional de Costa Rica, Sección Regional Huetar Norte y Caribe.
 - **Período actual**: II Ciclo 2025 (Ingeniería en Sistemas II).
 - **Proyecto completo**: I y II Ciclo 2025, I Ciclo 2026 (Ingeniería I, II y III).
 
