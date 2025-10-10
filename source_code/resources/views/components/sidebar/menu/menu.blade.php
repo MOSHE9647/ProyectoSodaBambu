@@ -35,11 +35,10 @@
 <ul class="nav nav-pills flex-column mb-auto gap-2">
 	@foreach($sidebarItems as $name => $item)
 		<x-sidebar.menu.item
-			:href="route($item['route'])"
+			:href="'#' /*route($item['route'])*/"
 			:svg="$item['svg']"
-			:name="$item['name']"
+			:name="$name"
 			:class="getNavLinkClass($currentRoute, $item)"
-			:item="$item"
 		/>
 	@endforeach
 </ul>

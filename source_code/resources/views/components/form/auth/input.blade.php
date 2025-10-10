@@ -23,11 +23,11 @@
 			placeholder="{{ $placeholder }}"
 			aria-describedby="{{ $id }}-error"
 			@isset($value) value="{{ $value }}" @endisset
-			{{ $required ?? 'required' }}
-			{{ $readonly ?? 'readonly' }}
-			{{ $disabled ?? 'disabled' }}
-			{{ $autocomplete ?? "autocomplete=$autocomplete" }}
-			{{ $autofocus ?? 'autofocus' }}
+			{{ $required ? 'required' : '' }}
+			{{ $readonly ? 'readonly' : '' }}
+			{{ $disabled ? 'disabled' : '' }}
+			{{ $autocomplete ? "autocomplete=$autocomplete" : '' }}
+			{{ $autofocus ? 'autofocus' : '' }}
 		>
 
 		<label for="{{ $id }}" class="form-label">

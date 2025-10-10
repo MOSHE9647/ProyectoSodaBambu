@@ -12,7 +12,8 @@
 		type="checkbox"
 		class="form-check-input {{ $checkClass }}"
 		aria-describedby="{{ $id }}-help"
-		{{ $checked ?? 'checked' }}
+		onclick="this.value=!!this.checked"
+		{{ $checked ? 'checked' : '' }}
 	>
 
 	<label for="{{ $id }}" class="form-check-label">

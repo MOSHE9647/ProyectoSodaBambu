@@ -21,5 +21,9 @@
 
 <div id="{{ $id }}" class="alert alert-{{ $type }} {{ $class }}" role="alert">
 	<i class="{{ $icon }} me-2"></i>
-	<span>{{ $message }}</span>
+	@isset($slot)
+		{{ $slot }}
+	@else
+		<span>{{ $message }}</span>
+	@endisset
 </div>
