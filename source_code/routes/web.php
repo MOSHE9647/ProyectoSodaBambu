@@ -1,15 +1,12 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-	redirect()->route('login');
+	return redirect()->route('dashboard');
 });
 
-Route::get('/dashboard', function () {
-	return view('dashboard');
-})->name('dashboard');
-
-Route::get('/login', function () {
-	return view('auth.login');
-})->name('login');
+Route::middleware(['auth', 'prevent-back'])->group(function () {
+	Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});

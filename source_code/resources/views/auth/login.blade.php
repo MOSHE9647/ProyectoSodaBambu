@@ -17,15 +17,20 @@
 	</div>
 
 	{{-- Alert Message --}}
-	<x-alert
-		:id="'login-alert'"
-		:type="'danger'"
-		:class="'d-none'"
-		:message="'Credenciales inválidas. Por favor, inténtelo de nuevo.'"
-	/>
+	@if($errors->any())
+		{{-- Display validation errors --}}
+		<x-alert
+			:id="'login-alert'"
+			:type="'danger'"
+		>
+			@foreach($errors->all() as $error)
+				<span>{{ __($error) }}</span>
+			@endforeach
+		</x-alert>
+	@endif
 
 	{{-- Login Form --}}
-	<form id="login-form" action="{{--{{ route('login') }}--}}" method="POST"
+	<form id="login-form" action="{{ route('login') }}" method="POST"
 		  class="auth-form d-flex flex-column align-items-center justify-content-center w-100">
 		{{-- CSRF Token --}}
 		@csrf
@@ -41,7 +46,7 @@
 			:value="old('email')"
 			:autofocus="true"
 			:required="true"
-			:errorMessage="'Debe ingresar un correo electrónico válido.'"
+			:errorMessage="$errors->has('email') ? $errors->first('email') : 'Debe ingresar un correo electrónico válido.'"
 		>
 			<i class="bi bi-envelope me-2"></i>
 			Correo Electrónico
@@ -56,7 +61,7 @@
 			:placeholder="'Contraseña'"
 			:autocomplete="'current-password'"
 			:required="true"
-			:errorMessage="'Debe ingresar su contraseña.'"
+			:errorMessage="$errors->has('password') ? $errors->first('password') : 'Debe ingresar su contraseña.'"
 		>
 			<i class="bi bi-lock me-2"></i>
 			Contraseña
