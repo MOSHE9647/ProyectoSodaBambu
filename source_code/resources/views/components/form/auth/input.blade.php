@@ -34,8 +34,8 @@
 			{{ $slot ?? ucwords(str_replace('-', ' ', $id)) }}
 		</label>
 
-		<div id="{{ $id }}-error" class="invalid-feedback" role="alert">
-			<strong class="p-1">{{ $errorMessage ?? 'Error no especificado' }}</strong>
+		<div id="{{ $id }}-error" class="invalid-feedback ps-2" role="alert">
+			<strong>{{ $errorMessage ?? 'Error no especificado' }}</strong>
 		</div>
 	</div>
 </div>
