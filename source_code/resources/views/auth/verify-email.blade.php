@@ -5,7 +5,10 @@
 	<div class="container w-100 d-flex flex-column align-items-center justify-content-center text-center mb-2">
 		{{-- Brand Logo --}}
 		{{-- Using an icon for the brand logo --}}
-		<div class="brand-logo d-flex flex-column align-items-center justify-content-center border rounded-circle mb-3">
+		<div
+			class="brand-logo d-flex flex-column align-items-center justify-content-center border rounded-circle mb-3"
+			style="width: 80px; height: 80px"
+		>
 			<i
 				class="bi bi-envelope-check rounded-circle d-flex align-items-center justify-content-center"
 				style="font-size: 2rem; color: white; width: 36px; height: 36px"
@@ -44,7 +47,7 @@
 			:type="'info'"
 		>
 		<span>
-			Se ha enviado un enlace de verificación a tu correo electrónico.
+			Se enviará un enlace de verificación a tu correo electrónico.
 			Por favor, revisa tu bandeja de entrada y haz clic en el enlace para verificar tu cuenta.
 		</span>
 		</x-alert>
@@ -64,7 +67,7 @@
 		>
 			<div id="resend-button-text" class="d-flex flex-row align-items-center justify-content-center">
 				<i class="bi bi-envelope-arrow-up me-2"></i>
-				Reenviar Correo de Verificación
+				Enviar Correo de Verificación
 			</div>
 		</x-form.auth.buttons.submit>
 	</form>

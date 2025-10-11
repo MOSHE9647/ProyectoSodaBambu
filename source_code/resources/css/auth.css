@@ -3,7 +3,6 @@
 :root {
 	--auth-card-padding-x: 41px;
 	--auth-card-padding-y: 51px;
-
 	--secondary-color: #6C757D;
 }
 
@@ -35,12 +34,6 @@ body {
 	padding: var(--auth-card-padding-y) var(--auth-card-padding-x);
 	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 	max-width: 420px;
-}
-
-.brand-logo {
-	background-color: var(--bambu-logo-bg);
-	width: 80px;
-	height: 80px;
 }
 
 .brand-title {
