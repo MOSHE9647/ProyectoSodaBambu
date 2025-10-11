@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\CostaRicaDatetime;
 use App\Enums\EmployeeStatus;
 use App\Enums\PaymentFrequency;
 use Database\Factories\EmployeeFactory;
@@ -36,6 +37,9 @@ class Employee extends Model
 	protected $casts = [
 		'status' => EmployeeStatus::class,
 		'payment_frequency' => PaymentFrequency::class,
+		'created_at' => CostaRicaDatetime::class,
+		'updated_at' => CostaRicaDatetime::class,
+		'deleted_at' => CostaRicaDatetime::class,
 	];
 
 	/**
