@@ -1,5 +1,6 @@
 @props([
 	'id' => '',
+	'name' => null,
 	'placeholder' => '',
 	'class' => '',
 	'inputClass' => '',
@@ -17,11 +18,11 @@
 	<div class="form-floating {{ $class }} mb-3">
 		<input
 			id="{{ $id }}"
-			name="{{ $id }}"
+			name="{{ $name ?? $id }}"
 			type="{{ $type ?? 'text' }}"
 			class="form-control {{ $inputClass }}"
 			placeholder="{{ $placeholder }}"
-			aria-describedby="{{ $id }}-error"
+			aria-describedby="{{ $name ?? $id }}-error"
 			@isset($value) value="{{ $value }}" @endisset
 			{{ $required ? 'required' : '' }}
 			{{ $readonly ? 'readonly' : '' }}
@@ -31,10 +32,10 @@
 		>
 
 		<label for="{{ $id }}" class="form-label">
-			{{ $slot ?? ucwords(str_replace('-', ' ', $id)) }}
+			{{ $slot ?? ucwords(str_replace('-', ' ', $name ?? $id)) }}
 		</label>
 
-		<div id="{{ $id }}-error" class="invalid-feedback ps-2" role="alert">
+		<div id="{{ $name ?? $id }}-error" class="invalid-feedback ps-2" role="alert">
 			<strong>{{ $errorMessage ?? 'Error no especificado' }}</strong>
 		</div>
 	</div>

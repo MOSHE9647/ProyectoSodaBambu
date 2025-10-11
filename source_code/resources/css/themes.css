@@ -30,11 +30,6 @@
 	/* Theme Colors */
 	--bs-primary: var(--bambu-primary);
 	--bs-secondary: var(--bambu-secondary);
-	--bs-success: #198754;
-	--bs-info: #0DCAF0;
-	--bs-warning: #FFC107;
-	--bs-danger: #DC3545;
-	--bs-light: #F8F9FA;
 
 	/* Form Controls */
 	/* Input Focus Styles */

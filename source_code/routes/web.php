@@ -7,6 +7,6 @@ Route::get('/', function () {
 	return redirect()->route('dashboard');
 });
 
-Route::middleware(['auth', 'prevent-back'])->group(function () {
+Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });

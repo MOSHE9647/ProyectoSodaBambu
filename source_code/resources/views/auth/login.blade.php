@@ -30,6 +30,16 @@
 		</x-alert>
 	@endif
 
+	@if(session('status'))
+		{{-- Alert Message --}}
+		<x-alert
+			:id="'status-alert'"
+			:type="'success'"
+		>
+			<span>{{ session('status') }}</span>
+		</x-alert>
+	@endif
+
 	{{-- Login Form --}}
 	<form id="login-form" action="{{ route('login') }}" method="POST"
 		  class="auth-form d-flex flex-column align-items-center justify-content-center w-100">
@@ -76,7 +86,7 @@
 		{{-- Submit Button --}}
 		<x-form.auth.buttons.submit
 			:id="'login-button'"
-			:class="'w-100 mb-3'"
+			:class="'btn-primary w-100 mb-3'"
 			:spinnerId="'login-spinner'"
 		>
 			<div id="login-button-text" class="d-flex flex-row align-items-center justify-content-center">
@@ -92,7 +102,7 @@
 				data-bs-toggle="tooltip"
 				data-bs-title="Recupere su contraseña mediante correo electrónico"
 			></i>
-			<a href="{{--{{ route('password.request') }}--}}">
+			<a href="{{ route('password.request') }}">
 				¿Olvidó su contraseña?
 			</a>
 		</div>
