@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Actions\AuthenticateUser;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
@@ -38,6 +37,18 @@ class FortifyServiceProvider extends ServiceProvider
 
 		Fortify::loginView(function () {
 			return view('auth.login');
+		});
+
+		Fortify::verifyEmailView(function () {
+			return view('auth.verify-email');
+		});
+
+		Fortify::requestPasswordResetLinkView(function () {
+			return view('auth.passwords.forgot');
+		});
+
+		Fortify::resetPasswordView(function (Request $request) {
+			return view('auth.passwords.reset', ['request' => $request]);
 		});
 
 		RateLimiter::for('login', function (Request $request) {

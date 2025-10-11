@@ -1,7 +1,12 @@
-// Description: JavaScript code for handling login form validation and submission.
-import {validateAndDisplayField, validateEmail, validatePassword} from '../utils/validation.js';
-import {clearFieldError, showFieldError} from '../utils/errorHandling.js';
-import {setLoadingState} from '../utils/utils.js';
+// Description: JavaScript for password reset page
+import {
+	validateAndDisplayField,
+	validateEmail,
+	validatePassword,
+	validatePasswordConfirmation
+} from '../../utils/validation.js';
+import {clearFieldError, showFieldError} from '../../utils/errorHandling.js';
+import {setLoadingState} from '../../utils/utils.js';
 
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
@@ -9,7 +14,7 @@ if (typeof $ === 'undefined') {
 }
 
 // Constants and Variables
-const loginFormId = 'login';
+const resetFormId = 'reset-password';
 const fieldValidators = {
 	email: {
 		validator: validateEmail,
@@ -20,19 +25,35 @@ const fieldValidators = {
 		validator: validatePassword,
 		emptyMsg: 'La contraseña es obligatoria.',
 		invalidMsg: 'La contraseña debe contener, al menos, 8 caracteres alfanuméricos.'
+	},
+	password_confirmation: {
+		validator: (confirmPassword) => validatePasswordConfirmation(
+			getPasswordValue(),
+			confirmPassword
+		),
+		emptyMsg: 'La confirmación de la contraseña es obligatoria.',
+		invalidMsg: 'Las contraseñas no coinciden.'
 	}
 };
 
 // Validation Functions
+/**
+ * Retrieves the trimmed value of the password field.
+ * @returns {string}
+ */
+function getPasswordValue() {
+	return $('#password').val().trim();
+}
 
 /**
- * Validates the login form fields.
+ * Validates the reset password form fields.
  * @param email
  * @param password
+ * @param confirmPassword
  * @returns {boolean}
  */
-function validateLoginForm(email, password) {
-	const values = {email, password};
+function validateResetPasswordForm(email, password, confirmPassword) {
+	const values = {email, password, password_confirmation: confirmPassword};
 	return validateAndDisplayField(
 		fieldValidators,
 		values,
@@ -50,24 +71,27 @@ function clearAllFieldErrors() {
 }
 
 /**
- * Form Submission Handler.
+ * Form Submission Handler
  *
- * Handles the login form submission.
+ * Handles the submission of the reset password form.
  * @returns {boolean}
  */
-function submitLoginForm() {
+function submitResetPasswordForm() {
 	clearAllFieldErrors();
 
 	// Get form values and validate them
 	const email = $('#email').val().trim();
 	const password = $('#password').val().trim();
-	let isValid = validateLoginForm(email, password);
+	const confirmPassword = $(`#password_confirmation`).val().trim();
+	let isValid = validateResetPasswordForm(
+		email, password, confirmPassword
+	);
 
 	// If there are validation errors, do not submit the form
 	if (!isValid) return false;
 
 	// Show loading state
-	setLoadingState(loginFormId, true);
+	setLoadingState(resetFormId, true);
 	return true;
 }
 
@@ -77,8 +101,8 @@ function submitLoginForm() {
  * Validates fields on input and shows/hides error messages accordingly.
  */
 Object.keys(fieldValidators).forEach((fieldId) => {
-	$(document).on('input', `#${fieldId}`, function () {
-		const value = $(this).val().trim();
+	$(document).on('input', `#${fieldId}`, () => {
+		const value = $(`#${fieldId}`).val().trim();
 		const {validator, emptyMsg, invalidMsg} = fieldValidators[fieldId];
 
 		if (!value) {
@@ -92,12 +116,10 @@ Object.keys(fieldValidators).forEach((fieldId) => {
 });
 
 /**
- * Form submission event listener.
- * Validates the form and manages the loading state.
+ * Form Submission Event Listener
  */
-$(document).on('submit', `#${loginFormId}-form`, (e) => {
-	// Prevent default form submission
+$(document).on('submit', `#${resetFormId}-form`, (e) => {
 	e.preventDefault();
-	if (submitLoginForm()) e.currentTarget.submit();
-	else setLoadingState(loginFormId, false);
+	if (submitResetPasswordForm()) e.currentTarget.submit();
+	else setLoadingState(resetFormId, false);
 });
