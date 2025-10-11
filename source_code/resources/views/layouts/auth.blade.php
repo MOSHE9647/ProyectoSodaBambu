@@ -13,18 +13,18 @@
 	@vite(['resources/css/auth.css', 'resources/js/app.js'])
 </head>
 <body>
-<div id="app"
-	 class="container auth-container w-100 d-flex flex-column align-items-center justify-content-center position-relative rounded-4">
-	<div class="container p-0">
-		{{-- Theme Toggle Button --}}
-		<x-buttons.theme-toggle class="border rounded-circle position-absolute top-0 end-0 m-3"/>
+	<div id="app"
+		 class="container auth-container w-100 d-flex flex-column align-items-center justify-content-center position-relative rounded-4">
+		<div class="container p-0">
+			{{-- Theme Toggle Button --}}
+			<x-buttons.theme-toggle class="border rounded-circle position-absolute top-0 end-0 m-3"/>
 
-		{{-- Auth Content --}}
-		@yield('content')
+			{{-- Auth Content --}}
+			@yield('content')
+		</div>
 	</div>
-</div>
 
-{{-- Auth Scripts --}}
-@yield('js')
+	{{-- Auth Scripts --}}
+	@yield('js')
 </body>
 </html>

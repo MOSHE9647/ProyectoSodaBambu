@@ -13,14 +13,14 @@
 	@vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
-<div id="app">
-	{{-- Sidebar Component --}}
-	<x-sidebar/>
+	<div id="app">
+		{{-- Sidebar Component --}}
+		<x-sidebar/>
 
-	{{-- Main Content --}}
-	<main class="py-4">
-		@yield('content')
-	</main>
-</div>
+		{{-- Main Content --}}
+		<main class="py-4">
+			@yield('content')
+		</main>
+	</div>
 </body>
 </html>
