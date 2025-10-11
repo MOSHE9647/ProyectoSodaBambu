@@ -32,12 +32,26 @@ main {
 
 #sidebar .list-item .dropdown-item:hover,
 #sidebar .nav-link:hover {
-	color: var(--sidebar-hover-color);
-	background-color: var(--sidebar-hover-bg);
+	color: var(--sidebar-item-hover-color);
+	background-color: var(--sidebar-item-hover-bg);
 }
 
 #sidebar .nav-link.active {
 	font-weight: 600;
-	color: var(--sidebar-active-color);
-	background-color: var(--sidebar-active-bg);
+	color: var(--sidebar-active-item-color);
+	background-color: var(--sidebar-active-item-bg);
+}
+
+#sidebar .nav-link.active:hover {
+	background-color: var(--sidebar-active-item-hover-bg);
+	color: var(--sidebar-active-item-color);
+}
+
+#logoutBtn:hover {
+	color: var(--bambu-text-light) !important;
+	background-color: var(--bambu-danger) !important;
+}
+
+.link-body-emphasis {
+	color: var(--sidebar-item-hover-color);
 }

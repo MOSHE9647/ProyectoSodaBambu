@@ -5,7 +5,10 @@
 	<div class="container w-100 d-flex flex-column align-items-center justify-content-center text-center mb-2">
 		{{-- Brand Logo --}}
 		{{-- Using an icon for the brand logo --}}
-		<div class="brand-logo d-flex flex-column align-items-center justify-content-center border rounded-circle mb-3">
+		<div
+			class="brand-logo d-flex flex-column align-items-center justify-content-center border rounded-circle mb-3"
+			style="width: 80px; height: 80px;"
+		>
 			<i
 				class="bi bi-key rounded-circle d-flex align-items-center justify-content-center"
 				style="font-size: 2rem; color: white; width: 36px; height: 36px"

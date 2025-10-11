@@ -1,15 +1,36 @@
-<a
-	href="{{ route('dashboard') }}"
-	class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none"
->
-	<img
-		src="{{ asset('storage/Logo.webp') }}"
-		class="bi pe-none me-2" width="60" height="60" alt="Logo" aria-hidden="true"
+@props([
+	'href' => route('home'),
+	'type' => 'sidebar',
+	'imgClass' => null,
+	'imgStyle' => 'width: 60px; height: 60px',
+])
+
+@php
+	$image = '<img';
+	if ($imgClass) {
+		$image .= ' class="' . $imgClass . '"';
+	}
+	if ($imgStyle) {
+		$image .= ' style="' . $imgStyle . '"';
+	}
+	$image .= ' src="' . asset('storage/Logo.webp') . '" alt="Soda El Bambú Logo" aria-hidden="true">';
+@endphp
+
+@if($type === 'sidebar')
+	<a
+		href="{{ $href }}"
+		class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none"
 	>
-	<div class="d-flex flex-column">
-		<span class="fs-4" style="font-weight: bold; font-size: 2rem">
-			{{ config("app.name", "Soda El Bambú") }}
-		</span>
-		<small class="text-body-secondary">Sistema de Gestión Interna</small>
+		<div
+			class="brand-logo bi pe-none me-2 d-flex flex-column align-items-center justify-content-center border rounded-circle">
+			{!! $image !!}
+		</div>
+		{{ $slot }}
+	</a>
+
+@elseif($type === 'login')
+	<div class="brand-logo d-flex flex-column align-items-center justify-content-center border rounded-circle mb-3">
+		{!! $image !!}
 	</div>
-</a>
+	{{ $slot }}
+@endif

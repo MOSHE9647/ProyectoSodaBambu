@@ -4,16 +4,15 @@
 	{{-- Brand Logo and Title --}}
 	<div class="container w-100 d-flex flex-column align-items-center justify-content-center text-center mb-2">
 		{{-- Brand Logo --}}
-		<div class="brand-logo d-flex flex-column align-items-center justify-content-center border rounded-circle mb-3">
-			<img
-				src="{{ asset('storage/Logo.webp') }}"
-				style="width: 80px; height: 80px"
-				alt="Soda El Bambú Logo"
-			>
-		</div>
-		{{-- Brand Title and Subtitle --}}
-		<h1 class="brand-title">Soda El Bambú</h1>
-		<p class="brand-subtitle">Sistema de Gestión Interna</p>
+		<x-sidebar.logo
+			:href="'#'"
+			:type="'login'"
+			:imgStyle="'width: 80px; height: 80px;'"
+		>
+			{{-- Brand Title and Subtitle --}}
+			<h1 class="brand-title">Soda El Bambú</h1>
+			<p class="brand-subtitle">Sistema de Gestión Interna</p>
+		</x-sidebar.logo>
 	</div>
 
 	{{-- Check for validation errors --}}
