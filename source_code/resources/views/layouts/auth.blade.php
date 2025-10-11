@@ -23,5 +23,8 @@
 		@yield('content')
 	</div>
 </div>
+
+{{-- Auth Scripts --}}
+@yield('js')
 </body>
 </html>

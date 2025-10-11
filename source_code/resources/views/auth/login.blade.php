@@ -16,13 +16,14 @@
 		<p class="brand-subtitle">Sistema de Gestión Interna</p>
 	</div>
 
-	{{-- Alert Message --}}
+	{{-- Check for validation errors --}}
 	@if($errors->any())
-		{{-- Display validation errors --}}
+		{{-- Alert Message --}}
 		<x-alert
 			:id="'login-alert'"
 			:type="'danger'"
 		>
+			{{-- Display validation errors --}}
 			@foreach($errors->all() as $error)
 				<span>{{ __($error) }}</span>
 			@endforeach
@@ -40,13 +41,11 @@
 			:id="'email'"
 			:type="'email'"
 			:class="'w-100'"
-			:inputClass="$errors->has('email') ? 'is-invalid' : ''"
 			:placeholder="'Correo Electrónico'"
 			:autocomplete="'email'"
 			:value="old('email')"
 			:autofocus="true"
 			:required="true"
-			:errorMessage="$errors->has('email') ? $errors->first('email') : 'Debe ingresar un correo electrónico válido.'"
 		>
 			<i class="bi bi-envelope me-2"></i>
 			Correo Electrónico
@@ -57,11 +56,9 @@
 			:id="'password'"
 			:type="'password'"
 			:class="'w-100'"
-			:inputClass="$errors->has('password') ? 'is-invalid' : ''"
 			:placeholder="'Contraseña'"
 			:autocomplete="'current-password'"
 			:required="true"
-			:errorMessage="$errors->has('password') ? $errors->first('password') : 'Debe ingresar su contraseña.'"
 		>
 			<i class="bi bi-lock me-2"></i>
 			Contraseña
@@ -82,8 +79,10 @@
 			:class="'w-100 mb-3'"
 			:spinnerId="'login-spinner'"
 		>
-			<i class="bi bi-box-arrow-in-right me-2"></i>
-			Iniciar Sesión
+			<div id="login-button-text" class="d-flex flex-row align-items-center justify-content-center">
+				<i class="bi bi-box-arrow-in-right me-2"></i>
+				Iniciar Sesión
+			</div>
 		</x-form.auth.buttons.submit>
 
 		{{-- Additional Links --}}
@@ -98,4 +97,8 @@
 			</a>
 		</div>
 	</form>
+@endsection
+
+@section('js')
+	@vite(['resources/js/auth/login.js'])
 @endsection
