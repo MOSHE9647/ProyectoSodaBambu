@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\CostaRicaDatetime;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -45,7 +46,10 @@ class User extends Authenticatable implements MustVerifyEmail
 	protected function casts(): array
 	{
 		return [
-			'email_verified_at' => 'datetime',
+			'email_verified_at' => CostaRicaDatetime::class,
+			'created_at' => CostaRicaDatetime::class,
+			'updated_at' => CostaRicaDatetime::class,
+			'deleted_at' => CostaRicaDatetime::class,
 			'password' => 'hashed',
 		];
 	}
