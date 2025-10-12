@@ -3,7 +3,7 @@ import '@popperjs/core';
 
 import $ from 'jquery';
 import * as bootstrap from 'bootstrap';
-import {applyTheme} from "./utils/themeToggler.js";
+import { applyTheme } from "./utils/themeToggler.js";
 
 window.$ = $; // Make jQuery globally available
 window.bootstrap = bootstrap; // Make Bootstrap globally available

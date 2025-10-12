@@ -3,12 +3,13 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#28A745"/>
 
 	<!-- Favicon -->
 	<link rel="apple-touch-icon" sizes="180x180" href="<?php echo e(asset('/favicon/apple-touch-icon.png')); ?>">
 	<link rel="icon" type="image/png" sizes="32x32" href="<?php echo e(asset('/favicon/favicon-32x32.png')); ?>">
 	<link rel="icon" type="image/png" sizes="16x16" href="<?php echo e(asset('/favicon/favicon-16x16.png')); ?>">
-	<link rel="manifest" href="<?php echo e(asset('/favicon/site.webmanifest')); ?>">
+	<link rel="manifest" href="<?php echo e(asset('/site.webmanifest')); ?>">
 
 	<!-- CSRF Token -->
 	<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
@@ -52,6 +53,10 @@
 
 	
 	<?php echo $__env->yieldContent('js'); ?>
+
+	
+	<script src="<?php echo e(asset('/sw.js')); ?>"></script>
+	<script src="<?php echo e(asset('/scripts/registerServiceWorker.js')); ?>"></script>
 </body>
 </html>
 <?php /**PATH C:\Users\isaac\OneDrive - Universidad Nacional de Costa Rica\2025\II CICLO 2025\INGENIERIA EN SISTEMAS II\Proyecto\ProyectoSodaBambu\source_code\resources\views/layouts/auth.blade.php ENDPATH**/ ?>
