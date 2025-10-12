@@ -13,7 +13,7 @@
 	if ($imgStyle) {
 		$image .= ' style="' . $imgStyle . '"';
 	}
-	$image .= ' src="' . asset('storage/Logo.webp') . '" alt="Soda El Bambú Logo" aria-hidden="true">';
+	$image .= ' src="' . asset('storage/logo.webp') . '" alt="Soda El Bambú Logo" aria-hidden="true">';
 @endphp
 
 @if($type === 'sidebar')
