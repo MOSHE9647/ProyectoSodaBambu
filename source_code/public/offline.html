@@ -1,14 +1,60 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 
 <head>
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="title" content="Soda El Bambú - Sin Conexión">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Ups! No hay conexión a internet.</title>
+
+	<!-- Favicon -->
+	<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+
+	<title>No se pudo conectar al servidor.</title>
+
+	<script>
+		(function () {
+			function getTheme() {
+				const stored = localStorage.getItem('theme');
+				if (stored === 'dark' || stored === 'light') return stored;
+				return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+			}
+
+			const theme = getTheme();
+			document.documentElement.setAttribute('data-bs-theme', theme);
+		})();
+	</script>
 
 	<style>
+		:root,
+		[data-bs-theme="light"] {
+			--error-body-bg: #F6F6F6;
+			--error-container-bg: #F8F9FA;
+			--error-container-border: #DEE2E6;
+			--error-title-color: #1A1A1A;
+			--error-subtitle-color: #6C757D;
+			--error-alert-bg: #D1ECF1;
+			--error-alert-border: #BEE5EB;
+			--error-alert-color: #0C5460;
+		}
+
+		[data-bs-theme="dark"] {
+			--error-body-bg: #212529;
+			--error-container-bg: #23282A;
+			--error-container-border: rgba(248, 249, 250, 0.2);
+			--error-title-color: #FAFAFA;
+			--error-subtitle-color: #6C757D;
+			--error-alert-bg: rgba(13, 202, 240, 0.15);
+			--error-alert-border: rgba(13, 202, 240, 0.3);
+			--error-alert-color: #9EEAF9;
+		}
+
+		* {
+			transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+		}
+
 		.error_body {
 			display: flex;
 			flex-direction: column;
@@ -19,7 +65,7 @@
 			box-sizing: border-box;
 			height: 100vh;
 			width: 100%;
-			background: #f6f6f6;
+			background: var(--error-body-bg);
 			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 		}
 
@@ -28,8 +74,8 @@
 			flex-direction: column;
 			justify-content: center;
 			align-items: center;
-			background-color: #f8f9fa;
-			border: 1px solid #ddd;
+			background-color: var(--error-container-bg);
+			border: 1px solid var(--error-container-border);
 			border-radius: 1rem;
 			padding: 51px 41px;
 			text-align: center;
@@ -58,13 +104,13 @@
 		.brand-title {
 			font-size: 1.5rem;
 			font-weight: bold;
-			color: #333;
+			color: var(--error-title-color);
 			margin-bottom: 0rem;
 		}
 
 		.brand-subtitle {
 			font-size: 1rem;
-			color: #666;
+			color: var(--error-subtitle-color);
 			margin-bottom: 2rem;
 		}
 
@@ -77,9 +123,9 @@
 		}
 
 		.alert-info {
-			background-color: #d1ecf1;
-			border-color: #bee5eb;
-			color: #0c5460;
+			background-color: var(--error-alert-bg);
+			border: 1px solid var(--error-alert-border);
+			color: var(--error-alert-color);
 		}
 
 		.error_btn {
@@ -90,8 +136,13 @@
 			border-radius: 0.5rem;
 			color: white;
 			text-decoration: none;
-			display: inline-block;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0.5rem;
+			min-width: 250px;
 			transition: background-color 0.3s;
+			cursor: pointer;
 		}
 
 		.error_btn:hover {
@@ -100,6 +151,32 @@
 
 		.error_btn:focus {
 			box-shadow: none !important;
+		}
+
+		.error_btn.loading {
+			pointer-events: none;
+			opacity: 0.8;
+		}
+
+		.spinner {
+			display: none;
+			width: 1rem;
+			height: 1rem;
+			border: 0.15em solid currentColor;
+			border-right-color: transparent;
+			border-radius: 50%;
+			animation: spinner-border 0.75s linear infinite;
+			vertical-align: -0.125em;
+		}
+
+		.error_btn.loading .spinner {
+			display: inline-block;
+		}
+
+		@keyframes spinner-border {
+			to {
+				transform: rotate(360deg);
+			}
 		}
 
 		@media (max-width: 540px) {
@@ -128,14 +205,38 @@
 
 			<!-- Info Alert -->
 			<div class="alert alert-info">
-				<span>¡Ups! No tienes conexión a internet. <br>Por favor, revisa tu conexión de red e intenta de
-					nuevo.</span>
+				<span>
+					¡Ups! Parece que no tienes conexión a internet. <br>
+					Por favor, revisa tu conexión de red e inténtalo de nuevo más tarde.
+				</span>
 			</div>
 
 			<!-- Back to Home Button -->
-			<a href="/" class="error_btn">Volver a la Página Principal</a>
+			<a href="/" class="error_btn" id="retryBtn">
+				<span class="spinner"></span>
+				<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="currentColor"
+					class="bi bi-house-door" viewBox="0 0 16 16">
+					<path
+						d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4z" />
+				</svg>
+				<span class="btn-text">Volver a la Página Principal</span>
+			</a>
 		</div>
 	</div>
+
+	<script>
+		document.getElementById('retryBtn').addEventListener('click', function (e) {
+			// Get the button and its text span
+			const btn = this;
+			const btnText = btn.querySelector('.btn-text');
+			const btnIcon = btn.querySelector('svg');
+
+			// Add loading state and change text
+			btn.classList.add('loading');
+			btnText.textContent = 'Cargando...';
+			btnIcon.style.display = 'none';
+		});
+	</script>
 </body>
 
 </html>
