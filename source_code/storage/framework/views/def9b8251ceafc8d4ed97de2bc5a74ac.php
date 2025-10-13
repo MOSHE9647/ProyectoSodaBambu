@@ -17,6 +17,20 @@
 	<!-- Title -->
 	<title><?php echo e(config('app.name', 'Laravel')); ?></title>
 
+	<!-- Theme Script -->
+		<script nonce>
+		(function () {
+			function getTheme() {
+				const stored = localStorage.getItem('theme');
+				if (stored === 'dark' || stored === 'light') return stored;
+				return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+			}
+
+			const theme = getTheme();
+			document.documentElement.setAttribute('data-bs-theme', theme);
+		})();
+	</script>
+
 	<!-- Scripts -->
 	<?php echo app('Illuminate\Foundation\Vite')(['resources/css/auth.css', 'resources/js/app.js']); ?>
 </head>

@@ -17,6 +17,9 @@
 	<!-- Title -->
 	<title>{{ config('app.name', 'Laravel') }}</title>
 
+	<!-- Theme Script -->
+	@setDarkLightTheme
+
 	<!-- Scripts -->
 	@vite(['resources/css/auth.css', 'resources/js/app.js'])
 </head>
