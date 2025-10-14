@@ -1,11 +1,57 @@
-@import 'tailwindcss';
+@import './themes.css';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+:root {
+	--sidebar-width: 290px;
+}
 
-@theme {
-	--font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-	'Segoe UI Symbol', 'Noto Color Emoji';
+main {
+	position: absolute;
+	left: var(--sidebar-width);
+	width: calc(100vw - var(--sidebar-width));
+}
+
+#sidebar {
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 100vh;
+	width: var(--sidebar-width);
+	color: var(--sidebar-color);
+	border-radius: 0 20px 20px 0;
+	box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+	background-color: var(--sidebar-bg);
+	border-right: 1px solid var(--sidebar-border);
+}
+
+#sidebar .list-item a {
+	display: flex;
+	align-items: center;
+	font-size: 1rem;
+	gap: 1rem;
+}
+
+#sidebar .list-item .dropdown-item:hover,
+#sidebar .nav-link:hover {
+	color: var(--sidebar-item-hover-color);
+	background-color: var(--sidebar-item-hover-bg);
+}
+
+#sidebar .nav-link.active {
+	font-weight: 600;
+	color: var(--sidebar-active-item-color);
+	background-color: var(--sidebar-active-item-bg);
+}
+
+#sidebar .nav-link.active:hover {
+	background-color: var(--sidebar-active-item-hover-bg);
+	color: var(--sidebar-active-item-color);
+}
+
+#logoutBtn:hover {
+	color: var(--bambu-text-light) !important;
+	background-color: var(--bambu-danger) !important;
+}
+
+.link-body-emphasis {
+	color: var(--sidebar-item-hover-color);
 }

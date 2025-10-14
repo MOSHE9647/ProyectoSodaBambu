@@ -1,0 +1,199 @@
+@import './themes.css';
+
+:root {
+	--auth-card-padding-x: 41px;
+	--auth-card-padding-y: 51px;
+	--secondary-color: #6C757D;
+}
+
+:root,
+[data-bs-theme="light"] {
+	--auth-card-bg: var(--bambu-light);
+	--input-bg: white;
+	--input-text: var(--bambu-body-dark);
+	--input-border: #DEE2E6;
+}
+
+[data-bs-theme="dark"] {
+	--auth-card-bg: var(--bambu-dark);
+	--input-bg: var(--bambu-body-dark);
+	--input-text: var(--bambu-light);
+	--input-border: #4C5053;
+}
+
+body {
+	/*font-family: Roboto, sans-serif;*/
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.auth-container {
+	background-color: var(--auth-card-bg);
+	padding: var(--auth-card-padding-y) var(--auth-card-padding-x);
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+	max-width: 420px;
+}
+
+.brand-title {
+	font-size: 1.5rem;
+	font-weight: 700;
+	margin-bottom: 0.4rem;
+}
+
+.brand-subtitle {
+	color: var(--secondary-color);
+	font-weight: 400;
+	font-size: 0.9rem;
+}
+
+.form-floating {
+	margin-bottom: 1rem;
+}
+
+.form-control {
+	background: var(--input-bg);
+	border: 2px solid var(--input-border);
+	border-radius: 12px;
+	font-size: 1rem;
+	padding: 1rem;
+	height: auto;
+}
+
+.form-control:focus {
+	background: var(--input-bg);
+	border: 2px solid var(--bambu-logo-bg);
+	box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+	color: var(--input-text);
+}
+
+.form-floating > label {
+	color: var(--secondary-color);
+	margin-bottom: 1rem;
+	font-size: .9rem;
+	padding: 1rem 3rem 1rem 1rem;
+}
+
+.form-check-input {
+	background: var(--input-bg);
+	border: 2px solid var(--input-border);
+	border-radius: 4px;
+	width: 1.2em;
+	height: 1.2em;
+}
+
+.form-check-input:checked {
+	appearance: none;
+	border-color: var(--bambu-logo-bg);
+	background-color: var(--bambu-logo-bg);
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' stroke='white' stroke-width='2' class='bi bi-check2' viewBox='0 0 16 16'%3e%3cpath d='M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0' stroke='white' stroke-width='1'%3e%3c/path%3e%3c/svg%3e");
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+.form-check-label {
+	color: var(--input-text);
+	margin-left: 0.5rem;
+	font-size: 0.95rem;
+}
+
+.btn-primary {
+	--bs-btn-bg: var(--bambu-logo-bg);
+	--bs-btn-border-color: var(--bambu-logo-bg);
+	--bs-btn-border-radius: 12px;
+	--bs-btn-padding-x: 25px;
+	--bs-btn-padding-y: 10px;
+	--bs-btn-font-size: 1rem;
+	--bs-btn-font-weight: 600;
+
+	transition: all 0.3s ease;
+}
+
+.btn-primary:active {
+	--bs-btn-active-bg: #1E7E34;
+	--bs-btn-active-border-color: #1E7E34;
+	transform: translateY(-2px);
+}
+
+.btn-primary:hover {
+	--bs-btn-hover-bg: #1E7E34;
+	--bs-btn-hover-border-color: #1E7E34;
+	box-shadow: 0 6px 16px rgba(40, 167, 88, 0.3);
+}
+
+.btn-primary:focus {
+	background: var(--bambu-logo-bg);
+	border: 1px solid #1E7E34;
+	box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.btn.btn-primary:disabled {
+	background: var(--bambu-logo-bg);
+	border: 1px solid var(--bambu-logo-bg);
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+.btn-danger {
+	--bs-btn-bg: var(--bs-danger, #dc3545);
+	--bs-btn-border-color: var(--bs-danger, #dc3545);
+	--bs-btn-border-radius: 12px;
+	--bs-btn-padding-x: 25px;
+	--bs-btn-padding-y: 10px;
+	--bs-btn-font-size: 1rem;
+	--bs-btn-font-weight: 600;
+
+	transition: all 0.3s ease;
+}
+
+.btn-danger:active {
+	--bs-btn-active-bg: #a71d2a;
+	--bs-btn-active-border-color: #a71d2a;
+	transform: translateY(-2px);
+}
+
+.btn-danger:hover {
+	--bs-btn-hover-bg: #bb2d3b;
+	--bs-btn-hover-border-color: #bb2d3b;
+	box-shadow: 0 6px 16px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger:focus {
+	background: var(--bs-danger, #dc3545);
+	border: 1px solid #bb2d3b;
+	box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.btn.btn-danger:disabled {
+	background: var(--bs-danger, #dc3545);
+	border: 1px solid var(--bs-danger, #dc3545);
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+.forgot-password {
+	color: var(--bambu-logo-bg);
+	font-size: 0.9rem;
+	font-weight: 500;
+}
+
+.forgot-password a {
+	color: var(--bambu-logo-bg);
+	text-decoration: none;
+}
+
+.forgot-password a:hover {
+	color: #1E7E34;
+	text-decoration: underline;
+}
+
+.back-link {
+	color: var(--secondary-color);
+	font-size: 0.9rem;
+	gap: 0.5rem;
+}
+
+.back-link:hover {
+	color: var(--bambu-logo-bg);
+}
