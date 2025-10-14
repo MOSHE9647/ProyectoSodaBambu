@@ -1,0 +1,147 @@
+/* Importar fuentes */
+@import url('https://fonts.bunny.net/css?family=nunito:400,500,600,700,800');
+
+/* Importar Bootstrap y Bootstrap Icons */
+@import 'bootstrap';
+@import '../libs/bootstrap/bootstrap-icons.min.css';
+
+/* Paleta de colores base */
+:root {
+	--bambu-logo-bg: #28A745;
+	--bambu-body-light: #F6F6F6;
+	--bambu-body-dark: #212529;
+	--bambu-primary: #73BD2C;
+	--bambu-secondary: #81BE3D;
+	--bambu-tertiary: #2A502F;
+	--bambu-light: #F8F9FA;
+	--bambu-dark: #23282A;
+	--bambu-text-dark: #1A1A1A;
+	--bambu-text-light: #FAFAFA;
+	--bambu-text: #2E2E2E;
+	--bambu-danger: #DC3545;
+}
+
+/* Tema Light (por defecto) */
+:root,
+[data-bs-theme="light"] {
+	/* Bootstrap Core */
+	--bs-border-color: rgb(46 46 46 / 12%);
+	--bs-body-bg: var(--bambu-body-light);
+
+	/* Theme Colors */
+	--bs-primary: var(--bambu-primary);
+	--bs-secondary: var(--bambu-secondary);
+
+	/* Form Controls */
+	/* Input Focus Styles */
+	--form-control-focus-border-color: var(--bambu-logo-bg);
+	--form-control-focus-box-shadow: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
+
+	/* Checkbox Focus Styles */
+	--form-check-input-checked-bg-color: var(--bambu-logo-bg);
+	--form-check-input-checked-border-color: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
+
+	/* Sidebar */
+	/*--sidebar-active-item-bg: rgb(115 189 44 / 85%);*/
+	/*--sidebar-active-item-color: var(--bambu-text-dark);*/
+	--sidebar-bg: rgb(248 249 250 / 70%);
+	--sidebar-border: rgb(46 46 46 / 10%);
+	--sidebar-color: var(--bambu-text-dark);
+	--sidebar-active-item-bg: var(--bambu-logo-bg);
+	--sidebar-active-item-color: var(--bambu-text-light);
+	--sidebar-active-item-hover-bg: #1E7E34;
+	--sidebar-item-hover-bg: rgb(115 189 44 / 35%);
+	--sidebar-item-hover-color: var(--bambu-text-dark);
+}
+
+/* Tema Dark */
+[data-bs-theme="dark"] {
+	/* Bootstrap Core */
+	--bs-body-bg: var(--bambu-body-dark);
+	--bs-border-color: rgb(248 249 250 / 20%);
+
+	/* Theme Colors */
+	--bs-primary: var(--bambu-primary);
+	--bs-secondary: rgb(129 190 61 / 85%);
+
+	/* Form Controls */
+	/* Input Focus Styles */
+	/*	--form-control-focus-border-color: rgb(115 189 44 / 35%);
+		--form-control-focus-box-shadow: 0 0 0 0.25rem var(--form-control-focus-border-color);*/
+
+	/* Checkbox Focus Styles */
+	--form-check-input-checked-bg-color: rgb(115 189 44 / 85%);
+	--form-check-input-checked-border-color: rgb(115 189 44 / 85%);
+
+	/* Sidebar */
+	--sidebar-bg: rgb(26 26 26 / 85%);
+	--sidebar-border: rgb(248 249 250 / 12%);
+	--sidebar-color: var(--bambu-light);
+	--sidebar-active-item-bg: var(--bambu-logo-bg);
+	--sidebar-active-item-color: var(--bambu-light);
+	--sidebar-item-hover-bg: rgb(42 80 47 / 85%);
+	--sidebar-item-hover-color: var(--bambu-light);
+}
+
+/* Transiciones suaves */
+* {
+	transition: all 0.3s ease;
+}
+
+/* Visibilidad de iconos según tema */
+[data-bs-theme="dark"] #moonIcon,
+[data-bs-theme="light"] #sunIcon {
+	display: none;
+}
+
+[data-bs-theme="dark"] #sunIcon,
+[data-bs-theme="light"] #moonIcon {
+	display: inline-block;
+}
+
+/* Estilos de formulario */
+.form-control:focus,
+.form-check-input:focus {
+	border-color: var(--form-control-focus-border-color);
+	box-shadow: var(--form-control-focus-box-shadow);
+}
+
+.form-check-input:checked {
+	background-color: var(--form-check-input-checked-bg-color);
+	border-color: var(--form-check-input-checked-border-color);
+}
+
+/* Aplicar background y color del body */
+body {
+	background-color: var(--bs-body-bg);
+	font-family: 'Nunito', sans-serif;
+	min-height: 100vh;
+	font-size: 0.9rem;
+	line-height: 1.6;
+}
+
+/* Estilizar scrollbars */
+/*body::-webkit-scrollbar {
+	width: 8px;
+}*/
+
+/* Estilizar el botón de cambio de tema */
+#moonIcon {
+	margin-left: 3px;
+	margin-bottom: 1px;
+}
+
+#themeTogglerBtn {
+	width: 44px;
+	height: 44px;
+}
+
+#themeTogglerBtn:hover {
+	background-color: var(--bambu-logo-bg);
+	border-color: var(--bambu-logo-bg);
+	color: var(--bambu-text-dark);
+}
+
+.brand-logo {
+	background-color: var(--bambu-logo-bg);
+}
