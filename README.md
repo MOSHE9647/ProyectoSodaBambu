@@ -320,7 +320,7 @@ Si encuentras conflictos al hacer merge:
 |--------|---------------------|---------|
 | Isaac Herrera Pastrana | isaac.herrera.pastrana@est.una.ac.cr | [@Moshe9647](https://github.com/Moshe9647) |
 | Melanie Oviedo Maleaño | melanie.oviedo.maleano@est.una.ac.cr | [@MelanieOviedo](https://github.com/MelanieOviedo) |
-| Natalia Ortiz Martinez | deyaneira.ortiz.martinez@est.una.ac.cr | [@Nataliaortiz9](https://github.com/Nataliaortiz9) |
+| Natalia Ortiz Martinez | deyaneira.ortiz.martinez@est.una.ac.cr | [@DeyaneiraOrtizMartinez](https://github.com/DeyaneiraOrtizMartinez) |
 | Andrea Morera Zúñiga | andrea.morera.zuniga@est.una.ac.cr | [@AndreMoreZu](https://github.com/AndreMoreZu) |
 | Jeremy Romero Carazo | jeremy.romero.carazo@est.una.ac.cr | [@Romero42](https://github.com/Romero42) |
 
