@@ -13,6 +13,6 @@ const filesToCache = [
 ];
 
 fs.writeFileSync(
-	path.join(__dirname, '../storage/cache.json'),
+	path.join(__dirname, '../cache.json'),
 	JSON.stringify(filesToCache, null, 2)
 );
