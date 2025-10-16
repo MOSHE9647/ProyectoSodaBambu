@@ -23,13 +23,13 @@
 	<!-- Scripts -->
 	@vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body class="overflow-hidden">
 	<div id="app">
 		{{-- Sidebar Component --}}
 		<x-sidebar/>
 
 		{{-- Main Content --}}
-		<main class="p-4">
+		<main class="p-4 overflow-auto vh-100">
 			@yield('content')
 		</main>
 	</div>
@@ -37,5 +37,8 @@
 	{{-- PWA Scripts --}}
 	<script src="{{ asset('/sw.js') }}"></script>
 	<script src="{{ asset('/scripts/registerServiceWorker.js') }}"></script>
+
+	{{-- Additional Scripts --}}
+	@yield('scripts')
 </body>
 </html>
