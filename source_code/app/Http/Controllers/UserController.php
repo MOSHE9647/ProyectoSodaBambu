@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use Exception;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Yajra\DataTables\DataTables;
 
 class UserController extends Controller implements HasMiddleware
 {
@@ -18,11 +23,23 @@ class UserController extends Controller implements HasMiddleware
 		];
 	}
 
-	public function index()
+	/**
+	 * Display a listing of the resource.
+	 *
+	 * @param Request $request
+	 * @return Factory|View|JsonResponse|\Illuminate\View\View
+	 * @throws Exception
+	 */
+	public function index(Request $request)
 	{
 		$role = UserRole::EMPLOYEE->value;
-		$users = User::with([$role, 'roles'])->paginate(10);
-		return view('models.users.index', compact('users'));
+//		return User::with([$role, 'roles'])->get();
+		if ($request->ajax()) {
+			return DataTables::of(
+				User::with([$role, 'roles'])->get()
+			)->make();
+		}
+		return view('models.users.index');
 	}
 
 	public function create()

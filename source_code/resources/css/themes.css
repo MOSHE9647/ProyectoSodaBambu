@@ -42,8 +42,6 @@
 	--form-check-input-checked-border-color: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
 
 	/* Sidebar */
-	/*--sidebar-active-item-bg: rgb(115 189 44 / 85%);*/
-	/*--sidebar-active-item-color: var(--bambu-text-dark);*/
 	--sidebar-bg: rgb(248 249 250 / 70%);
 	--sidebar-border: rgb(46 46 46 / 10%);
 	--sidebar-color: var(--bambu-text-dark);
@@ -52,6 +50,10 @@
 	--sidebar-active-item-hover-bg: #1E7E34;
 	--sidebar-item-hover-bg: rgb(115 189 44 / 35%);
 	--sidebar-item-hover-color: var(--bambu-text-dark);
+
+	/* Scrollbar Colors */
+	--scrollbar-thumb: var(--bambu-logo-bg);
+	--scrollbar-thumb-hover: #1E7E34;
 }
 
 /* Tema Dark */
@@ -63,11 +65,6 @@
 	/* Theme Colors */
 	--bs-primary: var(--bambu-primary);
 	--bs-secondary: rgb(129 190 61 / 85%);
-
-	/* Form Controls */
-	/* Input Focus Styles */
-	/*	--form-control-focus-border-color: rgb(115 189 44 / 35%);
-		--form-control-focus-box-shadow: 0 0 0 0.25rem var(--form-control-focus-border-color);*/
 
 	/* Checkbox Focus Styles */
 	--form-check-input-checked-bg-color: rgb(115 189 44 / 85%);
@@ -81,6 +78,10 @@
 	--sidebar-active-item-color: var(--bambu-light);
 	--sidebar-item-hover-bg: rgb(42 80 47 / 85%);
 	--sidebar-item-hover-color: var(--bambu-light);
+
+	/* Scrollbar Colors */
+	--scrollbar-thumb: var(--bambu-logo-bg);
+	--scrollbar-thumb-hover: #1E7E34;
 }
 
 /* Transiciones suaves */
@@ -121,9 +122,24 @@ body {
 }
 
 /* Estilizar scrollbars */
-/*body::-webkit-scrollbar {
+::-webkit-scrollbar {
 	width: 8px;
-}*/
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+	border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--scrollbar-thumb);
+	border-radius: 6px;
+	transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--scrollbar-thumb-hover);
+}
 
 /* Estilizar el botón de cambio de tema */
 #moonIcon {

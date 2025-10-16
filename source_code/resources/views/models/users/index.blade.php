@@ -18,34 +18,42 @@
 							<x-alert :type="'success'" :message="session('status')"/>
 						@endif
 
-						<table class="table">
+						<table id="users-table" class="table">
 							<thead>
 							<tr>
-								<th scope="col">#</th>
 								<th scope="col">Name</th>
 								<th scope="col">Email</th>
 								<th scope="col">Role</th>
 								<th scope="col">Created At</th>
+								<th scope="col">Actions</th>
 							</tr>
 							</thead>
 							<tbody>
-							@foreach ($users as $user)
-								<tr>
-									<th scope="row">{{ $user->id }}</th>
-									<td>{{ $user->name }}</td>
-									<td>{{ $user->email }}</td>
-									<td>{{ UserRole::tryFrom($user->roles->first()->name)->label() }}</td>
-									<td>{{ Carbon::parse($user->created_at)->format('d-M-Y') }}</td>
-								</tr>
-							@endforeach
+								{{-- Loaded with JS --}}
 							</tbody>
 						</table>
-
-						{{-- Pagination Links --}}
-						{{ $users->links('pagination::bootstrap-5') }}
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
+@endsection
+
+@section('scripts')
+	<script type="text/javascript">
+		let userRoute = "{{ route('users.index') }}";
+		let userEditRoute = "{{ route('users.edit', ['user' => ':id']) }}";
+		let userDeleteRoute = "{{ route('users.destroy', ['user' => ':id']) }}";
+		let csrfToken = "{{ csrf_token() }}";
+		let userRoles = [
+			@foreach(UserRole::cases() as $role)
+				{
+					name: "{{ $role->name }}",
+					value: "{{ $role->value }}",
+					label: "{{ $role->label() }}"
+				},
+			@endforeach
+		];
+	</script>
+	@vite(['resources/js/models/users/main.js'])
 @endsection

@@ -81,7 +81,7 @@
 	}
 @endphp
 
-<ul class="nav nav-pills flex-column mb-auto gap-2">
+<ul class="nav nav-pills flex-nowrap flex-column overflow-auto mb-auto gap-2">
 	@foreach($sidebarItems as $name => $item)
 		@hasanyrole($item['role'])
 		<x-sidebar.menu.item
