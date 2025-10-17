@@ -3,7 +3,7 @@ import '@popperjs/core';
 
 import $ from 'jquery';
 import * as bootstrap from 'bootstrap';
-import { applyTheme } from './utils/themeToggler.js';
+import { applyTheme } from './utils/theme-toggler.js';
 import { scrollToItem, checkScrollbarVisibility } from './utils/scrollbar.js';
 
 window.$ = $; // Make jQuery globally available
