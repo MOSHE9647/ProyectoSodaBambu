@@ -1,6 +1,6 @@
 // Description: JavaScript code for handling login form validation and submission.
 import {validateAndDisplayField, validateEmail, validatePassword} from '../utils/validation.js';
-import {clearFieldError, showFieldError} from '../utils/errorHandling.js';
+import {clearFieldError, showFieldError} from '../utils/error-handling.js';
 import {setLoadingState} from '../utils/utils.js';
 
 // Ensure jQuery is loaded

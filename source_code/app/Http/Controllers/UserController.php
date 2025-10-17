@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Exception;
 use Illuminate\Contracts\View\Factory;
@@ -15,12 +16,19 @@ use Yajra\DataTables\DataTables;
 
 class UserController extends Controller implements HasMiddleware
 {
+	private string $role;
+
 	public static function middleware(): array
 	{
 		$role = UserRole::ADMIN->value;
 		return [
 			new Middleware("role:$role"),
 		];
+	}
+
+	public function __construct()
+	{
+		$this->role = UserRole::EMPLOYEE->value;
 	}
 
 	/**
@@ -32,13 +40,16 @@ class UserController extends Controller implements HasMiddleware
 	 */
 	public function index(Request $request)
 	{
-		$role = UserRole::EMPLOYEE->value;
-//		return User::with([$role, 'roles'])->get();
+		// Fetch users with their roles and specific role relationship
+		$users = User::with([$this->role, 'roles'])->get();
+		$resource = UserResource::collection($users);
+
+		// Handle AJAX request for DataTables
 		if ($request->ajax()) {
-			return DataTables::of(
-				User::with([$role, 'roles'])->get()
-			)->make();
+			return DataTables::of($resource)->make();
 		}
+
+		// For non-AJAX requests, return the view
 		return view('models.users.index');
 	}
 
@@ -50,19 +61,22 @@ class UserController extends Controller implements HasMiddleware
 	{
 	}
 
-	public function show($id)
+	public function show(User $user)
+	{
+		$userToShow = $user->load([$this->role, 'roles']);
+		$resource = UserResource::make($userToShow);
+		return response()->json($resource);
+	}
+
+	public function edit(User $user)
 	{
 	}
 
-	public function edit($id)
+	public function update(Request $request, User $user)
 	{
 	}
 
-	public function update(Request $request, $id)
-	{
-	}
-
-	public function destroy($id)
+	public function destroy(User $user)
 	{
 	}
 }
