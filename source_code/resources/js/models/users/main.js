@@ -1,7 +1,9 @@
 import { NewCrudDataTable } from '../../utils/datatables.js';
+import { SwalToast } from "../../utils/sweetalert.js";
 import { showUser } from "./show.js";
 
 window.showUser = showUser; // Make globally accessible for inline onclick handlers
+window.SwalToast = SwalToast; // Make globally accessible for inline usage
 
 /**
  * Translate the Message if needed.

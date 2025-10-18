@@ -19,3 +19,16 @@ export const SwalModal = Swal.mixin({
 		timerProgressBar: '...',
 	}
 });
+
+export const SwalToast = Swal.mixin({
+	toast: true,
+	position: 'top-end',
+	theme: 'bootstrap-5',
+	showConfirmButton: false,
+	timerProgressBar: true,
+	timer: 5000,
+	customClass: {
+		popup: 'swal-popup bg-body-tertiary',
+		timerProgressBar: 'swal-timer-progress-bar',
+	}
+});

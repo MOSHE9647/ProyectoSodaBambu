@@ -1,5 +1,6 @@
 import '../../libs/datatables/datatables.js';
 import languageES from 'datatables.net-plugins/i18n/es-MX.mjs';
+import { SwalToast } from "../utils/sweetalert.js";
 
 /**
  * Custom language settings for DataTables in Spanish with modified translations.
@@ -157,7 +158,21 @@ export function NewCrudDataTable(tableId, ajaxUrl, columns, actions, customButto
 	// Default options for the CRUD DataTable
 	const defaultOptions = {
 		serverSide: true, // Enable server-side processing
-		ajax: ajaxUrl, // Set AJAX data source url
+		ajax: {
+			url: ajaxUrl,
+			error: function (jqXHR, textStatus, errorThrown) {
+				// Show error message on AJAX failure
+				console.error(`Error de AJAX: ${textStatus}`, errorThrown);
+				SwalToast.fire({
+					icon: 'error',
+					title: 'No se pudieron cargar los datos de la tabla.',
+					timer: 8000
+				});
+
+				// Update table to show error message
+				$(`#${tableId}_processing`).hide();
+			}
+		},
 		columnControl: ['order'], // Enable column control for ordering
 		columnDefs: [{ // Disable ordering on action columns
 			target: -1,

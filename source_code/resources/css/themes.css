@@ -301,3 +301,7 @@ body {
 .swal-close-btn {
 	color: var(--bs-body-color);
 }
+
+.swal-timer-progress-bar {
+	background: var(--bambu-logo-bg);
+}
