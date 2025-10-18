@@ -1,6 +1,6 @@
-import './bootstrap';
-import '@popperjs/core';
-import 'sweetalert2/themes/bootstrap-5.css';
+import './bootstrap'; //<- Import Bootstrap and dependencies
+import '@popperjs/core'; //<- Import Popper.js for Bootstrap tooltips and popovers
+import 'sweetalert2/themes/bootstrap-5.css'; //<- Import SweetAlert2 Bootstrap 5 theme
 
 import $ from 'jquery';
 import * as bootstrap from 'bootstrap';

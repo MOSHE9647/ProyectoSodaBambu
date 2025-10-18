@@ -57,4 +57,14 @@
 		];
 	</script>
 	@vite(['resources/js/models/users/main.js'])
+
+	{{-- Success Toast Notification --}}
+	@if(session('success'))
+		<script type="module">
+			SwalToast.fire({
+				icon: 'success',
+				title: "{{ session('success') }}"
+			});
+		</script>
+	@endif
 @endsection

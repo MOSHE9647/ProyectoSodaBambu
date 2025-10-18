@@ -1,4 +1,4 @@
-import {SwalModal} from "../../utils/sweetalert.js";
+import { SwalModal } from "../../utils/sweetalert.js";
 
 async function fetchUser(url) {
 	try {

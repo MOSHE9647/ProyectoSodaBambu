@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use DB;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Throwable;
 use Yajra\DataTables\DataTables;
 
 class UserController extends Controller implements HasMiddleware
@@ -81,7 +84,30 @@ class UserController extends Controller implements HasMiddleware
 	{
 	}
 
+	/**
+	 * Remove the specified resource from storage.
+	 *
+	 * @param User $user
+	 * @return RedirectResponse
+	 * @throws Throwable
+	 */
 	public function destroy(User $user)
 	{
+		// Use a transaction to ensure data integrity
+		DB::transaction(function () use ($user) {
+			// Get the user with the specific role relationship
+			$user->load($this->role);
+
+			// If the user has the specific role, delete the related record
+			if ($user->employee()) {
+				$user->employee()->delete();
+			}
+
+			// Delete the user record
+			$user->delete();
+		});
+
+		// Redirect back with a success message
+		return redirect()->back()->with('success', 'Usuario eliminado correctamente.');
 	}
 }
