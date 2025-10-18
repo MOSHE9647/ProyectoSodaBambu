@@ -33,7 +33,7 @@ $(document).ready(() => {
             data: 'roles.0.name',
             name: 'role',
             render: function(data, type, row) {
-                // Try to find the role label from userRoles (passed from Blade)
+				// Try to find the role label from userRoles (passed from Blade)
                 const role = userRoles.find(role => role.value === data);
                 return role ? role.label : data; // Fallback to raw data if not found
             }
@@ -58,12 +58,14 @@ $(document).ready(() => {
 		edit: { route: userEditRoute, tooltip: 'Editar usuario' },
 		delete: {
 			route: userDeleteRoute,
-			disabledIf: (row) => row.roles[0].name === 'admin',
-			disabledIfTooltip: 'No se puede eliminar un usuario con rol de administrador.',
+			disabledIf: (row) => {
+				const isAdmin = row.roles[0].name === 'admin';
+				return isAdmin && isUserUniqueAdmin;
+			},
+			disabledIfTooltip: 'No se puede eliminar al único usuario con rol de administrador.',
 			tooltip: 'Eliminar usuario'
 		}
 	};
-
 
 	// Define custom buttons
     const customButtons = [

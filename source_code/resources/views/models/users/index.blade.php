@@ -33,22 +33,6 @@
 				</tbody>
 			</table>
 		</div>
-
-		{{-- User Details Modal --}}
-		{{-- TODO: Implement User Info Modal --}}
-		{{--<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 class="modal-title" id="userModalLabel">Detalles del Usuario</h5>
-						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-					</div>
-					<div class="modal-body" id="userModalBody">
-						<!-- El contenido se reemplazará con JavaScript -->
-					</div>
-				</div>
-			</div>
-		</div>--}}
 	</div>
 
 @endsection
@@ -60,8 +44,9 @@
 		let userCreateRoute = "{{ route('users.create') }}";
 		let userEditRoute = "{{ route('users.edit', ['user' => ':id']) }}";
 		let userDeleteRoute = "{{ route('users.destroy', ['user' => ':id']) }}";
+		let isUserUniqueAdmin = {{ $adminCount <= 1 ? 'true' : 'false' }};
 		let csrfToken = "{{ csrf_token() }}";
-		let userRoles = [
+		userRoles = [
 			@foreach(UserRole::cases() as $role)
 				{
 					name: "{{ $role->name }}",

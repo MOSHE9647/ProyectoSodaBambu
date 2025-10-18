@@ -214,9 +214,9 @@ function generateActionButton(action, row, type, defaultTooltip, iconClass, butt
 
 	switch (type) {
 		case 'show':
-			const actionFunc = `${action.func.name}(\'${actionRoute}\');`;
+			const actionFunc = `onclick="${action.func.name}(\'${actionRoute}\');"`;
 			return `
-				<a class="${baseClass}" ${disabled ? '' : actionFunc}" ${baseAttrs} ${extraAttrs}>
+				<a class="${baseClass}" ${disabled ? '' : actionFunc} ${baseAttrs} ${extraAttrs}>
 					<i class="${iconClass}"></i>
 				</a>
 			`;
