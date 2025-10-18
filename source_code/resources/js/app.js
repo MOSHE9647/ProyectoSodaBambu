@@ -1,5 +1,6 @@
 import './bootstrap';
 import '@popperjs/core';
+import 'sweetalert2/themes/bootstrap-5.css';
 
 import $ from 'jquery';
 import * as bootstrap from 'bootstrap';

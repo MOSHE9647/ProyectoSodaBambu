@@ -27,6 +27,7 @@
 	/* Bootstrap Core */
 	--bs-border-color: rgb(46 46 46 / 12%);
 	--bs-body-bg: var(--bambu-body-light);
+	--bs-body-color: var(--bambu-text-dark);
 
 	/* Theme Colors */
 	--bs-primary: var(--bambu-primary);
@@ -83,6 +84,7 @@
 	/* Bootstrap Core */
 	--bs-body-bg: var(--bambu-body-dark);
 	--bs-border-color: rgb(248 249 250 / 20%);
+	--bs-body-color: var(--bambu-text-light);
 
 	/* Theme Colors */
 	--bs-primary: var(--bambu-primary);
@@ -289,4 +291,13 @@ body {
 	border: 1px solid var(--bs-danger, #dc3545);
 	cursor: not-allowed;
 	opacity: 0.65;
+}
+
+.swal-popup {
+	background: var(--bs-body-bg);
+	color: var(--bs-body-color);
+}
+
+.swal-close-btn {
+	color: var(--bs-body-color);
 }

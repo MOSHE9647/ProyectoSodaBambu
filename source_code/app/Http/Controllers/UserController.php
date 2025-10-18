@@ -44,13 +44,18 @@ class UserController extends Controller implements HasMiddleware
 		$users = User::with([$this->role, 'roles'])->get();
 		$resource = UserResource::collection($users);
 
+		// Contar usuarios con rol 'admin'
+		$adminCount = User::whereHas('roles', function ($role) {
+			$role->where('name', UserRole::ADMIN);
+		})->count();
+
 		// Handle AJAX request for DataTables
 		if ($request->ajax()) {
 			return DataTables::of($resource)->make();
 		}
 
 		// For non-AJAX requests, return the view
-		return view('models.users.index');
+		return view('models.users.index', compact('adminCount'));
 	}
 
 	public function create()
@@ -65,7 +70,7 @@ class UserController extends Controller implements HasMiddleware
 	{
 		$userToShow = $user->load([$this->role, 'roles']);
 		$resource = UserResource::make($userToShow);
-		return response()->json($resource);
+		return view('models.users.show', ['user' => $resource]);
 	}
 
 	public function edit(User $user)

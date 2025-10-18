@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -19,7 +20,7 @@ class UserResource extends JsonResource
 			'updated_at' => $this->updated_at,
 			'deleted_at' => $this->deleted_at,
 			'roles' => RoleResource::collection($this->whenLoaded('roles')),
-			'employee' => $this->whenLoaded('employee'),
+			'employee' => $this->whenLoaded(UserRole::EMPLOYEE->value),
 		];
 	}
 }
