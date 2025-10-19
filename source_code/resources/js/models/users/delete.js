@@ -15,9 +15,9 @@ export function deleteUser(e) {
 	}).then((result) => {
 		if (result.isConfirmed) {
 			form.submit();
+		} else {
+			setLoadingState(form, 'delete-form', false);
 		}
-	}).finally(() => {
-		setLoadingState(form, 'delete-form', false);
 	});
 }
 

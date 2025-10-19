@@ -26,7 +26,6 @@ class EmployeeRequest extends FormRequest
 	public function rules(): array
 	{
 		return [
-			'id' => ['required', 'exists:users'],
 			'phone' => ['required', 'string', 'unique:employees,phone', 'min:12', 'max:14'],
 			'status' => ['required', new Enum(EmployeeStatus::class)],
 			'hourlyWage' => ['required', 'numeric', 'min:100'],

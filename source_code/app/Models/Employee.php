@@ -16,6 +16,13 @@ class Employee extends Model
 	/** @use HasFactory<EmployeeFactory> */
 	use HasFactory, SoftDeletes;
 
+	public static array $fields = [
+		'phone',
+		'status',
+		'hourlyWage',
+		'paymentFrequency'
+	];
+
 	/**
 	 * The attributes that are mass assignable.
 	 *
