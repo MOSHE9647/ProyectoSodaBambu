@@ -230,15 +230,20 @@ function generateActionButton(action, row, type, defaultTooltip, iconClass, butt
 
 	switch (type) {
 		case 'show':
-			const actionFunc = `onclick="${action.func.name}(\'${actionRoute}\');"`;
+			const actionFunc = `onclick="${action.func.name}(\'${actionRoute}\', this);"`;
 			return `
-				<a class="${baseClass}" ${disabled ? '' : actionFunc} ${baseAttrs} ${extraAttrs}>
-					<i class="${iconClass}"></i>
+				<a class="info-button ${baseClass}" ${disabled ? '' : actionFunc} ${baseAttrs} ${extraAttrs}>
+					<div class="info-spinner d-none flex-row align-items-center justify-content-center">
+						<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+					</div>
+                    <div class="info-button-text d-flex flex-row align-items-center justify-content-center">
+                    	<i class="${iconClass}"></i>
+					</div>
 				</a>
 			`;
 		case 'edit':
 			return `
-				<a href="${disabled ? '#' : actionRoute}" class="${baseClass}" ${baseAttrs} ${extraAttrs}>
+				<a href="${disabled ? '#' : actionRoute}" class="edit-button ${baseClass}" ${baseAttrs} ${extraAttrs}>
 					<i class="${iconClass}"></i>
 				</a>
 			`;

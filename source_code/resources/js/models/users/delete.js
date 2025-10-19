@@ -24,15 +24,16 @@ export function deleteUser(e) {
 function setLoadingState(form, formClass, isLoading) {
 	// Accept either a form element or a class name
 	if (typeof form === 'string') {
-		form = document.querySelector(`.${form}`);
+		form = $(`.${form}`);
 	}
 
 	// If form is not found or invalid, log an error and return
 	if (!form || !(form instanceof HTMLElement)) {
-		console.error(`Formulario no encontrado o inválido para formClass: ${formClass}`);
+		console.error(`Form not found or invalid for formClass: ${formClass}`);
 		return;
 	}
 
+	// Get necessary elements within the form
 	const spinner = $(form).find(`.${formClass}-spinner`);
 	const submitButton = $(form).find(`.${formClass}-button`);
 	const submitButtonText = $(form).find(`.${formClass}-button-text`);
