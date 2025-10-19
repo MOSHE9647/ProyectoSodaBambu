@@ -11,11 +11,9 @@ class CardPayment extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'reference', // referencia
+        'reference',
         'idPaymentMethod'
     ];
-
-    // Relación con el método de pago (padre)
     public function paymentMethod()
     {
         return $this->belongsTo(PaymentMethod::class, 'idPaymentMethod', 'idPaymentMethod');

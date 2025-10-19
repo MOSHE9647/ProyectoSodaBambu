@@ -11,11 +11,10 @@ class SinpePayment extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'voucher', // comprobante
+        'voucher', 
         'idPaymentMethod' 
     ];
 
-    // Relación con el método de pago (padre)
     public function paymentMethod()
     {
         return $this->belongsTo(PaymentMethod::class, 'idPaymentMethod', 'idPaymentMethod');

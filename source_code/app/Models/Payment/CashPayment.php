@@ -11,11 +11,10 @@ class CashPayment extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'changeAmount', // monto vuelto
+        'changeAmount',
         'idPaymentMethod'
     ];
 
-    // Relación con el método de pago (padre)
     public function paymentMethod()
     {
         return $this->belongsTo(PaymentMethod::class, 'idPaymentMethod', 'idPaymentMethod');

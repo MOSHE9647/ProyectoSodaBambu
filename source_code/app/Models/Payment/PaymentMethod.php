@@ -11,11 +11,10 @@ class PaymentMethod extends Model
     protected $primaryKey = 'idPaymentMethod';
 
     protected $fillable = [
-        'amount', // monto
-        'type_payment' // tipo de pago
+        'amount', 
+        'type_payment'
     ];
 
-    // Relación polimórfica para obtener el detalle específico
     public function sinpePayment()
     {
         return $this->hasOne(SinpePayment::class, 'idPaymentMethod', 'idPaymentMethod');
@@ -31,7 +30,7 @@ class PaymentMethod extends Model
         return $this->hasOne(CashPayment::class, 'idPaymentMethod', 'idPaymentMethod');
     }
 
-    // Método helper para obtener el detalle según el tipo
+    // Helper method to get the specific payment detail based on type_payment
     public function getDetalle()
     {
         switch ($this->tipo_pago) {
