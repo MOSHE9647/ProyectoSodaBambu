@@ -131,7 +131,8 @@ export function NewCrudDataTable(tableId, ajaxUrl, columns, actions, customButto
 						'delete',
 						'Eliminar',
 						'bi-trash',
-						'btn-danger'
+						'btn-danger',
+						'class="delete-form"'
 					);
 				}
 
@@ -246,14 +247,19 @@ function generateActionButton(action, row, type, defaultTooltip, iconClass, butt
 				<form
 					method="POST"
 					action="${actionRoute}"
-					onsubmit="${disabled ? 'return false;' : 'return confirm(\'¿Estás seguro de que deseas eliminar este elemento?\');'}"
+					onsubmit="${disabled ? 'return false;' : action.func.name + '(event);'}"
 					${baseAttrs}
 					${extraAttrs}
 				>
                     <input type="hidden" name="_token" value="${csrfToken}">
                     <input type="hidden" name="_method" value="DELETE">
-                    <button type="submit" class="btn btn-sm ${buttonClass}" ${disabled ? 'disabled' : ''}>
-                    	<i class="${iconClass}"></i>
+                    <button type="submit" class="delete-form-button btn btn-sm ${buttonClass}" ${disabled ? 'disabled' : ''}>
+                    	<div class="delete-form-spinner d-none flex-row align-items-center justify-content-center">
+							<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+						</div>
+                    	<div class="delete-form-button-text d-flex flex-row align-items-center justify-content-center">
+                    		<i class="${iconClass}"></i>
+						</div>
                     </button>
                 </form>`;
 		default:
