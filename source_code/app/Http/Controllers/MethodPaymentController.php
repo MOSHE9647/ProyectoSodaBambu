@@ -23,69 +23,68 @@ class MethodPaymentController extends Controller
      * save a new payment method
      */
     public function store(Request $request)
-{
-    // validation
-    $request->validate([
-        'amount' => 'required|numeric|min:0',
-        'type_payment' => 'required|in:sinpe,card,cash',
+    {
+        // validation
+        $request->validate([
+            'amount' => 'required|numeric|min:0',
+            'type_payment' => 'required|in:sinpe,card,cash',
 
-        // Validations for specific payment types
-        'voucher' => 'required_if:type_payment,sinpe|string|nullable',
-        'reference' => 'required_if:type_payment,card|string|nullable',
-        'changeAmount' => 'required_if:type_payment,cash|numeric|nullable'
-    ], [
-        'amount.required' => 'El monto es obligatorio.',
-        'amount.numeric' => 'El monto debe ser un número.',
-        'amount.min' => 'El monto debe ser mayor que cero.',
-        'type_payment.required' => 'El tipo de pago es obligatorio.',
-        'voucher.required_if' => 'El comprobante es obligatorio para pagos SINPE.',
-        'reference.required_if' => 'La referencia es obligatoria para pagos con tarjeta.',
-        'changeAmount.required_if' => 'El monto de cambio es obligatorio para pagos en efectivo.'
-    ]);
+            // Validations for specific payment types
+            'voucher' => 'required_if:type_payment,sinpe|string|nullable',
+            'reference' => 'required_if:type_payment,card|string|nullable',
+            'changeAmount' => 'required_if:type_payment,cash|numeric|nullable'
+        ], [
+            'amount.required' => 'El monto es obligatorio.',
+            'amount.numeric' => 'El monto debe ser un número.',
+            'amount.min' => 'El monto debe ser mayor que cero.',
+            'type_payment.required' => 'El tipo de pago es obligatorio.',
+            'voucher.required_if' => 'El comprobante es obligatorio para pagos SINPE.',
+            'reference.required_if' => 'La referencia es obligatoria para pagos con tarjeta.',
+            'changeAmount.required_if' => 'El monto de cambio es obligatorio para pagos en efectivo.'
+        ]);
 
-    try {
-        // Create the parent payment method
-        $paymentMethod = new PaymentMethod();
-        $paymentMethod->amount = $request->amount;
-        $paymentMethod->type_payment = $request->type_payment;
-        $paymentMethod->save();
+        try {
+            // Create the parent payment method
+            $paymentMethod = new PaymentMethod();
+            $paymentMethod->amount = $request->amount;
+            $paymentMethod->type_payment = $request->type_payment;
+            $paymentMethod->save();
 
-        // Create a child payment method based on the type
-        switch ($request->type_payment) {
-            case 'sinpe':
-                $sinpePayment = new SinpePayment();
-                $sinpePayment->voucher = $request->voucher;
-                $sinpePayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
-                $sinpePayment->save();
-                break;
+            // Create a child payment method based on the type
+            switch ($request->type_payment) {
+                case 'sinpe':
+                    $sinpePayment = new SinpePayment();
+                    $sinpePayment->voucher = $request->voucher;
+                    $sinpePayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $sinpePayment->save();
+                    break;
 
-            case 'card':
-                $cardPayment = new CardPayment();
-                $cardPayment->reference = $request->reference;
-                $cardPayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
-                $cardPayment->save();
-                break;
+                case 'card':
+                    $cardPayment = new CardPayment();
+                    $cardPayment->reference = $request->reference;
+                    $cardPayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $cardPayment->save();
+                    break;
 
-            case 'cash':
-                $cashPayment = new CashPayment();
-                $cashPayment->changeAmount = $request->changeAmount;
-                $cashPayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
-                $cashPayment->save();
-                break;
+                case 'cash':
+                    $cashPayment = new CashPayment();
+                    $cashPayment->changeAmount = $request->changeAmount;
+                    $cashPayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $cashPayment->save();
+                    break;
+            }
+
+            return response()->json([
+                'message' => 'Método de pago registrado correctamente',
+                'data' => $paymentMethod->load(['sinpePayment', 'cardPayment', 'cashPayment'])
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al registrar el método de pago',
+                'details' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'message' => 'Método de pago registrado correctamente',
-            'data' => $paymentMethod->load(['sinpePayment', 'cardPayment', 'cashPayment'])
-        ], 201);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Error al registrar el método de pago',
-            'details' => $e->getMessage()
-        ], 500);
     }
-}
 
     /**
      * Show a specific payment method
@@ -102,13 +101,77 @@ class MethodPaymentController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $payment = PaymentMethod::findOrFail($id);
+        // Validation
+        $request->validate([
+            'amount' => 'required|numeric|min:0',
+            'type_payment' => 'required|in:sinpe,card,cash',
 
-        $payment->update([
-            'monto' => $request->input('monto', $payment->monto),
+            // Validations for specific payment types
+            'voucher' => 'required_if:type_payment,sinpe|string|nullable',
+            'reference' => 'required_if:type_payment,card|string|nullable',
+            'changeAmount' => 'required_if:type_payment,cash|numeric|nullable'
+        ], [
+            'amount.required' => 'El monto es obligatorio.',
+            'amount.numeric' => 'El monto debe ser un número.',
+            'amount.min' => 'El monto debe ser mayor que cero.',
+            'type_payment.required' => 'El tipo de pago es obligatorio.',
+            'voucher.required_if' => 'El comprobante es obligatorio para pagos SINPE.',
+            'reference.required_if' => 'La referencia es obligatoria para pagos con tarjeta.',
+            'changeAmount.required_if' => 'El monto de cambio es obligatorio para pagos en efectivo.'
         ]);
 
-        return response()->json(['message' => 'Método de pago actualizado']);
+        try {
+            // Find the payment method
+            $paymentMethod = PaymentMethod::findOrFail($id);
+
+            // Update main payment method data
+            $paymentMethod->amount = $request->amount;
+            $paymentMethod->type_payment = $request->type_payment;
+            $paymentMethod->save();
+
+            // Delete old child payment records from all types
+            SinpePayment::where('idPaymentMethod', $id)->delete();
+            CardPayment::where('idPaymentMethod', $id)->delete();
+            CashPayment::where('idPaymentMethod', $id)->delete();
+
+            // Create new child payment method based on the updated type
+            switch ($request->type_payment) {
+                case 'sinpe':
+                    $sinpePayment = new SinpePayment();
+                    $sinpePayment->voucher = $request->voucher;
+                    $sinpePayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $sinpePayment->save();
+                    break;
+
+                case 'card':
+                    $cardPayment = new CardPayment();
+                    $cardPayment->reference = $request->reference;
+                    $cardPayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $cardPayment->save();
+                    break;
+
+                case 'cash':
+                    $cashPayment = new CashPayment();
+                    $cashPayment->changeAmount = $request->changeAmount;
+                    $cashPayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $cashPayment->save();
+                    break;
+            }
+
+            return response()->json([
+                'message' => 'Método de pago actualizado correctamente',
+                'data' => $paymentMethod->load(['sinpePayment', 'cardPayment', 'cashPayment'])
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Método de pago no encontrado'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al actualizar el método de pago',
+                'details' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
