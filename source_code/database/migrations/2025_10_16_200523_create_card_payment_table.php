@@ -13,9 +13,9 @@ return new class extends Migration
     {
             Schema::create('card_payment', function (Blueprint $table) {
             $table->id('idCardPayment');
-            $table->string('reference'); // referencia
+            $table->string('reference');
             
-            // 🔗 Foreign Key hacia payment_method
+            // Foreign Key hacia payment_method
             $table->unsignedBigInteger('idPaymentMethod');
             $table->foreign('idPaymentMethod')
                   ->references('idPaymentMethod')
