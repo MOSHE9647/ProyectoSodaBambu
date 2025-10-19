@@ -1,7 +1,9 @@
 import { NewCrudDataTable } from '../../utils/datatables.js';
+import { deleteUser } from "../../models/users/delete.js";
 import { SwalToast } from "../../utils/sweetalert.js";
 import { showUser } from "./show.js";
 
+window.deleteUser = deleteUser; // Make globally accessible for inline onclick handlers
 window.showUser = showUser; // Make globally accessible for inline onclick handlers
 window.SwalToast = SwalToast; // Make globally accessible for inline usage
 
@@ -65,7 +67,8 @@ $(document).ready(() => {
 				return isAdmin && isUserUniqueAdmin;
 			},
 			disabledIfTooltip: 'No se puede eliminar al único usuario con rol de administrador.',
-			tooltip: 'Eliminar usuario'
+			tooltip: 'Eliminar usuario',
+			func: deleteUser,
 		}
 	};
 

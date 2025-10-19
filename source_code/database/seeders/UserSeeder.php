@@ -33,6 +33,6 @@ class UserSeeder extends Seeder
 		]);
 
 		// Generate 10 additional users with the Employee role using the factory.
-		User::factory(10)->withRole()->create();
+		Employee::factory(10)->create();
 	}
 }
