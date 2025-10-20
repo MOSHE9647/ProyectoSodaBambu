@@ -14,7 +14,6 @@ return new class extends Migration
             $table->string('last_name');
             $table->string('phone')->nullable();
             $table->string('email')->unique();
-            $table->date('registration_date')->default(now());
             $table->timestamps();
         });
     }

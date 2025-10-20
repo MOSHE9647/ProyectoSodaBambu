@@ -171,8 +171,6 @@ return [
          */
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
-        // App\Providers\BroadcastServiceProvider::class,
-        App\Providers\RouteServiceProvider::class, // ¡La línea que faltaba por cargarse!
         App\Providers\FortifyServiceProvider::class,
 
     ],
