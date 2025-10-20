@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rule;
 
 class UserRequest extends FormRequest
 {
@@ -14,7 +15,7 @@ class UserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -26,9 +27,9 @@ class UserRequest extends FormRequest
     {
         return [
 	        'name' => ['required', 'string', 'max:255'],
-	        'email' => ['required', 'string', 'email', 'unique:users,email'],
+	        'email' => ['required', 'string', 'email', Rule::unique('users')->ignore($this->route('user'))],
 	        'role' => ['required', new Enum(UserRole::class)],
-	        'password' => ['required', 'string', 'min:8', 'confirmed'],
+	        'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ];
     }
 }

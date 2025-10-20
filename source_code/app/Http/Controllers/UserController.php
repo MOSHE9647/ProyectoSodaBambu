@@ -58,7 +58,7 @@ class UserController extends Controller implements HasMiddleware
 		$users = User::with([$this->role, 'roles'])->get();
 		$resource = UserResource::collection($users);
 
-		// Contar usuarios con rol 'admin'
+		// Count the number of admin users
 		$adminCount = User::whereHas('roles', function ($role) {
 			$role->where('name', UserRole::ADMIN);
 		})->count();
@@ -72,21 +72,26 @@ class UserController extends Controller implements HasMiddleware
 		return view('models.users.index', compact('adminCount'));
 	}
 
+	/**
+	 * Show the form for creating a new resource.
+	 *
+	 * @return Factory|View|\Illuminate\View\View
+	 */
 	public function create()
 	{
+		return view('models.users.create');
 	}
 
 	/**
 	 * Store a newly created resource in storage.
 	 *
 	 * @param UserRequest $userRequest
-	 * @param Request $request
 	 * @return RedirectResponse
 	 * @throws Throwable
 	 */
-	public function store(UserRequest $userRequest, Request $request)
+	public function store(UserRequest $userRequest)
 	{
-		DB::transaction(function () use ($request, $userRequest) {
+		DB::transaction(function () use ($userRequest) {
 			// Create the User
 			$userData = $userRequest->validated();
 			$user = User::create($userData);
@@ -98,7 +103,7 @@ class UserController extends Controller implements HasMiddleware
 			// If the role is EMPLOYEE, create the related Employee record
 			if ($userRole === UserRole::EMPLOYEE) {
 				// Validate Employee-specific data with EmployeeRequest
-				$employeeData = $this->validateEmployeeData($request);
+				$employeeData = $this->validateEmployeeData($userRequest);
 
 				// Create the Employee record
 				$employeeData['id'] = $user->id;
@@ -122,24 +127,38 @@ class UserController extends Controller implements HasMiddleware
 		return view('models.users.show', ['user' => $resource]);
 	}
 
+	/**
+	 * Show the form for editing the specified resource.
+	 *
+	 * @param User $user
+	 * @return Factory|View|\Illuminate\View\View
+	 */
 	public function edit(User $user)
 	{
+		$user->load('roles');
+		return view('models.users.edit', compact('user'));
 	}
 
 	/**
 	 * Update the specified resource in storage.
+	 * If the role is changed to EMPLOYEE, create or restore the Employee record.
+	 * If the role is changed from EMPLOYEE to another role, delete the Employee record.
 	 *
 	 * @param UserRequest $userRequest
-	 * @param Request $request
 	 * @param User $user
 	 * @return RedirectResponse
 	 * @throws Throwable
 	 */
-	public function update(UserRequest $userRequest, Request $request, User $user)
+	public function update(UserRequest $userRequest, User $user)
 	{
-		DB::transaction(function () use ($request, $userRequest, $user) {
+		DB::transaction(function () use ($userRequest, $user) {
 			// Update the User
 			$userData = $userRequest->validated();
+
+			// Remove password if not provided to avoid setting it to null
+			if (empty($userData['password'])) {
+				unset($userData['password']);
+			}
 			$user->update($userData);
 
 			// Sync the role to the user
@@ -149,10 +168,17 @@ class UserController extends Controller implements HasMiddleware
 			// If the role is EMPLOYEE, update or create the related Employee record
 			if ($userRole === UserRole::EMPLOYEE) {
 				// Validate Employee-specific data with EmployeeRequest
-				$employeeData = $this->validateEmployeeData($request);
+				$employeeData = $this->validateEmployeeData($userRequest);
 
-				// Update or create the Employee record
-				$user->employee()->updateOrCreate([], $employeeData);
+				// Check if there's a soft-deleted employee to restore
+				$trashedEmployee = $user->employee()->onlyTrashed()->first();
+				if ($trashedEmployee) {
+					$trashedEmployee->restore();
+					$trashedEmployee->update($employeeData);
+				} else {
+					// Update or create the Employee record
+					$user->employee()->updateOrCreate([], $employeeData);
+				}
 			} else {
 				// If the role is not EMPLOYEE, delete the related Employee record if it exists
 				if ($user->employee) {
@@ -194,14 +220,14 @@ class UserController extends Controller implements HasMiddleware
 	/**
 	 * Validate Employee-specific data using EmployeeRequest.
 	 *
-	 * @param Request $request
+	 * @param UserRequest $userRequest
 	 * @return array
 	 */
-	private function validateEmployeeData(Request $request): array
+	private function validateEmployeeData(UserRequest $userRequest): array
 	{
 		// Validate Employee-specific data with EmployeeRequest
 		$employeeRequest = app(EmployeeRequest::class);
-		$employeeRequest->merge($request->only(Employee::$fields));
+		$employeeRequest->merge($userRequest->only(Employee::$fields));
 		$employeeRequest->validateResolved();
 		return $employeeRequest->validated();
 	}
