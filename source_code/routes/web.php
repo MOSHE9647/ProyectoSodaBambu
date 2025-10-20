@@ -13,14 +13,9 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
  * Protected routes that require authentication, email verification, and prevention of back navigation after logout.
  * These routes are accessible only to authenticated and verified users.
  */
-Route::middleware([/* 'auth', 'verified', 'prevent-back' */])->group(function () {
+Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
 	Route::get('/sales', [HomeController::class, 'sales'])->name('sales');
 });
 
 Route::resource('payment', MethodPaymentController::class);
-/**
- * Payment Method Routes made with Resource Controller
- * and JSON responses for testing.
- * If the MethodPaymentController is not working move the Route down the index line.
- */

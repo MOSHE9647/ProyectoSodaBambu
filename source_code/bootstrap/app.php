@@ -15,13 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
 			'prevent-back' => App\Http\Middleware\PreventBack::class,
 		]);
 
-		// TEMPORAL - Exclude /payment from CSRF for testing
-    $middleware->validateCsrfTokens(except: [
-        'payment/*',
-		'/payment',
-		'payment'
-    ]);
-
 	})
 	->withExceptions(function (Exceptions $exceptions): void {
 		//

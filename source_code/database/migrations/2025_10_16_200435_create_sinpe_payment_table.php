@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('idSinpePayment');
             $table->string('voucher');
             
-            // Foreign Key hacia payment_method
+            // Foreign Key to payment_method
             $table->unsignedBigInteger('idPaymentMethod');
             $table->foreign('idPaymentMethod')
                   ->references('idPaymentMethod')
