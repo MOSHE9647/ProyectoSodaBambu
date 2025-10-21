@@ -21,3 +21,6 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	// Supplier routes
 	Route::resource('suppliers', SupplierController::class);
 });
+
+Route::resource('categories', App\Http\Controllers\CategoryController::class);
+
