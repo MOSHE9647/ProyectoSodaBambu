@@ -8,7 +8,6 @@ class SinpePayment extends Model
 {
     protected $table = 'sinpe_payment';
     protected $primaryKey = 'idSinpePayment';
-    public $timestamps = false;
 
     protected $fillable = [
         'voucher', 
