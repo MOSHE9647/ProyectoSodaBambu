@@ -15,5 +15,6 @@ class DatabaseSeeder extends Seeder
 	{
 		// Seed the database using the respective seeders
 		$this->call(UserSeeder::class);
+		$this->call(SupplierSeeder::class);
 	}
 }
