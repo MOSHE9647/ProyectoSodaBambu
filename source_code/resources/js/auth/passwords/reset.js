@@ -5,7 +5,7 @@ import {
 	validatePassword,
 	validatePasswordConfirmation
 } from '../../utils/validation.js';
-import {clearFieldError, showFieldError} from '../../utils/errorHandling.js';
+import {clearFieldError, showFieldError} from '../../utils/error-handling.js';
 import {setLoadingState} from '../../utils/utils.js';
 
 // Ensure jQuery is loaded

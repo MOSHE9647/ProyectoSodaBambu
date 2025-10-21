@@ -1,9 +1,11 @@
-import './bootstrap';
-import '@popperjs/core';
+import './bootstrap'; //<- Import Bootstrap and dependencies
+import '@popperjs/core'; //<- Import Popper.js for Bootstrap tooltips and popovers
+import 'sweetalert2/themes/bootstrap-5.css'; //<- Import SweetAlert2 Bootstrap 5 theme
 
 import $ from 'jquery';
 import * as bootstrap from 'bootstrap';
-import { applyTheme } from "./utils/themeToggler.js";
+import { applyTheme } from './utils/theme-toggler.js';
+import { scrollToItem, checkScrollbarVisibility } from './utils/scrollbar.js';
 
 window.$ = $; // Make jQuery globally available
 window.bootstrap = bootstrap; // Make Bootstrap globally available
@@ -16,4 +18,10 @@ $(document).ready(function () {
 	$('[data-bs-toggle="tooltip"]')?.each(function () {
 		new bootstrap.Tooltip(this);
 	}) || console.warn('No tooltips found on the page.');
+
+	// Scroll sidebar to active item
+	scrollToItem();
+
+	// Check if scrollbar is needed for sidebar navigation
+	checkScrollbarVisibility();
 })
