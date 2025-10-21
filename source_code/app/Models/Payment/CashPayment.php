@@ -8,7 +8,6 @@ class CashPayment extends Model
 {
     protected $table = 'cash_payment';
     protected $primaryKey = 'idCashPayment';
-    public $timestamps = false;
 
     protected $fillable = [
         'changeAmount',

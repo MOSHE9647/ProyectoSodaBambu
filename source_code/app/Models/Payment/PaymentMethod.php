@@ -33,7 +33,7 @@ class PaymentMethod extends Model
     // Helper method to get the specific payment detail based on type_payment
     public function getDetalle()
     {
-        switch ($this->tipo_pago) {
+        switch ($this->type_payment) {
             case 'sinpe':
                 return $this->sinpePayment;
             case 'card':

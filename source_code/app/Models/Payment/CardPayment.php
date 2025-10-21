@@ -8,7 +8,6 @@ class CardPayment extends Model
 {
     protected $table = 'card_payment';
     protected $primaryKey = 'idCardPayment';
-    public $timestamps = false;
 
     protected $fillable = [
         'reference',

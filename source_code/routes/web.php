@@ -16,6 +16,6 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
 	Route::get('/sales', [HomeController::class, 'sales'])->name('sales');
+	Route::resource('payment', MethodPaymentController::class);
 });
 
-Route::resource('payment', MethodPaymentController::class);
