@@ -28,8 +28,11 @@ class UserSeeder extends Seeder
 			'password' => bcrypt('testPassword'),
 		]);
 		Employee::factory()->create([
-			'id' => $employeeUser->firstOrFail()->id,
+			'id' => $employeeUser->id,
 			'phone' => '+506 6421 2950',
 		]);
+
+		// Generate 10 additional users with the Employee role using the factory.
+		Employee::factory(10)->create();
 	}
 }

@@ -20,7 +20,7 @@ class EmployeeFactory extends Factory
 	public function definition(): array
 	{
 		return [
-			'id' => User::factory(), // Create a new user and use its ID
+			'id' => User::factory()->withRole(), // Create a new user and use its ID
 			'phone' => $this->faker->phoneNumber(),
 			'status' => $this->faker->randomElement(EmployeeStatus::cases()),
 			'payment_frequency' => $this->faker->randomElement(PaymentFrequency::cases()),

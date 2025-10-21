@@ -17,6 +17,18 @@ class Employee extends Model
 	use HasFactory, SoftDeletes;
 
 	/**
+	 * The fields of the Employee model. For internal use.
+	 *
+	 * @var array|string[]
+	 */
+	public static array $fields = [
+		'phone',
+		'status',
+		'hourly_wage',
+		'payment_frequency',
+	];
+
+	/**
 	 * The attributes that are mass assignable.
 	 *
 	 * @var list<string>
