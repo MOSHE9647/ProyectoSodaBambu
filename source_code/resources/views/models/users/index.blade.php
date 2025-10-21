@@ -6,15 +6,8 @@
 
 @section('content')
 	<div class="container p-0">
-		{{-- Page Title --}}
-		<div class="d-flex flex-column w-100 mb-4">
-			<span class="fs-4" style="font-weight: bold; font-size: 2rem;">
-				Gestión de Usuarios
-			</span>
-			<span class="text-body-secondary">
-				Administre los usuarios existentes
-			</span>
-		</div>
+		{{-- Page Header --}}
+		<x-header title="Gestión de Usuarios" subtitle="Administre los usuarios existentes" />
 
 		{{-- Table Container --}}
 		<div class="table-container rounded-2 p-4">
