@@ -6,7 +6,7 @@
 	{{-- User Basic Information --}}
 	<div class="row g-3 mb-3">
 		<div class="col-6">
-			<x-form.input
+			<x-form.input.floating-label
 				:id="'name'"
 				:type="'text'"
 				:readonly="true"
@@ -15,13 +15,13 @@
 				:iconLeft="'bi bi-person'"
 			>
 				Nombre
-			</x-form.input>
+			</x-form.input.floating-label>
 		</div>
 		<div class="col-6">
 			@php
 				$userRole = UserRole::tryFrom($user->roles->first()->name);
 			@endphp
-			<x-form.input
+			<x-form.input.floating-label
 				:id="'role'"
 				:type="'text'"
 				:readonly="true"
@@ -30,12 +30,12 @@
 				:value="optional($userRole)->label() ?? 'N/A'"
 			>
 				Rol de Usuario
-			</x-form.input>
+			</x-form.input.floating-label>
 		</div>
 	</div>
 	<div class="row g-3 mb-0">
 		<div class="col-12">
-			<x-form.input
+			<x-form.input.floating-label
 				:id="'email'"
 				:type="'email'"
 				:readonly="true"
@@ -44,7 +44,7 @@
 				:placeholder="'Correo Electrónico'"
 			>
 				Correo Electrónico
-			</x-form.input>
+			</x-form.input.floating-label>
 		</div>
 	</div>
 
@@ -53,7 +53,7 @@
 		<hr class="my-4"/>
 		<div class="row g-3 mb-3">
 			<div class="col-6">
-				<x-form.input
+				<x-form.input.floating-label
 					:id="'payment_frequency'"
 					:type="'text'"
 					:readonly="true"
@@ -62,10 +62,10 @@
 					:placeholder="'Modalidad de Pago'"
 				>
 					Modalidad de Pago
-				</x-form.input>
+				</x-form.input.floating-label>
 			</div>
 			<div class="col-6">
-				<x-form.input
+				<x-form.input.floating-label
 					:id="'hourly_wage'"
 					:type="'text'"
 					:iconLeft="'bi bi-cash-coin'"
@@ -80,12 +80,12 @@
 					<x-slot:iconRight>
 						<x-icons.colon-icon/>
 					</x-slot:iconRight>
-				</x-form.input>
+				</x-form.input.floating-label>
 			</div>
 		</div>
 		<div class="row g-3">
 			<div class="col-12">
-				<x-form.input
+				<x-form.input.floating-label
 					:id="'phone'"
 					:type="'text'"
 					:readonly="true"
@@ -94,10 +94,10 @@
 					:placeholder="'Teléfono'"
 				>
 					Teléfono
-				</x-form.input>
+				</x-form.input.floating-label>
 			</div>
 			<div class="col-12">
-				<x-form.input
+				<x-form.input.floating-label
 					:id="'status'"
 					:type="'text'"
 					:readonly="true"
@@ -106,7 +106,7 @@
 					:placeholder="'Estado del Colaborador'"
 				>
 					Estado del Colaborador
-				</x-form.input>
+				</x-form.input.floating-label>
 			</div>
 		</div>
 	@endif
