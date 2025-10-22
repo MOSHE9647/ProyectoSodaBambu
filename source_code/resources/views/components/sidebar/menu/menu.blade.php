@@ -71,13 +71,11 @@
 		],
 	];
 	$currentRoute = Route::currentRouteName();
+	$routePrefix = explode('.', $currentRoute)[0] ?? $currentRoute;
 
-	function getNavLinkClass($currentRoute, $item): string {
-		return $currentRoute === $item['route'] ? ' active' : ' link-body-emphasis';
-	}
-
-	function getActiveTab($currentRoute, $item): string {
-		return $currentRoute === $item['route'] ? ' show active' : '';
+	function getNavLinkClass($routePrefix, $item): string {
+	    $itemPrefix = explode('.', $item['route'])[0] ?? $item['route'];
+	    return $routePrefix === $itemPrefix ? ' active' : ' link-body-emphasis';
 	}
 @endphp
 
@@ -88,7 +86,7 @@
 			:href="Route::has($item['route']) ? route($item['route']) : '#'"
 			:svg="$item['svg']"
 			:name="$name"
-			:class="getNavLinkClass($currentRoute, $item)"
+			:class="getNavLinkClass($routePrefix, $item)"
 		/>
 		@endhasanyrole
 	@endforeach

@@ -22,8 +22,8 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
 	Route::get('/sales', [HomeController::class, 'sales'])->name('sales');
 	Route::resource('users', UserController::class)->names('users');
-	Route::resource('payment', MethodPaymentController::class)->name('payments');
-	Route::resource('suppliers', SupplierController::class)->name('suppliers');
-  Route::resource('categories', CategoryController::class)->name('categories');
-  Route::resource('clients', ClientController::class)->name('clients');
+	Route::resource('payment', MethodPaymentController::class)->names('payments');
+	Route::resource('suppliers', SupplierController::class)->names('suppliers');
+    Route::resource('categories', CategoryController::class)->names('categories');
+    Route::resource('clients', ClientController::class)->names('clients');
 });

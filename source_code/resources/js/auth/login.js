@@ -1,6 +1,10 @@
 // Description: JavaScript code for handling login form validation and submission.
-import {validateAndDisplayField, validateEmail, validatePassword} from '../utils/validation.js';
-import {clearFieldError, showFieldError} from '../utils/error-handling.js';
+import {
+	validateAndDisplayField,
+	validateEmail, validatePassword,
+	clearAllFieldErrors
+} from '../utils/validation.js';
+import {clearFieldError, showFieldError} from '../utils/validation.js';
 import {setLoadingState} from '../utils/utils.js';
 
 // Ensure jQuery is loaded
@@ -42,12 +46,6 @@ function validateLoginForm(email, password) {
 }
 
 // UI Manipulation Functions
-/**
- * Clears all field errors in the form.
- */
-function clearAllFieldErrors() {
-	Object.keys(fieldValidators).forEach(clearFieldError);
-}
 
 /**
  * Form Submission Handler.
@@ -56,7 +54,7 @@ function clearAllFieldErrors() {
  * @returns {boolean}
  */
 function submitLoginForm() {
-	clearAllFieldErrors();
+	clearAllFieldErrors(fieldValidators);
 
 	// Get form values and validate them
 	const email = $('#email').val().trim();

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\CostaRicaDatetime;
+use App\Casts\DecimalFormat;
 use App\Enums\EmployeeStatus;
 use App\Enums\PaymentFrequency;
 use Database\Factories\EmployeeFactory;
@@ -48,6 +49,7 @@ class Employee extends Model
 	 */
 	protected $casts = [
 		'status' => EmployeeStatus::class,
+		'hourly_wage' => DecimalFormat::class,
 		'payment_frequency' => PaymentFrequency::class,
 		'created_at' => CostaRicaDatetime::class,
 		'updated_at' => CostaRicaDatetime::class,

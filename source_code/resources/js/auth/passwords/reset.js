@@ -1,11 +1,10 @@
 // Description: JavaScript for password reset page
 import {
-	validateAndDisplayField,
-	validateEmail,
-	validatePassword,
-	validatePasswordConfirmation
+	clearFieldError, showFieldError,
+	validateEmail, validatePassword,
+	validatePasswordConfirmation,
+	validateAndDisplayField
 } from '../../utils/validation.js';
-import {clearFieldError, showFieldError} from '../../utils/error-handling.js';
 import {setLoadingState} from '../../utils/utils.js';
 
 // Ensure jQuery is loaded

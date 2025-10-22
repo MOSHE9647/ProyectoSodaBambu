@@ -19,8 +19,70 @@ export function validatePassword(password) {
 	return passwordRegex.test(password);
 }
 
+/**
+ * Validates if the password and confirmation match.
+ * @param password
+ * @param confirmPassword
+ * @returns {boolean}
+ */
 export function validatePasswordConfirmation(password, confirmPassword) {
 	return password === confirmPassword;
+}
+
+/**
+ * Validates if the provided name is valid.
+ * @param name
+ * @returns {boolean}
+ */
+export function validateName(name) {
+	return name.length <= 255;
+}
+
+/**
+ * Validates if the provided role is selected.
+ * @param role
+ * @returns {boolean}
+ */
+export function validateRole(role) {
+	return role !== '-1';
+}
+
+/**
+ * Validates if the provided hourly wage is a valid number >= 0.
+ * @param wage
+ * @returns {boolean}
+ */
+export function validateHourlyWage(wage) {
+	const num = parseFloat(wage);
+	return !isNaN(num) && num >= 0;
+}
+
+/**
+ * Validates if the provided phone number is in Costa Rican format (optional).
+ * @param phone
+ * @returns {boolean}
+ */
+export function validatePhone(phone) {
+	const phoneRegex = /^\+506 \d{4} \d{4}$/;
+	return phoneRegex.test(phone);
+}
+
+/**
+ * Validates if the provided payment frequency is selected.
+ * @param freq
+ * @returns {boolean}
+ */
+export function validatePaymentFrequency(freq) {
+	return freq !== '-1';
+}
+
+/**
+ * Validates if the provided employee status is selected.
+ * @param status
+ * @returns {boolean}
+ */
+export function validateEmployeeStatus(status) {
+	return status !== '-1';
 }
 
 /**
@@ -50,4 +112,53 @@ export function validateAndDisplayField(fieldValidators, values, showFieldError,
 	});
 
 	return isValid;
+}
+
+/**
+ * Retrieves the field and its associated error element based on the field ID.
+ * @param fieldId
+ * @returns {{field: *|jQuery|HTMLElement, errorElement: *|jQuery|[]}}
+ */
+export function getFieldElements(fieldId) {
+	const field = $(`#${fieldId}`);
+	const errorElement = $(`#${fieldId}-error`).children('strong');
+	return {field, errorElement};
+}
+
+/**
+ * Displays an error message for a specific field.
+ * @param fieldId
+ * @param message
+ */
+export function showFieldError(fieldId, message) {
+	const {field, errorElement} = getFieldElements(fieldId);
+
+	if (field.length && errorElement.length) {
+		field.addClass('is-invalid');
+		errorElement.text(message);
+	} else {
+		console.error(`Field or error element not found for ID: ${fieldId}`);
+	}
+}
+
+/**
+ * Clears the error message for a specific field.
+ * @param fieldId
+ */
+export function clearFieldError(fieldId) {
+	const {field, errorElement} = getFieldElements(fieldId);
+
+	if (field.length && errorElement.length) {
+		field.removeClass('is-invalid');
+		errorElement.text('');
+	} else {
+		console.error(`Field or error element not found for ID: ${fieldId}`);
+	}
+}
+
+/**
+ * Clears all field errors in the form.
+ */
+export function clearAllFieldErrors(fieldValidators) {
+	Object.keys(fieldValidators).forEach(clearFieldError);
 }
