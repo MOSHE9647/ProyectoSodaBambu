@@ -38,6 +38,7 @@
 		let userEditRoute = "{{ route('users.edit', ['user' => ':id']) }}";
 		let userDeleteRoute = "{{ route('users.destroy', ['user' => ':id']) }}";
 		let isUserUniqueAdmin = {{ $adminCount <= 1 ? 'true' : 'false' }};
+		let loggedInUserEmail = "{{ auth()->user()->email }}";
 		let csrfToken = "{{ csrf_token() }}";
 		userRoles = [
 			@foreach(UserRole::cases() as $role)

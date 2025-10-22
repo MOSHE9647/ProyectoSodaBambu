@@ -229,11 +229,12 @@ function generateActionButton(action, row, type, defaultTooltip, iconClass, butt
 	// Get all necessary attributes for the button
 	const disabled = action.disabledIf && action.disabledIf(row);
 	const tooltip = disabled ? (action.disabledIfTooltip || 'Deshabilitado') : (action.tooltip || defaultTooltip);
+	const disabledIfTooltip = typeof tooltip === 'function' ? tooltip(row) : tooltip;
 	const disabledAttrs = disabled ? 'disabled' : '';
 	const baseClass = `btn btn-sm ${buttonClass} me-2 ${disabled ? 'disabled' : ''}`;
 	const baseAttrs = `
 		data-bs-toggle="tooltip"
-		data-bs-title="${tooltip}" ${disabledAttrs}
+		data-bs-title="${disabledIfTooltip}" ${disabledAttrs}
 	`;
 
 	// Generate HTML based on action type
