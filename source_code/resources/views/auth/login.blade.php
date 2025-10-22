@@ -83,7 +83,7 @@
 		</x-form.auth.checkbox>
 
 		{{-- Submit Button --}}
-		<x-form.auth.buttons.submit
+		<x-form.submit
 			:id="'login-button'"
 			:class="'btn-primary w-100 mb-3'"
 			:spinnerId="'login-spinner'"
@@ -92,7 +92,7 @@
 				<i class="bi bi-box-arrow-in-right me-2"></i>
 				Iniciar Sesión
 			</div>
-		</x-form.auth.buttons.submit>
+		</x-form.submit>
 
 		{{-- Additional Links --}}
 		<div class="forgot-password d-block text-center mt-1">

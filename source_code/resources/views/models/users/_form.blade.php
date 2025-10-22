@@ -16,7 +16,10 @@
 
 	{{-- Form Container --}}
 	<div class="table-container rounded-2 p-4 w-75 justify-content-start">
-		<form action="{{ $action }}" method="POST" class="d-flex flex-column gap-2">
+		<form
+			id="{{ isset($user) ? 'edit-user-form' : 'create-user-form' }}"
+			action="{{ $action }}" method="POST" class="d-flex flex-column gap-2"
+		>
 			{{-- CSRF Token --}}
 			@csrf
 			@if(isset($user))
@@ -37,8 +40,10 @@
 							:id="'name'"
 							:type="'text'"
 							:class="'border-secondary'"
+							:inputClass="$errors->has('name') ? 'is-invalid' : ''"
 							:placeholder="'Ej: María García López'"
 							:value="old('name', optional($user)->name ?? '')"
+							:errorMessage="$errors->first('name') ?? ''"
 							:iconLeft="'bi bi-person'"
 							:required="true"
 						>
@@ -53,20 +58,23 @@
 						} else {
 							$userRole = null;
 						}
+						$oldRole = old('role', $userRole ?? '');
 					@endphp
 					<div class="col-6">
 						<x-form.select
 							:id="'role'"
 							:class="'border-secondary'"
+							:selectClass="$errors->has('role') ? 'is-invalid' : ''"
+							:errorMessage="$errors->first('role') ?? ''"
 							:iconLeft="'bi bi-shield-check'"
 							:required="true"
 						>
 							Rol de Usuario <span class="text-danger">*</span>
 							<x-slot:options>
-								<option value="">Seleccionar rol...</option>
+								<option value="-1">Seleccionar rol...</option>
 								@foreach(UserRole::cases() as $roleEnum)
 									<option
-										value="{{ $roleEnum->value }}" {{ old('role', $userRole ?? '') === $roleEnum ? 'selected' : '' }}>
+										value="{{ $roleEnum->value }}" {{ ($oldRole === $roleEnum || $oldRole === $roleEnum->value) ? 'selected' : '' }}>
 										{{ $roleEnum->label() }}
 									</option>
 								@endforeach
@@ -82,6 +90,8 @@
 							:id="'email'"
 							:type="'email'"
 							:class="'border-secondary'"
+							:inputClass="$errors->has('email') ? 'is-invalid' : ''"
+							:errorMessage="$errors->first('email') ?? ''"
 							:placeholder="'usuario@ejemplo.com'"
 							:value="old('email', optional($user)->email ?? '')"
 							:iconLeft="'bi bi-envelope'"
@@ -107,6 +117,13 @@
 					Información Laboral
 				</h5>
 
+				@php
+					$formattedWage = old('hourly_wage', optional($user)->employee?->hourly_wage ?? '');
+					if (is_string($formattedWage) && !empty($formattedWage)) {
+					    // Convert "1.600,00" → "1600.00"
+					    $formattedWage = str_replace(['.', ','], ['', '.'], $formattedWage);
+					}
+				@endphp
 				<div class="row g-3 mt-2">
 					{{-- Hourly Wage --}}
 					<div class="col-md-6">
@@ -114,10 +131,12 @@
 							:id="'hourly_wage'"
 							:type="'number'"
 							:class="'border-secondary'"
+							:inputClass="$errors->has('hourly_wage') ? 'is-invalid' : ''"
+							:errorMessage="$errors->first('hourly_wage') ?? ''"
 							:placeholder="'Ej: 1600.00'"
 							:step="'0.01'"
 							:min="'0'"
-							:value="old('hourly_wage', optional($user)->employee?->hourly_wage ?? '')"
+							:value="$formattedWage"
 							:iconLeft="'bi bi-cash-coin'"
 							:textIconRight="true"
 						>
@@ -133,12 +152,14 @@
 						<x-form.select
 							:id="'payment_frequency'"
 							:class="'border-secondary'"
+							:selectClass="$errors->has('payment_frequency') ? 'is-invalid' : ''"
+							:errorMessage="$errors->first('payment_frequency') ?? ''"
 							:iconLeft="'bi bi-calendar-check'"
 							:required="true"
 						>
 							Modalidad de Pago
 							<x-slot:options>
-								<option value="">Seleccionar modalidad...</option>
+								<option value="-1">Seleccionar modalidad...</option>
 								@foreach(PaymentFrequency::cases() as $freqEnum)
 									<option
 										value="{{ $freqEnum->value }}" {{ old('payment_frequency', optional($user)->employee?->payment_frequency?->value ?? '') == $freqEnum->value ? 'selected' : '' }}>
@@ -155,7 +176,9 @@
 							:id="'phone'"
 							:type="'tel'"
 							:class="'border-secondary'"
-							:placeholder="'+506 XXXX-XXXX'"
+							:inputClass="$errors->has('phone') ? 'is-invalid' : ''"
+							:errorMessage="$errors->first('phone') ?? ''"
+							:placeholder="'+506 XXXX XXXX'"
 							:value="old('phone', optional($user)->employee?->phone ?? '')"
 							:iconLeft="'bi bi-telephone'"
 						>
@@ -168,12 +191,14 @@
 						<x-form.select
 							:id="'status'"
 							:class="'border-secondary'"
+							:selectClass="$errors->has('status') ? 'is-invalid' : ''"
+							:errorMessage="$errors->first('status') ?? ''"
 							:iconLeft="'bi bi-clipboard-check'"
 							:required="true"
 						>
 							Estado del Colaborador
 							<x-slot:options>
-								<option value="">Seleccionar estado...</option>
+								<option value="-1">Seleccionar estado...</option>
 								@foreach(EmployeeStatus::cases() as $statusEnum)
 									<option
 										value="{{ $statusEnum->value }}" {{ old('status', optional($user)->employee?->status?->value ?? '') == $statusEnum->value ? 'selected' : '' }}>
@@ -208,6 +233,8 @@
 							:id="'password'"
 							:type="'password'"
 							:class="'border-secondary mb-2'"
+							:inputClass="$errors->has('password') ? 'is-invalid' : ''"
+							:errorMessage="$errors->first('password') ?? ''"
 							:placeholder="'Mínimo 8 caracteres'"
 							:minLength="'8'"
 							:iconLeft="'bi bi-lock'"
@@ -241,6 +268,8 @@
 							:name="'password_confirmation'"
 							:type="'password'"
 							:class="'border-secondary mb-2'"
+							:inputClass="$errors->has('password_confirmation') ? 'is-invalid' : ''"
+							:errorMessage="$errors->first('password_confirmation') ?? ''"
 							:placeholder="'Repite la contraseña'"
 							:minLength="'8'"
 							:iconLeft="'bi bi-lock-fill'"
@@ -266,68 +295,72 @@
 
 			{{-- Form Actions --}}
 			<div class="d-flex justify-content-end gap-2">
+				{{-- Cancel Button --}}
 				<a href="{{ route('users.index') }}" class="btn btn-outline-danger px-4">
 					Cancelar
 				</a>
-				<button type="submit" class="btn btn-primary px-4">
-					{{ isset($user) ? 'Actualizar Usuario' : 'Crear Usuario' }}
-				</button>
+
+				{{-- Submit Button --}}
+				<x-form.submit
+					:id="isset($user) ? 'edit-user-form-button' : 'create-user-form-button'"
+					:spinnerId="isset($user) ? 'edit-user-form-spinner' : 'create-user-form-spinner'"
+					:class="'btn-primary px-4'"
+					:loadingMessage="isset($user) ? 'Actualizando...' : 'Guardando...'"
+				>
+					<div
+						id="{{ isset($user) ? 'edit-user-form-button-text' : 'create-user-form-button-text' }}"
+						class="d-flex flex-row align-items-center justify-content-center"
+					>
+						<i class="bi bi-person-add me-2"></i>
+						{{ isset($user) ? 'Actualizar' : 'Guardar' }}
+					</div>
+				</x-form.submit>
 			</div>
 		</form>
 	</div>
 </div>
 
-<script>
-	// Toggle de visibilidad de contraseña
-	function togglePasswordVisibility(inputId, button) {
-		const input = document.getElementById(inputId);
-		const icon = button.querySelector('i');
+@section('scripts')
+	<script type="text/javascript">
+		/**
+		 * Shows or hides the password input field
+		 *
+		 * @param inputId
+		 * @param button
+		 */
+		function togglePasswordVisibility(inputId, button) {
+			const input = document.getElementById(inputId);
+			const icon = button.querySelector('i');
 
-		if (input.type === 'password') {
-			input.type = 'text';
-			icon.classList.remove('bi-eye');
-			icon.classList.add('bi-eye-slash');
-		} else {
-			input.type = 'password';
-			icon.classList.remove('bi-eye-slash');
-			icon.classList.add('bi-eye');
+			if (input.type === 'password') {
+				input.type = 'text';
+				icon.classList.remove('bi-eye');
+				icon.classList.add('bi-eye-slash');
+			} else {
+				input.type = 'password';
+				icon.classList.remove('bi-eye-slash');
+				icon.classList.add('bi-eye');
+			}
 		}
-	}
 
-	// Mostrar/ocultar campos de empleado según el rol seleccionado
-	document.getElementById('role').addEventListener('change', function () {
-		const employeeFields = document.getElementById('employee-fields');
-		const isEmployee = this.value === 'employee';
+		// Show/hide employee fields based on selected role
+		const roleSelect = document.getElementById('role');
+		roleSelect.addEventListener('change', function () {
+			const employeeFields = document.getElementById('employee-fields');
+			const isEmployee = this.value === 'employee';
 
-		if (isEmployee) {
-			employeeFields.style.display = 'block';
-		} else {
-			employeeFields.style.display = 'none';
-			// Limpiar campos de empleado si cambia a otro rol
-			document.getElementById('phone').value = '';
-			document.getElementById('hourly_wage').value = '';
+			if (isEmployee) {
+				employeeFields.style.display = 'block';
+			} else {
+				employeeFields.style.display = 'none';
+				// Limpiar campos de empleado si cambia a otro rol
+				document.getElementById('phone').value = '';
+				document.getElementById('hourly_wage').value = '';
+			}
+		});
+		if (roleSelect.value === 'employee') {
+			roleSelect.dispatchEvent(new Event('change'));
 		}
-	});
-
-	// Validación de confirmación de contraseña en tiempo real
-	document.getElementById('password_confirmation').addEventListener('input', function () {
-		const password = document.getElementById('password').value;
-		const confirmation = this.value;
-
-		if (confirmation && password !== confirmation) {
-			this.setCustomValidity('Las contraseñas no coinciden');
-			this.classList.add('is-invalid');
-		} else {
-			this.setCustomValidity('');
-			this.classList.remove('is-invalid');
-		}
-	});
-
-	// Asegurar que si se llena confirmación, también se llene la contraseña
-	document.getElementById('password').addEventListener('input', function () {
-		const confirmation = document.getElementById('password_confirmation');
-		if (confirmation.value) {
-			confirmation.dispatchEvent(new Event('input'));
-		}
-	});
-</script>
+	</script>
+	@vite(['resources/js/models/users/form.js'])
+@endsection

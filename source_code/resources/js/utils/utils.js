@@ -46,3 +46,19 @@ export const attachLoadingSubmit = (formId) => {
 		e.currentTarget.submit();
 	});
 };
+
+export function toggleLoadingState(element, elementClass, isLoading) {
+	const btn = typeof element === 'string'
+		? document.querySelector(element)
+		: element;
+
+	if (!btn) return;
+
+	const spinner = btn.querySelector(`.${elementClass}-spinner`);
+	const text = btn.querySelector(`.${elementClass}-button-text`);
+
+	btn.disabled = isLoading;
+	spinner?.classList.toggle('d-none', !isLoading);
+	spinner?.querySelector('span:nth-child(2)')?.classList.toggle('visually-hidden', !isLoading);
+	text?.classList.toggle('d-none', isLoading);
+}

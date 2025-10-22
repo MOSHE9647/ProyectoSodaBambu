@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\EmployeeRequest;
 use App\Models\Employee;
 
+// TODO: This controller isn't being used currently. Will be implemented in future features.
 class EmployeeController extends Controller
 {
 	public function index()
