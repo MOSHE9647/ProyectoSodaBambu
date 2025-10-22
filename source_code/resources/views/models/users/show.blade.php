@@ -4,152 +4,109 @@
 
 <div class="d-flex flex-column text-start">
 	{{-- User Basic Information --}}
-	{{--<span class="fs-5 mb-3">Información Básica</span>--}}
 	<div class="row g-3 mb-3">
 		<div class="col-6">
-			<div class="input-group">
-				<span class="input-group-text">
-					<i class="bi bi-person"></i>
-				</span>
-				<div class="form-floating">
-					<input
-						id="name"
-						type="text"
-						class="form-control"
-						placeholder="Nombre"
-						aria-label="Nombre"
-						value="{{ $user->name }}"
-						readonly
-					>
-					<label for="name">Nombre</label>
-				</div>
-			</div>
+			<x-form.input.floating-label
+				:id="'name'"
+				:type="'text'"
+				:readonly="true"
+				:value="$user->name"
+				:placeholder="'Nombre'"
+				:iconLeft="'bi bi-person'"
+			>
+				Nombre
+			</x-form.input.floating-label>
 		</div>
 		<div class="col-6">
-			<div class="input-group">
-				<span class="input-group-text">
-					<i class="bi bi-shield-lock"></i>
-				</span>
-				<div class="form-floating">
-					<input
-						id="role"
-						type="text"
-						class="form-control"
-						placeholder="Correo Electrónico"
-						aria-label="Correo Electrónico"
-						value="{{ UserRole::tryFrom($user->roles->first()->name)->label() ?? 'N/A' }}"
-						readonly
-					>
-					<label for="role">Rol de Usuario</label>
-				</div>
-			</div>
+			@php
+				$userRole = UserRole::tryFrom($user->roles->first()->name);
+			@endphp
+			<x-form.input.floating-label
+				:id="'role'"
+				:type="'text'"
+				:readonly="true"
+				:placeholder="'Rol de Usuario'"
+				:iconLeft="'bi bi-shield-lock'"
+				:value="optional($userRole)->label() ?? 'N/A'"
+			>
+				Rol de Usuario
+			</x-form.input.floating-label>
 		</div>
 	</div>
 	<div class="row g-3 mb-0">
 		<div class="col-12">
-			<div class="input-group">
-				<span class="input-group-text">
-					<i class="bi bi-at"></i>
-				</span>
-				<div class="form-floating">
-					<input
-						id="email"
-						type="text"
-						class="form-control"
-						placeholder="Correo Electrónico"
-						aria-label="Correo Electrónico"
-						value="{{ $user->email }}"
-						readonly
-					>
-					<label for="email">Correo Electrónico</label>
-				</div>
-			</div>
+			<x-form.input.floating-label
+				:id="'email'"
+				:type="'email'"
+				:readonly="true"
+				:value="$user->email"
+				:iconLeft="'bi bi-at'"
+				:placeholder="'Correo Electrónico'"
+			>
+				Correo Electrónico
+			</x-form.input.floating-label>
 		</div>
 	</div>
 
 	{{-- Employee Info --}}
 	@if($user->employee)
 		<hr class="my-4"/>
-
-		{{--<span class="fs-5 mb-3">Información del Empleado</span>--}}
 		<div class="row g-3 mb-3">
 			<div class="col-6">
-				<div class="input-group">
-					<span class="input-group-text">
-						<i class="bi bi-calendar-check"></i>
-					</span>
-					<div class="form-floating">
-						<input
-							id="payment_frequency"
-							type="text"
-							class="form-control"
-							placeholder="Modalidad de Pago"
-							aria-label="Modalidad de Pago"
-							value="{{ $user->employee->payment_frequency->label() }}"
-							readonly
-						>
-						<label for="payment_frequency">Modalidad de Pago</label>
-					</div>
-				</div>
+				<x-form.input.floating-label
+					:id="'payment_frequency'"
+					:type="'text'"
+					:readonly="true"
+					:value="$user->employee->payment_frequency->label()"
+					:iconLeft="'bi bi-calendar-check'"
+					:placeholder="'Modalidad de Pago'"
+				>
+					Modalidad de Pago
+				</x-form.input.floating-label>
 			</div>
 			<div class="col-6">
-				<div class="input-group">
-					<span class="input-group-text">
-						<i class="bi bi-cash"></i>
-					</span>
-					<div class="form-floating">
-						<input
-							id="hourly_wage"
-							type="text"
-							class="form-control"
-							placeholder="Salario Por Hora"
-							aria-label="Salario Por Hora"
-							value="₵ {{ $user->employee->hourly_wage }}"
-							readonly
-						>
-						<label for="hourly_wage">Salario Por Hora</label>
-					</div>
-				</div>
+				<x-form.input.floating-label
+					:id="'hourly_wage'"
+					:type="'text'"
+					:iconLeft="'bi bi-cash-coin'"
+					:textIconRight="true"
+					:placeholder="'Salario Por Hora'"
+					:value="$user->employee->hourly_wage"
+					:readonly="true"
+					:step="'0.01'"
+					:min="'0'"
+				>
+					Salario Por Hora
+					<x-slot:iconRight>
+						<x-icons.colon-icon/>
+					</x-slot:iconRight>
+				</x-form.input.floating-label>
 			</div>
 		</div>
 		<div class="row g-3">
 			<div class="col-12">
-				<div class="input-group">
-					<span class="input-group-text">
-						<i class="bi bi-telephone"></i>
-					</span>
-					<div class="form-floating">
-						<input
-							id="phone"
-							type="text"
-							class="form-control"
-							placeholder="Teléfono"
-							aria-label="Teléfono"
-							value="{{ $user->employee->phone }}"
-							readonly
-						>
-						<label for="phone">Teléfono</label>
-					</div>
-				</div>
+				<x-form.input.floating-label
+					:id="'phone'"
+					:type="'text'"
+					:readonly="true"
+					:value="$user->employee->phone"
+					:iconLeft="'bi bi-telephone'"
+					:placeholder="'Teléfono'"
+				>
+					Teléfono
+				</x-form.input.floating-label>
 			</div>
 			<div class="col-12">
-				<div class="input-group">
-					<span class="input-group-text">
-						<i class="bi bi-briefcase"></i>
-					</span>
-					<div class="form-floating">
-						<input
-							id="status"
-							type="text"
-							class="form-control"
-							placeholder="Estado del Colaborador"
-							aria-label="Estado del Colaborador"
-							value="{{ $user->employee->status->label() }}"
-							readonly
-						>
-						<label for="status">Estado del Colaborador</label>
-					</div>
-				</div>
+				<x-form.input.floating-label
+					:id="'status'"
+					:type="'text'"
+					:readonly="true"
+					:value="$user->employee->status->label()"
+					:iconLeft="'bi bi-clipboard-check'"
+					:placeholder="'Estado del Colaborador'"
+				>
+					Estado del Colaborador
+				</x-form.input.floating-label>
 			</div>
 		</div>
 	@endif

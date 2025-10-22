@@ -1,7 +1,6 @@
 // Description: JavaScript for forgot password page
-import {clearFieldError, showFieldError} from '../../utils/error-handling.js';
-import {validateEmail} from '../../utils/validation.js';
-import {setLoadingState} from '../../utils/utils.js';
+import { clearFieldError, showFieldError, validateEmail } from '../../utils/validation.js';
+import { setLoadingState } from '../../utils/utils.js';
 
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
