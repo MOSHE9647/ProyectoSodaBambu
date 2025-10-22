@@ -7,29 +7,56 @@ use App\Models\Payment\PaymentMethod;
 use App\Models\Payment\SinpePayment;
 use App\Models\Payment\CardPayment;
 use App\Models\Payment\CashPayment;
+use Yajra\DataTables\DataTables;
 
 class MethodPaymentController extends Controller
 {
     /**
-     * Show all payment methods
+     * Display a listing of the resource.
      */
     public function index()
     {
-        $payments = PaymentMethod::with(['sinpePayment', 'cardPayment', 'cashPayment'])->get();
-        return response()->json($payments);
+        if (request()->ajax()) {
+            $payments = PaymentMethod::with(['sinpePayment', 'cardPayment', 'cashPayment'])
+                ->select('payment_method.*');
+
+            return DataTables::of($payments)
+                ->addColumn('id', function ($payment) {
+                    return $payment->id;
+                })
+                ->editColumn('type_payment', function ($payment) {
+                    return $this->getPaymentTypeLabel($payment->type_payment);
+                })
+                ->editColumn('amount', function ($payment) {
+                    return '₡' . number_format($payment->amount, 2);
+                })
+                ->editColumn('created_at', function ($payment) {
+                    return $payment->created_at->format('d-m-Y');
+                })
+                ->make(true);
+        }
+
+        return view('models.method-payments.index');
+    }
+
+    public function create()
+    {
+        return view('models.method-payments.create');
+    }
+
+    public function edit()
+    {
+        return view('models.method-payments.edit');
     }
 
     /**
-     * save a new payment method
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        // validation
         $request->validate([
             'amount' => 'required|numeric|min:0',
             'type_payment' => 'required|in:sinpe,card,cash',
-
-            // Validations for specific payment types
             'voucher' => 'required_if:type_payment,sinpe|string|nullable',
             'reference' => 'required_if:type_payment,card|string|nullable',
             'changeAmount' => 'required_if:type_payment,cash|numeric|nullable'
@@ -55,58 +82,40 @@ class MethodPaymentController extends Controller
                 case 'sinpe':
                     $sinpePayment = new SinpePayment();
                     $sinpePayment->voucher = $request->voucher;
-                    $sinpePayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $sinpePayment->payment_method_id = $paymentMethod->id;
                     $sinpePayment->save();
                     break;
 
                 case 'card':
                     $cardPayment = new CardPayment();
                     $cardPayment->reference = $request->reference;
-                    $cardPayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $cardPayment->payment_method_id = $paymentMethod->id;
                     $cardPayment->save();
                     break;
 
                 case 'cash':
                     $cashPayment = new CashPayment();
                     $cashPayment->changeAmount = $request->changeAmount;
-                    $cashPayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $cashPayment->payment_method_id = $paymentMethod->id;
                     $cashPayment->save();
                     break;
             }
 
-            return response()->json([
-                'message' => 'Método de pago registrado correctamente',
-                'data' => $paymentMethod->load(['sinpePayment', 'cardPayment', 'cashPayment'])
-            ], 201);
+            return redirect()->route('method-payments.index')
+                ->with('success', 'Método de pago registrado correctamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Error al registrar el método de pago',
-                'details' => $e->getMessage()
-            ], 500);
+            return back()->withInput()->with('error', 'Error al registrar el método de pago: ' . $e->getMessage());
         }
     }
 
     /**
-     * Show a specific payment method
-     */
-    public function show($id)
-    {
-        $payment = PaymentMethod::with(['sinpePayment', 'cardPayment', 'cashPayment'])
-            ->findOrFail($id);
-        return response()->json($payment);
-    }
-
-    /**
-     * Update a payment method
+     * Update the specified resource in storage.
      */
     public function update(Request $request, $id)
     {
-        // Validation
         $request->validate([
             'amount' => 'required|numeric|min:0',
             'type_payment' => 'required|in:sinpe,card,cash',
-
-            // Validations for specific payment types
             'voucher' => 'required_if:type_payment,sinpe|string|nullable',
             'reference' => 'required_if:type_payment,card|string|nullable',
             'changeAmount' => 'required_if:type_payment,cash|numeric|nullable'
@@ -130,58 +139,70 @@ class MethodPaymentController extends Controller
             $paymentMethod->save();
 
             // Delete old child payment records from all types
-            SinpePayment::where('idPaymentMethod', $id)->delete();
-            CardPayment::where('idPaymentMethod', $id)->delete();
-            CashPayment::where('idPaymentMethod', $id)->delete();
+            SinpePayment::where('payment_method_id', $id)->delete();
+            CardPayment::where('payment_method_id', $id)->delete();
+            CashPayment::where('payment_method_id', $id)->delete();
 
             // Create new child payment method based on the updated type
             switch ($request->type_payment) {
                 case 'sinpe':
                     $sinpePayment = new SinpePayment();
                     $sinpePayment->voucher = $request->voucher;
-                    $sinpePayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $sinpePayment->payment_method_id = $paymentMethod->id;
                     $sinpePayment->save();
                     break;
 
                 case 'card':
                     $cardPayment = new CardPayment();
                     $cardPayment->reference = $request->reference;
-                    $cardPayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $cardPayment->payment_method_id = $paymentMethod->id; 
                     $cardPayment->save();
                     break;
 
                 case 'cash':
                     $cashPayment = new CashPayment();
                     $cashPayment->changeAmount = $request->changeAmount;
-                    $cashPayment->idPaymentMethod = $paymentMethod->idPaymentMethod;
+                    $cashPayment->payment_method_id = $paymentMethod->id; 
                     $cashPayment->save();
                     break;
             }
 
-            return response()->json([
-                'message' => 'Método de pago actualizado correctamente',
-                'data' => $paymentMethod->load(['sinpePayment', 'cardPayment', 'cashPayment'])
-            ], 200);
+            return redirect()->route('method-payments.index')
+                ->with('success', 'Método de pago actualizado correctamente');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Método de pago no encontrado'
-            ], 404);
+            return back()->with('error', 'Método de pago no encontrado');
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Error al actualizar el método de pago',
-                'details' => $e->getMessage()
-            ], 500);
+            return back()->withInput()->with('error', 'Error al actualizar el método de pago: ' . $e->getMessage());
         }
     }
 
     /**
-     * Delete a payment method
+     * Remove the specified resource from storage.
      */
     public function destroy($id)
     {
-        $payment = PaymentMethod::findOrFail($id);
-        $payment->delete();
+        try {
+            $payment = PaymentMethod::findOrFail($id);
+            $payment->delete();
 
-        return response()->json(['message' => 'Método de pago eliminado']);
+            return redirect()->route('method-payments.index')
+                ->with('success', 'Método de pago eliminado correctamente');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al eliminar el método de pago: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get the label for payment type
+     */
+    public static function getPaymentTypeLabel($type)
+    {
+        $types = [
+            'sinpe' => 'SINPE Móvil',
+            'card' => 'Tarjeta',
+            'cash' => 'Efectivo'
+        ];
+
+        return $types[$type] ?? $type;
     }
 }

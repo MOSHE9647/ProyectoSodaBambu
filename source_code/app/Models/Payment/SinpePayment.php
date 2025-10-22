@@ -7,15 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class SinpePayment extends Model
 {
     protected $table = 'sinpe_payment';
-    protected $primaryKey = 'idSinpePayment';
 
     protected $fillable = [
         'voucher', 
-        'idPaymentMethod' 
+        'payment_method_id'
     ];
 
     public function paymentMethod()
     {
-        return $this->belongsTo(PaymentMethod::class, 'idPaymentMethod', 'idPaymentMethod');
+       return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
     }
 }
