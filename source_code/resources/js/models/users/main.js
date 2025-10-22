@@ -85,9 +85,16 @@ $(document).ready(() => {
 			route: userDeleteRoute,
 			disabledIf: (row) => {
 				const isAdmin = row.roles[0].name === 'admin';
-				return isAdmin && isUserUniqueAdmin;
+				const isLoggedInUser = row.email === loggedInUserEmail;
+				return isAdmin && (isUserUniqueAdmin || isLoggedInUser);
 			},
-			disabledIfTooltip: 'No se puede eliminar al único usuario con rol de administrador.',
+			disabledIfTooltip: (row) => {
+				const isLoggedInUser = row.email === loggedInUserEmail;
+				if (isLoggedInUser) {
+					return 'No puedes eliminar tu propio usuario.';
+				}
+				return 'No se puede eliminar al único usuario administrador.';
+			},
 			tooltip: 'Eliminar usuario',
 			func: deleteUser,
 		}

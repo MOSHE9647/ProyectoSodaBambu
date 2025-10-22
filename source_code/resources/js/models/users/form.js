@@ -160,7 +160,8 @@ Object.keys(fieldValidators).forEach((fieldId) => {
 		}
 
 		if (!value) {
-			if (emptyMsg && (isEmployeeField || role === 'employee')) {
+			const shouldShowEmployeeValidation = (isEmployeeField && role === 'employee') || !isEmployeeField;
+			if (emptyMsg && shouldShowEmployeeValidation) {
 				showFieldError(fieldId, emptyMsg);
 			} else {
 				clearFieldError(fieldId);

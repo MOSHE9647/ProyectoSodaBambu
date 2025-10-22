@@ -10,7 +10,7 @@ import { fetchWithErrorHandling } from "../../utils/error-handling.js";
  */
 export async function showUser(url, anchor) {
 	// Show loading state
-	toggleLoadingState(anchor, 'create', true);
+	toggleLoadingState(anchor, 'info', true);
 
 	try {
 		// Fetch user data

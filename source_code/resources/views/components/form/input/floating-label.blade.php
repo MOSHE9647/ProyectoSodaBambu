@@ -21,7 +21,7 @@
 	'errorMessage' => null,
 ])
 
-<div class="input-group has validation">
+<div class="input-group has-validation">
 	{{-- Left Icon --}}
 	@isset($iconLeft)
 		<span class="input-group-text">
