@@ -4,73 +4,128 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateClientRequest;
 use App\Http\Requests\UpdateClientRequest;
+use App\Http\Resources\ClientResource;
 use App\Models\Client;
+use DB;
+use Exception;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Throwable;
+use Yajra\DataTables\DataTables;
 
 class ClientController extends Controller
 {
-    /**
-     * Muestra una lista de clientes.
-     */
-    public function index()
-    {
-        $clients = Client::all();
-        // Devuelve la vista 'clients.index' con todos los clientes.
-        return view('clients.index', compact('clients'));
-    }
+	/**
+	 * Display a listing of the resource.
+	 *
+	 * @param Request $request
+	 * @return Factory|View|JsonResponse|\Illuminate\View\View
+	 * @throws Exception
+	 */
+	public function index(Request $request)
+	{
+		// Fetch clients
+		$clients = Client::all();
+		$resource = ClientResource::collection($clients);
 
-    /**
-     * Muestra el formulario para crear un nuevo cliente.
-     */
-    public function create()
-    {
-        // Devuelve la vista del formulario de creación.
-        return view('clients.create');
-    }
+		// Handle AJAX request for DataTables
+		if ($request->ajax()) {
+			return DataTables::of($resource)->make();
+		}
 
-    /**
-     * Guarda un nuevo cliente en la base de datos.
-     */
-    public function store(CreateClientRequest $request)
-    {
-        Client::create($request->validated());
-        // Redirige al listado con un mensaje de éxito.
-        return redirect()->route('clients.index')->with('success', 'Cliente creado exitosamente!');
-    }
+		// For non-AJAX requests, return the view
+		return view('models.clients.index');
+	}
 
-    /**
-     * Muestra un cliente específico (opcional, pero útil).
-     */
-    public function show(Client $client)
-    {
-        return view('clients.show', compact('client'));
-    }
+	/**
+	 * Show the form for creating a new resource.
+	 *
+	 * @return Factory|View|\Illuminate\View\View
+	 */
+	public function create()
+	{
+		return view('models.clients.create');
+	}
 
-    /**
-     * Muestra el formulario para editar un cliente.
-     */
-    public function edit(Client $client)
-    {
-        // Devuelve la vista del formulario de edición con los datos del cliente.
-        return view('clients.edit', compact('client'));
-    }
+	/**
+	 * Store a newly created resource in storage.
+	 *
+	 * @param CreateClientRequest $request
+	 * @return RedirectResponse
+	 * @throws Throwable
+	 */
+	public function store(CreateClientRequest $request)
+	{
+		DB::transaction(function () use ($request) {
+			// Create the Client
+			$clientData = $request->validated();
+			Client::create($clientData);
+		});
 
-    /**
-     * Actualiza un cliente existente en la base de datos.
-     */
-    public function update(UpdateClientRequest $request, Client $client)
-    {
-        $client->update($request->validated());
-        // Redirige al listado con un mensaje de éxito.
-        return redirect()->route('clients.index')->with('success', 'Cliente actualizado exitosamente!');
-    }
+		return redirect()->route('clients.index')->with('success', 'Cliente creado correctamente.');
+	}
 
-    /**
-     * Elimina un cliente de la base de datos.
-     */
-    public function destroy(Client $client)
-    {
-        $client->delete();
-        // Redirige al listado con un mensaje de éxito.
-        return redirect()->route('clients.index')->with('success', 'Cliente eliminado exitosamente!');
-    }
+	/**
+	 * Display the specified resource.
+	 *
+	 * @param Client $client
+	 * @return Factory|View|\Illuminate\View\View
+	 */
+	public function show(Client $client)
+	{
+		$resource = ClientResource::make($client);
+		return view('models.clients.show', ['client' => $resource]);
+	}
+
+	/**
+	 * Show the form for editing the specified resource.
+	 *
+	 * @param Client $client
+	 * @return Factory|View|\Illuminate\View\View
+	 */
+	public function edit(Client $client)
+	{
+		return view('models.clients.edit', compact('client'));
+	}
+
+	/**
+	 * Update the specified resource in storage.
+	 *
+	 * @param UpdateClientRequest $request
+	 * @param Client $client
+	 * @return RedirectResponse
+	 * @throws Throwable
+	 */
+	public function update(UpdateClientRequest $request, Client $client)
+	{
+		DB::transaction(function () use ($request, $client) {
+			// Update the Client
+			$clientData = $request->validated();
+			$client->update($clientData);
+		});
+
+		return redirect()->route('clients.index')->with('success', 'Cliente actualizado correctamente.');
+	}
+
+	/**
+	 * Remove the specified resource from storage.
+	 *
+	 * @param Client $client
+	 * @return RedirectResponse
+	 * @throws Throwable
+	 */
+	public function destroy(Client $client)
+	{
+		// Use a transaction to ensure data integrity
+		DB::transaction(function () use ($client) {
+			// Delete the client record
+			$client->delete();
+		});
+
+		// Redirect back with a success message
+		return redirect()->back()->with('success', 'Cliente eliminado correctamente.');
+	}
 }
