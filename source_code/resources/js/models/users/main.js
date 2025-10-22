@@ -1,11 +1,12 @@
+import { showUser, deleteUser } from "./actions.js";
 import { NewCrudDataTable } from '../../utils/datatables.js';
-import { deleteUser } from "../../models/users/delete.js";
+import { toggleLoadingState } from "../../utils/utils.js";
 import { SwalToast } from "../../utils/sweetalert.js";
-import { showUser } from "./show.js";
 
+window.toggleLoadingState = toggleLoadingState; // Make globally accessible for inline usage
 window.deleteUser = deleteUser; // Make globally accessible for inline onclick handlers
-window.showUser = showUser; // Make globally accessible for inline onclick handlers
 window.SwalToast = SwalToast; // Make globally accessible for inline usage
+window.showUser = showUser; // Make globally accessible for inline onclick handlers
 
 /**
  * Translate the Message if needed.
@@ -29,7 +30,7 @@ window.SwalToast = SwalToast; // Make globally accessible for inline usage
 
 // Ensure the DOM is fully loaded before initializing the DataTable
 $(document).ready(() => {
-    // Define columns for users table
+    // Define columns for users table (only for server-side processing)
     const columns = [
         { data: 'name', name: 'name' },
         { data: 'email', name: 'email' },
@@ -56,10 +57,30 @@ $(document).ready(() => {
         }
     ];
 
-    // Define actions
+	/**
+	 * Define actions for each user row in the DataTable.
+	 * @type {{
+	 * 		show: {
+	 * 			route: string,
+	 * 			func: function(url, anchor): Promise<void>,
+	 * 			tooltip: string
+	 * 		},
+	 * 		edit: {
+	 * 			route: string,
+	 * 			tooltip: string
+	 * 		},
+	 * 		delete: {
+	 * 			route: string,
+	 * 			disabledIf: function(any): boolean,
+	 * 			disabledIfTooltip: string,
+	 * 			tooltip: string,
+	 * 			func: function(event): void
+	 * 		}
+	 * 	}}
+	 */
 	const actions = {
 		show: { route: userShowRoute, func: showUser, tooltip: 'Ver detalles' },
-		edit: { route: userEditRoute, tooltip: 'Editar usuario' },
+		edit: { route: userEditRoute, func: toggleLoadingState, tooltip: 'Editar usuario' },
 		delete: {
 			route: userDeleteRoute,
 			disabledIf: (row) => {
@@ -72,22 +93,47 @@ $(document).ready(() => {
 		}
 	};
 
-	// Define custom buttons
+	/**
+	 * Define custom buttons for the DataTable interface.
+	 * @type {[
+	 * 		{
+	 * 			text: string,
+	 * 			href: string,
+	 * 			class: string,
+	 * 			icon: string
+	 * 		}
+	 * ]}
+	 */
     const customButtons = [
         {
             text: 'Registrar Asistencia',
             href: '#',
             class: 'btn-outline-info',
-            icon: 'bi-card-checklist'
+            icon: 'bi-card-checklist',
+			func: underDevelopment,
         },
         {
             text: 'Crear Usuario',
             href: userCreateRoute,
-            class: 'btn-primary',
-            icon: 'bi-person-plus-fill'
+            class: 'create-button btn-primary',
+            icon: 'bi-person-plus-fill',
+			func: toggleLoadingState,
+			params: ['.create-button', 'create', true],
         }
     ];
 
     // Initialize the CRUD DataTable
     NewCrudDataTable('users-table', userRoute, columns, actions, customButtons);
 });
+
+// TODO: Remove this function when the feature is implemented
+/**
+ * Displays a toast notification indicating that the functionality is under development.
+ */
+function underDevelopment() {
+	SwalToast.fire({
+		icon: 'info',
+		title: 'Funcionalidad en desarrollo',
+	});
+}
+window.underDevelopment = underDevelopment;

@@ -147,10 +147,22 @@ export function NewCrudDataTable(tableId, ajaxUrl, columns, actions, customButto
 	// Build custom buttons HTML. They will be placed at the top right of the table.
 	let buttonsHtml = '<div class="d-flex flex-row align-items-center justify-content-between mb-2 gap-3">';
 	customButtons.forEach(button => {
+		const buttonFuncParams = button.params ? Array.from(button.params) : [];
+		const params = buttonFuncParams.map(param =>
+			typeof param === 'string' ? `'${param}'` : param
+		).join(', ');
+
+		const onclick = button.func ? `onclick="${button.func.name}(${params ?? ''});"` : '';
 		buttonsHtml += `
-            <a href="${button.href || '#'}" class="btn ${button.class} align-items-center">
-                <i class="${button.icon} me-2"></i>
-                ${button.text}
+            <a href="${button.href ?? '#'}" class="btn ${button.class} align-items-center" ${onclick}>
+            	<div class="${buttonFuncParams[1]}-spinner d-none flex-row align-items-center justify-content-center">
+					<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+					<span class="visually-hidden">${button.text}</span>
+				</div>
+                <div class="${buttonFuncParams[1]}-button-text d-flex flex-row align-items-center justify-content-center">
+                    <i class=" ${button.icon} me-2"></i>
+               		${button.text}
+				</div>
             </a>
         `;
 	});
@@ -230,9 +242,9 @@ function generateActionButton(action, row, type, defaultTooltip, iconClass, butt
 
 	switch (type) {
 		case 'show':
-			const actionFunc = `onclick="${action.func.name}(\'${actionRoute}\', this);"`;
+			const showActionFunc = `onclick="${action.func.name}(\'${actionRoute}\', this);"`;
 			return `
-				<a class="info-button ${baseClass}" ${disabled ? '' : actionFunc} ${baseAttrs} ${extraAttrs}>
+				<a class="info-button ${baseClass}" ${disabled ? '' : showActionFunc} ${baseAttrs} ${extraAttrs}>
 					<div class="info-spinner d-none flex-row align-items-center justify-content-center">
 						<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
 					</div>
@@ -242,9 +254,20 @@ function generateActionButton(action, row, type, defaultTooltip, iconClass, butt
 				</a>
 			`;
 		case 'edit':
+			const editActionFunc = `onclick="${action.func.name}(this, \'edit\', true);"`;
 			return `
-				<a href="${disabled ? '#' : actionRoute}" class="edit-button ${baseClass}" ${baseAttrs} ${extraAttrs}>
-					<i class="${iconClass}"></i>
+				<a
+					href="${disabled ? '#' : actionRoute}"
+					class="edit-button ${baseClass}"
+					${disabled ? '' : editActionFunc}
+					${baseAttrs} ${extraAttrs}
+				>
+					<div class="edit-spinner d-none flex-row align-items-center justify-content-center">
+						<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+					</div>
+                    <div class="edit-button-text d-flex flex-row align-items-center justify-content-center">
+                    	<i class="${iconClass}"></i>
+					</div>
 				</a>
 			`;
 		case 'delete':

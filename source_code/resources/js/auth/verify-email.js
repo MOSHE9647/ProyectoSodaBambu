@@ -1,5 +1,5 @@
 // Description: JavaScript for email verification page
-import {attachLoadingSubmit} from '../utils/utils.js';
+import { attachLoadingSubmit } from '../utils/utils.js';
 
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
