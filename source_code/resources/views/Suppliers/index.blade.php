@@ -1,49 +1,49 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Lista de Proveedores</h2>
-                <a class="btn btn-primary" href="{{ route('suppliers.create') }}">Agregar Proveedor</a>
-            </div>
+	<div class="container p-0">
+		{{-- Page Header --}}
+		<x-header title="Gestión de Proveedores" subtitle="Administre los proveedores existentes" />
 
-            <div class="card border-secondary">
-                <div class="card-body">
-                    <table class="table table-hover">
-                        <thead class="bg-dark text-white">
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Telefono</th>
-                                <th>Correo Electronico</th>
-                                <th style="width: 20px;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($data as $item)
-                                <tr>
-                                    <td>{{ $item->id_supplier }}</td>
-                                    <td>{{ $item->name }}</td>
-                                    <td>{{ $item->phone }}</td>
-                                    <td>{{ $item->email }}</td>
-                                    <td>
-                                        <a class="btn btn-sm btn-info me-1" href="{{ route('suppliers.show', $item) }}">Ver</a>
-                                        <a class="btn btn-sm btn-warning me-1" href="{{ route('suppliers.edit', $item) }}">Editar</a>
-                                        <form action="{{ route('suppliers.destroy', $item) }}" method="post" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de que quieres eliminar este proveedor?')">Eliminar</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+		{{-- Table Container --}}
+		<div class="table-container rounded-2 p-4">
+			<table id="suppliers-table" class="table table-hover rounded-2">
+				<thead>
+					<tr>
+						<th scope="col">Nombre</th>
+						<th scope="col">Teléfono</th>
+						<th scope="col">Email</th>
+						<th scope="col">Fecha de Creación</th>
+						<th scope="col">Acciones</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{-- Table data will be populated by JavaScript --}}
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+@endsection
+
+@section('scripts')
+	<script type="text/javascript">
+		let supplierRoute = "{{ route('suppliers.index') }}";
+		let supplierShowRoute = "{{ route('suppliers.show', ['supplier' => ':id']) }}";
+		let supplierCreateRoute = "{{ route('suppliers.create') }}";
+		let supplierEditRoute = "{{ route('suppliers.edit', ['supplier' => ':id']) }}";
+		let supplierDeleteRoute = "{{ route('suppliers.destroy', ['supplier' => ':id']) }}";
+		let csrfToken = "{{ csrf_token() }}";
+	</script>
+	@vite(['resources/js/models/suppliers/main.js'])
+
+	{{-- Success Toast Notification --}}
+	@if(session('success'))
+		<script type="module">
+			SwalToast.fire({
+				icon: 'success',
+				title: "{{ session('success') }}"
+			});
+		</script>
+	@endif
 @endsection
