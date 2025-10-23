@@ -10,11 +10,10 @@ class CardPayment extends Model
 
     protected $fillable = [
         'reference',
-        'payment_method_id'
     ];
     
     public function paymentMethod()
     {
-        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+        return $this->belongsTo(PaymentMethod::class);
     }
 }

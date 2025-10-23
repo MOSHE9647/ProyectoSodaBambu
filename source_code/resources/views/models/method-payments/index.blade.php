@@ -10,7 +10,6 @@
             <table id="method-payments-table" class="table table-hover rounded-2">
                 <thead>
                     <tr>
-                        <th scope="col">ID</th>
                         <th scope="col">Monto</th>
                         <th scope="col">Tipo de Pago</th>
                         <th scope="col">Fecha de Creación</th>

@@ -11,7 +11,6 @@ window.showMethodPayment = showMethodPayment;
 
 $(document).ready(() => {
     const columns = [
-        { data: 'id', name: 'id' },
         { data: 'amount', name: 'amount' },
         { data: 'type_payment', name: 'type_payment' },
         { data: 'created_at', name: 'created_at' }
