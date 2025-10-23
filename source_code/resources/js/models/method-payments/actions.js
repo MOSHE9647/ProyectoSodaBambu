@@ -48,26 +48,3 @@ export function deleteMethodPayment(e) {
         }
     });
 }
-
-// Payment Method Validations
-export function validateAmount(value) {
-    const amount = parseFloat(value);
-    return !isNaN(amount) && amount >= 0;
-}
-
-export function validatePaymentType(value) {
-    return ['sinpe', 'card', 'cash'].includes(value);
-}
-
-export function validateVoucher(value) {
-    return value.length >= 1 && value.length <= 255;
-}
-
-export function validateReference(value) {
-    return value.length >= 1 && value.length <= 255;
-}
-
-export function validateChangeAmount(value) {
-    const amount = parseFloat(value);
-    return !isNaN(amount) && amount >= 0;
-}

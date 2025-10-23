@@ -10,11 +10,10 @@ class SinpePayment extends Model
 
     protected $fillable = [
         'voucher', 
-        'payment_method_id'
     ];
 
     public function paymentMethod()
     {
-       return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+       return $this->belongsTo(PaymentMethod::class);
     }
 }
