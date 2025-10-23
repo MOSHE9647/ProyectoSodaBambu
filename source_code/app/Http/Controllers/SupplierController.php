@@ -4,16 +4,38 @@ namespace App\Http\Controllers;
 
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables;
 
 class SupplierController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index() //muestra todos los registros
+    public function index(Request $request)
     {
-        $data = Supplier::all();
-        return view('suppliers.index', compact('data'));
+        if ($request->ajax()) {
+            $suppliers = Supplier::withTrashed()->select(['id', 'name', 'phone', 'email', 'created_at', 'deleted_at']);
+            
+            return DataTables::of($suppliers)
+                ->addColumn('actions', function ($supplier) {
+                    $showUrl = route('suppliers.show', $supplier->id);
+                    $editUrl = route('suppliers.edit', $supplier->id);
+                    $deleteUrl = route('suppliers.destroy', $supplier->id);
+                    
+                    return view('components.datatable-actions', [
+                        'showUrl' => $showUrl,
+                        'editUrl' => $editUrl,
+                        'deleteUrl' => $deleteUrl,
+                        'showTooltip' => 'Ver detalles',
+                        'editTooltip' => 'Editar proveedor',
+                        'deleteTooltip' => 'Eliminar proveedor'
+                    ])->render();
+                })
+                ->rawColumns(['actions'])
+                ->make(true);
+        }
+
+        return view('Suppliers.index');
     }
 
     /**
@@ -21,65 +43,67 @@ class SupplierController extends Controller
      */
     public function create()
     {
-        $rol = 'create';
-        $item = new Supplier(); //objeto vacio para evitar errores en la vista
-        return view('suppliers.create', compact('item', 'rol'));
+        return view('Suppliers.create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request) //recibe los datos del formulario de la vista suppliers.create
+    public function store(Request $request)
     {
-        $item = new Supplier();
-        $item->name = $request->name;
-        $item->phone = $request->phone;
-        $item->email = $request->email;
-        $item->save(); //guarda el registro en la base de datos
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'email' => 'required|email|max:255|unique:suppliers,email',
+        ]);
 
-        return redirect()->route('suppliers.show', $item); //redirecciona a la vista suppliers.show con el id del registro recien creado
+        $supplier = Supplier::create($request->all());
+
+        return redirect()->route('suppliers.index')
+            ->with('success', 'Proveedor creado exitosamente.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Supplier $supplier)
     {
-        $item = Supplier::find($id); //busca el registro por su id
-        return view('suppliers.show', compact('item'));
+        return view('Suppliers.show', compact('supplier'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Supplier $supplier)
     {
-        $item = Supplier::find($id); //busca el registro por su id
-        $rol = 'edit';
-        return view('suppliers.create', compact('rol', 'item'));//redirecciona a la vista suppliers.create con el id del registro a editar
+        return view('Suppliers.edit', compact('supplier'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Supplier $supplier)
     {
-        $item = Supplier::find($id); //busca el registro por su id
-        $item->name = $request->name;
-        $item->phone = $request->phone;
-        $item->email = $request->email;
-        $item->save(); //guarda el registro en la base de datos
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'email' => 'required|email|max:255|unique:suppliers,email,' . $supplier->id,
+        ]);
 
-        return redirect()->route('suppliers.edit', $item); //redirecciona a la vista suppliers.edit con el id del registro recien editado
+        $supplier->update($request->all());
+
+        return redirect()->route('suppliers.index')
+            ->with('success', 'Proveedor actualizado exitosamente.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Supplier $supplier)
     {
-        $item = Supplier::find($id); //busca el registro por su id   
-        $item->delete(); //elimina el registro de la base de datos
-        return redirect()->route('suppliers.index'); 
+        $supplier->delete();
+
+        return redirect()->route('suppliers.index')
+            ->with('success', 'Proveedor eliminado exitosamente.');
     }
 }
