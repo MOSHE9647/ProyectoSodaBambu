@@ -65,20 +65,50 @@
     @endif
 
     @if($payment->type_payment == 'cash' && $payment->cashPayment)
-        <hr class="my-4"/>
-        <div class="row g-3">
-            <div class="col-12">
-                <x-form.input.floating-label
-                    :id="'changeAmount'"
-                    :type="'text'"
-                    :readonly="true"
-                    :value="'₡ ' . number_format($payment->cashPayment->changeAmount, 2)"
-                    :placeholder="'Monto de Cambio'"
-                    :iconLeft="'bi bi-currency-exchange'"
-                >
-                    Monto de Cambio
-                </x-form.input.floating-label>
-            </div>
+    <hr class="my-4"/>
+    <div class="row g-3">
+        {{-- Monto Pagado --}}
+        <div class="col-6">
+            <x-form.input.floating-label
+                :id="'amount_paid'"
+                :type="'text'"
+                :readonly="true"
+                :value="'₡ ' . number_format($payment->amount + $payment->cashPayment->changeAmount, 2)"
+                :placeholder="'Monto Pagado'"
+                :iconLeft="'bi bi-cash-coin'"
+            >
+                Monto Pagado
+            </x-form.input.floating-label>
         </div>
-    @endif
+        
+        {{-- Monto de Cambio --}}
+        <div class="col-6">
+            <x-form.input.floating-label
+                :id="'changeAmount'"
+                :type="'text'"
+                :readonly="true"
+                :value="'₡ ' . number_format($payment->cashPayment->changeAmount, 2)"
+                :placeholder="'Monto de Cambio'"
+                :iconLeft="'bi bi-currency-exchange'"
+            >
+                Monto de Cambio
+            </x-form.input.floating-label>
+        </div>
+        
+        {{-- Monto Final --}}
+        <div class="col-12">
+            <x-form.input.floating-label
+                :id="'final_amount'"
+                :type="'text'"
+                :readonly="true"
+                :value="'₡ ' . number_format($payment->amount, 2)"
+                :placeholder="'Monto Final'"
+                :iconLeft="'bi bi-calculator'"
+                :inputClass="'fw-bold text-success'"
+            >
+                Monto Final (Pagado - Cambio)
+            </x-form.input.floating-label>
+        </div>
+    </div>
+@endif
 </div>
