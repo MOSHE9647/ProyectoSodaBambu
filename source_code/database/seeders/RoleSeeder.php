@@ -16,7 +16,7 @@ class RoleSeeder extends Seeder
 		 */
 		$roles = UserRole::cases();
 		foreach ($roles as $role) {
-			Role::create(['name' => $role]);
+			Role::firstOrCreate(['name' => $role->value]);
 		}
 	}
 }
