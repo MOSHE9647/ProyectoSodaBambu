@@ -1,59 +1,98 @@
-@extends('layouts.app')
+<div class="table-container rounded-2 p-4 w-90 justify-content-start">
+	<section class="d-flex flex-column mb-4 gap-3">
+		<h5 class="text-muted pb-3 border-bottom border-secondary">
+			<i class="bi bi-building me-3"></i>
+			Información del Proveedor
+		</h5>
 
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Detalles del Proveedor</h2>
-                <a class="btn btn-outline-secondary" href="{{ route('suppliers.index') }}">Volver</a>
-            </div>
+		<div class="row g-3">
+			{{-- ID --}}
+			<div class="col-md-6">
+				<div class="form-floating">
+					<input type="text" class="form-control border-secondary" value="{{ $supplier->id }}" readonly>
+					<label class="form-label">ID del Proveedor</label>
+				</div>
+			</div>
 
-            <div class="card border-secondary">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">ID:</label>
-                        <p>{{ $item->id_supplier }}</p>
-                    </div>
+			{{-- Name --}}
+			<div class="col-md-6">
+				<div class="form-floating">
+					<input type="text" class="form-control border-secondary" value="{{ $supplier->name }}" readonly>
+					<label class="form-label">Nombre del Proveedor</label>
+				</div>
+			</div>
+		</div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Nombre:</label>
-                        <p>{{ $item->name }}</p>
-                    </div>
+		<div class="row g-3">
+			{{-- Phone --}}
+			<div class="col-md-6">
+				<div class="form-floating">
+					<input type="text" class="form-control border-secondary" value="{{ $supplier->phone }}" readonly>
+					<label class="form-label">Teléfono</label>
+				</div>
+			</div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Telefono:</label>
-                        <p>{{ $item->phone }}</p>
-                    </div>
+			{{-- Email --}}
+			<div class="col-md-6">
+				<div class="form-floating">
+					<input type="email" class="form-control border-secondary" value="{{ $supplier->email }}" readonly>
+					<label class="form-label">Correo Electrónico</label>
+				</div>
+			</div>
+		</div>
+	</section>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Correo Electronico:</label>
-                        <p>{{ $item->email }}</p>
-                    </div>
+	{{-- Timestamps Section --}}
+	<section class="d-flex flex-column mb-4 gap-3">
+		<h5 class="text-muted pt-2 pb-3 border-bottom border-secondary">
+			<i class="bi bi-clock-history me-3"></i>
+			Información de Registro
+		</h5>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Creado:</label>
-                        <p>{{ $item->created_at }}</p>
-                    </div>
+		<div class="row g-3">
+			{{-- Created At --}}
+			<div class="col-md-6">
+				<div class="form-floating">
+					<input type="text" class="form-control border-secondary" value="{{ $supplier->created_at }}" readonly>
+					<label class="form-label">Fecha de Creación</label>
+				</div>
+			</div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Actualizado:</label>
-                        <p>{{ $item->updated_at }}</p>
-                    </div>
+			{{-- Updated At --}}
+			<div class="col-md-6">
+				<div class="form-floating">
+					<input type="text" class="form-control border-secondary" value="{{ $supplier->updated_at }}" readonly>
+					<label class="form-label">Última Actualización</label>
+				</div>
+			</div>
+		</div>
+	</section>
 
-                    <hr>
+	{{-- Actions --}}
+	<div class="d-flex justify-content-end gap-2">
+		{{-- Back Button --}}
+		<a href="{{ route('suppliers.index') }}" class="btn btn-outline-secondary px-4">
+			<i class="bi bi-arrow-left me-2"></i>
+			Volver
+		</a>
 
-                    <div class="d-flex gap-2">
-                        <a class="btn btn-warning" href="{{ route('suppliers.edit', $item) }}">Editar</a>
-                        <form action="{{ route('suppliers.destroy', $item) }}" method="post" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this supplier?')">Delete</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+		{{-- Edit Button --}}
+		<a href="{{ route('suppliers.edit', $supplier) }}" class="btn btn-warning px-4">
+			<i class="bi bi-pencil me-2"></i>
+			Editar
+		</a>
+
+		{{-- Delete Button --}}
+		<form action="{{ route('suppliers.destroy', $supplier) }}" method="post" class="d-inline">
+			@csrf
+			@method('DELETE')
+			<button 
+				class="btn btn-danger px-4" 
+				onclick="return confirm('¿Estás seguro de que quieres eliminar este proveedor?')"
+			>
+				<i class="bi bi-trash me-2"></i>
+				Eliminar
+			</button>
+		</form>
+	</div>
 </div>
-@endsection
