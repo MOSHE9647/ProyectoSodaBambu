@@ -76,6 +76,37 @@ function validateMethodPaymentForm(values) {
 }
 
 /**
+ * Real-time validation for cash amount
+ */
+function validateCashAmountInRealTime() {
+    const amount = $('#amount').val().trim();
+    const changeAmount = $('#changeAmount').val().trim();
+    const typePayment = $('#type_payment').val();
+    
+    if (typePayment === 'cash' && amount && changeAmount) {
+        const paid = parseFloat(amount);
+        const change = parseFloat(changeAmount);
+        
+        if (!isNaN(paid) && !isNaN(change)) {
+            if (change > paid) {
+                showFieldError('changeAmount', 'El monto de cambio no puede ser mayor al monto pagado.');
+                return false;
+            }
+            
+            const finalAmount = paid - change;
+            if (finalAmount < 0) {
+                showFieldError('changeAmount', 'El monto final no puede ser negativo.');
+                return false;
+            }
+            
+            clearFieldError('changeAmount');
+            return true;
+        }
+    }
+    return true;
+}
+
+/**
  * Form Submission Handler.
  *
  * Handles the payment method form submission.
@@ -143,6 +174,24 @@ Object.keys(fieldValidators).forEach((fieldId) => {
             clearFieldError(fieldId);
         }
     });
+});
+
+// Event listeners para validación en tiempo real
+$(document).on('input change', '#amount, #changeAmount', function () {
+    const typePayment = $('#type_payment').val();
+    if (typePayment === 'cash') {
+        validateCashAmountInRealTime();
+    }
+});
+
+$(document).on('change', '#type_payment', function () {
+    if (this.value === 'cash') {
+        $('#final-amount-display').remove();
+        setTimeout(() => validateCashAmountInRealTime(), 100);
+    } else {
+        $('#final-amount-display').remove();
+        clearFieldError('changeAmount');
+    }
 });
 
 /**

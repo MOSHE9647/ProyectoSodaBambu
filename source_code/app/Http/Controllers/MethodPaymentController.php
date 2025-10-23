@@ -8,6 +8,7 @@ use App\Models\Payment\SinpePayment;
 use App\Models\Payment\CardPayment;
 use App\Models\Payment\CashPayment;
 use Yajra\DataTables\DataTables;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class MethodPaymentController extends Controller
 {
@@ -39,14 +40,45 @@ class MethodPaymentController extends Controller
         return view('models.method-payments.index');
     }
 
+    /**
+     * Display the specified resource.
+     */
+    public function show($id)
+    {
+        try {
+            $payment = PaymentMethod::with(['sinpePayment', 'cardPayment', 'cashPayment'])
+                ->findOrFail($id);
+
+            return view('models.method-payments.show', compact('payment'));
+        } catch (ModelNotFoundException $e) {
+            return back()->with('error', 'Método de pago no encontrado');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Método de pago no encontrado');
+        }
+    }
+
+    /**
+     * Display the specified create resource.
+     */
     public function create()
     {
         return view('models.method-payments.create');
     }
 
-    public function edit()
+    public function edit($id)
     {
-        return view('models.method-payments.edit');
+        try {
+            $payment = PaymentMethod::with(['sinpePayment', 'cardPayment', 'cashPayment'])
+                ->findOrFail($id);
+
+            return view('models.method-payments.edit', compact('payment'));
+        } catch (ModelNotFoundException $e) {
+            return redirect()->route('method-payments.index')
+                ->with('error', 'Método de pago no encontrado.');
+        } catch (\Exception $e) {
+            return redirect()->route('method-payments.index')
+                ->with('error', 'Error al cargar el método de pago para edición: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -71,9 +103,24 @@ class MethodPaymentController extends Controller
         ]);
 
         try {
-            // Create the parent payment method
+
+            $finalAmount = $request->amount;
+
+            if ($request->type_payment == 'cash') {
+                
+                if ($request->changeAmount > $request->amount) {
+                    return back()->withInput()->withErrors(['changeAmount' => 'El monto de cambio no puede ser mayor al monto pagado.']);
+                }
+
+                $finalAmount = $request->amount - $request->changeAmount;
+
+                if ($finalAmount < 0) {
+                    return back()->withInput()->withErrors(['changeAmount' => 'El monto final no puede ser negativo.']);
+                }
+            }
+
             $paymentMethod = new PaymentMethod();
-            $paymentMethod->amount = $request->amount;
+            $paymentMethod->amount = $finalAmount;
             $paymentMethod->type_payment = $request->type_payment;
             $paymentMethod->save();
 
@@ -130,13 +177,31 @@ class MethodPaymentController extends Controller
         ]);
 
         try {
-            // Find the payment method
-            $paymentMethod = PaymentMethod::findOrFail($id);
+        // Calculate the final amount for cash payments
+        $finalAmount = $request->amount;
+        
+        if ($request->type_payment == 'cash') {
+            // Validate that changeAmount is not greater than amount
+            if ($request->changeAmount > $request->amount) {
+                return back()->withInput()->with('error', 'El monto de cambio no puede ser mayor al monto pagado.');
+            }
+            
+            // Calculate final amount
+            $finalAmount = $request->amount - $request->changeAmount;
+            
+            // validate that the amount is positive
+            if ($finalAmount < 0) {
+                return back()->withInput()->with('error', 'El monto final no puede ser negativo.');
+            }
+        }
 
-            // Update main payment method data
-            $paymentMethod->amount = $request->amount;
-            $paymentMethod->type_payment = $request->type_payment;
-            $paymentMethod->save();
+        // Find the payment method
+        $paymentMethod = PaymentMethod::findOrFail($id);
+
+        // Update main payment method data
+        $paymentMethod->amount = $finalAmount; // Use final amount
+        $paymentMethod->type_payment = $request->type_payment;
+        $paymentMethod->save();
 
             // Delete old child payment records from all types
             SinpePayment::where('payment_method_id', $id)->delete();
@@ -155,21 +220,21 @@ class MethodPaymentController extends Controller
                 case 'card':
                     $cardPayment = new CardPayment();
                     $cardPayment->reference = $request->reference;
-                    $cardPayment->payment_method_id = $paymentMethod->id; 
+                    $cardPayment->payment_method_id = $paymentMethod->id;
                     $cardPayment->save();
                     break;
 
                 case 'cash':
                     $cashPayment = new CashPayment();
                     $cashPayment->changeAmount = $request->changeAmount;
-                    $cashPayment->payment_method_id = $paymentMethod->id; 
+                    $cashPayment->payment_method_id = $paymentMethod->id;
                     $cashPayment->save();
                     break;
             }
 
             return redirect()->route('method-payments.index')
                 ->with('success', 'Método de pago actualizado correctamente');
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return back()->with('error', 'Método de pago no encontrado');
         } catch (\Exception $e) {
             return back()->withInput()->with('error', 'Error al actualizar el método de pago: ' . $e->getMessage());
