@@ -6,7 +6,6 @@ use App\Http\Requests\CreateClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Http\Resources\ClientResource;
 use App\Models\Client;
-use DB;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -53,17 +52,17 @@ class ClientController extends Controller
 	/**
 	 * Store a newly created resource in storage.
 	 *
+	 * Se eliminó DB::transaction, ya que solo se realiza una acción (crear).
+	 *
 	 * @param CreateClientRequest $request
 	 * @return RedirectResponse
 	 * @throws Throwable
 	 */
 	public function store(CreateClientRequest $request)
 	{
-		DB::transaction(function () use ($request) {
-			// Create the Client
-			$clientData = $request->validated();
-			Client::create($clientData);
-		});
+		// Create the Client without a transaction
+		$clientData = $request->validated();
+		Client::create($clientData);
 
 		return redirect()->route('clients.index')->with('success', 'Cliente creado correctamente.');
 	}
@@ -94,6 +93,8 @@ class ClientController extends Controller
 	/**
 	 * Update the specified resource in storage.
 	 *
+	 * Se eliminó DB::transaction, ya que solo se realiza una acción (actualizar).
+	 *
 	 * @param UpdateClientRequest $request
 	 * @param Client $client
 	 * @return RedirectResponse
@@ -101,11 +102,9 @@ class ClientController extends Controller
 	 */
 	public function update(UpdateClientRequest $request, Client $client)
 	{
-		DB::transaction(function () use ($request, $client) {
-			// Update the Client
-			$clientData = $request->validated();
-			$client->update($clientData);
-		});
+		// Update the Client without a transaction
+		$clientData = $request->validated();
+		$client->update($clientData);
 
 		return redirect()->route('clients.index')->with('success', 'Cliente actualizado correctamente.');
 	}
@@ -113,17 +112,16 @@ class ClientController extends Controller
 	/**
 	 * Remove the specified resource from storage.
 	 *
+	 * Se eliminó DB::transaction, ya que solo se realiza una acción (eliminar).
+	 *
 	 * @param Client $client
 	 * @return RedirectResponse
 	 * @throws Throwable
 	 */
 	public function destroy(Client $client)
 	{
-		// Use a transaction to ensure data integrity
-		DB::transaction(function () use ($client) {
-			// Delete the client record
-			$client->delete();
-		});
+		// Delete the client record without a transaction
+		$client->delete();
 
 		// Redirect back with a success message
 		return redirect()->back()->with('success', 'Cliente eliminado correctamente.');

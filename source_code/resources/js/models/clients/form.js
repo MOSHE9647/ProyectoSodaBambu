@@ -1,4 +1,3 @@
-// Description: JavaScript code for handling client creation form validation and submission.
 import {
 	clearAllFieldErrors,
 	clearFieldError,
@@ -36,7 +35,7 @@ const fieldValidators = {
 	},
 	phone: {
 		validator: validatePhone,
-		emptyMsg: '', // Phone is optional
+		emptyMsg: '',
 		invalidMsg: 'Ingrese un teléfono válido en formato +506 XXXX XXXX.'
 	}
 };
@@ -58,7 +57,6 @@ function validateClientForm(values) {
 	);
 }
 
-// UI Manipulation Functions
 
 /**
  * Form Submission Handler.
@@ -69,16 +67,18 @@ function validateClientForm(values) {
 function submitClientForm() {
 	clearAllFieldErrors(fieldValidators);
 
-	// Get form values
+	// Get essential form values
 	const values = {
 		first_name: $('#first_name').val().trim(),
 		last_name: $('#last_name').val().trim(),
 		email: $('#email').val().trim(),
-		phone: $('#phone').val().trim(),
 	};
 
-	// Validate form
-	// If there are validation errors, do not submit the form
+	const phone = $('#phone').val().trim();
+
+	if (phone) {
+		values.phone = phone;
+	}
 	return validateClientForm(values);
 }
 
@@ -92,7 +92,7 @@ Object.keys(fieldValidators).forEach((fieldId) => {
 		const value = $(this).val().trim();
 		const {validator, emptyMsg, invalidMsg} = fieldValidators[fieldId];
 
-		// Skip validation for optional phone field when empty
+	
 		if (fieldId === 'phone' && !value) {
 			clearFieldError(fieldId);
 			return;
@@ -117,7 +117,6 @@ Object.keys(fieldValidators).forEach((fieldId) => {
  * Validates the form and manages the loading state.
  */
 $(document).on('submit', `#${formId}`, (e) => {
-	// Prevent default form submission
 	e.preventDefault();
 	setLoadingState(formId, true);
 	if (submitClientForm()) e.currentTarget.submit();
