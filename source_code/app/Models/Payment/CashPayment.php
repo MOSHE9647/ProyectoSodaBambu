@@ -7,15 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class CashPayment extends Model
 {
     protected $table = 'cash_payment';
-    protected $primaryKey = 'idCashPayment';
-
+    
     protected $fillable = [
         'changeAmount',
-        'idPaymentMethod'
     ];
 
     public function paymentMethod()
     {
-        return $this->belongsTo(PaymentMethod::class, 'idPaymentMethod', 'idPaymentMethod');
+        return $this->belongsTo(PaymentMethod::class);
     }
 }

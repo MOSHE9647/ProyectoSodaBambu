@@ -8,7 +8,6 @@ class PaymentMethod extends Model
 {
 
     protected $table = 'payment_method';
-    protected $primaryKey = 'idPaymentMethod';
 
     protected $fillable = [
         'amount', 
@@ -17,18 +16,19 @@ class PaymentMethod extends Model
 
     public function sinpePayment()
     {
-        return $this->hasOne(SinpePayment::class, 'idPaymentMethod', 'idPaymentMethod');
+        return $this->hasOne(SinpePayment::class);
     }
 
     public function cardPayment()
     {
-        return $this->hasOne(CardPayment::class, 'idPaymentMethod', 'idPaymentMethod');
+        return $this->hasOne(CardPayment::class);
     }
 
     public function cashPayment()
     {
-        return $this->hasOne(CashPayment::class, 'idPaymentMethod', 'idPaymentMethod');
+        return $this->hasOne(CashPayment::class);
     }
+
 
     // Helper method to get the specific payment detail based on type_payment
     public function getDetalle()

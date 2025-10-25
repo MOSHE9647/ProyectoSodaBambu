@@ -9,9 +9,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('payment_method', function (Blueprint $table) {
-            $table->id('idPaymentMethod');
+            $table->id();
             $table->double('amount');
-            $table->enum('type_payment', ['sinpe', 'card', 'cash']); // type_payment
+            $table->enum('type_payment', ['sinpe', 'card', 'cash']);
             $table->timestamps();
         });
     }
