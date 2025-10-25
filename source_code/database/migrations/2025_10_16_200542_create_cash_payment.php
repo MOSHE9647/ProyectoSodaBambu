@@ -12,15 +12,15 @@ return new class extends Migration
     public function up(): void
     {
             Schema::create('cash_payment', function (Blueprint $table) {
-            $table->id('idCashPayment');
+            $table->id();
             $table->double('changeAmount')->default(0);
             
-            // 🔗 Foreign Key hacia payment_method
-            $table->unsignedBigInteger('idPaymentMethod');
-            $table->foreign('idPaymentMethod')
-                  ->references('idPaymentMethod')
-                  ->on('payment_method')
-                  ->onDelete('cascade');
+            // Foreign Key hacia payment_method
+            $table->unsignedBigInteger('payment_method_id');
+            $table->foreign('payment_method_id')
+                ->references('id')
+                ->on('payment_method')
+                ->onDelete('cascade');
 
             $table->timestamps();
         });

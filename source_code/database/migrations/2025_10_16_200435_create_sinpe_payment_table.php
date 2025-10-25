@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;  
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -12,16 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('sinpe_payment', function (Blueprint $table) {
-            $table->id('idSinpePayment');
+            $table->id();
             $table->string('voucher');
-            
-            // Foreign Key to payment_method
-            $table->unsignedBigInteger('idPaymentMethod');
-            $table->foreign('idPaymentMethod')
-                  ->references('idPaymentMethod')
-                  ->on('payment_method')
-                  ->onDelete('cascade');
 
+            // Foreign Key hacia a payment_method
+            $table->unsignedBigInteger('payment_method_id');
+            $table->foreign('payment_method_id')
+                ->references('id')
+                ->on('payment_method')
+                ->onDelete('cascade');
+   
             $table->timestamps();
         });
     }
