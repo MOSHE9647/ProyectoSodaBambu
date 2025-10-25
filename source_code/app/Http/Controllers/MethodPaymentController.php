@@ -32,7 +32,7 @@ class MethodPaymentController extends Controller
                     return '₡' . number_format($payment->amount, 2);
                 })
                 ->editColumn('created_at', function ($payment) {
-                    return $payment->created_at->format('d-m-Y');
+                    return $payment->created_at->toISOString();
                 })
                 ->make(true);
         }
