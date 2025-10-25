@@ -6,25 +6,12 @@ use App\Casts\CostaRicaDatetime;
 use Database\Factories\SupplierFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Supplier extends Model
 {
 	/** @use HasFactory<SupplierFactory> */
-	use HasFactory;
-
-	/**
-	 * The table associated with the model.
-	 *
-	 * @var string
-	 */
-	protected $table = 'suppliers';
-
-	/**
-	 * The primary key associated with the table.
-	 *
-	 * @var string
-	 */
-	protected $primaryKey = 'id_supplier';
+	use HasFactory, SoftDeletes;
 
 	/**
 	 * The attributes that are mass assignable.
@@ -45,5 +32,6 @@ class Supplier extends Model
 	protected $casts = [
 		'created_at' => CostaRicaDatetime::class,
 		'updated_at' => CostaRicaDatetime::class,
+		'deleted_at' => CostaRicaDatetime::class,
 	];
 }
