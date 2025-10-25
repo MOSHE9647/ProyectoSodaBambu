@@ -9,11 +9,39 @@ window.deleteMethodPayment = deleteMethodPayment;
 window.SwalToast = SwalToast;
 window.showMethodPayment = showMethodPayment;
 
+// Función mejorada para formatear la fecha
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    
+    // Verificar si la fecha es válida
+    if (isNaN(date.getTime())) {
+        console.error('Fecha inválida:', dateString);
+        return 'Fecha inválida';
+    }
+
+    const months = [
+        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+
+    return `${day} de ${month} del ${year}`;
+}
+
 $(document).ready(() => {
     const columns = [
         { data: 'amount', name: 'amount' },
         { data: 'type_payment', name: 'type_payment' },
-        { data: 'created_at', name: 'created_at' }
+        { 
+            data: 'created_at', 
+            name: 'created_at',
+            render: function(data, type, row) {
+                return formatDate(data);
+            }
+        }
     ];
 
     const actions = {
