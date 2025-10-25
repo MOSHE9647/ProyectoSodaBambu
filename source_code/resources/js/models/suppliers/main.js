@@ -11,16 +11,44 @@ import { showSupplier, deleteSupplier } from "./actions.js";
 import { NewCrudDataTable } from '../../utils/datatables.js';
 import { toggleLoadingState } from "../../utils/utils.js";
 import { SwalToast } from "../../utils/sweetalert.js";
+import $ from 'jquery';
+import 'datatables.net-bs5';
 
-window.toggleLoadingState = toggleLoadingState; // Make globally accessible for inline usage
-window.deleteSupplier = deleteSupplier; // Make globally accessible for inline onclick handlers
-window.SwalToast = SwalToast; // Make globally accessible for inline usage
-window.showSupplier = showSupplier; // Make globally accessible for inline onclick handlers
+window.toggleLoadingState = toggleLoadingState;
+window.deleteSupplier = deleteSupplier;
+window.SwalToast = SwalToast;
+window.showSupplier = showSupplier;
 
-/**
- * Initialize the Suppliers DataTable with server-side processing.
- * This provides better performance and scalability for large datasets.
- */
+let suppliersDT = null;
+
+function initSuppliersTable({ force = false } = {}) {
+  const $table = $('#suppliers-table');
+  if (!$table.length) return;
+
+
+  if ($.fn.dataTable && $.fn.dataTable.isDataTable($table[0])) {
+    if (!force) return;
+    $table.DataTable().clear().destroy();
+    $table.find('tbody').empty();
+  }
+
+  suppliersDT = $table.DataTable({
+    processing: true,
+    serverSide: true,
+
+    ajax: supplierIndexRoute,
+    columns: [
+      { data: 'name', name: 'name' },
+      { data: 'phone', name: 'phone' },
+      { data: 'email', name: 'email' },
+      { data: 'created_at', name: 'created_at' },
+      { data: 'actions', name: 'actions', orderable: false, searchable: false }
+    ],
+    destroy: true,
+    retrieve: true,
+    responsive: true
+  });
+}
 
 // Ensure the DOM is fully loaded before initializing the DataTable
 $(document).ready(() => {
@@ -107,5 +135,17 @@ $(document).ready(() => {
     ];
 
     // Initialize the CRUD DataTable
-    NewCrudDataTable('suppliers-table', supplierRoute, columns, actions, customButtons);
+    NewCrudDataTable('suppliers-table', supplierIndexRoute, columns, actions, customButtons);
+
+    initSuppliersTable();
 });
+
+
+if (import.meta && import.meta.hot) {
+  import.meta.hot.accept(() => initSuppliersTable({ force: true }));
+}
+
+// Utilidad para recargar datos sin reinicializar
+window.reloadSuppliersTable = () => {
+  if (suppliersDT) suppliersDT.ajax.reload(null, false);
+};
