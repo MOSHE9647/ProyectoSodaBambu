@@ -1,3 +1,8 @@
+@php
+    use Carbon\Carbon;
+@endphp
+
+
 <div class="d-flex flex-column text-start">
 	{{-- User Basic Information --}}
 	<div class="row g-3 mb-3">
@@ -32,9 +37,9 @@
 		<div class="col-12">
 			<x-form.input.floating-label
                 :id="'created_at'"
-                :type="'datetime-local'"
+                :type="'text'"
                 :readonly="true"
-                :value="$category->created_at"
+                :value="Carbon::parse($category->created_at)->locale('es')->translatedFormat('d \d\e F \d\e\l Y')"
                 :iconLeft="'bi bi-calendar-plus'"
                 :placeholder="'Fecha de Creación'"
                 :readonly="true"
