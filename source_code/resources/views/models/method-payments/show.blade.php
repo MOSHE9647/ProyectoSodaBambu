@@ -27,6 +27,22 @@
         </div>
     </div>
 
+    {{-- Fecha de Creación --}}
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <x-form.input.floating-label
+                :id="'created_at'"
+                :type="'text'"
+                :readonly="true"
+                :value="$payment->created_at->translatedFormat('j \\d\\e F \\d\\e Y')"
+                :placeholder="'Fecha de Creación'"
+                :iconLeft="'bi bi-calendar'"
+            >
+                Fecha de Creación
+            </x-form.input.floating-label>
+        </div>
+    </div>
+
     {{-- Conditional Fields --}}
     @if($payment->type_payment == 'sinpe' && $payment->sinpePayment)
         <hr class="my-4"/>
