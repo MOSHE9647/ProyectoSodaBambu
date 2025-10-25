@@ -2,108 +2,132 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\SupplierResource;
 use App\Models\Supplier;
+use Exception;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Throwable;
 use Yajra\DataTables\Facades\DataTables;
 
 class SupplierController extends Controller
 {
     /**
      * Display a listing of the resource.
+     *
+     * @param Request $request
+     * @return Factory|View|JsonResponse|\Illuminate\View\View
+     * @throws Exception
      */
     public function index(Request $request)
     {
+
         if ($request->ajax()) {
-            $suppliers = Supplier::withTrashed()->select(['id', 'name', 'phone', 'email', 'created_at', 'deleted_at']);
-            
-            return DataTables::of($suppliers)
-                ->addColumn('actions', function ($supplier) {
-                    $showUrl = route('suppliers.show', $supplier->id);
-                    $editUrl = route('suppliers.edit', $supplier->id);
-                    $deleteUrl = route('suppliers.destroy', $supplier->id);
-                    
-                    return view('components.datatable-actions', [
-                        'showUrl' => $showUrl,
-                        'editUrl' => $editUrl,
-                        'deleteUrl' => $deleteUrl,
-                        'showTooltip' => 'Ver detalles',
-                        'editTooltip' => 'Editar proveedor',
-                        'deleteTooltip' => 'Eliminar proveedor'
-                    ])->render();
+            $query = Supplier::query()->select(['id', 'name', 'phone', 'email', 'created_at', 'updated_at', 'deleted_at']);
+            return DataTables::of($query)
+                ->addColumn('actions', function (Supplier $supplier) {
+                    $show = '<button class="btn btn-sm btn-info btn-show" data-id="'. $supplier->id .'"><i class="bi bi-eye"></i></button>';
+                    $edit = '<a href="'. route('suppliers.edit', $supplier->id) .'" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>';
+                    $delete = '<button class="btn btn-sm btn-danger btn-delete" data-id="'. $supplier->id .'"><i class="bi bi-trash"></i></button>';
+                    return '<div class="d-flex gap-1">'.$show.$edit.$delete.'</div>';
                 })
                 ->rawColumns(['actions'])
                 ->make(true);
         }
 
-        return view('Suppliers.index');
+
+        return view('models.suppliers.index');
     }
 
     /**
      * Show the form for creating a new resource.
+     *
+     * @return Factory|View|\Illuminate\View\View
      */
     public function create()
     {
-        return view('Suppliers.create');
+        return view('models.suppliers.create');
     }
 
     /**
      * Store a newly created resource in storage.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     * @throws Throwable
      */
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'  => 'required|string|max:255',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|max:255|unique:suppliers,email',
         ]);
 
-        $supplier = Supplier::create($request->all());
+        $supplierData = $request->only(['name', 'phone', 'email']);
+        Supplier::create($supplierData);
 
-        return redirect()->route('suppliers.index')
-            ->with('success', 'Proveedor creado exitosamente.');
+        return redirect()->route('suppliers.index')->with('success', 'Proveedor creado exitosamente.');
     }
 
     /**
      * Display the specified resource.
+     *
+     * @param Supplier $supplier
+     * @return Factory|View|\Illuminate\View\View
      */
     public function show(Supplier $supplier)
     {
-        return view('Suppliers.show', compact('supplier'));
+        return view('models.suppliers.show', ['supplier' => $supplier]);
     }
 
     /**
      * Show the form for editing the specified resource.
+     *
+     * @param Supplier $supplier
+     * @return Factory|View|\Illuminate\View\View
      */
     public function edit(Supplier $supplier)
     {
-        return view('Suppliers.edit', compact('supplier'));
+        return view('models.suppliers.edit', compact('supplier'));
     }
 
     /**
      * Update the specified resource in storage.
+     *
+     * @param Request $request
+     * @param Supplier $supplier
+     * @return RedirectResponse
+     * @throws Throwable
      */
     public function update(Request $request, Supplier $supplier)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'  => 'required|string|max:255',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|max:255|unique:suppliers,email,' . $supplier->id,
         ]);
 
-        $supplier->update($request->all());
+        $supplierData = $request->only(['name', 'phone', 'email']);
+        $supplier->update($supplierData);
 
-        return redirect()->route('suppliers.index')
-            ->with('success', 'Proveedor actualizado exitosamente.');
+        return redirect()->route('suppliers.index')->with('success', 'Proveedor actualizado exitosamente.');
     }
 
     /**
      * Remove the specified resource from storage.
+     *
+     * @param Supplier $supplier
+     * @return RedirectResponse
+     * @throws Throwable
      */
     public function destroy(Supplier $supplier)
     {
         $supplier->delete();
 
-        return redirect()->route('suppliers.index')
-            ->with('success', 'Proveedor eliminado exitosamente.');
+        return redirect()->route('suppliers.index')->with('success', 'Proveedor eliminado exitosamente.');
     }
 }
