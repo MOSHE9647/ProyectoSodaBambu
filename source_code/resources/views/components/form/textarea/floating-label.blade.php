@@ -8,11 +8,9 @@
 	'iconRight' => null,
 	'textIconRight' => false,
 	'inputClass' => '',
-	'type' => null,
 	'value' => null,
-	'step' => null,
-	'min' => null,
-	'max' => null,
+	'height' => 100,
+	'cols' => null,
 	'required' => false,
 	'readonly' => false,
 	'disabled' => false,
@@ -34,24 +32,21 @@
 	@endisset
 
 	<div class="form-floating {{ $class }}">
-		{{-- Input Field --}}
-		<input
+		{{-- Textarea Field --}}
+		<textarea
 			id="{{ $id }}"
 			name="{{ $name ?? $id }}"
-			type="{{ $type ?? 'text' }}"
 			class="form-control {{ $inputClass }}"
+			style="height: {{ $height !== 'auto' ? $height.'px' : $height }};"
 			placeholder="{{ $placeholder }}"
+			@isset($cols) cols="{{ $cols }}" @endisset
 			aria-describedby="{{ $name ?? $id }}-error"
-			@isset($value) value="{{ $value }}" @endisset
-			@isset($step) step="{{ $step }}" @endisset
-			@isset($min) min="{{ $min }}" @endisset
-			@isset($max) max="{{ $max }}" @endisset
 			{{ $required ? 'required' : '' }}
 			{{ $readonly ? 'readonly' : '' }}
 			{{ $disabled ? 'disabled' : '' }}
 			{{ $autocomplete ? "autocomplete=$autocomplete" : '' }}
 			{{ $autofocus ? 'autofocus' : '' }}
-		>
+		>{{ $value }}</textarea>
 
 		{{-- Label --}}
 		<label for="{{ $id }}" class="form-label">
