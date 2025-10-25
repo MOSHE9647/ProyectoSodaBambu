@@ -9,11 +9,10 @@ window.deleteMethodPayment = deleteMethodPayment;
 window.SwalToast = SwalToast;
 window.showMethodPayment = showMethodPayment;
 
-// Función mejorada para formatear la fecha
+
 function formatDate(dateString) {
     const date = new Date(dateString);
     
-    // Verificar si la fecha es válida
     if (isNaN(date.getTime())) {
         console.error('Fecha inválida:', dateString);
         return 'Fecha inválida';
