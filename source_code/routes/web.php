@@ -22,7 +22,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
 	Route::get('/sales', [HomeController::class, 'sales'])->name('sales');
 	Route::resource('users', UserController::class)->names('users');
-	Route::resource('payment', MethodPaymentController::class)->names('payments');
+	Route::resource('payments', MethodPaymentController::class)->names('method-payments');
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
