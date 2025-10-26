@@ -92,6 +92,15 @@
 				</svg>
 			'
 		],
+		'Proveedores' => [
+			'role' => [UserRole::ADMIN],
+			'route' => 'suppliers.index',
+			'svg' => '
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+					<path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V6h1.5A1.5 1.5 0 0 1 15 7.5v3A1.5 1.5 0 0 1 13.5 12H13v1.5A1.5 1.5 0 0 1 11.5 15h-1A1.5 1.5 0 0 1 8 13.5V12H5v1.5A1.5 1.5 0 0 1 3.5 15h-1A1.5 1.5 0 0 1 1 13.5V12H1.5A1.5 1.5 0 0 1 0 10.5v-7zM12 7V3.5a.5.5 0 0 0-.5-.5H1.5a.5.5 0 0 0-.5.5V10h11V7zM3.5 12a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm8 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+				</svg>
+			'
+		],
 	];
 	$currentRoute = Route::currentRouteName();
 	$routePrefix = explode('.', $currentRoute)[0] ?? $currentRoute;
