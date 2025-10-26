@@ -1,3 +1,6 @@
+@php
+    use Carbon\Carbon; 
+@endphp
 <div class="d-flex flex-column text-start">
 	{{-- Client Basic Information --}}
 	<div class="row g-3 mb-3">
@@ -62,7 +65,7 @@
 				:id="'created_at'"
 				:type="'text'"
 				:readonly="true"
-				:value="$client->created_at->format('Y-m-d H:i:s')"
+				:value="\Carbon\Carbon::parse($client->created_at)->locale('es')->translatedFormat('d \d\e F \d\e\l Y')"
 				:iconLeft="'bi bi-calendar-plus'"
 				:placeholder="'Fecha de Creación'"
 			>
