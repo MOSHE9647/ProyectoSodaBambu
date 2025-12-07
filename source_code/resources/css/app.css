@@ -24,6 +24,14 @@ main {
 	scroll-snap-type: y mandatory;
 }
 
+#sidebar .accordion {
+	--bs-accordion-bg: rgba(var(--bs-tertiary-bg-rgb), var(--bs-bg-opacity));
+	--bs-accordion-color: var(--sidebar-color);
+	--bs-accordion-active-bg: var(--sidebar-item-hover-bg);
+	--bs-accordion-active-color: var(--sidebar-item-hover-color);
+	--bs-accordion-border-color: transparent;
+}
+
 #sidebar .list-item a,
 #sidebar .list-item button{
 	display: flex;
@@ -31,14 +39,6 @@ main {
 	scroll-snap-align: center;
 	font-size: 1rem;
 	gap: 1rem;
-}
-
-#sidebar .list-item .accordion {
-	--bs-accordion-bg: rgba(var(--bs-tertiary-bg-rgb), var(--bs-bg-opacity));
-	--bs-accordion-color: var(--sidebar-color);
-	--bs-accordion-active-bg: var(--sidebar-item-hover-bg);
-	--bs-accordion-active-color: var(--sidebar-item-hover-color);
-	--bs-accordion-border-color: transparent;
 }
 
 #sidebar .list-item .accordion-button {
