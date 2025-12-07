@@ -154,46 +154,49 @@
 	}
 @endphp
 
-<ul class="nav nav-pills flex-nowrap flex-column overflow-auto mb-auto gap-2">
-	@foreach($sidebarItems as $name => $item)
-		@hasanyrole($item['role'])
-			@if($item['collapsible'] ?? false)
-			@php
-				$showCollapsible = false;
-				foreach ($item['collapsibleItems'] as $collapsibleItem) {
-					if (getNavLinkClass($routePrefix, $collapsibleItem) === ' active') {
-						$showCollapsible = true;
-						break;
-					}
-				}
-			@endphp
+<div class="accordion vh-100" id="sidebar-accordion">
+    <ul class="nav nav-pills flex-nowrap flex-column overflow-auto mb-auto gap-2">
+        @foreach($sidebarItems as $name => $item)
+            @hasanyrole($item['role'])
+                @if($item['collapsible'] ?? false)
+                @php
+                    $showCollapsible = false;
+                    foreach ($item['collapsibleItems'] as $collapsibleItem) {
+                        if (getNavLinkClass($routePrefix, $collapsibleItem) === ' active') {
+                            $showCollapsible = true;
+                            break;
+                        }
+                    }
+                @endphp
 
-			<x-sidebar.menu.accordion
-				:href="Route::has($item['route']) ? route($item['route']) : null"
-				:svg="$item['svg']"
-				:name="$name"
-				:show="$showCollapsible"
-				:class="getNavLinkClass($routePrefix, $item)"
-			>
-				@foreach($item['collapsibleItems'] as $collapsibleName => $collapsibleItem)
-					@hasanyrole($collapsibleItem['role'])
-					<x-sidebar.menu.item
-						:href="Route::has($collapsibleItem['route']) ? route($collapsibleItem['route']) : '#'"
-						:svg="$collapsibleItem['svg']"
-						:name="$collapsibleName"
-						:class="getNavLinkClass($routePrefix, $collapsibleItem)"
-					/>
-					@endhasanyrole
-				@endforeach
-			</x-sidebar.menu.accordion>
-			@else
-				<x-sidebar.menu.item
-					:href="Route::has($item['route']) ? route($item['route']) : '#'"
-					:svg="$item['svg']"
-					:name="$name"
-					:class="getNavLinkClass($routePrefix, $item)"
-				/>
-			@endif
-		@endhasanyrole
-	@endforeach
-</ul>
+                <x-sidebar.menu.accordion
+                    :href="Route::has($item['route']) ? route($item['route']) : null"
+                    :svg="$item['svg']"
+                    :name="$name"
+                    :show="$showCollapsible"
+                    :class="getNavLinkClass($routePrefix, $item)"
+                    parentId="sidebar-accordion"
+                >
+                    @foreach($item['collapsibleItems'] as $collapsibleName => $collapsibleItem)
+                        @hasanyrole($collapsibleItem['role'])
+                        <x-sidebar.menu.item
+                            :href="Route::has($collapsibleItem['route']) ? route($collapsibleItem['route']) : '#'"
+                            :svg="$collapsibleItem['svg']"
+                            :name="$collapsibleName"
+                            :class="getNavLinkClass($routePrefix, $collapsibleItem)"
+                        />
+                        @endhasanyrole
+                    @endforeach
+                </x-sidebar.menu.accordion>
+                @else
+                    <x-sidebar.menu.item
+                        :href="Route::has($item['route']) ? route($item['route']) : '#'"
+                        :svg="$item['svg']"
+                        :name="$name"
+                        :class="getNavLinkClass($routePrefix, $item)"
+                    />
+                @endif
+            @endhasanyrole
+        @endforeach
+    </ul>
+</div>
