@@ -109,3 +109,7 @@
 		</form>
 	</div>
 </div>
+
+@section('scripts')
+	@vite(['resources/js/models/suppliers/form.js'])
+@endsection

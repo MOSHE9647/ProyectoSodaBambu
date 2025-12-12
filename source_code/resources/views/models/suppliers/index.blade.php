@@ -11,8 +11,8 @@
 				<thead>
 					<tr>
 						<th scope="col">Nombre</th>
-						<th scope="col">Teléfono</th>
 						<th scope="col">Correo Electrónico</th>
+						<th scope="col">Teléfono</th>
 						<th scope="col">Fecha de Creación</th>
 						<th scope="col">Acciones</th>
 					</tr>
