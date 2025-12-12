@@ -58,6 +58,39 @@ export function validateHourlyWage(wage) {
 }
 
 /**
+ * Formats a phone number to Costa Rican format: +506 XXXX XXXX
+ * Only allows digits and automatically formats as the user types.
+ * @param {string} input - The raw phone input
+ * @returns {string} - The formatted phone number
+ */
+export function formatPhoneNumber(input) {
+	// Remove all non-digit and non-plus characters
+	let cleaned = input.replace(/[^\d+]/g, '');
+	
+	// If it starts with +, remove it to process only digits
+	if (cleaned.startsWith('+')) {
+		cleaned = cleaned.substring(1);
+	}
+	
+	// Remove the country code (506) if it's at the beginning
+	if (cleaned.startsWith('506')) {
+		cleaned = cleaned.substring(3);
+	}
+	
+	// Limit to 8 digits (Costa Rican phone numbers)
+	const limited = cleaned.slice(0, 8);
+	
+	// Apply format: +506 XXXX XXXX
+	if (limited.length === 0) {
+		return '+506 ';
+	} else if (limited.length <= 4) {
+		return `+506 ${limited}`;
+	} else {
+		return `+506 ${limited.slice(0, 4)} ${limited.slice(4)}`;
+	}
+}
+
+/**
  * Validates if the provided phone number is in Costa Rican format (optional).
  * @param phone
  * @returns {boolean}

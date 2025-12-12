@@ -1,11 +1,3 @@
-/**
- * Acciones JavaScript para la gestión de proveedores (suppliers).
- *
- * - showSupplier(): obtiene y muestra la información de un proveedor en un modal SweetAlert.
- * - deleteSupplier(): gestiona la eliminación de un proveedor con confirmación y control de estado.
- */
-
-
 import { SwalModal } from "../../utils/sweetalert.js";
 import { toggleLoadingState } from "../../utils/utils.js";
 import { fetchWithErrorHandling } from "../../utils/error-handling.js";
@@ -24,7 +16,6 @@ export async function showSupplier(url, anchor) {
 		// Fetch supplier data
 		const response = await fetchWithErrorHandling(url);
 		const html = await response.text();
-		
 
 		// Display supplier information in a modal
 		if (html) {

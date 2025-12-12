@@ -56,7 +56,7 @@
                 :id="'created_at'"
                 :type="'text'"
                 :readonly="true"
-                :value="$supplier->created_at ? Carbon::parse($supplier->created_at)->setTimezone('America/Costa_Rica')->locale('es')->translatedFormat('d \\d\\e F \\d\\e\\l Y H:i:s') : ''"
+                :value="$supplier->created_at ? Carbon::parse($supplier->created_at)->setTimezone('America/Costa_Rica')->locale('es')->translatedFormat('d \\d\\e F \\d\\e\\l Y') : ''"
                 :iconLeft="'bi bi-calendar-plus'"
                 :placeholder="'Fecha de Creación'"
             >
@@ -69,7 +69,7 @@
                 :id="'updated_at'"
                 :type="'text'"
                 :readonly="true"
-                :value="$supplier->updated_at ? Carbon::parse($supplier->updated_at)->setTimezone('America/Costa_Rica')->locale('es')->translatedFormat('d \\d\\e F \\d\\e\\l Y H:i:s') : ''"
+                :value="$supplier->updated_at ? Carbon::parse($supplier->updated_at)->setTimezone('America/Costa_Rica')->locale('es')->translatedFormat('d \\d\\e F \\d\\e\\l Y') : ''"
                 :iconLeft="'bi bi-calendar-check'"
                 :placeholder="'Última Actualización'"
             >

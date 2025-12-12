@@ -2,8 +2,6 @@ import { showSupplier, deleteSupplier } from "./actions.js";
 import { NewCrudDataTable } from '../../utils/datatables.js';
 import { toggleLoadingState } from "../../utils/utils.js";
 import { SwalToast } from "../../utils/sweetalert.js";
-import $ from 'jquery';
-import 'datatables.net-bs5';
 
 window.SwalToast = SwalToast;
 window.toggleLoadingState = toggleLoadingState;
@@ -25,8 +23,8 @@ $(() => {
 				return nameText;
 			}
 		},
-		{ data: 'phone', name: 'phone' },
 		{ data: 'email', name: 'email' },
+		{ data: 'phone', name: 'phone' },
 		{
 			data: 'created_at',
 			name: 'created_at',
