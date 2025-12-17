@@ -1,48 +1,54 @@
-import { SwalModal } from "../../utils/sweetalert.js";
-import { toggleLoadingState } from "../../utils/utils.js";
-import { fetchWithErrorHandling } from "../../utils/error-handling.js";
+import { SwalModal, SwalToast } from "../utils/sweetalert.js";
+import { toggleLoadingState } from "../utils/utils.js";
+import { capitalizeSentence } from "../utils/utils.js";
+import { fetchWithErrorHandling } from "../utils/error-handling.js";
 
 /**
- * Displays category information in a modal.
- * @param url - The URL to fetch category data from.
+ * Displays model information in a modal.
+ * @param url - The URL to fetch a previously rendered Laravel Blade file.
  * @param anchor - The anchor element that triggered the action.
+ * @param modelName - The name of the model to be displayed.
  * @returns {Promise<void>}
  */
-export async function showCategory(url, anchor) {
+export async function showModelInfo(url, anchor, modelName) {
     // Show loading state
     toggleLoadingState(anchor, 'info', true);
 
     try {
-        // Fetch category data
+        // Fetch model data
         const response = await fetchWithErrorHandling(url);
         const html = await response.text();
 
-        // Display category information in a modal
+        // Display model information in a modal
         if (html) {
+            const capitalizedModelName = capitalizeSentence(modelName) || 'Modelo';
+
             SwalModal.fire({
-                title: 'Información de la Categoría',
+                title: `Información del ${capitalizedModelName}`,
                 showConfirmButton: false,
                 showCancelButton: true,
                 cancelButtonText: 'Cerrar',
                 html: `${html}`,
             });
         } else {
-            alert('No se pudo cargar la información de la categoría.');
+            SwalToast.fire({
+                icon: 'error',
+                text: `No se pudo cargar la información del ${modelName}.`,
+            });
         }
     } catch (error) {
-        console.error('Error loading category data:', error);
-        alert('Ocurrió un error al cargar la información de la categoría.');
+        console.error(`Error loading ${modelName} data:`, error);
+        SwalToast.fire({
+            icon: 'error',
+            text: `Ocurrió un error al cargar la información del ${modelName}.`,
+        });
     } finally {
         // Hide loading state
         toggleLoadingState(anchor, 'info', false);
     }
 }
 
-/**
- * Handles category deletion with confirmation.
- * @param e - The event object from the delete form action.
- */
-export function deleteCategory(e) {
+export function deleteModel(e, modelName) {
     // Prevent default form submission
     e.preventDefault();
 
@@ -52,7 +58,7 @@ export function deleteCategory(e) {
 
     // Show confirmation dialog
     SwalModal.fire({
-        title: '¿Estás seguro de eliminar esta categoría?',
+        title: `¿Estás seguro de eliminar este ${modelName}?`,
         text: "Esta acción no se puede deshacer.",
         icon: 'warning',
         showCancelButton: true,
@@ -65,6 +71,11 @@ export function deleteCategory(e) {
         } else {
             // Hide loading state if cancelled
             toggleLoadingState(form, 'delete-form', false);
+            return false;
         }
     });
 }
+
+// Expose functions globally
+window.showModelInfo = showModelInfo;
+window.deleteModel = deleteModel;

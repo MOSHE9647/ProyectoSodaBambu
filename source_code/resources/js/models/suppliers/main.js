@@ -1,12 +1,17 @@
-import { showSupplier, deleteSupplier } from "./actions.js";
-import { NewCrudDataTable } from '../../utils/datatables.js';
-import { toggleLoadingState } from "../../utils/utils.js";
+import { showModelInfo, deleteModel } from '../actions.js';
+import { CreateNewDataTable } from '../../utils/datatables.js';
+import { capitalizeSentence, toggleLoadingState } from "../../utils/utils.js";
 import { SwalToast } from "../../utils/sweetalert.js";
+import { formatDate } from '../../utils/utils.js';
 
+// Constants
+const MODEL_NAME = 'proveedor';
+
+// Expose functions globally
 window.SwalToast = SwalToast;
 window.toggleLoadingState = toggleLoadingState;
-window.deleteSupplier = deleteSupplier;
-window.showSupplier = showSupplier;
+window.deleteSupplier = function deleteSupplier(e) { return deleteModel(e, MODEL_NAME); };
+window.showSupplier = function showSupplier(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
 
 // Ensure the DOM is fully loaded before initializing the DataTable
 $(() => {
@@ -28,14 +33,7 @@ $(() => {
 		{
 			data: 'created_at',
 			name: 'created_at',
-			render: function (data) {
-				// Format the created_at date to a more readable format
-				const date = new Date(data);
-				const day = String(date.getDate()).padStart(2, '0');
-				const month = date.toLocaleDateString('es-ES', { month: 'long' });
-				const year = date.getFullYear();
-				return `${day} de ${month} del ${year}`;
-			}
+			render: (data) => formatDate(data),
 		}
 	];
 
@@ -49,10 +47,10 @@ $(() => {
 	 */
 	const actions = {
 		show: { route: supplierShowRoute, func: showSupplier, funcName: 'showSupplier', tooltip: 'Ver detalles' },
-		edit: { route: supplierEditRoute, func: toggleLoadingState, funcName: 'toggleLoadingState', tooltip: 'Editar proveedor' },
+		edit: { route: supplierEditRoute, func: toggleLoadingState, funcName: 'toggleLoadingState', tooltip: `Editar ${MODEL_NAME}` },
 		delete: {
 			route: supplierDeleteRoute,
-			tooltip: 'Eliminar proveedor',
+			tooltip: `Eliminar ${MODEL_NAME}`,
 			func: deleteSupplier,
 			funcName: 'deleteSupplier',
 		}
@@ -66,7 +64,7 @@ $(() => {
 	 */
 	const customButtons = [
 		{
-			text: 'Crear Proveedor',
+			text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
 			href: supplierCreateRoute,
 			class: 'create-button btn-primary',
 			icon: 'bi-building-add',
@@ -77,5 +75,5 @@ $(() => {
 	];
 
 	// Initialize the CRUD DataTable
-	NewCrudDataTable('suppliers-table', supplierIndexRoute, columns, actions, customButtons);
+	CreateNewDataTable('suppliers-table', supplierIndexRoute, columns, actions, customButtons);
 });
