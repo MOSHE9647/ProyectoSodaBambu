@@ -1,12 +1,16 @@
-import { showUser, deleteUser } from "./actions.js";
-import { NewCrudDataTable } from '../../utils/datatables.js';
-import { toggleLoadingState } from "../../utils/utils.js";
+import { showModelInfo, deleteModel } from '../actions.js';
+import { CreateNewDataTable } from '../../utils/datatables.js';
+import { capitalizeSentence, formatDate, toggleLoadingState } from "../../utils/utils.js";
 import { SwalToast } from "../../utils/sweetalert.js";
 
-window.SwalToast = SwalToast; // Make globally accessible for inline usage
-window.toggleLoadingState = toggleLoadingState; // Make globally accessible for inline usage
-window.deleteUser = deleteUser; // Make globally accessible for inline onclick handlers
-window.showUser = showUser; // Make globally accessible for inline onclick handlers
+// Constants
+const MODEL_NAME = 'usuario';
+
+// Expose functions globally
+window.SwalToast = SwalToast;
+window.toggleLoadingState = toggleLoadingState;
+window.deleteUser = function deleteUser(e) { return deleteModel(e, MODEL_NAME); };
+window.showUserInfo = function showUserInfo(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
 
 // Ensure the DOM is fully loaded before initializing the DataTable
 $(() => {
@@ -26,14 +30,7 @@ $(() => {
         { // Format created_at date to 'DD de Month del YYYY'
             data: 'created_at',
             name: 'created_at',
-            render: function(data) {
-                // Format the created_at date to a more readable format
-                const date = new Date(data);
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = date.toLocaleDateString('es-ES', { month: 'long' });
-                const year = date.getFullYear();
-                return `${day} de ${month} del ${year}`;
-            }
+			render: (data) => formatDate(data),
         }
     ];
 
@@ -46,8 +43,8 @@ $(() => {
 	 * }}
 	 */
 	const actions = {
-		show: { route: userShowRoute, func: showUser, tooltip: 'Ver detalles' },
-		edit: { route: userEditRoute, func: toggleLoadingState, tooltip: 'Editar usuario' },
+		show: { route: userShowRoute, func: showUserInfo, tooltip: 'Ver detalles' },
+		edit: { route: userEditRoute, func: toggleLoadingState, tooltip: `Editar ${MODEL_NAME}` },
 		delete: {
 			route: userDeleteRoute,
 			disabledIf: (row) => {
@@ -58,11 +55,11 @@ $(() => {
 			disabledIfTooltip: (row) => {
 				const isLoggedInUser = row.email === loggedInUserEmail;
 				if (isLoggedInUser) {
-					return 'No puedes eliminar tu propio usuario.';
+					return `No puedes eliminar tu propio ${MODEL_NAME}.`;
 				}
-				return 'No se puede eliminar al único usuario administrador.';
+				return `No se puede eliminar al único ${MODEL_NAME} administrador.`;
 			},
-			tooltip: 'Eliminar usuario',
+			tooltip: `Eliminar ${MODEL_NAME}`,
 			func: deleteUser,
 		}
 	};
@@ -82,7 +79,7 @@ $(() => {
 			func: underDevelopment,
         },
         {
-            text: 'Crear Usuario',
+            text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
             href: userCreateRoute,
             class: 'create-button btn-primary',
             icon: 'bi-person-plus-fill',
@@ -92,7 +89,7 @@ $(() => {
     ];
 
     // Initialize the CRUD DataTable
-    NewCrudDataTable('users-table', userRoute, columns, actions, customButtons);
+    CreateNewDataTable('users-table', userRoute, columns, actions, customButtons);
 });
 
 // TODO: Remove this function when the feature is implemented

@@ -1,47 +1,33 @@
-import { showClient, deleteClient } from "./actions.js";
-import { NewCrudDataTable } from '../../utils/datatables.js';
-import { toggleLoadingState } from "../../utils/utils.js";
+import { showModelInfo, deleteModel } from '../actions.js';
+import { CreateNewDataTable } from '../../utils/datatables.js';
+import { capitalizeSentence, formatDate, toggleLoadingState } from "../../utils/utils.js";
 import { SwalToast } from "../../utils/sweetalert.js";
 
-window.toggleLoadingState = toggleLoadingState;
-window.deleteClient = deleteClient;
+// Constants
+const MODEL_NAME = 'cliente';
+
+// Expose functions globally
 window.SwalToast = SwalToast;
-window.showClient = showClient;
+window.toggleLoadingState = toggleLoadingState;
+window.deleteClient = function deleteClient(e) { return deleteModel(e, MODEL_NAME); };
+window.showClient = function showClient(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
 
 // Ensure the DOM is fully loaded before initializing the DataTable
-$(document).ready(() => {
+$(() => {
     // Define columns for clients table
     const columns = [
-        { 
-			data: 'first_name',
-			name: 'first_name'
-		},
-        { 
-			data: 'last_name',
-			name: 'last_name'
-		},
-        { 
-			data: 'email', 
-			name: 'email' 
-		},
+        { data: 'first_name', name: 'first_name' },
+        { data: 'last_name', name: 'last_name' },
+        { data: 'email', name: 'email' },
         { 
 			data: 'phone', 
 			name: 'phone',
-			render: function(data) {
-				return data && data !== 'N/A' ? data : 'N/A';
-			}
+			render: (data) => data ? data : 'N/A',
 		},
         {
             data: 'created_at',
             name: 'created_at',
-            render: function(data) {
-                // Format the created_at date to a more readable format
-                const date = new Date(data);
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = date.toLocaleDateString('es-ES', { month: 'long' });
-                const year = date.getFullYear();
-                return `${day} de ${month} del ${year}`;
-            }
+            render: (data) => formatDate(data),
         }
     ];
 
@@ -50,10 +36,10 @@ $(document).ready(() => {
 	 */
 	const actions = {
 		show: { route: clientShowRoute, func: showClient, tooltip: 'Ver detalles' },
-		edit: { route: clientEditRoute, func: toggleLoadingState, tooltip: 'Editar cliente' },
+		edit: { route: clientEditRoute, func: toggleLoadingState, tooltip: `Editar ${MODEL_NAME}` },
 		delete: {
 			route: clientDeleteRoute,
-			tooltip: 'Eliminar cliente',
+			tooltip: `Eliminar ${MODEL_NAME}`,
 			func: deleteClient,
 		}
 	};
@@ -63,7 +49,7 @@ $(document).ready(() => {
 	 */
     const customButtons = [
         {
-            text: 'Crear Cliente',
+            text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
             href: clientCreateRoute,
             class: 'create-button btn-primary',
             icon: 'bi-person-plus-fill',
@@ -73,5 +59,5 @@ $(document).ready(() => {
     ];
 
     // Initialize the CRUD DataTable
-    NewCrudDataTable('clients-table', clientRoute, columns, actions, customButtons);
+    CreateNewDataTable('clients-table', clientRoute, columns, actions, customButtons);
 });

@@ -1,40 +1,31 @@
-import { showCategory, deleteCategory } from "./actions.js";
-import { NewCrudDataTable } from '../../utils/datatables.js';
-import { toggleLoadingState } from "../../utils/utils.js";
+import { showModelInfo, deleteModel } from '../actions.js';
+import { CreateNewDataTable } from '../../utils/datatables.js';
+import { capitalizeSentence, formatDate, toggleLoadingState } from "../../utils/utils.js";
 import { SwalToast } from "../../utils/sweetalert.js";
 
+// Constants
+const MODEL_NAME = 'categoría';
+
 // Expose necessary functions to window object
-window.toggleLoadingState = toggleLoadingState;
-window.deleteCategory = deleteCategory;
 window.SwalToast = SwalToast;
-window.showCategory = showCategory;
+window.toggleLoadingState = toggleLoadingState;
+window.deleteCategory = function deleteCategory(e) { return deleteModel(e, MODEL_NAME); };
+window.showCategory = function showCategory(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
 
 // Ensure the DOM is fully loaded before initializing the DataTable
-$(document).ready(() => {
+$(() => {
     // Define columns for categories table
     const columns = [
-        { 
-            data: 'name',
-            name: 'name'
-        },
+        { data: 'name', name: 'name' },
         { 
             data: 'description',
             name: 'description',
-            render: function(data) {
-                return data && data !== 'N/A' ? data : 'N/A';
-            }
+            render: (data) => data ? data : 'N/A',
         },
         {
             data: 'created_at',
             name: 'created_at',
-            render: function(data) {
-                // Format the created_at date to a more readable format
-                const date = new Date(data);
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = date.toLocaleDateString('es-ES', { month: 'long' });
-                const year = date.getFullYear();
-                return `${day} de ${month} del ${year}`;
-            }
+            render: (data) => formatDate(data),
         }
     ];
 
@@ -43,10 +34,10 @@ $(document).ready(() => {
      */
     const actions = {
         show: { route: categoryShowRoute, func: showCategory, tooltip: 'Ver detalles' },
-        edit: { route: categoryEditRoute, func: toggleLoadingState, tooltip: 'Editar categoría' },
+        edit: { route: categoryEditRoute, func: toggleLoadingState, tooltip: `Editar ${MODEL_NAME}` },
         delete: {
             route: categoryDeleteRoute,
-            tooltip: 'Eliminar categoría',
+            tooltip: `Eliminar ${MODEL_NAME}`,
             func: deleteCategory,
         }
     };
@@ -56,7 +47,7 @@ $(document).ready(() => {
      */
     const customButtons = [
         {
-            text: 'Crear Categoría',
+            text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
             href: categoryCreateRoute,
             class: 'create-button btn-primary',
             icon: 'bi-plus-circle-fill',
@@ -66,5 +57,5 @@ $(document).ready(() => {
     ];
 
     // Initialize the CRUD DataTable
-    NewCrudDataTable('categories-table', categoryRoute, columns, actions, customButtons);
+    CreateNewDataTable('categories-table', categoryRoute, columns, actions, customButtons);
 });

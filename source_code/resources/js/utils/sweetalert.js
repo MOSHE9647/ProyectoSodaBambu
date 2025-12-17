@@ -3,7 +3,6 @@ import Swal from 'sweetalert2';
 
 export const SwalModal = Swal.mixin({
 	theme: 'bootstrap-5',
-	showCloseButton: true,
 	focusConfirm: false,
 	customClass: {
 		popup: 'swal-popup w-auto h-auto',
@@ -20,11 +19,17 @@ export const SwalToast = Swal.mixin({
 	toast: true,
 	position: 'top-end',
 	theme: 'bootstrap-5',
+	showCloseButton: true,
 	showConfirmButton: false,
 	timerProgressBar: true,
-	timer: 5000,
+	timer: 7000,
 	customClass: {
+		closeButton: 'swal-close-btn fs-3',
 		popup: 'swal-popup bg-body-tertiary',
 		timerProgressBar: 'swal-timer-progress-bar',
+	},
+	didOpen: (toast) => {
+		toast.onmouseenter = Swal.stopTimer;
+		toast.onmouseleave = Swal.resumeTimer;
 	}
 });

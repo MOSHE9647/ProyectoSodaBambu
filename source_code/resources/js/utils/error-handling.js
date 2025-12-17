@@ -1,4 +1,4 @@
-import { SwalToast } from "../utils/sweetalert.js";
+import { SwalToast } from "./sweetalert.js";
 
 export function handleApiError(error, customMessage = null) {
 	console.error('API Error:', error);
