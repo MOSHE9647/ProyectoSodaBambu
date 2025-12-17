@@ -6,9 +6,11 @@ import $ from 'jquery';
 import * as bootstrap from 'bootstrap';
 import { applyTheme } from './utils/theme-toggler.js';
 import { scrollToItem, checkScrollbarVisibility } from './utils/scrollbar.js';
+import { updateConnectionStatus } from './utils/connection-status.js';
 
 window.$ = $; // Make jQuery globally available
 window.bootstrap = bootstrap; // Make Bootstrap globally available
+window.updateConnectionStatus = updateConnectionStatus;
 
 $(document).ready(function () {
 	// Enable theme toggler button functionality
@@ -24,4 +26,10 @@ $(document).ready(function () {
 
 	// Check if scrollbar is needed for sidebar navigation
 	checkScrollbarVisibility();
+
+	// Verify connection status every 5 seconds
+	setInterval(updateConnectionStatus, 5000);
+
+	// Call the function on page load
+	updateConnectionStatus();
 })

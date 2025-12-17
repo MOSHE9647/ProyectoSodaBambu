@@ -298,6 +298,19 @@ body {
 	color: var(--bs-body-color);
 }
 
+.swal-offline-popup {
+	display: flex !important;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-evenly;
+	padding-right: 5px !important;
+	height: 10dvh !important;
+}
+
+.swal-offline-container {
+	width: 42dvw !important;
+}
+
 .swal-close-btn {
 	color: var(--bs-body-color);
 }
