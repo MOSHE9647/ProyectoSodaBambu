@@ -33,3 +33,15 @@ export const SwalToast = Swal.mixin({
 		toast.onmouseleave = Swal.resumeTimer;
 	}
 });
+
+export const SwalOfflineToast = Swal.mixin({
+	toast: true,
+	position: 'bottom',
+	theme: 'bootstrap-5',
+	customClass: {
+		popup: 'swal-offline-popup bg-body-tertiary',
+		container: 'swal-offline-container',
+		confirmButton: 'btn btn-primary',
+		actions: 'pb-1'
+	}
+});
