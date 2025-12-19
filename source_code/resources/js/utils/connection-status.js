@@ -11,7 +11,8 @@ export function updateConnectionStatus() {
     if (currentOnline) {
         fetch('/up')
             .then(response => {
-                const currentServerReachable = response.ok;
+                const responseUrl = response.url;
+                const currentServerReachable = response.ok && responseUrl.includes('/up');
 
                 // Solo mostrar mensaje si el estado cambió
                 if (!previousConnectionState.serverReachable && currentServerReachable) {

@@ -1,4 +1,21 @@
 /**
+ * Check if a URL should be cached
+ * @param { string } url
+ * @returns { boolean }
+ */
+const shouldCache = function (url) {
+	// Don't cache '/up' endpoint
+	if (url.endsWith('/up')) {
+		return false;
+	}
+	// Don't cache URLs that are not http(s)
+	if (!url.startsWith('http')) {
+		return false;
+	}
+	return true;
+};
+
+/**
  * Preloads the necessary files for offline use.
  * @returns { Promise<void> }
  */
@@ -7,7 +24,9 @@ const preLoad = async function () {
 	const filesToCache = await response.json();
 	return caches.open("offline").then(function (cache) {
 		// caching index and important routes
-		const promises = filesToCache.map(url => cache.add(url).catch(error => console.error(`Error caching ${url}:`, error)));
+		const promises = filesToCache
+			.filter(url => shouldCache(url)) // Filter URLs that shouldn't be cached
+			.map(url => cache.add(url).catch(error => console.error(`Error caching ${url}:`, error)));
 		return Promise.all(promises);
 	});
 };
@@ -25,7 +44,7 @@ self.addEventListener("install", function (event) {
  * @returns { Promise<Response> }
  */
 const checkResponse = function (request) {
-	// Simplify: always try to fetch from network and return the response if the server responds (regardless of status)
+	// Always try to fetch from network and return the response if the server responds (regardless of status)
 	return fetch(request);
 };
 
@@ -34,16 +53,17 @@ const checkResponse = function (request) {
  * @param { Request } request
  * @returns { Promise<void> }
  */
-const addToCache = function (request) {
+const addToCache = async function (request) {
 	// Only cache http(s) requests
-	if (!request.url.startsWith('http')) {
+	if (!shouldCache(request.url)) {
 		return Promise.resolve();
 	}
-	return caches.open("offline").then(function (cache) {
-		return fetch(request).then(function (response) {
-			return cache.put(request, response);
-		});
-	});
+	const cache = await caches.open("offline");
+	const response = await fetch(request);
+	if (response.ok) {
+		return cache.put(request, response.clone());
+	}
+	return response;
 };
 
 /**
@@ -51,16 +71,14 @@ const addToCache = function (request) {
  * @param { Request } request
  * @returns { Promise<Response> }
  */
-const returnFromCache = function (request) {
-	return caches.open("offline").then(function (cache) {
-		return cache.match(request).then(function (matching) {
-			if (!matching || matching.status === 404) {
-				return cache.match("offline.html");
-			} else {
-				return matching;
-			}
-		});
-	});
+const returnFromCache = async function (request) {
+	const cache = await caches.open("offline");
+	const matching = await cache.match(request);
+	if (!matching || matching.status === 404) {
+		return cache.match("offline.html");
+	} else {
+		return matching;
+	}
 };
 
 /**
@@ -73,7 +91,7 @@ self.addEventListener("fetch", function (event) {
 			return returnFromCache(event.request);
 		})
 	);
-	if (event.request.url.startsWith('http')) {
+	if (shouldCache(event.request.url)) {
 		event.waitUntil(addToCache(event.request));
 	}
 });

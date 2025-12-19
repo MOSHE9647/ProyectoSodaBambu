@@ -38,6 +38,7 @@ export const SwalOfflineToast = Swal.mixin({
 	toast: true,
 	position: 'bottom',
 	theme: 'bootstrap-5',
+	confirmButtonText: 'Entendido',
 	customClass: {
 		popup: 'swal-offline-popup bg-body-tertiary',
 		container: 'swal-offline-container',
