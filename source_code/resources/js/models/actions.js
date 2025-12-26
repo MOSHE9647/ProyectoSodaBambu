@@ -1,4 +1,4 @@
-import { SwalModal, SwalToast } from "../utils/sweetalert.js";
+import { SwalModal, SwalNotificationTypes, SwalToast } from "../utils/sweetalert.js";
 import { toggleLoadingState } from "../utils/utils.js";
 import { capitalizeSentence } from "../utils/utils.js";
 import { fetchWithErrorHandling } from "../utils/error-handling.js";
@@ -32,14 +32,14 @@ export async function showModelInfo(url, anchor, modelName) {
             });
         } else {
             SwalToast.fire({
-                icon: 'error',
+                icon: SwalNotificationTypes.ERROR,
                 text: `No se pudo cargar la información del ${modelName}.`,
             });
         }
     } catch (error) {
         console.error(`Error loading ${modelName} data:`, error);
         SwalToast.fire({
-            icon: 'error',
+            icon: SwalNotificationTypes.ERROR,
             text: `Ocurrió un error al cargar la información del ${modelName}.`,
         });
     } finally {
@@ -60,7 +60,7 @@ export function deleteModel(e, modelName) {
     SwalModal.fire({
         title: `¿Estás seguro de eliminar este ${modelName}?`,
         text: "Esta acción no se puede deshacer.",
-        icon: 'warning',
+        icon: SwalNotificationTypes.WARNING,
         showCancelButton: true,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',

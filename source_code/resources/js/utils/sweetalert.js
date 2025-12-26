@@ -1,6 +1,14 @@
 import 'sweetalert2/themes/bootstrap-5.css'; //<- Import SweetAlert2 Bootstrap 5 theme
 import Swal from 'sweetalert2';
 
+export const SwalNotificationTypes = {
+	SUCCESS: 'success',
+	ERROR: 'error',
+	WARNING: 'warning',
+	INFO: 'info',
+	QUESTION: 'question'
+}
+
 export const SwalModal = Swal.mixin({
 	theme: 'bootstrap-5',
 	focusConfirm: false,

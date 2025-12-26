@@ -1,13 +1,14 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
 import { capitalizeSentence, formatDate, toggleLoadingState } from "../../utils/utils.js";
-import { SwalToast } from "../../utils/sweetalert.js";
+import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 // Constants
 const MODEL_NAME = 'categoría';
 
 // Expose necessary functions to window object
 window.SwalToast = SwalToast;
+window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
 window.deleteCategory = function deleteCategory(e) { return deleteModel(e, MODEL_NAME); };
 window.showCategory = function showCategory(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };

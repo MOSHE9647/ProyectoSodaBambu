@@ -56,7 +56,7 @@
 	@if(session('success'))
 		<script type="module">
 			SwalToast.fire({
-				icon: 'success',
+				icon: SwalNotificationTypes.SUCCESS,
 				title: "{{ session('success') }}"
 			});
 		</script>

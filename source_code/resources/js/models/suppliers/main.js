@@ -1,7 +1,7 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
 import { capitalizeSentence, toggleLoadingState } from "../../utils/utils.js";
-import { SwalToast } from "../../utils/sweetalert.js";
+import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 import { formatDate } from '../../utils/utils.js';
 
 // Constants
@@ -9,6 +9,7 @@ const MODEL_NAME = 'proveedor';
 
 // Expose functions globally
 window.SwalToast = SwalToast;
+window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
 window.deleteSupplier = function deleteSupplier(e) { return deleteModel(e, MODEL_NAME); };
 window.showSupplier = function showSupplier(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
