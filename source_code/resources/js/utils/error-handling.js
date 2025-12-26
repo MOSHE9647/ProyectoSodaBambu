@@ -1,11 +1,11 @@
-import { SwalToast } from "./sweetalert.js";
+import { SwalNotificationTypes, SwalToast } from "./sweetalert.js";
 
 export function handleApiError(error, customMessage = null) {
 	console.error('API Error:', error);
 
 	SwalToast.fire({
-		icon: 'error',
 		title: 'Error',
+		icon: SwalNotificationTypes.ERROR,
 		text: customMessage || 'Ocurrió un error inesperado'
 	});
 }

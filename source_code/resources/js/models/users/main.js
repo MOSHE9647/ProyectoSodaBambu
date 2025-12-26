@@ -1,13 +1,14 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
 import { capitalizeSentence, formatDate, toggleLoadingState } from "../../utils/utils.js";
-import { SwalToast } from "../../utils/sweetalert.js";
+import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 // Constants
 const MODEL_NAME = 'usuario';
 
 // Expose functions globally
 window.SwalToast = SwalToast;
+window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
 window.deleteUser = function deleteUser(e) { return deleteModel(e, MODEL_NAME); };
 window.showUserInfo = function showUserInfo(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
@@ -98,7 +99,7 @@ $(() => {
  */
 function underDevelopment() {
 	SwalToast.fire({
-		icon: 'info',
+		icon: SwalNotificationTypes.INFO,
 		title: 'Funcionalidad en desarrollo',
 	});
 }

@@ -1,6 +1,6 @@
 import '../config/datatables.js';
 import { escapeHtml } from "./utils.js";
-import { SwalToast } from "./sweetalert.js";
+import { SwalNotificationTypes, SwalToast } from "./sweetalert.js";
 
 /**
  * Action button configuration templates
@@ -247,7 +247,7 @@ function buildTableOptions(tableId, ajaxUrl, columns, buttonsHtml, userOptions) 
 function handleAjaxError(tableId, textStatus, errorThrown) {
 	console.error(`Error de AJAX: ${textStatus}`, errorThrown);
 	SwalToast.fire({
-		icon: 'error',
+		icon: SwalNotificationTypes.ERROR,
 		title: 'No se pudieron cargar los datos de la tabla.',
 		timer: 8000
 	});

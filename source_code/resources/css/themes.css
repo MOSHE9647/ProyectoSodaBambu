@@ -1,11 +1,11 @@
-/* Importar fuentes */
+/* Font Import */
 @import url('https://fonts.bunny.net/css?family=nunito:400,500,600,700,800');
 
-/* Importar Bootstrap y Bootstrap Icons */
+/* Import Bootstrap and Bootstrap Icons */
 @import 'bootstrap';
 @import '../libs/bootstrap/bootstrap-icons.min.css';
 
-/* Paleta de colores base */
+/* Base Color Palette */
 :root {
 	--bambu-logo-bg: #28A745;
 	--bambu-body-light: #F6F6F6;
@@ -21,7 +21,7 @@
 	--bambu-danger: #DC3545;
 }
 
-/* Tema Light (por defecto) */
+/* Light Theme (default) */
 :root,
 [data-bs-theme="light"] {
 	/* Bootstrap Core */
@@ -79,7 +79,7 @@
 	--pagination-disabled-border-color: var(--bs-border-color);
 }
 
-/* Tema Dark */
+/* Dark Theme */
 [data-bs-theme="dark"] {
 	/* Bootstrap Core */
 	--bs-body-bg: var(--bambu-body-dark);
@@ -130,12 +130,12 @@
 	--pagination-disabled-border-color: var(--bs-border-color);
 }
 
-/* Transiciones suaves */
+/* Smooth Transitions */
 * {
 	transition: all 0.3s ease;
 }
 
-/* Visibilidad de iconos según tema */
+/* Icon Visibility Based on Theme */
 [data-bs-theme="dark"] #moonIcon,
 [data-bs-theme="light"] #sunIcon {
 	display: none;
@@ -146,7 +146,7 @@
 	display: inline-block;
 }
 
-/* Estilos de formulario */
+/* Form Styles */
 .form-select:focus,
 .form-control:focus,
 .form-check-input:focus {
@@ -159,7 +159,7 @@
 	border-color: var(--form-check-input-checked-border-color);
 }
 
-/* Aplicar background y color del body */
+/* Apply background and body color */
 body {
 	background-color: var(--bs-body-bg);
 	font-family: 'Nunito', sans-serif;
@@ -168,7 +168,7 @@ body {
 	line-height: 1.6;
 }
 
-/* Estilizar scrollbars */
+/* Style scrollbars */
 ::-webkit-scrollbar {
 	width: 8px;
 }
@@ -188,7 +188,7 @@ body {
 	background: var(--scrollbar-thumb-hover);
 }
 
-/* Estilizar el botón de cambio de tema */
+/* Style the theme toggle button */
 #moonIcon {
 	margin-left: 3px;
 	margin-bottom: 1px;
@@ -205,10 +205,12 @@ body {
 	color: var(--bambu-text-dark);
 }
 
+/* Brand Logo Style */
 .brand-logo {
 	background-color: var(--bambu-logo-bg);
 }
 
+/* Global Table Styles */
 .table-container {
 	background: var(--table-container-bg);
 	border: 1px solid var(--table-container-border);
@@ -233,6 +235,7 @@ body {
 	--bs-pagination-disabled-border-color: var(--pagination-disabled-border-color);
 }
 
+/* Button Styles */
 .btn-primary {
 	--bs-btn-bg: var(--bambu-logo-bg);
 	--bs-btn-border-color: var(--bambu-logo-bg);
@@ -293,6 +296,7 @@ body {
 	opacity: 0.65;
 }
 
+/* SweetAlert2 Styles */
 .swal-popup {
 	background: var(--bs-body-bg);
 	color: var(--bs-body-color);
@@ -302,13 +306,17 @@ body {
 	display: flex !important;
 	flex-direction: row;
 	align-items: center;
-	justify-content: space-evenly;
+	justify-content: space-between;
 	padding-right: 5px !important;
-	height: 10dvh !important;
+	min-height: 60px !important;
+	max-height: 80px !important;
 }
 
 .swal-offline-container {
-	width: 42dvw !important;
+	min-width: 250px !important;
+	max-width: 90vw !important;
+	width: fit-content !important;
+	overflow: hidden !important;
 }
 
 .swal-close-btn {
