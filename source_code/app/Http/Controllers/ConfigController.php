@@ -2,10 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
 
-class ConfigController extends Controller
+class ConfigController extends Controller implements HasMiddleware
 {
+    public function middleware()
+    {
+        return ['auth', RoleMiddleware::using(UserRole::ADMIN->value)];
+    }
+
     public function index()
     {
         return view('pages.config.index');

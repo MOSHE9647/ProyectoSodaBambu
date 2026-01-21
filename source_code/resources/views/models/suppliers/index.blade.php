@@ -43,7 +43,7 @@
 		<script type="module">
 			SwalToast.fire({
 				icon: SwalNotificationTypes.SUCCESS,
-				title: "{{ session('success') }}"
+				title: @json(session('success'))
 			});
 		</script>
 	@endif

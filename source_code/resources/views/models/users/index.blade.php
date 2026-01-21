@@ -32,20 +32,20 @@
 
 @section('scripts')
 	<script type="text/javascript">
-		let userRoute = "{{ route('users.index') }}";
-		let userShowRoute = "{{ route('users.show', ['user' => ':id']) }}";
-		let userCreateRoute = "{{ route('users.create') }}";
-		let userEditRoute = "{{ route('users.edit', ['user' => ':id']) }}";
-		let userDeleteRoute = "{{ route('users.destroy', ['user' => ':id']) }}";
-		let isUserUniqueAdmin = {{ $adminCount <= 1 ? 'true' : 'false' }};
-		let loggedInUserEmail = "{{ auth()->user()->email }}";
-		let csrfToken = "{{ csrf_token() }}";
+		let userRoute = @json(route('users.index'));
+		let userShowRoute = @json(route('users.show', ['user' => ':id']));
+		let userCreateRoute = @json(route('users.create'));
+		let userEditRoute = @json(route('users.edit', ['user' => ':id']));
+		let userDeleteRoute = @json(route('users.destroy', ['user' => ':id']));
+		let isUserUniqueAdmin = @json($adminCount <= 1 ? true : false);
+		let loggedInUserEmail = @json(auth()->user()->email);
+		let csrfToken = @json(csrf_token());
 		userRoles = [
 			@foreach(UserRole::cases() as $role)
 				{
-					name: "{{ $role->name }}",
-					value: "{{ $role->value }}",
-					label: "{{ $role->label() }}"
+					name: @json($role->name),
+					value: @json($role->value),
+					label: @json($role->label())
 				},
 			@endforeach
 		];
@@ -57,7 +57,7 @@
 		<script type="module">
 			SwalToast.fire({
 				icon: SwalNotificationTypes.SUCCESS,
-				title: "{{ session('success') }}"
+				title: @json(session('success'))
 			});
 		</script>
 	@endif
