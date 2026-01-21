@@ -78,6 +78,7 @@ $(() => {
             class: 'btn-outline-info',
             icon: 'bi-card-checklist',
 			func: underDevelopment,
+			params: ['.attendance-button', 'attendance', true],
         },
         {
             text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
@@ -97,7 +98,7 @@ $(() => {
 /**
  * Displays a toast notification indicating that the functionality is under development.
  */
-function underDevelopment() {
+function underDevelopment(_param1, _param2, _param3) {
 	SwalToast.fire({
 		icon: SwalNotificationTypes.INFO,
 		title: 'Funcionalidad en desarrollo',
