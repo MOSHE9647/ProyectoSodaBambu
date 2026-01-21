@@ -18,7 +18,6 @@
 	@setDarkLightTheme
 
 	<!-- Scripts -->
-	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 	@vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="overflow-hidden">

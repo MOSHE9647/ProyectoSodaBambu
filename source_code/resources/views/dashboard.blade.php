@@ -81,13 +81,12 @@
 @endsection
 
 @section('scripts')
-	<script>
-		document.addEventListener("DOMContentLoaded", function () {
-		
+	<script type="module">
+		$(document).ready(function () {
 			// Get current theme (light or dark)
 			function getCurrentTheme() {
-        		return document.documentElement.getAttribute('data-bs-theme') || 'light';
-    		}
+				return $('html').attr('data-bs-theme') || 'light';
+			}
 
 			// Graph Options (Series and Categories should show data up to the current day of the month)
 			var options = {
@@ -99,7 +98,7 @@
 							$currentDay = now()->day;
 							$currentMonth = now()->month;
 							
-							for ($day = 1; $day < $currentDay; $day++) {
+							for ($day = 1; $day <= $currentDay; $day++) {
 								echo rand(50000, 500000);
 								if ($day < $currentDay) echo ', ';
 							}
@@ -111,7 +110,7 @@
 						@php
 							$currentDay = now()->day;
 							$monthName = ucfirst(now()->translatedFormat('F'));
-							for ($day = 1; $day < $currentDay; $day++) {
+							for ($day = 1; $day <= $currentDay; $day++) {
 								$date = now()->setDay($day);
 								$dayName = ucfirst($date->translatedFormat('l'));
 								echo "'" . $dayName . ", " . $day . " de " . $monthName . "'";
@@ -141,13 +140,13 @@
 						},
 						autoSelected: 'pan' 
 					},
-					sparkline: { enabled: true } // SPARKLINE MODE: Automatically removes axes and borders
+					sparkline: { enabled: true }
 				},
 				theme: {
-					mode: getCurrentTheme() // 'light' or 'dark' dynamically
+					mode: getCurrentTheme()
 				},
 				stroke: {
-					curve: 'smooth',   // Smooth curved lines
+					curve: 'smooth',
 					width: 2
 				},
 				fill: {
@@ -155,33 +154,31 @@
 					gradient: {
 						shadeIntensity: 1,
 						opacityFrom: 0.7,
-						opacityTo: 0.3, // Decreased for better visibility
+						opacityTo: 0.3,
 						stops: [0, 90, 100]
 					}
 				},
-				colors: ['#198754'], // Green color (Bootstrap 'success')
+				colors: ['#198754'],
 				tooltip: {
 					theme: getCurrentTheme(),
 					y: {
 						formatter: function (val) {
-							return "₡ " + val.toLocaleString(); // Currency format
+							return "₡ " + val.toLocaleString();
 						}
 					}
 				}
 			};
 
 			// Render the chart
-			var chart = new ApexCharts(document.querySelector("#chart-monthly-income"), options);
+			var chart = new ApexCharts($('#chart-monthly-income')[0], options);
 			chart.render();
 
-			// Create an observer that watches the <html> tag
+			// Use MutationObserver with jQuery to watch for changes in data-bs-theme attribute
 			var observer = new MutationObserver(function(mutations) {
 				mutations.forEach(function(mutation) {
 					if (mutation.attributeName === "data-bs-theme") {
-						// Detect the new theme
 						var newTheme = getCurrentTheme();
 						
-						// Update ApexCharts dynamically
 						chart.updateOptions({
 							theme: { mode: newTheme },
 							tooltip: { theme: newTheme }
@@ -190,10 +187,10 @@
 				});
 			});
 
-			// Start observing the <html> tag
+			// Start observing the documentElement for attribute changes
 			observer.observe(document.documentElement, {
-				attributes: true, // Watch attributes
-				attributeFilter: ['data-bs-theme'] // Only this specific attribute
+				attributes: true,
+				attributeFilter: ['data-bs-theme']
 			});
 		});
 	</script>

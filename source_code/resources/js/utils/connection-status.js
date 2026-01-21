@@ -103,3 +103,41 @@ export async function updateConnectionStatus() {
 function showToast(icon, title) {
     SwalOfflineToast.fire({ icon, title });
 }
+
+export function checkConnectionStatus() {
+    // Verify connection status every 5 seconds, but only while the page is visible
+    let connectionStatusIntervalId = null;
+    const CONNECTION_CHECK_INTERVAL = 5000;
+
+    const startConnectionStatusChecks = () => {
+        if (connectionStatusIntervalId !== null) {
+            return;
+        }
+
+        // Call the function immediately, then start the interval  
+        updateConnectionStatus();
+        connectionStatusIntervalId = setInterval(updateConnectionStatus, CONNECTION_CHECK_INTERVAL);
+    };
+
+    const stopConnectionStatusChecks = () => {
+        if (connectionStatusIntervalId === null) {
+            return;
+        }
+
+        clearInterval(connectionStatusIntervalId);
+        connectionStatusIntervalId = null;
+    };
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+            startConnectionStatusChecks();
+        } else {
+            stopConnectionStatusChecks();
+        }
+    });
+
+    // Start connection status checks immediately if the page is already visible  
+    if (document.visibilityState === 'visible') {
+        startConnectionStatusChecks();
+    }
+}

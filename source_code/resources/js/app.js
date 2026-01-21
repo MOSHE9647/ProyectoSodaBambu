@@ -3,13 +3,15 @@ import '@popperjs/core'; //<- Import Popper.js for Bootstrap tooltips and popove
 import 'sweetalert2/themes/bootstrap-5.css'; //<- Import SweetAlert2 Bootstrap 5 theme
 
 import $ from 'jquery';
+import ApexCharts from 'apexcharts';
 import * as bootstrap from 'bootstrap';
 import { applyTheme } from './utils/theme-toggler.js';
 import { scrollToItem, checkScrollbarVisibility } from './utils/scrollbar.js';
-import { updateConnectionStatus } from './utils/connection-status.js';
+import { checkConnectionStatus, updateConnectionStatus } from './utils/connection-status.js';
 
 window.$ = $; // Make jQuery globally available
 window.bootstrap = bootstrap; // Make Bootstrap globally available
+window.ApexCharts = ApexCharts; // Make ApexCharts globally available
 window.updateConnectionStatus = updateConnectionStatus;
 
 $(document).ready(function () {
@@ -27,9 +29,6 @@ $(document).ready(function () {
 	// Check if scrollbar is needed for sidebar navigation
 	checkScrollbarVisibility();
 
-	// Verify connection status every 5 seconds
-	setInterval(updateConnectionStatus, 5000);
-
-	// Call the function on page load
-	updateConnectionStatus();
+	// Start checking connection status
+	checkConnectionStatus();
 })
