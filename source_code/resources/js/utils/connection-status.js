@@ -104,6 +104,24 @@ function showToast(icon, title) {
     SwalOfflineToast.fire({ icon, title });
 }
 
+
+/**
+ * Checks the connection status of the application at regular intervals.
+ * 
+ * Verifies connection status every 5 seconds, but only while the page is visible.
+ * Automatically pauses checks when the page loses visibility (e.g., tab is hidden)
+ * and resumes when the page becomes visible again.
+ * 
+ * The function immediately calls the connection status update upon initialization
+ * if the page is already visible, then establishes an interval for subsequent checks.
+ * 
+ * @function checkConnectionStatus
+ * @returns {void}
+ * 
+ * @example
+ * // Initialize connection status monitoring
+ * checkConnectionStatus();
+ */
 export function checkConnectionStatus() {
     // Verify connection status every 5 seconds, but only while the page is visible
     let connectionStatusIntervalId = null;

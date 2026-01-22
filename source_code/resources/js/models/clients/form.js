@@ -15,6 +15,7 @@ if (typeof $ === 'undefined') {
 }
 
 // Constants and Variables
+// TODO: Verify why validatePhone is not working as expected in this form
 const isEdit = document.querySelector('form[id^="edit-"]') !== null;
 const formId = isEdit ? 'edit-client-form' : 'create-client-form';
 const fieldValidators = {

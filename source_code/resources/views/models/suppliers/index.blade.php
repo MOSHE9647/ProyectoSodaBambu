@@ -27,15 +27,6 @@
 @endsection
 
 @section('scripts')
-	<script type="text/javascript">
-		let supplierIndexRoute = "{{ route('suppliers.index') }}";
-		let supplierCreateRoute = "{{ route('suppliers.create') }}";
-		let supplierBaseUrl = "{{ url('suppliers') }}"; 
-		let supplierShowRoute = supplierBaseUrl + "/:id";
-		let supplierEditRoute = supplierBaseUrl + "/:id/edit";
-		let supplierDeleteRoute = supplierBaseUrl + "/:id"; 
-		let csrfToken = "{{ csrf_token() }}";
-	</script>
 	@vite(['resources/js/models/suppliers/main.js'])
 
 	{{-- Success Toast Notification --}}

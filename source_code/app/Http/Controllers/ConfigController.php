@@ -9,7 +9,7 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 
 class ConfigController extends Controller implements HasMiddleware
 {
-    public function middleware()
+    public static function middleware()
     {
         return ['auth', RoleMiddleware::using(UserRole::ADMIN->value)];
     }

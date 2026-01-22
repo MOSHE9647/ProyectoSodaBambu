@@ -1,5 +1,5 @@
 @php
-	use App\Enums\UserRole;
+use App\Enums\UserRole;
 @endphp
 
 @extends('layouts.app')
@@ -32,23 +32,19 @@
 
 @section('scripts')
 	<script type="text/javascript">
-		let userRoute = @json(route('users.index'));
-		let userShowRoute = @json(route('users.show', ['user' => ':id']));
-		let userCreateRoute = @json(route('users.create'));
-		let userEditRoute = @json(route('users.edit', ['user' => ':id']));
-		let userDeleteRoute = @json(route('users.destroy', ['user' => ':id']));
-		let isUserUniqueAdmin = @json($adminCount <= 1 ? true : false);
-		let loggedInUserEmail = @json(auth()->user()->email);
-		let csrfToken = @json(csrf_token());
-		userRoles = [
-			@foreach(UserRole::cases() as $role)
-				{
-					name: @json($role->name),
-					value: @json($role->value),
-					label: @json($role->label())
-				},
-			@endforeach
-		];
+		window.UsersAppData = {
+			user: {
+				id: @json(auth()->user()->id),
+				canDelete: @json($adminCount > 1)
+			},
+			roles: @json(
+				collect(UserRole::cases())->map(fn($role) => [
+					'name' => $role->name,
+					'value' => $role->value,
+					'label' => $role->label()
+				])->toArray()
+			)
+		};
 	</script>
 	@vite(['resources/js/models/users/main.js'])
 
