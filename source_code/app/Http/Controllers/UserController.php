@@ -199,6 +199,11 @@ class UserController extends Controller implements HasMiddleware
 	 */
 	public function destroy(User $user)
 	{
+		$isUniqueAdmin = $user->hasRole(UserRole::ADMIN) && User::role(UserRole::ADMIN)->count() === 1;
+		if ($isUniqueAdmin) {
+			return redirect()->back()->with('error', 'No se puede eliminar el único usuario administrador.');
+		}
+
 		// Use a transaction to ensure data integrity
 		DB::transaction(function () use ($user) {
 			// Get the user with the specific role relationship

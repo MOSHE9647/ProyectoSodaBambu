@@ -34,8 +34,10 @@
 	{{-- PWA Scripts --}}
 	<script src="{{ asset('sw.js') }}"></script>
 	<script src="{{ asset('scripts/registerServiceWorker.js') }}"></script>
-
+	<script type="text/javascript">let csrfToken = @json(csrf_token());</script>
+	
 	{{-- Additional Scripts --}}
+	@routes
 	@yield('scripts')
 </body>
 </html>
