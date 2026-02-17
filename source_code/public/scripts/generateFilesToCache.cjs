@@ -6,9 +6,8 @@ const assetsDir = path.join(__dirname, '../build/assets');
 const assetFiles = fs.readdirSync(assetsDir).map(f => `/build/assets/${f}`);
 
 const filesToCache = [
-	'/',
 	'/offline.html',
-	"/build/manifest.json",
+	'/build/manifest.json',
 	...assetFiles
 ];
 

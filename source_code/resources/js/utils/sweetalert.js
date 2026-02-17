@@ -1,9 +1,16 @@
 import 'sweetalert2/themes/bootstrap-5.css'; //<- Import SweetAlert2 Bootstrap 5 theme
 import Swal from 'sweetalert2';
 
+export const SwalNotificationTypes = {
+	SUCCESS: 'success',
+	ERROR: 'error',
+	WARNING: 'warning',
+	INFO: 'info',
+	QUESTION: 'question'
+}
+
 export const SwalModal = Swal.mixin({
 	theme: 'bootstrap-5',
-	showCloseButton: true,
 	focusConfirm: false,
 	customClass: {
 		popup: 'swal-popup w-auto h-auto',
@@ -20,11 +27,30 @@ export const SwalToast = Swal.mixin({
 	toast: true,
 	position: 'top-end',
 	theme: 'bootstrap-5',
+	showCloseButton: true,
 	showConfirmButton: false,
 	timerProgressBar: true,
-	timer: 5000,
+	timer: 7000,
 	customClass: {
+		closeButton: 'swal-close-btn fs-3',
 		popup: 'swal-popup bg-body-tertiary',
 		timerProgressBar: 'swal-timer-progress-bar',
+	},
+	didOpen: (toast) => {
+		toast.onmouseenter = Swal.stopTimer;
+		toast.onmouseleave = Swal.resumeTimer;
+	}
+});
+
+export const SwalOfflineToast = Swal.mixin({
+	toast: true,
+	position: 'bottom',
+	theme: 'bootstrap-5',
+	confirmButtonText: 'Entendido',
+	customClass: {
+		popup: 'swal-offline-popup bg-body-tertiary',
+		container: 'swal-offline-container',
+		confirmButton: 'btn btn-primary',
+		actions: 'pb-1'
 	}
 });

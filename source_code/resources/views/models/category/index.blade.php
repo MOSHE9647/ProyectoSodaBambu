@@ -25,22 +25,14 @@
 @endsection
 
 @section('scripts')
-    <script type="text/javascript">
-        let categoryRoute = "{{ route('categories.index') }}";
-        let categoryShowRoute = "{{ route('categories.show', ['category' => ':id']) }}";
-        let categoryCreateRoute = "{{ route('categories.create') }}";
-        let categoryEditRoute = "{{ route('categories.edit', ['category' => ':id']) }}";
-        let categoryDeleteRoute = "{{ route('categories.destroy', ['category' => ':id']) }}";
-        let csrfToken = "{{ csrf_token() }}";
-    </script>
     @vite(['resources/js/models/category/main.js'])
 
     {{-- Success Toast Notification --}}
     @if(session('success'))
         <script type="module">
             SwalToast.fire({
-                icon: 'success',
-                title: "{{ session('success') }}"
+                icon: SwalNotificationTypes.SUCCESS,
+                title: @json(session('success'))
             });
         </script>
     @endif

@@ -1,64 +1,96 @@
-import { showCategory, deleteCategory } from "./actions.js";
-import { NewCrudDataTable } from '../../utils/datatables.js';
-import { toggleLoadingState } from "../../utils/utils.js";
-import { SwalToast } from "../../utils/sweetalert.js";
+import { showModelInfo, deleteModel } from '../actions.js';
+import { CreateNewDataTable } from '../../utils/datatables.js';
+import { capitalizeSentence, formatDate, toggleLoadingState } from "../../utils/utils.js";
+import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+
+// ==================== Constants ====================
+
+// Model Configuration
+const MODEL_NAME = 'categoría';
+
+// String Constants
+const BTN_CLASS_PRIMARY = 'btn-primary';
+
+// Routes Configuration
+const MODEL_ROUTES = {
+    index: 	route('categories.index'),
+    create: route('categories.create'),
+    show: 	route('categories.show', { category: ':id' }),
+    edit: 	route('categories.edit', { category: ':id' }),
+    delete: route('categories.destroy', { category: ':id' }),
+};
+
+// ==================== Global Functions ====================
 
 // Expose necessary functions to window object
-window.toggleLoadingState = toggleLoadingState;
-window.deleteCategory = deleteCategory;
 window.SwalToast = SwalToast;
-window.showCategory = showCategory;
+window.SwalNotificationTypes = SwalNotificationTypes;
+window.toggleLoadingState = toggleLoadingState;
+window.deleteCategory = function deleteCategory(e) { return deleteModel(e, MODEL_NAME); };
+window.showCategory = function showCategory(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
+
+// ==================== DataTable Initialization ====================
 
 // Ensure the DOM is fully loaded before initializing the DataTable
-$(document).ready(() => {
-    // Define columns for categories table
+$(() => {
+    // Define columns for categories table (only for server-side processing)
     const columns = [
         { 
-            data: 'name',
+            data: 'name', 
             name: 'name'
+            // Nombre de la categoría
         },
         { 
             data: 'description',
             name: 'description',
-            render: function(data) {
-                return data && data !== 'N/A' ? data : 'N/A';
-            }
+            // Descripción de la categoría (N/A si no está disponible)
+            render: (data) => data ? data : 'N/A',
         },
         {
             data: 'created_at',
             name: 'created_at',
-            render: function(data) {
-                // Format the created_at date to a more readable format
-                const date = new Date(data);
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = date.toLocaleDateString('es-ES', { month: 'long' });
-                const year = date.getFullYear();
-                return `${day} de ${month} del ${year}`;
-            }
+            // Fecha de creación formateada como 'DD de Month del YYYY'
+            render: (data) => formatDate(data),
         }
     ];
 
     /**
      * Define actions for each category row in the DataTable.
+     * @type {{
+     * 	show: { route: string, func: function(url, anchor): Promise<void>, tooltip: string },
+     * 	edit: { route: string, tooltip: string },
+     * 	delete: { route: string, tooltip: string, func: function(event): void }
+     * }}
      */
     const actions = {
-        show: { route: categoryShowRoute, func: showCategory, tooltip: 'Ver detalles' },
-        edit: { route: categoryEditRoute, func: toggleLoadingState, tooltip: 'Editar categoría' },
+        show: { 
+            route: MODEL_ROUTES.show, 
+            func: showCategory, 
+            tooltip: 'Ver detalles' 
+        },
+        edit: { 
+            route: MODEL_ROUTES.edit, 
+            func: toggleLoadingState, 
+            tooltip: `Editar ${MODEL_NAME}` 
+        },
         delete: {
-            route: categoryDeleteRoute,
-            tooltip: 'Eliminar categoría',
+            route: MODEL_ROUTES.delete,
+            tooltip: `Eliminar ${MODEL_NAME}`,
             func: deleteCategory,
         }
     };
 
     /**
      * Define custom buttons for the DataTable interface.
+     * @type {[
+     * 	{ text: string, href: string, class: string, icon: string }
+     * ]}
      */
     const customButtons = [
         {
-            text: 'Crear Categoría',
-            href: categoryCreateRoute,
-            class: 'create-button btn-primary',
+            text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
+            href: MODEL_ROUTES.create,
+            class: `create-button ${BTN_CLASS_PRIMARY}`,
             icon: 'bi-plus-circle-fill',
             func: toggleLoadingState,
             params: ['.create-button', 'create', true],
@@ -66,5 +98,5 @@ $(document).ready(() => {
     ];
 
     // Initialize the CRUD DataTable
-    NewCrudDataTable('categories-table', categoryRoute, columns, actions, customButtons);
+    CreateNewDataTable('categories-table', MODEL_ROUTES.index, columns, actions, customButtons);
 });

@@ -1,5 +1,5 @@
 @php
-	use App\Enums\UserRole;
+use App\Enums\UserRole;
 @endphp
 
 @extends('layouts.app')
@@ -32,23 +32,19 @@
 
 @section('scripts')
 	<script type="text/javascript">
-		let userRoute = "{{ route('users.index') }}";
-		let userShowRoute = "{{ route('users.show', ['user' => ':id']) }}";
-		let userCreateRoute = "{{ route('users.create') }}";
-		let userEditRoute = "{{ route('users.edit', ['user' => ':id']) }}";
-		let userDeleteRoute = "{{ route('users.destroy', ['user' => ':id']) }}";
-		let isUserUniqueAdmin = {{ $adminCount <= 1 ? 'true' : 'false' }};
-		let loggedInUserEmail = "{{ auth()->user()->email }}";
-		let csrfToken = "{{ csrf_token() }}";
-		userRoles = [
-			@foreach(UserRole::cases() as $role)
-				{
-					name: "{{ $role->name }}",
-					value: "{{ $role->value }}",
-					label: "{{ $role->label() }}"
-				},
-			@endforeach
-		];
+		window.UsersAppData = {
+			user: {
+				id: @json(auth()->user()->id),
+				canDelete: @json($adminCount > 1)
+			},
+			roles: @json(
+				collect(UserRole::cases())->map(fn($role) => [
+					'name' => $role->name,
+					'value' => $role->value,
+					'label' => $role->label()
+				])->toArray()
+			)
+		};
 	</script>
 	@vite(['resources/js/models/users/main.js'])
 
@@ -56,8 +52,8 @@
 	@if(session('success'))
 		<script type="module">
 			SwalToast.fire({
-				icon: 'success',
-				title: "{{ session('success') }}"
+				icon: SwalNotificationTypes.SUCCESS,
+				title: @json(session('success'))
 			});
 		</script>
 	@endif
