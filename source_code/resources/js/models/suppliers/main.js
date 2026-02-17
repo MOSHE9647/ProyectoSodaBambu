@@ -1,151 +1,123 @@
-/**
- * Módulo JS para la gestión de suppliers.
- *
- * - Inicializa el DataTable con soporte server-side para mejor rendimiento.
- * - Define columnas, acciones CRUD (ver, editar, eliminar).
- * - Integra SweetAlert, control de carga y botones personalizados.
- *
- */
+import { showModelInfo, deleteModel } from '../actions.js';
+import { CreateNewDataTable } from '../../utils/datatables.js';
+import { capitalizeSentence, toggleLoadingState, formatDate } from "../../utils/utils.js";
+import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
-import { showSupplier, deleteSupplier } from "./actions.js";
-import { NewCrudDataTable } from '../../utils/datatables.js';
-import { toggleLoadingState } from "../../utils/utils.js";
-import { SwalToast } from "../../utils/sweetalert.js";
-import $ from 'jquery';
-import 'datatables.net-bs5';
+// ==================== Constants ====================
 
-window.toggleLoadingState = toggleLoadingState;
-window.deleteSupplier = deleteSupplier;
+// Model Configuration
+const MODEL_NAME = 'proveedor';
+
+// String Constants
+const BTN_CLASS_PRIMARY = 'btn-primary';
+const BADGE_DELETED = '<span class="badge bg-danger">Eliminado</span>';
+
+// Routes Configuration
+const MODEL_ROUTES = {
+	index: 	route('suppliers.index'),
+	create: route('suppliers.create'),
+	show: 	route('suppliers.show', { supplier: ':id' }),
+	edit: 	route('suppliers.edit', { supplier: ':id' }),
+	delete: route('suppliers.destroy', { supplier: ':id' }),
+};
+
+// ==================== Global Functions ====================
+
+// Expose functions globally
 window.SwalToast = SwalToast;
-window.showSupplier = showSupplier;
+window.SwalNotificationTypes = SwalNotificationTypes;
+window.toggleLoadingState = toggleLoadingState;
+window.deleteSupplier = function deleteSupplier(e) { return deleteModel(e, MODEL_NAME); };
+window.showSupplier = function showSupplier(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
 
-let suppliersDT = null;
+// ==================== Helper Functions ====================
 
-function initSuppliersTable({ force = false } = {}) {
-  const $table = $('#suppliers-table');
-  if (!$table.length) return;
-
-
-  if ($.fn.dataTable && $.fn.dataTable.isDataTable($table[0])) {
-    if (!force) return;
-    $table.DataTable().clear().destroy();
-    $table.find('tbody').empty();
-  }
-
-  suppliersDT = $table.DataTable({
-    processing: true,
-    serverSide: true,
-
-    ajax: supplierIndexRoute,
-    columns: [
-      { data: 'name', name: 'name' },
-      { data: 'phone', name: 'phone' },
-      { data: 'email', name: 'email' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'actions', name: 'actions', orderable: false, searchable: false }
-    ],
-    destroy: true,
-    retrieve: true,
-    responsive: true
-  });
+/**
+ * Renders the supplier name with a deleted badge if applicable.
+ * @param {string} data - The supplier name
+ * @param {Object} row - The full row data
+ * @returns {string} The formatted name HTML
+ */
+function renderSupplierName(data, row) {
+    if (row?.deleted_at) {
+        return `${data} ${BADGE_DELETED}`;
+    }
+    return data;
 }
 
+// ==================== DataTable Initialization ====================
+
 // Ensure the DOM is fully loaded before initializing the DataTable
-$(document).ready(() => {
-    // Define columns for suppliers table (only for server-side processing)
-    const columns = [
-        { 
-            data: 'name', 
-            name: 'name',
-            render: function(data, type, row) {
-                let nameText = data;
-                if (row.deleted_at) {
-                    nameText += ' <span class="badge bg-danger">Eliminado</span>';
-                }
-                return nameText;
-            }
-        },
-        { data: 'phone', name: 'phone' },
-        { data: 'email', name: 'email' },
-        {
-            data: 'created_at',
-            name: 'created_at',
-            render: function(data) {
-                // Format the created_at date to a more readable format
-                const date = new Date(data);
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = date.toLocaleDateString('es-ES', { month: 'long' });
-                const year = date.getFullYear();
-                return `${day} de ${month} del ${year}`;
-            }
-        }
-    ];
+$(() => {
+	// Define columns for suppliers table (only for server-side processing)
+	const columns = [
+		{
+			data: 'name',
+			name: 'name',
+			// Nombre del proveedor con badge si está marcado como eliminado
+			render: (data, _type, row) => renderSupplierName(data, row)
+		},
+		{
+			data: 'email',
+			name: 'email',
+			// Correo electrónico del proveedor
+		},
+		{
+			data: 'phone',
+			name: 'phone'
+			// Teléfono de contacto del proveedor
+		},
+		{
+			data: 'created_at',
+			name: 'created_at',
+			// Fecha de creación formateada como 'DD de Month del YYYY'
+			render: (data) => formatDate(data),
+		}
+	];
 
 	/**
 	 * Define actions for each supplier row in the DataTable.
 	 * @type {{
-	 * 		show: {
-	 * 			route: string,
-	 * 			func: function(url, anchor): Promise<void>,
-	 * 			tooltip: string
-	 * 		},
-	 * 		edit: {
-	 * 			route: string,
-	 * 			tooltip: string
-	 * 		},
-	 * 		delete: {
-	 * 			route: string,
-	 * 			tooltip: string,
-	 * 			func: function(event): void
-	 * 		}
-	 * 	}}
+	 * 	show: { route: string, func: function(url, anchor): Promise<void>, tooltip: string },
+	 * 	edit: { route: string, tooltip: string },
+	 * 	delete: { route: string, tooltip: string, func: function(event): void }
+	 * }}
 	 */
 	const actions = {
-		show: { route: supplierShowRoute, func: showSupplier, funcName: 'showSupplier', tooltip: 'Ver detalles' },
-		edit: { route: supplierEditRoute, func: toggleLoadingState, funcName: 'toggleLoadingState', tooltip: 'Editar proveedor' },
+		show: { 
+			route: MODEL_ROUTES.show, 
+			func: showSupplier, 
+			tooltip: 'Ver detalles' 
+		},
+		edit: { 
+			route: MODEL_ROUTES.edit, 
+			func: toggleLoadingState, 
+			tooltip: `Editar ${MODEL_NAME}` 
+		},
 		delete: {
-			route: supplierDeleteRoute,
-			tooltip: 'Eliminar proveedor',
+			route: MODEL_ROUTES.delete,
+			tooltip: `Eliminar ${MODEL_NAME}`,
 			func: deleteSupplier,
-			funcName: 'deleteSupplier',
 		}
 	};
 
 	/**
 	 * Define custom buttons for the DataTable interface.
 	 * @type {[
-	 * 		{
-	 * 			text: string,
-	 * 			href: string,
-	 * 			class: string,
-	 * 			icon: string
-	 * 		}
+	 * 	{ text: string, href: string, class: string, icon: string }
 	 * ]}
 	 */
-    const customButtons = [
-        {
-            text: 'Crear Proveedor',
-            href: supplierCreateRoute,
-            class: 'create-button btn-primary',
-            icon: 'bi-building-add',
+	const customButtons = [
+		{
+			text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
+			href: MODEL_ROUTES.create,
+			class: `create-button ${BTN_CLASS_PRIMARY}`,
+			icon: 'bi-building-add',
 			func: toggleLoadingState,
-			funcName: 'toggleLoadingState',
 			params: ['.create-button', 'create', true],
-        }
-    ];
+		}
+	];
 
-    // Initialize the CRUD DataTable
-    NewCrudDataTable('suppliers-table', supplierIndexRoute, columns, actions, customButtons);
-
-    initSuppliersTable();
+	// Initialize the CRUD DataTable
+	CreateNewDataTable('suppliers-table', MODEL_ROUTES.index, columns, actions, customButtons);
 });
-
-
-if (import.meta && import.meta.hot) {
-  import.meta.hot.accept(() => initSuppliersTable({ force: true }));
-}
-
-// Utilidad para recargar datos sin reinicializar
-window.reloadSuppliersTable = () => {
-  if (suppliersDT) suppliersDT.ajax.reload(null, false);
-};

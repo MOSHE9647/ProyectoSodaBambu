@@ -1,22 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
-	<div class="container">
-		<div class="row justify-content-center">
-			<div class="col-md-8">
-				<div class="card">
-					<div class="card-header">{{ __('Sales') }}</div>
+	{{-- Header --}}
+	<x-header title="Ventas" subtitle="Gestión y seguimiento de ventas" />
 
-					<div class="card-body">
-						@if (session('status'))
-							{{-- Success Component --}}
-							<x-alert :type="'success'" :message="session('status')"/>
-						@endif
-
-						{{ __('Welcome to the Sales page. Here you can view and manage sales.') }}
-					</div>
-				</div>
-			</div>
-		</div>
+	{{-- Main Content --}}
+	<div class="container-fluid px-0">
+		
 	</div>
 @endsection

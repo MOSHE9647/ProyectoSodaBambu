@@ -21,18 +21,29 @@ class UserSeeder extends Seeder
 			'password' => bcrypt('admin1234'),
 		]);
 
-		// Create a new test employee with predefined credentials.
-		$employeeUser = User::factory()->withRole()->create([
-			'name' => 'Test Employee',
-			'email' => 'test@employee.com',
-			'password' => bcrypt('testPassword'),
-		]);
-		Employee::factory()->create([
-			'id' => $employeeUser->id,
-			'phone' => '+506 6421 2950',
-		]);
+		// Create 9 additional employees with real data.
+		$employees = [
+			['name' => 'Juan Pérez', 'email' => 'juan.perez@sodabambu.com', 'phone' => '+506 8765 4321'],
+			['name' => 'María García', 'email' => 'maria.garcia@sodabambu.com', 'phone' => '+506 7654 3210'],
+			['name' => 'Carlos López', 'email' => 'carlos.lopez@sodabambu.com', 'phone' => '+506 6543 2109'],
+			['name' => 'Ana Martínez', 'email' => 'ana.martinez@sodabambu.com', 'phone' => '+506 5432 1098'],
+			['name' => 'Roberto Sánchez', 'email' => 'roberto.sanchez@sodabambu.com', 'phone' => '+506 4321 0987'],
+			['name' => 'Laura Rodríguez', 'email' => 'laura.rodriguez@sodabambu.com', 'phone' => '+506 4210 9876'],
+			['name' => 'Diego Fernández', 'email' => 'diego.fernandez@sodabambu.com', 'phone' => '+506 8901 2345'],
+			['name' => 'Sofía Jiménez', 'email' => 'sofia.jimenez@sodabambu.com', 'phone' => '+506 7890 1234'],
+			['name' => 'Miguel Morales', 'email' => 'miguel.morales@sodabambu.com', 'phone' => '+506 6789 0123'],
+		];
 
-		// Generate 10 additional users with the Employee role using the factory.
-		Employee::factory(10)->create();
+		foreach ($employees as $employee) {
+			$user = User::factory()->withRole(UserRole::EMPLOYEE)->create([
+				'name' => $employee['name'],
+				'email' => $employee['email'],
+				'password' => bcrypt('password123'),
+			]);
+			Employee::factory()->create([
+				'id' => $user->id,
+				'phone' => $employee['phone'],
+			]);
+		}
 	}
 }

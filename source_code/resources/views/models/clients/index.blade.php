@@ -28,22 +28,14 @@
 @endsection
 
 @section('scripts')
-	<script type="text/javascript">
-		let clientRoute = "{{ route('clients.index') }}";
-		let clientShowRoute = "{{ route('clients.show', ['client' => ':id']) }}";
-		let clientCreateRoute = "{{ route('clients.create') }}";
-		let clientEditRoute = "{{ route('clients.edit', ['client' => ':id']) }}";
-		let clientDeleteRoute = "{{ route('clients.destroy', ['client' => ':id']) }}";
-		let csrfToken = "{{ csrf_token() }}";
-	</script>
 	@vite(['resources/js/models/clients/main.js'])
 
 	{{-- Success Toast Notification --}}
 	@if(session('success'))
 		<script type="module">
 			SwalToast.fire({
-				icon: 'success',
-				title: "{{ session('success') }}"
+				icon: SwalNotificationTypes.SUCCESS,
+				title: @json(session('success'))
 			});
 		</script>
 	@endif

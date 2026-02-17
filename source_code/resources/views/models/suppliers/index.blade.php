@@ -11,8 +11,8 @@
 				<thead>
 					<tr>
 						<th scope="col">Nombre</th>
-						<th scope="col">Teléfono</th>
 						<th scope="col">Correo Electrónico</th>
+						<th scope="col">Teléfono</th>
 						<th scope="col">Fecha de Creación</th>
 						<th scope="col">Acciones</th>
 					</tr>
@@ -27,23 +27,14 @@
 @endsection
 
 @section('scripts')
-	<script type="text/javascript">
-		let supplierIndexRoute = "{{ route('suppliers.index') }}";
-		let supplierCreateRoute = "{{ route('suppliers.create') }}";
-		let supplierBaseUrl = "{{ url('suppliers') }}"; 
-		let supplierShowRoute = supplierBaseUrl + "/:id";
-		let supplierEditRoute = supplierBaseUrl + "/:id/edit";
-		let supplierDeleteRoute = supplierBaseUrl + "/:id"; 
-		let csrfToken = "{{ csrf_token() }}";
-	</script>
 	@vite(['resources/js/models/suppliers/main.js'])
 
 	{{-- Success Toast Notification --}}
 	@if(session('success'))
 		<script type="module">
 			SwalToast.fire({
-				icon: 'success',
-				title: "{{ session('success') }}"
+				icon: SwalNotificationTypes.SUCCESS,
+				title: @json(session('success'))
 			});
 		</script>
 	@endif

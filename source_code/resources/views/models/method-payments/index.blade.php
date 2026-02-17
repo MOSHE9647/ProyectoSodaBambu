@@ -25,22 +25,14 @@
 @endsection
 
 @section('scripts')
-    <script type="text/javascript">
-        let methodPaymentRoute = "{{ route('method-payments.index') }}";
-        let methodPaymentShowRoute = "{{ route('method-payments.show', ['payment' => ':id']) }}";
-        let methodPaymentCreateRoute = "{{ route('method-payments.create') }}";
-        let methodPaymentEditRoute = "{{ route('method-payments.edit', ['payment' => ':id']) }}";
-        let methodPaymentDeleteRoute = "{{ route('method-payments.destroy', ['payment' => ':id']) }}";
-        let csrfToken = "{{ csrf_token() }}";
-    </script>
     @vite(['resources/js/models/method-payments/main.js'])
 
     {{-- Success Toast Notification --}}
     @if(session('success'))
         <script type="module">
             SwalToast.fire({
-                icon: 'success',
-                title: "{{ session('success') }}"
+                icon: SwalNotificationTypes.SUCCESS,
+                title: @json(session('success'))
             });
         </script>
     @endif

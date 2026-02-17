@@ -72,7 +72,7 @@
 		</x-form.auth.input>
 
 		{{-- Submit Button --}}
-		<x-form.auth.buttons.submit
+		<x-form.submit
 			:id="'forgot-password-button'"
 			:class="'btn-primary w-100 my-3'"
 			:spinnerId="'forgot-password-spinner'"
@@ -81,7 +81,7 @@
 				<i class="bi bi-send me-2"></i>
 				Enviar Enlace de Recuperación
 			</div>
-		</x-form.auth.buttons.submit>
+		</x-form.submit>
 
 		{{-- Additional Links --}}
 		<a
