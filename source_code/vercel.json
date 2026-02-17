@@ -13,7 +13,7 @@
 		{ "src": "/favicon/(.*)", "dest": "/favicon/$1" },
 		{
 			"src": "/(sw\\.js|site\\.webmanifest|logo\\.webp|robots\\.txt|offline\\.html)",
-			"dest": "/$1"
+			"dest": "/public/$1"
 		},
 		{ "src": "/(.*\\.php)", "dest": "/api/$1" },
 		{ "src": "/(.*)", "dest": "/api/index.php" }
