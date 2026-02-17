@@ -104,7 +104,8 @@ success('Carpeta "node_modules" eliminada correctamente.');
 deleteDirectory(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor');
 success('Carpeta "vendor" eliminada correctamente.');
 
-runCommand('composer setup', "\nEjecutando comando \"composer setup\"");
+runCommand('composer update', "\nActualizando dependencias con \"composer update\"");
+runCommand('composer setup', "\nConfigurando el entorno con \"composer setup\"");
 runCommand('php artisan migrate:fresh --seed', "\nEjecutando migraciones y seeders (migrate:fresh --seed)");
 
 generateStorageLink();
