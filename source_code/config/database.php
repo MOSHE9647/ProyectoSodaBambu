@@ -2,6 +2,22 @@
 
 use Illuminate\Support\Str;
 
+$resolveSslPath = static function ($path) {
+	if (! is_string($path) || $path === '') {
+		return null;
+	}
+
+	// Absolute path on Unix or Windows.
+	if ($path[0] === '/' || preg_match('/^[A-Za-z]:[\\\\\\/]/', $path)) {
+		return $path;
+	}
+
+	return base_path($path);
+};
+
+$sslCa = $resolveSslPath(env('MYSQL_ATTR_SSL_CA'));
+$sslCaPath = $resolveSslPath(env('MYSQL_ATTR_SSL_CAPATH'));
+
 return [
 
 	/*
@@ -59,8 +75,9 @@ return [
 			'strict' => true,
 			'engine' => null,
 			'options' => extension_loaded('pdo_mysql') ? array_filter([
-				PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-				PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false, // Disable server certificate verification
+				PDO::MYSQL_ATTR_SSL_CA => $sslCa,
+				PDO::MYSQL_ATTR_SSL_CAPATH => $sslCaPath,
+				// PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false, // Disable server certificate verification
 			]) : [],
 		],
 
@@ -80,7 +97,8 @@ return [
 			'strict' => true,
 			'engine' => null,
 			'options' => extension_loaded('pdo_mysql') ? array_filter([
-				PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+				PDO::MYSQL_ATTR_SSL_CA => $sslCa,
+				PDO::MYSQL_ATTR_SSL_CAPATH => $sslCaPath,
 			]) : [],
 		],
 
