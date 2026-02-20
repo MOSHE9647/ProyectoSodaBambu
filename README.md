@@ -14,7 +14,7 @@
 
 ## 📋 Descripción del Proyecto
 
-Sistema de información desarrollado para la gestión integral de Soda y Restaurante El Bambú, como parte del curso de Ingeniería en Sistemas I, II y III de la Universidad Nacional de Costa Rica.
+Este proyecto tiene como objetivo desarrollar un sistema para la gestión interna de la Soda y Restaurante El Bambú, con el fin de optimizar sus procesos administrativos, financieros y operativos. Esto proyecto se está desarrollando como parte del desarrollo de los cursos de Ingeniería en Sistemas I, II y III de la Universidad Nacional de Costa Rica.
 
 ## 🎯 Objetivos
 
@@ -44,14 +44,15 @@ ProyectoSodaBambu/
 │   ├── database/                      # Scripts de base de datos
 │   └── deployment/                    # Scripts de despliegue
 ├── source_code/                       # Código fuente Laravel
+│   ├── api/                           # Configuración redireccionamiento para despliegue
 │   ├── app/                           # Lógica de la aplicación
 │   ├── config/                        # Archivos de configuración
 │   ├── database/                      # Migraciones y seeders
+|   ├── lang/                          # Archivos de idioma
 │   ├── public/                        # Archivos públicos
 │   ├── resources/                     # Vistas y assets
 │   ├── routes/                        # Definición de rutas
-│   ├── .env.example                   # Plantilla de variables de entorno
-│   └── artisan                        # CLI de Laravel
+│   └── .env.example                   # Plantilla de variables de entorno
 ├── uml/                               # Diagramas UML
 │   ├── activity_diagrams/             # Diagramas de actividad
 │   ├── class_diagrams/                # Diagramas de clases
@@ -79,13 +80,16 @@ ProyectoSodaBambu/
 - **PHP**: >= 8.2
 - **Framework**: Laravel ^12.x (PHP)
 - **Base de datos**: MySQL/SQLite
-- **Servidor web**: Apache/Nginx
-- **Autenticación**: Laravel-UI/Bootstrap-Auth
+- **Autenticación**: Laravel Fortify
 
 ### Frontend
 - **Templates**: Laravel Blade
 - **CSS Framework**: Bootstrap 5
-- **JavaScript**: Vanilla JS
+- **JavaScript**: Vanilla JS + jQuery
+
+### Deployment
+- **Hosting de la Aplicación**: Vercel
+- **Servidor de Base de Datos**: TiDB Cloud
 
 ### Herramientas de Desarrollo
 - **Control de versiones**: Git + Gitflow
@@ -111,24 +115,26 @@ ProyectoSodaBambu/
    cd ProyectoSodaBambu
    ```
 
-2. **Instalar dependencias del backend**
+2. **Configurar Laravel**
    ```bash
    cd source_code
-   composer install
    ```
 
-3. **Instalar dependencias del frontend**
+   Para configurar Laravel para que trabaje con **SQLite**, ejecuta el siguiente comando:
+
    ```bash
-   npm install
+   composer workspace:sqlite
    ```
 
-4. **Configurar variables de entorno**
-   ```bash
-   copy .env.example .env
-   php artisan key:generate
-   ```
+   Si, en cambio, deseas trabajar con MySQL, ejecuta el siguiente comando cambiando cada uno de los valores usados por las credenciales de tu base de datos:
    
-   Edita el archivo `.env` con tus credenciales de base de datos:
+   > **Nota:** Antes de continuar, asegúrate de que el servidor de tu base de datos (XAMPP/Laragon) esté configurado correctamente y en ejecución.
+
+   ```bash
+   composer workspace:mysql -- --db-host 127.0.0.1 --db-port 3306 --db-name laravel_db --db-username root --db-password su_contrasena
+   ```
+
+   Al final, con los datos asignados, el archivo ```.env``` debería verse algo así:
    ```
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
@@ -138,28 +144,36 @@ ProyectoSodaBambu/
    DB_PASSWORD=tu_contraseña
    ```
 
-5. **Ejecutar migraciones**
-   ```bash
-   php artisan migrate
+   Si utilizaste los valores por defecto, el archivo ```.env``` debería verse así:
+   ```
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=laravel_db
+   DB_USERNAME=root
+   DB_PASSWORD=
    ```
 
-6. **Compilar assets**
+   > **Nota:** También puedes omitir algunos de los argumentos del comando anterior si desea que estos se queden con su valor por defecto.
+
+   El siguiente comando utiliza los valores por defecto mostrados en el comando anterior:
+
    ```bash
-   npm run dev
-   # O para producción:
-   npm run build
+   composer workspace:mysql
    ```
 
-7. **Iniciar el servidor de desarrollo**
+   Estos comandos crearán y actualizarán el archivo ```.env``` con los datos necesarios para conectarse a cualquiera de las dos Bases de Datos. Cabe aclarar que también puedes configurar el proyecto manualmente si así lo deseas.
+
+3. **Iniciar el servidor de desarrollo**
    ```bash
    composer run dev
    ```
 
-8. **Acceder a la aplicación**
+4. **Acceder a la aplicación**
    
    Abre tu navegador en: `http://localhost:8000`
 
-   > **Nota:** Asegúrate de que el servidor web (Apache/Nginx) y XAMPP/Laragon estén configurados correctamente y en ejecución si no usas el servidor de desarrollo integrado.
+Como información adicional, si deseas ejecutar los *seeders* existentes en el proyecto puedes utilizar los comandos ```composer workspace:[db]:seed``` o ```composer workspace:[db]:fresh:seed``` para realizarlo utilizando los datos existentes o borrando todos los datos existentes, respectivamente. Solamente cambia ```[db]``` por el nombre de tu motor de base de datos según lo mencionado en pasos anteriores.
 
 ### Scripts Disponibles
 
@@ -327,7 +341,7 @@ Si encuentras conflictos al hacer merge:
 ### 👨‍🏫 Supervisión Académica
 - **Ingeniería en Sistemas I**: M.Sc. Olivier Blanco Sandí
 - **Ingeniería en Sistemas II**: Prof. Adán Carranza Alfaro
-- **Ingeniería en Sistemas III**: *Por definir*
+- **Ingeniería en Sistemas III**: Prof. Michael Barquero Salazar
 
 ## 🏪 Sobre el Cliente
 
@@ -348,7 +362,7 @@ Este sistema fue desarrollado como proyecto académico del curso de **Ingenierí
 
 ### 👥 Autoría y Desarrollo
 - **Desarrollado por**: Equipo de estudiantes de Ingeniería en Sistemas (ver sección "Equipo de Desarrollo").
-- **Supervisión académica**: M.Sc. Olivier Blanco Sandí (Ingeniería I), Prof. Adán Carranza Alfaro (Ingeniería II) y Prof. [Nombre por definir] (Ingeniería III).
+- **Supervisión académica**: M.Sc. Olivier Blanco Sandí (Ingeniería I), Prof. Adán Carranza Alfaro (Ingeniería II) y Prof. Prof. Michael Barquero Salazar (Ingeniería III).
 - **Institución**: Universidad Nacional de Costa Rica, Sección Regional Huetar Norte y Caribe.
 - **Período actual**: II Ciclo 2025 (Ingeniería en Sistemas II).
 - **Proyecto completo**: I y II Ciclo 2025, I Ciclo 2026 (Ingeniería I, II y III).
