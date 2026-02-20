@@ -1,0 +1,161 @@
+import { SwalOfflineToast, SwalNotificationTypes } from './sweetalert.js';
+
+// Messages for different connection states
+const MESSAGES = {
+    offline: 'No tienes conexión a internet. \nAlgunas características pueden no estar disponibles.',
+    serverUnreachable: 'No se pudo conectar al servidor. \nAlgunas características pueden no estar disponibles.',
+    serverReachable: 'Conexión al servidor restaurada.'
+};
+
+// Endpoint to check server reachability
+const ENDPOINT = '/up';
+
+// Store previous connection state to detect changes
+let previousConnectionState = {
+    online: true,
+    serverReachable: true
+};
+
+// Prevent multiple simultaneous checks
+let isCheckingConnection = false;
+
+/**
+ * Update the connection status by checking both internet connectivity and server reachability.
+ * Displays appropriate toast notifications on state changes.
+ * 
+ * Usage: Call this function periodically to monitor connection status.
+ * 
+ * Example:
+ * setInterval(updateConnectionStatus, 5000);
+ * 
+ * @returns {void}
+ */
+export async function updateConnectionStatus() {
+    if (isCheckingConnection) return; // Prevent overlapping checks
+    isCheckingConnection = true;
+
+    const currentOnline = navigator.onLine;
+
+    // Offline handling
+    if (!currentOnline) {
+        if (previousConnectionState.online) {
+            showToast(SwalNotificationTypes.WARNING, MESSAGES.offline);
+        }
+        previousConnectionState.online = false;
+        previousConnectionState.serverReachable = false;
+        isCheckingConnection = false;
+        return;
+    }
+
+    // Online handling
+    try {
+        // Check server reachability with a timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout
+
+        // Attempt to fetch the '/up' endpoint
+        const response = await fetch(`${ENDPOINT}?t=` + Date.now(), {
+            cache: 'no-store',
+            signal: controller.signal 
+        });
+
+        // Clear timeout if fetch completes
+        clearTimeout(timeoutId);
+
+        // Determine if server is reachable
+        const responsePathname = new URL(response.url, window.location.origin).pathname;
+        const currentServerReachable = response.ok && responsePathname === ENDPOINT;
+
+        // Handle server reachability changes
+        if (currentServerReachable) {
+            if (!previousConnectionState.serverReachable || !previousConnectionState.online) {
+                showToast(SwalNotificationTypes.SUCCESS, MESSAGES.serverReachable);
+            }
+        } else {
+            if (previousConnectionState.serverReachable) {
+                showToast(SwalNotificationTypes.ERROR, MESSAGES.serverUnreachable);
+            }
+        }
+
+        // Sets previous state to online and current server status
+        previousConnectionState.online = true;
+        previousConnectionState.serverReachable = currentServerReachable;
+
+    } catch (error) {
+        // Handle fetch errors (network issues, timeouts, etc.)
+        if (previousConnectionState.serverReachable) {
+            showToast(SwalNotificationTypes.ERROR, MESSAGES.serverUnreachable);
+        }
+        previousConnectionState.online = true; // Still online, but server unreachable
+        previousConnectionState.serverReachable = false;
+
+    } finally {
+        isCheckingConnection = false;
+    }
+}
+
+/**
+ * Show a toast notification using SwalOfflineToast.
+ * 
+ * @param {String} icon 
+ * @param {String} title 
+ */
+function showToast(icon, title) {
+    SwalOfflineToast.fire({ icon, title });
+}
+
+
+/**
+ * Checks the connection status of the application at regular intervals.
+ * 
+ * Verifies connection status every 5 seconds, but only while the page is visible.
+ * Automatically pauses checks when the page loses visibility (e.g., tab is hidden)
+ * and resumes when the page becomes visible again.
+ * 
+ * The function immediately calls the connection status update upon initialization
+ * if the page is already visible, then establishes an interval for subsequent checks.
+ * 
+ * @function checkConnectionStatus
+ * @returns {void}
+ * 
+ * @example
+ * // Initialize connection status monitoring
+ * checkConnectionStatus();
+ */
+export function checkConnectionStatus() {
+    // Verify connection status every 5 seconds, but only while the page is visible
+    let connectionStatusIntervalId = null;
+    const CONNECTION_CHECK_INTERVAL = 5000;
+
+    const startConnectionStatusChecks = () => {
+        if (connectionStatusIntervalId !== null) {
+            return;
+        }
+
+        // Call the function immediately, then start the interval  
+        updateConnectionStatus();
+        connectionStatusIntervalId = setInterval(updateConnectionStatus, CONNECTION_CHECK_INTERVAL);
+    };
+
+    const stopConnectionStatusChecks = () => {
+        if (connectionStatusIntervalId === null) {
+            return;
+        }
+
+        clearInterval(connectionStatusIntervalId);
+        connectionStatusIntervalId = null;
+    };
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+            startConnectionStatusChecks();
+        } else {
+            stopConnectionStatusChecks();
+        }
+    });
+
+    // Start connection status checks immediately if the page is already visible  
+    if (document.visibilityState === 'visible') {
+        startConnectionStatusChecks();
+    }
+}
