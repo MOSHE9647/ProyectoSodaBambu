@@ -1,17 +1,85 @@
 # Sistema de Gestión Integral - Soda El Bambú
 
-## Descripción Técnica
+## 📋 Descripción del Proyecto
 
-Este es el código fuente del sistema de gestión integral desarrollado con Laravel para Soda y Restaurante El Bambú.
+Esta parte del repositorio contiene el codigo fuente del sistema de gestion integral para Soda y Restaurante El Bambu. El sistema centraliza la operacion del restaurante para optimizar ventas, inventario, reportes, reservas y administracion interna.
 
-## Stack Tecnológico
+## 🌐 Proyecto Desplegado
 
+Puedes acceder a la version en produccion del sistema en:
+
+**🔗 [https://proyecto-soda-bambu.vercel.app](https://proyecto-soda-bambu.vercel.app)**
+
+> **Nota:** El sistema se encuentra desplegado en Vercel con una base de datos MySQL en TiDB Cloud.
+
+## 💡 ¿Como Funciona el Sistema?
+
+El sistema esta disenado como una aplicacion web progresiva (PWA) que permite gestionar todos los procesos internos del restaurante de forma centralizada:
+
+### Arquitectura General
+- **Backend**: Laravel procesa las peticiones, valida datos y gestiona la logica de negocio.
+- **Frontend**: Blade templates + Bootstrap 5 proveen una interfaz responsive.
+- **Base de Datos**: MySQL/SQLite almacena la informacion del negocio.
+- **Autenticacion**: Laravel Fortify maneja el acceso seguro con roles y permisos.
+
+### Flujo de Trabajo Tipico
+1. El usuario se autentica en el sistema segun su rol (Administrador/Empleado).
+2. Accede a los modulos correspondientes a sus permisos.
+3. Realiza operaciones CRUD sobre las entidades del negocio.
+4. El sistema valida, procesa y almacena la informacion.
+5. Genera reportes y estadisticas en tiempo real.
+
+## 📖 Guia de Uso
+
+### Primer Acceso
+
+1. Accede al sistema a traves del [enlace desplegado](https://proyecto-soda-bambu.vercel.app) o en tu entorno local (`http://localhost:8000`).
+2. Inicia sesion con tus credenciales.
+3. Verifica tu correo electronico (si es requerido).
+
+> **Nota:** La verificacion del correo se realiza la primera vez que el usuario inicia sesion (despues de que el Administrador lo haya creado).
+
+### Usuarios de Prueba (Desarrollo)
+
+Para probar el sistema en entorno local con datos de ejemplo:
+
+```bash
+composer workspace:sqlite:fresh:seed
+# o
+composer workspace:mysql:fresh:seed
+```
+
+**Credenciales de prueba:**
+- **Administrador**:
+	- Email: `admin@admin.com`
+	- Contrasena: `admin1234`
+- **Empleado**:
+	- Email: `juan.perez@sodabambu.com`
+	- Contrasena: `password123`
+
+## 🔧 Tecnologias
+
+### Backend
 - **PHP**: >= 8.2
-- **Framework**: Laravel ^12.x
+- **Framework**: Laravel ^12.x (PHP)
 - **Base de datos**: MySQL/SQLite
-- **Frontend**: Blade Templates, Bootstrap 5
-- **Autenticación**: Laravel-UI/Bootstrap-Auth
+- **Autenticacion**: Laravel Fortify
+
+### Frontend
+- **Templates**: Laravel Blade
+- **CSS Framework**: Bootstrap 5
+- **JavaScript**: Vanilla JS + jQuery
+
+### Deployment
+- **Hosting de la aplicacion**: Vercel
+- **Servidor de base de datos**: TiDB Cloud
+
+### Herramientas de Desarrollo
 - **Control de versiones**: Git + Gitflow
+- **Gestor de dependencias PHP**: Composer
+- **Gestor de dependencias JS**: npm
+- **Entorno de desarrollo**: XAMPP / Laragon
+- **IDE recomendado**: Visual Studio Code / PHPStorm
 
 ## Estructura de Directorios
 
@@ -20,7 +88,6 @@ source_code/
 ├── app/                      # Lógica de negocio
 │   ├── Http/Controllers/     # Controladores
 │   ├── Models/               # Modelos Eloquent
-│   ├── Services/             # Servicios de negocio
 │   └── ...
 ├── config/                   # Configuración
 ├── database/
@@ -33,8 +100,7 @@ source_code/
 │   ├── css/                  # Estilos
 │   └── js/                   # JavaScript
 ├── routes/
-│   ├── web.php               # Rutas web
-│   └── api.php               # Rutas API
+│   └── web.php               # Rutas web
 └── tests/                    # Tests automatizados
 ```
 
@@ -89,9 +155,6 @@ php artisan migrate --seed
 ### 5. Compilar Assets
 
 ```bash
-# Modo desarrollo (con watch)
-npm run dev
-
 # Modo producción
 npm run build
 ```
