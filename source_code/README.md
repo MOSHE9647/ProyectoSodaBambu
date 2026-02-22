@@ -1,8 +1,8 @@
-# Sistema de Gestión Integral - Soda El Bambú
+# Sistema de Gestión Interna - Soda El Bambú
 
 ## 📋 Descripción del Proyecto
 
-Esta parte del repositorio contiene el codigo fuente del sistema de gestion integral para Soda y Restaurante El Bambu. El sistema centraliza la operacion del restaurante para optimizar ventas, inventario, reportes, reservas y administracion interna.
+Esta parte del repositorio contiene el codigo fuente del sistema de gestion interna para Soda y Restaurante El Bambu. El sistema centraliza la operacion del restaurante para optimizar ventas, inventario, reportes, reservas y administracion interna.
 
 ## 🌐 Proyecto Desplegado
 
@@ -14,7 +14,7 @@ Puedes acceder a la version en produccion del sistema en:
 
 ## 💡 ¿Como Funciona el Sistema?
 
-El sistema esta disenado como una aplicacion web progresiva (PWA) que permite gestionar todos los procesos internos del restaurante de forma centralizada:
+El sistema esta diseñado como una aplicacion web progresiva (PWA) que permite gestionar todos los procesos internos del restaurante de forma centralizada:
 
 ### Arquitectura General
 - **Backend**: Laravel procesa las peticiones, valida datos y gestiona la logica de negocio.
@@ -24,20 +24,20 @@ El sistema esta disenado como una aplicacion web progresiva (PWA) que permite ge
 
 ### Flujo de Trabajo Tipico
 1. El usuario se autentica en el sistema segun su rol (Administrador/Empleado).
-2. Accede a los modulos correspondientes a sus permisos.
+2. Accede a los módulos correspondientes a sus permisos.
 3. Realiza operaciones CRUD sobre las entidades del negocio.
 4. El sistema valida, procesa y almacena la informacion.
-5. Genera reportes y estadisticas en tiempo real.
+5. Genera reportes y estadísticas en tiempo real.
 
 ## 📖 Guia de Uso
 
 ### Primer Acceso
 
-1. Accede al sistema a traves del [enlace desplegado](https://proyecto-soda-bambu.vercel.app) o en tu entorno local (`http://localhost:8000`).
-2. Inicia sesion con tus credenciales.
-3. Verifica tu correo electronico (si es requerido).
+1. Accede al sistema a través del [enlace desplegado](https://proyecto-soda-bambu.vercel.app) o en tu entorno local (`http://localhost:8000`).
+2. Inicia sesión con tus credenciales.
+3. Verifica tu correo electrónico (si es requerido).
 
-> **Nota:** La verificacion del correo se realiza la primera vez que el usuario inicia sesion (despues de que el Administrador lo haya creado).
+> **Nota:** La verificación del correo se realiza la primera vez que el usuario inicia sesión (despues de que el Administrador lo haya creado).
 
 ### Usuarios de Prueba (Desarrollo)
 

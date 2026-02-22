@@ -1,4 +1,4 @@
-# Proyecto Soda Bambú
+# Sistema de Gestión Interna El Bambú
 
 ## Índice
 - [📋 Descripción del Proyecto](#-descripción-del-proyecto)
@@ -18,7 +18,7 @@
 
 ## 📋 Descripción del Proyecto
 
-Este proyecto tiene como objetivo desarrollar un sistema para la gestión interna de la Soda y Restaurante El Bambú, con el fin de optimizar sus procesos administrativos, financieros y operativos. Esto proyecto se está desarrollando como parte del desarrollo de los cursos de Ingeniería en Sistemas I, II y III de la Universidad Nacional de Costa Rica.
+Este proyecto tiene como objetivo desarrollar un sistema de gestion interna para la Soda y Restaurante El Bambu, con el fin de optimizar sus procesos administrativos, financieros y operativos. El proyecto se desarrolla como parte de una evaluacion requerida para aprobar los cursos de Ingenieria en Sistemas I, II y III de la Universidad Nacional de Costa Rica, y responde de forma directa a la problematica actual de una empresa pequeña que necesita digitalizar sus procesos.
 
 ## 🏪 Sobre el Cliente
 
@@ -62,30 +62,34 @@ El sistema está diseñado como una aplicación web progresiva (PWA) que permite
 ### Primer Acceso
 
 1. Accede al sistema através del [enlace desplegado](https://proyecto-soda-bambu.vercel.app) o en tu entorno local (`http://localhost:8000`)
-2. Inicia sesión con tus credenciales
+2. Inicia sesión con tus credenciales proporcionadas por el Administrador
 3. Verifica tu correo electrónico (si es requerido)
 
 > **Nota:** La verificación del correo solamente se realiza la primera vez que el usuario inicia sesión (después de que el Administrador lo haya creado). Si es tu primera vez accediendo, utiliza las credenciales de prueba proporcionadas a continuación.
 
-### Usuarios de Prueba (Desarrollo)
+### Usuarios de Prueba
 
-Para probar el sistema en entorno local con datos de ejemplo:
+Para probar el sistema con datos de ejemplo durante el desarrollo:
 
-```bash
-# Ejecutar migraciones con seeders siguiendo las instrucciones
-# de la sección anterior.
-composer workspace:sqlite:fresh:seed
-# o
-composer workspace:mysql:fresh:seed
-```
+> ⚠️ **Importante:** Las credenciales que se muestran a continuación son **únicamente para propósitos de prueba** mientras el proyecto se encuentra en fase de desarrollo. Una vez que el proyecto esté completado, el cliente proporcionará credenciales reales que reemplazarán estos datos de prueba.
 
-**Credenciales de prueba:**
+**Credenciales de prueba (temporales):**
 - **Administrador**: 
   - Email: `admin@admin.com`
   - Contraseña: `admin1234`
 - **Empleado**: 
   - Email: `juan.perez@sodabambu.com`
   - Contraseña: `password123`
+
+#### 🔐 Modelo de Acceso
+
+El sistema **no cuenta con un sistema público de registro de usuarios**. El acceso se controla de la siguiente manera:
+
+- **Creación de usuarios**: Solo el Administrador puede crear nuevos usuarios en el sistema
+- **Gestión de acceso**: El Administrador asigna roles y permisos a cada usuario
+- **Credenciales**: Cada usuario recibe sus credenciales del Administrador para acceder al sistema
+
+Esta estructura garantiza el control y la seguridad del acceso al sistema.
 
 ### Funcionalidades Principales
 
@@ -181,67 +185,81 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
    ```bash
    git clone [URL-del-repositorio]
    cd ProyectoSodaBambu
-   ```
-
-2. **Configurar Laravel**
-   ```bash
    cd source_code
    ```
 
-   Para configurar Laravel para que trabaje con **SQLite**, ejecuta el siguiente comando:
+2. **Configurar la Base de Datos**
 
+   Elige uno de los siguientes motores de base de datos según tus necesidades:
+
+   #### Opción A: SQLite (Recomendado para desarrollo local)
    ```bash
    composer workspace:sqlite
    ```
 
-   Si, en cambio, deseas trabajar con MySQL, ejecuta el siguiente comando cambiando cada uno de los valores usados por las credenciales de tu base de datos:
+   #### Opción B: MySQL (Para entornos de producción)
    
-   > **Nota:** Antes de continuar, asegúrate de que el servidor de tu base de datos (XAMPP/Laragon) esté configurado correctamente y en ejecución.
+   > ⚠️ **Importante:** Asegúrate de que el servidor de base de datos (XAMPP/Laragon) esté funcionando correctamente antes de continuar.
 
+   **Con valores personalizados:**
    ```bash
    composer workspace:mysql -- --db-host 127.0.0.1 --db-port 3306 --db-name laravel_db --db-username root --db-password su_contrasena
    ```
 
-   Al final, con los datos asignados, el archivo ```.env``` debería verse algo así:
-   ```
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=nombre_base_datos
-   DB_USERNAME=tu_usuario
-   DB_PASSWORD=tu_contraseña
-   ```
-
-   Si utilizaste los valores por defecto, el archivo ```.env``` debería verse así:
-   ```
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=laravel_db
-   DB_USERNAME=root
-   DB_PASSWORD=
-   ```
-
-   > **Nota:** También puedes omitir algunos de los argumentos del comando anterior si desea que estos se queden con su valor por defecto.
-
-   El siguiente comando utiliza los valores por defecto mostrados en el comando anterior:
-
+   **Con valores por defecto:**
    ```bash
    composer workspace:mysql
    ```
 
-   Estos comandos crearán y actualizarán el archivo ```.env``` con los datos necesarios para conectarse a cualquiera de las dos Bases de Datos. Cabe aclarar que también puedes configurar el proyecto manualmente si así lo deseas.
+   Los valores pueden ser:
+   - `db-host`: 127.0.0.1
+   - `db-port`: 3306
+   - `db-name`: laravel_db
+   - `db-username`: root
+   - `db-password`: (vacío por defecto)
 
-3. **Iniciar el servidor de desarrollo**
+   > 💡 **Nota:** Puedes omitir cualquiera de los argumentos para usar los valores por defecto. El archivo `.env` se actualizará automáticamente con tu configuración.
+
+3. **Poblar la Base de Datos (opcional)**
+
+   Para cargar datos de prueba en la base de datos:
+
+   ```bash
+   # SQLite
+   composer workspace:sqlite:fresh:seed
+
+   # MySQL
+   composer workspace:mysql:fresh:seed
+   ```
+
+   **Credenciales de prueba:**
+   - Email: `admin@admin.com`
+   - Contraseña: `admin1234`
+
+4. **Iniciar el servidor de desarrollo**
    ```bash
    composer run dev
    ```
 
-4. **Acceder a la aplicación**
+5. **Acceder a la aplicación**
    
    Abre tu navegador en: `http://localhost:8000`
 
-Como información adicional, si deseas ejecutar los *seeders* existentes en el proyecto puedes utilizar los comandos ```composer workspace:[db]:seed``` o ```composer workspace:[db]:fresh:seed``` para realizarlo utilizando los datos existentes o borrando todos los datos existentes, respectivamente. Solamente cambia ```[db]``` por el nombre de tu motor de base de datos según lo mencionado en pasos anteriores.
+### Comandos Adicionales
+
+Para ejecutar seeders sin limpiar la base de datos existente, utiliza:
+
+```bash
+composer workspace:[db]:seed
+```
+
+Reemplaza `[db]` con `sqlite` o `mysql` según tu configuración.
+
+Para limpiar la base de datos y cargar los datos de prueba de nuevo:
+
+```bash
+composer workspace:[db]:fresh:seed
+```
 
 ## 🏗️ Estructura del Proyecto
 
@@ -357,7 +375,7 @@ git commit -m "Fix: descripción del problema"
 git push origin hotfix/fix-descripcion
 ```
 
-Crea Pull Requests de `hotfix/fix-descripcion` → `main` o `dev` según corresponda
+Crea Pull Requests de `hotfix/fix-descripcion` → `main`
 
 ### Reglas de Oro del Proyecto
 
@@ -548,9 +566,9 @@ Control de acceso y administración de cuentas de usuario del sistema.
   </div>
 </div>
 
----
-
 > **Nota:** Todas las pantallas pueden ser visualizadas en tema oscuro o claro según la preferencia del usuario.
+
+---
 
 ### Scripts Disponibles
 
@@ -583,7 +601,7 @@ Este sistema fue desarrollado como proyecto académico del curso de **Ingenierí
 - **Desarrollado por**: Equipo de estudiantes de Ingeniería en Sistemas (ver sección "Equipo de Desarrollo").
 - **Supervisión académica**: M.Sc. Olivier Blanco Sandí (Ingeniería I), Prof. Adán Carranza Alfaro (Ingeniería II) y Prof. Prof. Michael Barquero Salazar (Ingeniería III).
 - **Institución**: Universidad Nacional de Costa Rica, Sección Regional Huetar Norte y Caribe.
-- **Período actual**: II Ciclo 2025 (Ingeniería en Sistemas II).
+- **Período actual**: I Ciclo 2026 (Ingeniería en Sistemas II).
 - **Proyecto completo**: I y II Ciclo 2025, I Ciclo 2026 (Ingeniería I, II y III).
 
 ### 🏪 Cliente y Propósito
@@ -604,7 +622,7 @@ Para consultas sobre el uso de este software o derechos de autor:
 - **Equipo de desarrollo**: Ver tabla de contactos en la sección "Equipo de Desarrollo"
 - **Supervisión académica**: A través de los canales oficiales de la Universidad Nacional de Costa Rica
 
-**© 2025 - Equipo de Desarrollo, Universidad Nacional de Costa Rica. Todos los derechos reservados.**
+**© 2026 - Equipo de Desarrollo, Universidad Nacional de Costa Rica. Todos los derechos reservados.**
 
 ---
 
@@ -613,4 +631,4 @@ Para consultas sobre el uso de este software o derechos de autor:
 **Universidad Nacional de Costa Rica**  
 **Escuela de Informática**  
 **Ingeniería en Sistemas II**  
-**II Ciclo 2025**
+**I Ciclo 2026**
