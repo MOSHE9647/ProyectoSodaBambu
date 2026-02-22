@@ -2,77 +2,145 @@
 
 ## Índice
 - [📋 Descripción del Proyecto](#-descripción-del-proyecto)
-- [🎯 Objetivos](#-objetivos) 
-- [🏗️ Estructura del Proyecto](#️-estructura-del-proyecto)
-- [📚 Documentación](#-documentación)
+- [🏪 Sobre el Cliente](#-sobre-el-cliente)
+- [🌐 Proyecto Desplegado](#-proyecto-desplegado)
+- [💡 ¿Cómo Funciona el Sistema?](#-cómo-funciona-el-sistema)
+- [📖 Guía de Uso](#-guía-de-uso)
 - [🔧 Tecnologías](#-tecnologías)
 - [🚀 Instalación y Configuración](#-instalación-y-configuración)
+- [🏗️ Estructura del Proyecto](#️-estructura-del-proyecto)
+- [📚 Documentación](#-documentación)
 - [🌿 Flujo de Trabajo con Git y Gitflow](#-flujo-de-trabajo-con-git-y-gitflow)
+- [❓ Preguntas Frecuentes (FAQ)](#-preguntas-frecuentes-faq)
+- [📸 Capturas de Pantalla](#-capturas-de-pantalla)
 - [👥 Equipo de Desarrollo](#-equipo-de-desarrollo)
-- [🏪 Sobre el Cliente](#-sobre-el-cliente)
 - [⚖️ Derechos de Autor y Términos de Uso](#️-derechos-de-autor-y-términos-de-uso)
 
 ## 📋 Descripción del Proyecto
 
 Este proyecto tiene como objetivo desarrollar un sistema para la gestión interna de la Soda y Restaurante El Bambú, con el fin de optimizar sus procesos administrativos, financieros y operativos. Esto proyecto se está desarrollando como parte del desarrollo de los cursos de Ingeniería en Sistemas I, II y III de la Universidad Nacional de Costa Rica.
 
-## 🎯 Objetivos
+## 🏪 Sobre el Cliente
 
-- Desarrollar un sistema de gestión completo para el establecimiento Soda y Restaurante El Bambú.
-- Implementar buenas prácticas de ingeniería de software.
-- Aplicar metodologías de desarrollo de sistemas.
+<img src="assets/images/logo-bambu.png" alt="Logo El Bambú" align="left" width="90"/>
 
-## 🏗️ Estructura del Proyecto
+**Soda y Restaurante El Bambú** es un negocio ubicado en Cariari, Pococí, Limón, Costa Rica. Su principal objetivo es ofrecer un servicio de comidas, con una variada selección de platillos y bebidas tipo soda, con un enfoque en ofrecer un servicio accesible, rápido y de calidad a la comunidad.
 
+### 🔍 Problemática Actual
+A pesar de ser una empresa pequeña, el restaurante enfrenta limitaciones debido a la falta de digitalización en sus procesos internos. Actualmente el control de ventas, los registros financieros, el cálculo de salarios, la gestión de inventario, las reservas y los reportes operativos se realizan de forma manual, lo que reduce la eficiencia del negocio.
+
+### 🎯 Objetivo del Sistema
+Con la implementación del sistema, se busca mejorar la organización interna, optimizar recursos y facilitar una toma de decisiones basada en datos reales. El sistema permitirá a los empleados y administradores gestionar de forma centralizada todas las operaciones del restaurante, desde el punto de venta hasta la administración de inventarios y la generación de reportes financieros.
+
+## 🌐 Proyecto Desplegado
+
+Puedes acceder a la versión en producción del sistema en:
+
+**🔗 [https://proyecto-soda-bambu.vercel.app](https://proyecto-soda-bambu.vercel.app)**
+
+> **Nota:** El sistema se encuentra desplegado en Vercel con una base de datos MySQL en TiDB Cloud.
+
+## 💡 ¿Cómo Funciona el Sistema?
+
+El sistema está diseñado como una aplicación web progresiva (PWA) que permite gestionar todos los procesos internos del restaurante de forma centralizada:
+
+### Arquitectura General
+- **Backend**: Laravel procesa todas las peticiones, valida datos y gestiona la lógica de negocio
+- **Frontend**: Blade templates + Bootstrap 5 proporcionan una interfaz responsive
+- **Base de Datos**: MySQL/SQLite almacena toda la información del negocio
+- **Autenticación**: Laravel Fortify maneja el acceso seguro con roles y permisos
+
+### Flujo de Trabajo Típico
+1. El usuario se autentica en el sistema según su rol (Administrador/Empleado)
+2. Accede a los módulos correspondientes a sus permisos
+3. Realiza operaciones CRUD sobre las entidades del negocio
+4. El sistema valida, procesa y almacena la información
+5. Genera reportes y estadísticas en tiempo real
+
+## 📖 Guía de Uso
+
+### Primer Acceso
+
+1. Accede al sistema através del [enlace desplegado](https://proyecto-soda-bambu.vercel.app) o en tu entorno local (`http://localhost:8000`)
+2. Inicia sesión con tus credenciales
+3. Verifica tu correo electrónico (si es requerido)
+
+> **Nota:** La verificación del correo solamente se realiza la primera vez que el usuario inicia sesión (después de que el Administrador lo haya creado). Si es tu primera vez accediendo, utiliza las credenciales de prueba proporcionadas a continuación.
+
+### Usuarios de Prueba (Desarrollo)
+
+Para probar el sistema en entorno local con datos de ejemplo:
+
+```bash
+# Ejecutar migraciones con seeders siguiendo las instrucciones
+# de la sección anterior.
+composer workspace:sqlite:fresh:seed
+# o
+composer workspace:mysql:fresh:seed
 ```
-ProyectoSodaBambu/
-├── assets/                            # Recursos estáticos
-│   ├── icons/                         # Iconos del proyecto
-│   └── images/                        # Imágenes y logos
-├── docs/                              # Documentación del proyecto
-│   ├── Documento de Casos de Uso.docx
-│   ├── Documento de Especificación de Requisitos de Software.docx
-│   ├── Documento de Reglas de Negocio.docx
-│   ├── Documento de Visión y Alcance.docx
-│   └── IngenieriaII/                  # Documentación específica del ciclo II
-├── legal/                             # Documentos legales y contratos
-│   ├── Carta de Intenciones (contrato).docx
-│   ├── Carta de Intenciones (firmado).pdf
-│   ├── Codigo de Ética (firmado).pdf
-│   └── Código de Ética.docx
-├── scripts/                           # Scripts de automatización
-│   ├── database/                      # Scripts de base de datos
-│   └── deployment/                    # Scripts de despliegue
-├── source_code/                       # Código fuente Laravel
-│   ├── api/                           # Configuración redireccionamiento para despliegue
-│   ├── app/                           # Lógica de la aplicación
-│   ├── config/                        # Archivos de configuración
-│   ├── database/                      # Migraciones y seeders
-|   ├── lang/                          # Archivos de idioma
-│   ├── public/                        # Archivos públicos
-│   ├── resources/                     # Vistas y assets
-│   ├── routes/                        # Definición de rutas
-│   └── .env.example                   # Plantilla de variables de entorno
-├── uml/                               # Diagramas UML
-│   ├── activity_diagrams/             # Diagramas de actividad
-│   ├── class_diagrams/                # Diagramas de clases
-│   ├── sequence_diagrams/             # Diagramas de secuencia
-│   ├── state_diagrams/                # Diagramas de estado
-│   └── use_case_diagrams/             # Diagramas de casos de uso
-└── README.md                          # Este archivo
-```
 
-## 📚 Documentación
+**Credenciales de prueba:**
+- **Administrador**: 
+  - Email: `admin@admin.com`
+  - Contraseña: `admin1234`
+- **Empleado**: 
+  - Email: `juan.perez@sodabambu.com`
+  - Contraseña: `password123`
 
-### Documentos de Análisis y Diseño
-- **Documento de Visión y Alcance**: Define el propósito, objetivos y límites del proyecto
-- **Documento de Especificación de Requisitos de Software**: Detalla los requisitos funcionales y no funcionales
-- **Documento de Casos de Uso**: Describe las interacciones entre los usuarios y el sistema
-- **Documento de Reglas de Negocio**: Establece las reglas y políticas del negocio
+### Funcionalidades Principales
 
-### Documentos Legales
-- **Carta de Intenciones**: Acuerdo formal con el cliente
-- **Código de Ética**: Principios éticos que rigen el desarrollo del proyecto
+En el sistema, las funcionalidades se organizan en módulos según el rol del usuario:
+
+> **Nota:** Muchas de las funcionalidades aún están en desarrollo, por lo que es posible que algunas de las funciones mencionadas a continuación no estén disponibles en la versión actual del sistema. Sin embargo, se espera que estas funcionalidades estén implementadas y operativas en futuras versiones del proyecto.
+
+#### 👤 Para Administradores
+
+1. **Gestión de Usuarios**
+   - Navega a "Usuarios" desde el menú lateral
+   - Crea, edita o elimina cuentas de empleados
+   - Asigna roles
+
+2. **Gestión de Clientes**
+   - Accede al módulo "Clientes"
+   - Registra nuevos clientes con su información de contacto
+   - Consulta el historial de pedidos por cliente
+
+3. **Gestión de Proveedores**
+   - Administra la información de proveedores
+   - Mantén actualizado el catálogo de contactos
+
+4. **Categorías y Productos**
+   - Organiza el inventario por categorías
+   - Define precios, stock mínimo y descripciones
+
+5. **Reportes y Dashboard**
+   - Visualiza estadísticas de ventas
+   - Genera reportes financieros y operativos
+   - Monitorea el estado del inventario
+
+#### 💼 Para Empleados
+
+1. **Punto de Venta**
+   - Registra ventas de forma rápida
+   - Selecciona productos del catálogo
+   - Procesa diferentes métodos de pago
+
+2. **Consulta de Inventario**
+   - Verifica disponibilidad de productos
+   - Notifica productos con stock bajo
+  
+> **Nota:** Las funcionalidades disponibles pueden variar según el rol asignado a cada usuario. Asegúrate de iniciar sesión con el rol correcto para acceder a las funciones correspondientes.
+
+### Navegación General
+
+- **Menú Lateral**: Accede a todos los módulos del sistema
+- **Botones de Acción**: ➕ Crear, ✏️ Editar, ℹ️ Ver Detalles, 🗑️ Eliminar
+
+### Características Especiales
+
+- **🌓 Tema Oscuro/Claro**: Cambia el tema según tu preferencia
+- **📊 Exportación de Datos**: Descarga reportes en PDF, Excel o CSV
+- **🔔 Notificaciones**: Recibe alertas de stock bajo, pedidos pendientes, etc.
 
 ## 🔧 Tecnologías
 
@@ -175,11 +243,57 @@ ProyectoSodaBambu/
 
 Como información adicional, si deseas ejecutar los *seeders* existentes en el proyecto puedes utilizar los comandos ```composer workspace:[db]:seed``` o ```composer workspace:[db]:fresh:seed``` para realizarlo utilizando los datos existentes o borrando todos los datos existentes, respectivamente. Solamente cambia ```[db]``` por el nombre de tu motor de base de datos según lo mencionado en pasos anteriores.
 
-### Scripts Disponibles
+## 🏗️ Estructura del Proyecto
 
-Revisa la carpeta [scripts/](scripts/) para:
-- **scripts/database/**: Scripts de base de datos (backups)
-- **scripts/deployment/**: Scripts de despliegue y configuración de producción
+```
+ProyectoSodaBambu/
+├── assets/                            # Recursos estáticos
+│   ├── icons/                         # Iconos del proyecto
+│   └── images/                        # Imágenes y logos
+├── docs/                              # Documentación del proyecto
+│   ├── Documento de Casos de Uso.docx
+│   ├── Documento de Especificación de Requisitos de Software.docx
+│   ├── Documento de Reglas de Negocio.docx
+│   ├── Documento de Visión y Alcance.docx
+│   └── IngenieriaII/                  # Documentación específica del ciclo II
+├── legal/                             # Documentos legales y contratos
+│   ├── Carta de Intenciones (contrato).docx
+│   ├── Carta de Intenciones (firmado).pdf
+│   ├── Codigo de Ética (firmado).pdf
+│   └── Código de Ética.docx
+├── scripts/                           # Scripts de automatización
+│   ├── database/                      # Scripts de base de datos
+│   └── deployment/                    # Scripts de despliegue
+├── source_code/                       # Código fuente Laravel
+│   ├── api/                           # Configuración redireccionamiento para despliegue
+│   ├── app/                           # Lógica de la aplicación
+│   ├── config/                        # Archivos de configuración
+│   ├── database/                      # Migraciones y seeders
+|   ├── lang/                          # Archivos de idioma
+│   ├── public/                        # Archivos públicos
+│   ├── resources/                     # Vistas y assets
+│   ├── routes/                        # Definición de rutas
+│   └── .env.example                   # Plantilla de variables de entorno
+├── uml/                               # Diagramas UML
+│   ├── activity_diagrams/             # Diagramas de actividad
+│   ├── class_diagrams/                # Diagramas de clases
+│   ├── sequence_diagrams/             # Diagramas de secuencia
+│   ├── state_diagrams/                # Diagramas de estado
+│   └── use_case_diagrams/             # Diagramas de casos de uso
+└── README.md                          # Este archivo
+```
+
+## 📚 Documentación
+
+### Documentos de Análisis y Diseño
+- **Documento de Visión y Alcance**: Define el propósito, objetivos y límites del proyecto
+- **Documento de Especificación de Requisitos de Software**: Detalla los requisitos funcionales y no funcionales
+- **Documento de Casos de Uso**: Describe las interacciones entre los usuarios y el sistema
+- **Documento de Reglas de Negocio**: Establece las reglas y políticas del negocio
+
+### Documentos Legales
+- **Carta de Intenciones**: Acuerdo formal con el cliente
+- **Código de Ética**: Principios éticos que rigen el desarrollo del proyecto
 
 ## 🌿 Flujo de Trabajo con Git y Gitflow
 
@@ -227,7 +341,7 @@ git commit -m "Preparar release v1.0.0"
 git push origin release/v1.0.0
 ```
 
-Crea Pull Requests de `release/v1.0.0` → `main` y `dev`
+Crea Pull Requests de `release/v1.0.0` → `main`
 
 #### 3. Correcciones Urgentes En Main (Hotfix)
 
@@ -243,7 +357,7 @@ git commit -m "Fix: descripción del problema"
 git push origin hotfix/fix-descripcion
 ```
 
-Crea Pull Requests de `hotfix/fix-descripcion` → `main` y `dev`
+Crea Pull Requests de `hotfix/fix-descripcion` → `main` o `dev` según corresponda
 
 ### Reglas de Oro del Proyecto
 
@@ -327,33 +441,138 @@ Si encuentras conflictos al hacer merge:
    git commit -m "Resolver conflictos de merge"
    ```
 
+## ❓ Preguntas Frecuentes (FAQ)
+
+<details>
+<summary><strong>¿Cómo recupero mi contraseña?</strong></summary>
+
+En la página de inicio de sesión, haz clic en "¿Olvidaste tu contraseña?" e ingresa tu correo electrónico. Recibirás un enlace para restablecer tu contraseña.
+</details>
+
+<details>
+<summary><strong>¿Puedo usar el sistema en mi teléfono móvil?</strong></summary>
+
+No, el sistema únicamente está diseñado para su uso en computadoras de escritorio o laptops, no está diseñado para su uso en dispositivos móviles
+</details>
+
+<details>
+<summary><strong>¿El sistema funciona sin internet?</strong></summary>
+
+No, el sistema requiere conexión a internet para funcionar. La arquitectura PWA está diseñada para que no sea necesario abrir un navegador tradicional para acceder a la aplicación, permitiendo instalarla como una aplicación nativa en el dispositivo.
+</details>
+
+## 📸 Capturas de Pantalla
+
+A continuación, se muestran capturas de pantalla del sistema en sus dos temas disponibles: **oscuro** y **claro**.
+
+> **Nota:** Las siguientes capturas son solo ejemplos de algunas de las pantallas del sistema. El sistema completo incluye muchas más funcionalidades y pantallas que se irán implementando a lo largo del desarrollo del proyecto. Cabe aclarar que algunas las funcionalidades mostradas en las capturas de pantalla todavía se encuentran en desarrollo, por lo que es posible que se lleguen a realizar cambios en el diseño o en la funcionalidad de estas pantallas a medida que se avance en el desarrollo del proyecto. Sin embargo, se espera que todas las funcionalidades mostradas en las capturas de pantalla estén implementadas y operativas en futuras versiones del sistema.
+
+### 🔐 Pantalla de Inicio de Sesión
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/login_dark.png" alt="Login Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/login_light.png" alt="Login Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 📊 Dashboard Principal
+
+El panel de control centralizado que muestra el resumen general del sistema.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/dashboard_dark.png" alt="Dashboard Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/dashboard_light.png" alt="Dashboard Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 👥 Gestión de Clientes
+
+Módulo para administrar la información de clientes del restaurante.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/clients_dark.png" alt="Clientes Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/clients_light.png" alt="Clientes Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 🏢 Gestión de Proveedores
+
+Administración centralizada de proveedores e información de contacto.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/suppliers_dark.png" alt="Proveedores Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/suppliers_light.png" alt="Proveedores Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 👤 Gestión de Usuarios
+
+Control de acceso y administración de cuentas de usuario del sistema.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/users_dark.png" alt="Usuarios Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/users_light.png" alt="Usuarios Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+> **Nota:** Todas las pantallas pueden ser visualizadas en tema oscuro o claro según la preferencia del usuario.
+
+### Scripts Disponibles
+
+Revisa la carpeta [scripts/](scripts/) para:
+- **scripts/database/**: Scripts de base de datos (backups)
+- **scripts/deployment/**: Scripts de despliegue y configuración de producción
+
 ## 👥 Equipo de Desarrollo
 
 ### 🎓 Estudiantes Desarrolladores
-| Nombre | Correo Institucional | GitHub |
-|--------|---------------------|---------|
-| Isaac Herrera Pastrana | isaac.herrera.pastrana@est.una.ac.cr | [@Moshe9647](https://github.com/Moshe9647) |
-| Melanie Oviedo Maleaño | melanie.oviedo.maleano@est.una.ac.cr | [@MelanieOviedo](https://github.com/MelanieOviedo) |
+| Nombre                 | Correo Institucional                   | GitHub                                                               |
+| ---------------------- | -------------------------------------- | -------------------------------------------------------------------- |
+| Isaac Herrera Pastrana | isaac.herrera.pastrana@est.una.ac.cr   | [@Moshe9647](https://github.com/Moshe9647)                           |
+| Melanie Oviedo Maleaño | melanie.oviedo.maleano@est.una.ac.cr   | [@MelanieOviedo](https://github.com/MelanieOviedo)                   |
 | Natalia Ortiz Martinez | deyaneira.ortiz.martinez@est.una.ac.cr | [@DeyaneiraOrtizMartinez](https://github.com/DeyaneiraOrtizMartinez) |
-| Andrea Morera Zúñiga | andrea.morera.zuniga@est.una.ac.cr | [@AndreMoreZu](https://github.com/AndreMoreZu) |
-| Jeremy Romero Carazo | jeremy.romero.carazo@est.una.ac.cr | [@Romero42](https://github.com/Romero42) |
+| Andrea Morera Zúñiga   | andrea.morera.zuniga@est.una.ac.cr     | [@AndreMoreZu](https://github.com/AndreMoreZu)                       |
+| Jeremy Romero Carazo   | jeremy.romero.carazo@est.una.ac.cr     | [@Romero42](https://github.com/Romero42)                             |
 
 ### 👨‍🏫 Supervisión Académica
 - **Ingeniería en Sistemas I**: M.Sc. Olivier Blanco Sandí
 - **Ingeniería en Sistemas II**: Prof. Adán Carranza Alfaro
 - **Ingeniería en Sistemas III**: Prof. Michael Barquero Salazar
-
-## 🏪 Sobre el Cliente
-
-<img src="assets/images/logo-bambu.png" alt="Logo El Bambú" align="left" width="90"/>
-
-**Soda y Restaurante El Bambú** es un negocio ubicado en Cariari, Pococí, Limón, Costa Rica. Su principal objetivo es ofrecer un servicio de comidas, con una variada selección de platillos y bebidas tipo soda, con un enfoque en ofrecer un servicio accesible, rápido y de calidad a la comunidad.
-
-### 🔍 Problemática Actual
-A pesar de ser una empresa pequeña, el restaurante enfrenta limitaciones debido a la falta de digitalización en sus procesos internos. Actualmente el control de ventas, los registros financieros, el cálculo de salarios, la gestión de inventario, las reservas y los reportes operativos se realizan de forma manual, lo que reduce la eficiencia del negocio.
-
-### 🎯 Objetivo del Sistema
-Con la implementación del sistema, se busca mejorar la organización interna, optimizar recursos y facilitar una toma de decisiones basada en datos reales.
 
 ## ⚖️ Derechos de Autor y Términos de Uso
 
