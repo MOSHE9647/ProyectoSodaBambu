@@ -18,11 +18,11 @@
 
 ## 📋 Descripción del Proyecto
 
-Este proyecto tiene como objetivo desarrollar un sistema de gestion interna para la Soda y Restaurante El Bambu, con el fin de optimizar sus procesos administrativos, financieros y operativos. El proyecto se desarrolla como parte de una evaluacion requerida para aprobar los cursos de Ingenieria en Sistemas I, II y III de la Universidad Nacional de Costa Rica, y responde de forma directa a la problematica actual de una empresa pequeña que necesita digitalizar sus procesos.
+Este proyecto tiene como objetivo desarrollar un sistema de gestión interna para la Soda y Restaurante El Bambú, con el fin de optimizar sus procesos administrativos, financieros y operativos. El proyecto se desarrolla como parte de una evaluación requerida para aprobar los cursos de Ingeniería en Sistemas I, II y III de la Universidad Nacional de Costa Rica, y responde de forma directa a la problemática actual de una empresa pequeña que necesita digitalizar sus procesos.
 
 ## 🏪 Sobre el Cliente
 
-<img src="assets/images/logo-bambu.png" alt="Logo El Bambú" align="left" width="90"/>
+<img src="assets/images/logo-bambu.png" alt="Logo El Bambú" align="left" width="90" height="93"/>
 
 **Soda y Restaurante El Bambú** es un negocio ubicado en Cariari, Pococí, Limón, Costa Rica. Su principal objetivo es ofrecer un servicio de comidas, con una variada selección de platillos y bebidas tipo soda, con un enfoque en ofrecer un servicio accesible, rápido y de calidad a la comunidad.
 
@@ -61,7 +61,7 @@ El sistema está diseñado como una aplicación web progresiva (PWA) que permite
 
 ### Primer Acceso
 
-1. Accede al sistema através del [enlace desplegado](https://proyecto-soda-bambu.vercel.app) o en tu entorno local (`http://localhost:8000`)
+1. Accede al sistema a través del [enlace desplegado](https://proyecto-soda-bambu.vercel.app) o en tu entorno local (`http://localhost:8000`)
 2. Inicia sesión con tus credenciales proporcionadas por el Administrador
 3. Verifica tu correo electrónico (si es requerido)
 
@@ -197,13 +197,13 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
    composer workspace:sqlite
    ```
 
-   #### Opción B: MySQL (Para entornos de producción)
+   #### Opción B: MySQL (Recomendado para entornos de producción)
    
-   > ⚠️ **Importante:** Asegúrate de que el servidor de base de datos (XAMPP/Laragon) esté funcionando correctamente antes de continuar.
+   > ⚠️ **Importante:** Asegúrate de que el servidor de base de datos (XAMPP/Laragon) esté funcionando correctamente antes de continuar. Además, verifica que el puerto configurado para MySQL no esté siendo utilizado por otro servicio y que la base de datos (`laravel_db` por defecto) esté creada y sea accesible con las credenciales proporcionadas.
 
    **Con valores personalizados:**
    ```bash
-   composer workspace:mysql -- --db-host 127.0.0.1 --db-port 3306 --db-name laravel_db --db-username root --db-password su_contrasena
+   composer workspace:mysql -- --db-host 127.0.0.1 --db-port 3306 --db-name laravel_db --db-user root --db-password su_contrasena
    ```
 
    **Con valores por defecto:**
@@ -211,14 +211,14 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
    composer workspace:mysql
    ```
 
-   Los valores pueden ser:
+   Los valores por defecto para MySQL son:
    - `db-host`: 127.0.0.1
    - `db-port`: 3306
    - `db-name`: laravel_db
-   - `db-username`: root
-   - `db-password`: (vacío por defecto)
+   - `db-user`: root
+   - `db-password`: (vacío)
 
-   > 💡 **Nota:** Puedes omitir cualquiera de los argumentos para usar los valores por defecto. El archivo `.env` se actualizará automáticamente con tu configuración.
+   Puedes omitir cualquiera de los argumentos para usar los valores por defecto indicados arriba.
 
 3. **Poblar la Base de Datos (opcional)**
 
@@ -247,19 +247,19 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
 
 ### Comandos Adicionales
 
-Para ejecutar seeders sin limpiar la base de datos existente, utiliza:
+Para cargar los datos de prueba sin limpiar la base de datos existente, utiliza:
 
 ```bash
 composer workspace:[db]:seed
 ```
 
-Reemplaza `[db]` con `sqlite` o `mysql` según tu configuración.
-
-Para limpiar la base de datos y cargar los datos de prueba de nuevo:
+Para limpiar la base de datos y volver a cargar los datos de prueba, utiliza:
 
 ```bash
 composer workspace:[db]:fresh:seed
 ```
+
+> Reemplaza `[db]` con `sqlite` o `mysql` según tu configuración.
 
 ## 🏗️ Estructura del Proyecto
 
@@ -343,7 +343,7 @@ git commit -m "Descripción del cambio"
 git push origin feature/nombre-de-la-feature
 ```
 
-**Importante**: Crea un **Pull Request** en GitHub de `feature/nombre-de-la-feature` → `dev`
+**Importante:** Crea un **Pull Request** en GitHub de `feature/nombre-de-la-feature` → `dev`
 
 #### 2. Lanzar una Nueva Versión (Release)
 
@@ -359,9 +359,9 @@ git commit -m "Preparar release v1.0.0"
 git push origin release/v1.0.0
 ```
 
-Crea Pull Requests de `release/v1.0.0` → `main`
+Crea **dos** Pull Requests: primero de `release/v1.0.0` → `main` para publicar la versión, y **después SIEMPRE** sincroniza `dev` creando un PR de `main` → `dev` una vez que la release haya sido aprobada y mergeada. Esto evita que `dev` se quede atrasado respecto a `main`.
 
-#### 3. Correcciones Urgentes En Main (Hotfix)
+#### 3. Correcciones Urgentes en `main` (Hotfix)
 
 ```bash
 # Iniciar un hotfix desde main
@@ -375,7 +375,7 @@ git commit -m "Fix: descripción del problema"
 git push origin hotfix/fix-descripcion
 ```
 
-Crea Pull Requests de `hotfix/fix-descripcion` → `main`
+Crea un Pull Request de `hotfix/fix-descripcion` → `main`. Una vez aprobado y fusionado, sincroniza también `main` → `dev` para que la corrección no se pierda en futuras releases.
 
 ### Reglas de Oro del Proyecto
 
@@ -384,6 +384,7 @@ Crea Pull Requests de `hotfix/fix-descripcion` → `main`
 3. ✅ **TODOS** los cambios deben pasar por Pull Request
 4. ✅ **ESPERA** la aprobación del PR antes de hacer merge
 5. ✅ Mantén tu rama actualizada con `dev`:
+   
    ```bash
    git checkout dev
    git pull origin dev
@@ -453,7 +454,8 @@ Si encuentras conflictos al hacer merge:
 
 1. Abre los archivos en conflicto en VS Code
 2. Resuelve los conflictos manualmente (VS Code te ayudará)
-3. Marca como resuelto:
+3. Marca los cambios como resueltos ejecutando:
+   
    ```bash
    git add .
    git commit -m "Resolver conflictos de merge"
@@ -579,13 +581,13 @@ Revisa la carpeta [scripts/](scripts/) para:
 ## 👥 Equipo de Desarrollo
 
 ### 🎓 Estudiantes Desarrolladores
-| Nombre                 | Correo Institucional                   | GitHub                                                               |
-| ---------------------- | -------------------------------------- | -------------------------------------------------------------------- |
-| Isaac Herrera Pastrana | isaac.herrera.pastrana@est.una.ac.cr   | [@Moshe9647](https://github.com/Moshe9647)                           |
-| Melanie Oviedo Maleaño | melanie.oviedo.maleano@est.una.ac.cr   | [@MelanieOviedo](https://github.com/MelanieOviedo)                   |
+| Nombre | Correo Institucional | GitHub |
+| ------ | ------ | ------ |
+| Isaac Herrera Pastrana | isaac.herrera.pastrana@est.una.ac.cr   | [@Moshe9647](https://github.com/Moshe9647) |
+| Melanie Oviedo Maleaño | melanie.oviedo.maleano@est.una.ac.cr   | [@MelanieOviedo](https://github.com/MelanieOviedo) |
 | Natalia Ortiz Martinez | deyaneira.ortiz.martinez@est.una.ac.cr | [@DeyaneiraOrtizMartinez](https://github.com/DeyaneiraOrtizMartinez) |
-| Andrea Morera Zúñiga   | andrea.morera.zuniga@est.una.ac.cr     | [@AndreMoreZu](https://github.com/AndreMoreZu)                       |
-| Jeremy Romero Carazo   | jeremy.romero.carazo@est.una.ac.cr     | [@Romero42](https://github.com/Romero42)                             |
+| Andrea Morera Zúñiga   | andrea.morera.zuniga@est.una.ac.cr     | [@AndreMoreZu](https://github.com/AndreMoreZu) |
+| Jeremy Romero Carazo   | jeremy.romero.carazo@est.una.ac.cr     | [@Romero42](https://github.com/Romero42) |
 
 ### 👨‍🏫 Supervisión Académica
 - **Ingeniería en Sistemas I**: M.Sc. Olivier Blanco Sandí
@@ -607,7 +609,7 @@ Este sistema fue desarrollado como proyecto académico del curso de **Ingenierí
 ### 🏪 Cliente y Propósito
 - **Cliente**: Soda y Restaurante El Bambú.
 - **Ubicación**: Cariari, Pococí, Limón, Costa Rica.
-- **Propósito**: Sistema de gestión integral para digitalizar y optimizar los procesos del establecimiento.
+- **Propósito**: Sistema de gestión interna para digitalizar y optimizar los procesos del establecimiento.
 - **Derechos de uso comercial**: Según lo establecido en la Carta de Intenciones firmada.
 
 ### 📋 Términos de Uso
@@ -622,7 +624,7 @@ Para consultas sobre el uso de este software o derechos de autor:
 - **Equipo de desarrollo**: Ver tabla de contactos en la sección "Equipo de Desarrollo"
 - **Supervisión académica**: A través de los canales oficiales de la Universidad Nacional de Costa Rica
 
-**© 2026 - Equipo de Desarrollo, Universidad Nacional de Costa Rica. Todos los derechos reservados.**
+**© 2025–2026 Equipo de Desarrollo, Universidad Nacional de Costa Rica. Todos los derechos reservados.**
 
 ---
 
