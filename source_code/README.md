@@ -52,10 +52,10 @@ composer workspace:mysql:fresh:seed
 **Credenciales de prueba:**
 - **Administrador**:
 	- Email: `admin@admin.com`
-	- Contrasena: `admin1234`
+	- Contraseña: `admin1234`
 - **Empleado**:
 	- Email: `juan.perez@sodabambu.com`
-	- Contrasena: `password123`
+	- Contraseña: `password123`
 
 ## 🔧 Tecnologias
 
