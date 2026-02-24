@@ -12,7 +12,7 @@ Puedes acceder a la version en produccion del sistema en:
 
 > **Nota:** El sistema se encuentra desplegado en Vercel con una base de datos MySQL en TiDB Cloud.
 
-## 💡 ¿Como Funciona el Sistema?
+## 💡 ¿Cómo Funciona el Sistema?
 
 El sistema esta diseñado como una aplicacion web progresiva (PWA) que permite gestionar todos los procesos internos del restaurante de forma centralizada:
 
