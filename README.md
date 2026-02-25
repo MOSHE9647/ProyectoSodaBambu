@@ -1,5 +1,17 @@
 # Sistema de Gestión Interna El Bambú
 
+![PHP](https://img.shields.io/badge/PHP->=8.2-777BB4?style=flat&logo=php)
+![Laravel](https://img.shields.io/badge/Laravel-^12.x-FF2D20?style=flat&logo=laravel)
+![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?style=flat&logo=mysql)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=flat&logo=bootstrap)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=flat&logo=javascript)
+![jQuery](https://img.shields.io/badge/jQuery-3.x-0769AD?style=flat&logo=jquery)
+
+![In Development](https://img.shields.io/badge/Estado-En%20Desarrollo-yellow?style=flat)
+![Maintenance](https://img.shields.io/badge/Mantenimiento-Activo-success?style=flat)
+![Project Type](https://img.shields.io/badge/Tipo-Proyecto%20Académico-blue?style=flat)
+![Institution](https://img.shields.io/badge/Institución-UNA%20Costa%20Rica-E21429?style=flat)
+
 ## Índice
 - [📋 Descripción del Proyecto](#-descripción-del-proyecto)
 - [🏪 Sobre el Cliente](#-sobre-el-cliente)
@@ -170,6 +182,8 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
 - **Entorno de desarrollo**: XAMPP / Laragon
 - **IDE recomendado**: Visual Studio Code / PHPStorm
 
+Para ver información técnica más detallada, revisa la documentación en la carpeta [docs/](docs/). El código fuente y su respectivo [README.md](source_code/README.md) con información adicional se encuentran dentro del directorio [source_code/](source_code/).
+
 ## 🚀 Instalación y Configuración
 
 ### Requisitos Previos
@@ -188,9 +202,15 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
    cd source_code
    ```
 
-2. **Configurar la Base de Datos**
+2. **Configurar Entorno y Base de Datos**
 
-   Elige uno de los siguientes motores de base de datos según tus necesidades:
+   La forma más sencilla de configurar el entorno es utilizando los scripts de Composer incluidos en el proyecto, los cuales automatizan la instalación de dependencias, configuración de entorno y ejecución de migraciones.
+   
+   Si no deseas usar los scripts de Composer para configurar el entorno o estás teniendo inconvenientes para ejecutar los mismos, puedes seguir los pasos descritos en la sección [Configuración Inicial](source_code/README.md#-configuración-inicial) del archivo **README.md** del directorio `source_code` para una configuración manual.
+   
+   Sin embargo, se recomienda utilizar los scripts de Composer para una configuración más rápida y sencilla.
+
+   Para empezar, elige uno de los siguientes motores de base de datos según tus necesidades:
 
    #### Opción A: SQLite (Recomendado para desarrollo local)
    ```bash
