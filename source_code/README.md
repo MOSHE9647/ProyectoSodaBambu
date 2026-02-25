@@ -2,11 +2,11 @@
 
 ## 📋 Descripción del Proyecto
 
-Esta parte del repositorio contiene el codigo fuente del sistema de gestion interna para Soda y Restaurante El Bambu. El sistema centraliza la operacion del restaurante para optimizar ventas, inventario, reportes, reservas y administracion interna.
+Esta parte del repositorio contiene el código fuente del sistema de gestión interna para Soda y Restaurante El Bambú. El sistema centraliza la operación del restaurante para optimizar ventas, inventario, reportes, reservas y administración interna.
 
 ## 🌐 Proyecto Desplegado
 
-Puedes acceder a la version en produccion del sistema en:
+Puedes acceder a la versión en producción del sistema en:
 
 **🔗 [https://proyecto-soda-bambu.vercel.app](https://proyecto-soda-bambu.vercel.app)**
 
@@ -17,19 +17,19 @@ Puedes acceder a la version en produccion del sistema en:
 El sistema esta diseñado como una aplicacion web progresiva (PWA) que permite gestionar todos los procesos internos del restaurante de forma centralizada:
 
 ### Arquitectura General
-- **Backend**: Laravel procesa las peticiones, valida datos y gestiona la logica de negocio.
+- **Backend**: Laravel procesa las peticiones, valida datos y gestiona la lógica de negocio.
 - **Frontend**: Blade templates + Bootstrap 5 proveen una interfaz responsive.
-- **Base de Datos**: MySQL/SQLite almacena la informacion del negocio.
+- **Base de Datos**: MySQL/SQLite almacena la información del negocio.
 - **Autenticacion**: Laravel Fortify maneja el acceso seguro con roles y permisos.
 
-### Flujo de Trabajo Tipico
-1. El usuario se autentica en el sistema segun su rol (Administrador/Empleado).
+### Flujo de Trabajo Típico
+1. El usuario se autentica en el sistema según su rol (Administrador/Empleado).
 2. Accede a los módulos correspondientes a sus permisos.
 3. Realiza operaciones CRUD sobre las entidades del negocio.
-4. El sistema valida, procesa y almacena la informacion.
+4. El sistema valida, procesa y almacena la información.
 5. Genera reportes y estadísticas en tiempo real.
 
-## 📖 Guia de Uso
+## 📖 Guía de Uso
 
 ### Primer Acceso
 
@@ -39,23 +39,19 @@ El sistema esta diseñado como una aplicacion web progresiva (PWA) que permite g
 
 > **Nota:** La verificación del correo se realiza la primera vez que el usuario inicia sesión (despues de que el Administrador lo haya creado).
 
-### Usuarios de Prueba (Desarrollo)
+### Usuarios de Prueba
 
-Para probar el sistema en entorno local con datos de ejemplo:
+Para probar el sistema con datos de ejemplo durante el desarrollo:
 
-```bash
-composer workspace:sqlite:fresh:seed
-# o
-composer workspace:mysql:fresh:seed
-```
+> ⚠️ **Importante:** Las credenciales que se muestran a continuación son **únicamente para propósitos de prueba** mientras el proyecto se encuentra en fase de desarrollo. Una vez que el proyecto esté completado, el cliente proporcionará credenciales reales que reemplazarán estos datos de prueba.
 
-**Credenciales de prueba:**
-- **Administrador**:
-	- Email: `admin@admin.com`
-	- Contraseña: `admin1234`
-- **Empleado**:
-	- Email: `juan.perez@sodabambu.com`
-	- Contraseña: `password123`
+**Credenciales de prueba (temporales):**
+- **Administrador**: 
+  - Email: `admin@admin.com`
+  - Contraseña: `admin1234`
+- **Empleado**: 
+  - Email: `juan.perez@sodabambu.com`
+  - Contraseña: `password123`
 
 ## 🔧 Tecnologias
 
@@ -71,7 +67,7 @@ composer workspace:mysql:fresh:seed
 - **JavaScript**: Vanilla JS + jQuery
 
 ### Deployment
-- **Hosting de la aplicacion**: Vercel
+- **Hosting de la aplicación**: Vercel
 - **Servidor de base de datos**: TiDB Cloud
 
 ### Herramientas de Desarrollo
@@ -81,7 +77,7 @@ composer workspace:mysql:fresh:seed
 - **Entorno de desarrollo**: XAMPP / Laragon
 - **IDE recomendado**: Visual Studio Code / PHPStorm
 
-## Estructura de Directorios
+## 🏗️ Estructura de Directorios
 
 ```
 source_code/
@@ -104,7 +100,11 @@ source_code/
 └── tests/                    # Tests automatizados
 ```
 
-## Configuración Inicial
+## 🚀 Configuración Inicial
+
+Para configurar el entorno de desarrollo, puedes usar los scripts de Composer incluidos en el proyecto. Estos scripts automatizan la instalación de dependencias, configuración de entorno y ejecución de migraciones. Los pasos para configurar el entorno usando los scripts de Composer se encuentran detallados en la sección "Instalación y Configuración" del [README Principal](../README.md#-instalación-y-configuración).
+
+Si no deseas usar los scripts de Composer para configurar el entorno, puedes seguir estos pasos manualmente:
 
 ### 1. Instalación de Dependencias
 
@@ -159,7 +159,7 @@ php artisan migrate --seed
 npm run build
 ```
 
-## Comandos Útiles
+## ⚙️ Comandos Útiles
 
 ### Desarrollo
 
@@ -205,7 +205,7 @@ php artisan test --filter NombreDelTest
 php artisan test --coverage
 ```
 
-## Convenciones de Código
+## 📐 Convenciones de Código
 
 - Seguir PSR-12 para PHP
 - Nombres de clases en `PascalCase`
@@ -214,7 +214,7 @@ php artisan test --coverage
 - Commits descriptivos en **inglés** (según estándares del proyecto)
 - Usar Pull Requests para todos los cambios (ver [README principal](../README.md#-flujo-de-trabajo-con-git-y-gitflow))
 
-## Variables de Entorno Importantes
+## 🔐 Variables de Entorno Importantes
 
 | Variable    | Descripción                    |
 |-------------|--------------------------------|
@@ -223,22 +223,28 @@ php artisan test --coverage
 | `APP_DEBUG` | Modo debug (true/false)        |
 | `DB_*`      | Configuración de base de datos |
 
-## Archivos Ignorados (Git)
+## 🚫 Archivos Ignorados (Git)
 
 Consulta el archivo [.gitignore](.gitignore) para ver qué archivos están excluidos del control de versiones.
 
-## Seguridad
+## 🔒 Seguridad
 
 - **Nunca** hacer commit del archivo `.env`
 - Mantener dependencias actualizadas
 - Usar validación en todos los inputs
 - Sanitizar datos antes de queries
 
-## Soporte
+## 🆘 Soporte
 
-Para dudas técnicas sobre el código, contactar al equipo de desarrollo (
-ver [README principal](../README.md#-equipo-de-desarrollo))
+Para dudas técnicas sobre el código, contactar con el equipo de desarrollo (ver sección [Equipo de Desarrollo](../README.md#-equipo-de-desarrollo) dentro del archivo **README.md** del directorio principal).
+
+**© 2025–2026 Equipo de Desarrollo, Universidad Nacional de Costa Rica. Todos los derechos reservados.**
 
 ---
 
-**Parte del proyecto académico de Ingeniería en Sistemas - Universidad Nacional de Costa Rica**
+<img src="../assets/images/logo-una.png" alt="Logo Universidad Nacional de Costa Rica" align="left" width="85"/>
+
+**Universidad Nacional de Costa Rica**  
+**Escuela de Informática**  
+**Ingeniería en Sistemas II**  
+**I Ciclo 2026**
