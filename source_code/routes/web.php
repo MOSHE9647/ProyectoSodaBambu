@@ -4,7 +4,6 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\MethodPaymentController;
 use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
@@ -24,7 +23,6 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('sales', [HomeController::class, 'sales'])->name('sales');
 	Route::get('config', [ConfigController::class, 'index'])->name('config');
 	Route::resource('users', UserController::class)->names('users');
-	Route::resource('payments', MethodPaymentController::class)->names('method-payments');
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
