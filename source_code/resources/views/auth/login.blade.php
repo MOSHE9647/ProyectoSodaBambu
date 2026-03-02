@@ -64,7 +64,6 @@
 		<x-form.auth.input
 			:id="'password'"
 			:type="'password'"
-			:class="'w-100'"
 			:placeholder="'Contraseña'"
 			:autocomplete="'current-password'"
 			:required="true"
