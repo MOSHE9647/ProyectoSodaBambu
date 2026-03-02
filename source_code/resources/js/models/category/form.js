@@ -5,7 +5,7 @@ import {
     validateAndDisplayField,
     validateName
 } from '../../utils/validation.js';
-import {setLoadingState} from '../../utils/utils.js';
+import { setLoadingState } from '../../utils/utils.js';
 
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
@@ -13,8 +13,9 @@ if (typeof $ === 'undefined') {
 }
 
 // Constants and Variables
-const isEdit = document.querySelector('form[id^="edit-"]') !== null;
-const formId = isEdit ? 'edit-category-form' : 'create-category-form';
+const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
+const FORM_ID = IS_EDITING ? 'edit-category-form' : 'create-category-form';
+
 const fieldValidators = {
     name: {
         validator: validateName,
@@ -24,6 +25,12 @@ const fieldValidators = {
 };
 
 // Validation Functions
+
+/**
+ * Validates the category form fields.
+ * @param {Object} values 
+ * @returns {boolean} True if all fields are valid, false otherwise.
+ */
 function validateCategoryForm(values) {
     return validateAndDisplayField(
         fieldValidators,
@@ -33,35 +40,68 @@ function validateCategoryForm(values) {
     );
 }
 
+// UI Manipulation Functions
+
+/**
+ * Handles the form submission process.
+ * @returns {boolean} True if form is valid and can be submitted, false otherwise.
+ */
 function submitCategoryForm() {
     clearAllFieldErrors(fieldValidators);
 
+    // Cache DOM elements
+    const $name = $('#name');
+
     const values = {
-        name: $('#name').val().trim()
+        name: $name.val().trim()
     };
 
     return validateCategoryForm(values);
 }
 
 // Event Listeners
-Object.keys(fieldValidators).forEach((fieldId) => {
-    $(document).on('input change', `#${fieldId}`, function () {
-        const value = $(this).val().trim();
-        const {validator, emptyMsg, invalidMsg} = fieldValidators[fieldId];
 
-        if (!value) {
+/**
+ * Real-time validation for category form fields.
+ * Validates fields on input and change events, providing immediate feedback to the user.
+ * @param {Event} e - The event object triggered by user interaction.
+ */
+$(document).on('input change', `#${FORM_ID}`, function (e) {
+    const $target = $(e.target);
+    const fieldId = $target.attr('id');
+
+    // Skip if field is not in validators
+    if (!fieldValidators.hasOwnProperty(fieldId)) {
+        return;
+    }
+
+    let value = $target.val().trim();
+    const {validator, emptyMsg, invalidMsg} = fieldValidators[fieldId];
+
+    if (!value) {
+        if (emptyMsg) {
             showFieldError(fieldId, emptyMsg);
-        } else if (!validator(value)) {
-            showFieldError(fieldId, invalidMsg);
         } else {
             clearFieldError(fieldId);
         }
-    });
+    } else if (!validator(value)) {
+        showFieldError(fieldId, invalidMsg);
+    } else {
+        clearFieldError(fieldId);
+    }
 });
 
-$(document).on('submit', `#${formId}`, (e) => {
+/**
+ * Handles the form submission event.
+ * Validates the form and sets loading state accordingly.
+ * @param {Event} e - The submit event triggered by the form submission.
+ */
+$(document).on('submit', `#${FORM_ID}`, (e) => {
+    // Prevent default form submission
     e.preventDefault();
-    setLoadingState(formId, true);
+    setLoadingState(FORM_ID, true);
+
+    // Validate form and submit if valid
     if (submitCategoryForm()) e.currentTarget.submit();
-    else setLoadingState(formId, false);
+    else setLoadingState(FORM_ID, false);
 });
