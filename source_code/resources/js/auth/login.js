@@ -1,10 +1,11 @@
 // Description: JavaScript code for handling login form validation and submission.
 import {
 	validateAndDisplayField,
-	validateEmail, validatePassword,
+	validateEmail,
 	clearAllFieldErrors
 } from '../utils/validation.js';
 import {clearFieldError, showFieldError} from '../utils/validation.js';
+import { togglePasswordVisibility } from '../utils/utils.js';
 import {setLoadingState} from '../utils/utils.js';
 
 // Ensure jQuery is loaded
@@ -12,22 +13,36 @@ if (typeof $ === 'undefined') {
 	throw new Error('This script requires jQuery');
 }
 
+window.togglePasswordVisibility = togglePasswordVisibility;
+
 // Constants and Variables
 const loginFormId = 'login';
 const fieldValidators = {
 	email: {
 		validator: validateEmail,
-		emptyMsg: 'El correo electrónico es obligatorio.',
-		invalidMsg: 'Ingrese un correo electrónico válido.'
+		emptyMsg: "El correo electrónico es obligatorio.",
+		invalidMsg: "Ingrese un correo electrónico válido.",
 	},
 	password: {
-		validator: validatePassword,
-		emptyMsg: 'La contraseña es obligatoria.',
-		invalidMsg: 'La contraseña debe contener, al menos, 8 caracteres alfanuméricos.'
-	}
+		validator: () => true,
+		emptyMsg: "La contraseña es obligatoria.",
+		invalidMsg: "",
+	},
 };
 
 // Validation Functions
+
+/**
+ * Updates the password toggle button class based on field error state.
+ * @param {string} fieldId - The field ID
+ * @param {boolean} hasError - Whether the field has an error
+ */
+function updatePasswordButtonClass(fieldId, hasError) {
+	if (fieldId === 'password') {
+		const $button = $(`#toggle-${fieldId}`);
+		$button.toggleClass('btn-danger', hasError).toggleClass('btn-primary', !hasError);
+	}
+}
 
 /**
  * Validates the login form fields.
@@ -55,6 +70,7 @@ function validateLoginForm(email, password) {
  */
 function submitLoginForm() {
 	clearAllFieldErrors(fieldValidators);
+	updatePasswordButtonClass('password', false);
 
 	// Get form values and validate them
 	const email = $('#email').val().trim();
@@ -62,7 +78,11 @@ function submitLoginForm() {
 	let isValid = validateLoginForm(email, password);
 
 	// If there are validation errors, do not submit the form
-	if (!isValid) return false;
+	if (!isValid) {
+		// Check if password field has error and update button state
+		updatePasswordButtonClass('password', $('#password').hasClass('is-invalid'));
+		return false;
+	}
 
 	// Show loading state
 	setLoadingState(loginFormId, true);
@@ -78,14 +98,21 @@ Object.keys(fieldValidators).forEach((fieldId) => {
 	$(document).on('input', `#${fieldId}`, function () {
 		const value = $(this).val().trim();
 		const {validator, emptyMsg, invalidMsg} = fieldValidators[fieldId];
+		let hasError = false;
 
 		if (!value) {
 			showFieldError(fieldId, emptyMsg);
+			hasError = true;
 		} else if (!validator(value)) {
 			showFieldError(fieldId, invalidMsg);
+			hasError = true;
 		} else {
 			clearFieldError(fieldId);
+			hasError = false;
 		}
+
+		// Update password button class based on error state
+		updatePasswordButtonClass(fieldId, hasError);
 	});
 });
 
