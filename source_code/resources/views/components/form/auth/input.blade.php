@@ -1,12 +1,3 @@
-@php
-	$inputId = $id;
-	$inputName = $name ?? $id;
-	$inputType = $type ?? 'text';
-	$isPassword = $inputType === 'password';
-	$isInvalid = $hasErrors;
-	$buttonClass = $isInvalid ? 'btn-danger' : 'btn-primary';
-@endphp
-
 @props([
 	'id' => '',
 	'name' => null,
@@ -23,6 +14,15 @@
 	'hasErrors' => false,
 	'errorMessage' => null,
 ])
+
+@php
+	$inputId = $id;
+	$inputName = $name ?? $id;
+	$inputType = $type ?? 'text';
+	$isPassword = $inputType === 'password';
+	$isInvalid = $hasErrors;
+	$buttonClass = $isInvalid ? 'btn-danger' : 'btn-primary';
+@endphp
 
 <div class="input-group has-validation d-flex justify-content-between">
 	<div class="form-floating {{ $class }}">
@@ -47,11 +47,9 @@
 		<label for="{{ $inputId }}" class="form-label">
 			{{ $slot ?? ucwords(str_replace('-', ' ', $inputName)) }}
 		</label>
-		@if($hasErrors || $errorMessage)
-			<div id="{{ $inputName }}-error" class="invalid-feedback ps-2" role="alert" style="width: calc(100% + 1.5rem);">
-				<strong>{{ $errorMessage ?? '' }}</strong>
-			</div>
-		@endif
+		<div id="{{ $inputName }}-error" class="invalid-feedback ps-2" role="alert" style="width: calc(100% + 1.5rem);">
+			<strong>{{ $errorMessage ?? '' }}</strong>
+		</div>
 	</div>
 	@if($isPassword)
 		<button 
