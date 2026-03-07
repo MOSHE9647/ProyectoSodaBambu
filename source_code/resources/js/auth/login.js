@@ -90,6 +90,7 @@ function submitLoginForm() {
 }
 
 // Event Listeners
+
 /**
  * Real-time validation for input fields.
  * Validates fields on input and shows/hides error messages accordingly.
