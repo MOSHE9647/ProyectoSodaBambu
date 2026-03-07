@@ -1,52 +1,67 @@
+@php
+	$inputId = $id;
+	$inputName = $name ?? $id;
+	$inputType = $type ?? 'text';
+	$isPassword = $inputType === 'password';
+	$isInvalid = $hasErrors;
+	$buttonClass = $isInvalid ? 'btn-danger' : 'btn-primary';
+@endphp
+
 @props([
 	'id' => '',
 	'name' => null,
 	'placeholder' => '',
-	'class' => '',
+	'class' => 'mb-3',
 	'inputClass' => '',
-	'type' => null,
+	'type' => 'text',
 	'value' => null,
 	'required' => false,
 	'readonly' => false,
 	'disabled' => false,
 	'autocomplete' => null,
 	'autofocus' => false,
+	'hasErrors' => false,
 	'errorMessage' => null,
-	'isPassword' => $type === 'password',
 ])
 
 <div class="input-group has-validation d-flex justify-content-between">
-	<div class="form-floating {{ $class }} mb-3">
+	<div class="form-floating {{ $class }}">
 		<input 
-			id="{{ $id }}" 
-			name="{{ $name ?? $id }}"
-			type="{{ $type ?? 'text' }}"
-			class="form-control{{ $inputClass }} @if ($isPassword) rounded-end-0 @endif"
+			id="{{ $inputId }}" 
+			name="{{ $inputName }}"
+			type="{{ $inputType }}"
 			placeholder="{{ $placeholder }}"
-			aria-describedby="{{ $name ?? $id }}-error"
+			aria-describedby="{{ $inputName }}-error"
+			@class([
+				'form-control',
+				$inputClass,
+				'rounded-end-0' => $isPassword,
+			])
+			@required($required)
+			@readonly($readonly)
+			@disabled($disabled)
+			@if($autofocus) autofocus @endif
+			@if($autocomplete) autocomplete="{{ $autocomplete }}" @endif
 			@isset($value) value="{{ $value }}" @endisset
-			{{ $required ? 'required' : '' }}
-			{{ $readonly ? 'readonly' : '' }}
-			{{ $disabled ? 'disabled' : '' }}
-			{{ $autocomplete ? "autocomplete=$autocomplete" : '' }}
-			{{ $autofocus ? 'autofocus' : '' }}
 		>
-		<label for="{{ $id }}" class="form-label">
-			{{ $slot ?? ucwords(str_replace('-', ' ', $name ?? $id)) }}
+		<label for="{{ $inputId }}" class="form-label">
+			{{ $slot ?? ucwords(str_replace('-', ' ', $inputName)) }}
 		</label>
-		<div id="{{ $name ?? $id }}-error" class="invalid-feedback ps-2" role="alert" style="width: calc(100% + 1.5rem);">
-			<strong>{{ $errorMessage ?? 'Error no especificado' }}</strong>
-		</div>
+		@if($hasErrors || $errorMessage)
+			<div id="{{ $inputName }}-error" class="invalid-feedback ps-2" role="alert" style="width: calc(100% + 1.5rem);">
+				<strong>{{ $errorMessage ?? '' }}</strong>
+			</div>
+		@endif
 	</div>
-	@if ($isPassword)
+	@if($isPassword)
 		<button 
-			id="toggle-{{ $id }}"
-			type="button" 
-			class="btn btn-primary btn-password-toggle w-auto rounded-start-0"
-			onclick="togglePasswordVisibility('{{ $id }}', 'toggle-{{ $id }}')"
+			id="toggle-{{ $inputId }}"
+			type="button"
+			class="btn {{ $buttonClass }} btn-password-toggle w-auto rounded-start-0"
+			onclick="togglePasswordVisibility('{{ $inputId }}', 'toggle-{{ $inputId }}')"
 			aria-label="Toggle password visibility"
 			aria-pressed="false"
-			aria-controls="{{ $id }}"
+			aria-controls="{{ $inputId }}"
 		>
 			<i class="bi bi-eye"></i>
 		</button>
