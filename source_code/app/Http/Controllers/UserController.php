@@ -54,18 +54,16 @@ class UserController extends Controller implements HasMiddleware
 	 */
 	public function index(Request $request)
 	{
-		// Fetch users with their roles and specific role relationship
-		$users = User::with([$this->role, 'roles'])->get();
-		$resource = UserResource::collection($users);
-
 		// Count the number of admin users
 		$adminCount = User::whereHas('roles', function ($role) {
-			$role->where('name', UserRole::ADMIN);
+			$role->where('name', UserRole::ADMIN->value);
 		})->count();
 
 		// Handle AJAX request for DataTables
 		if ($request->ajax()) {
-			return DataTables::of($resource)->make();
+			// Use query builder to avoid loading all rows in memory for DataTables
+			$query = User::query()->with([$this->role, 'roles']);
+			return DataTables::of($query)->toJson();
 		}
 
 		// For non-AJAX requests, return the view
@@ -91,27 +89,50 @@ class UserController extends Controller implements HasMiddleware
 	 */
 	public function store(UserRequest $userRequest)
 	{
-		DB::transaction(function () use ($userRequest) {
-			// Create the User
+		$wasRestored = false;
+
+		DB::transaction(function () use ($userRequest, &$wasRestored) {
 			$userData = $userRequest->validated();
-			$user = User::create($userData);
-
-			// Assign the role to the user
 			$userRole = UserRole::from($userRequest['role']);
-			$user->assignRole($userRole);
 
-			// If the role is EMPLOYEE, create the related Employee record
+			// Reuse soft-deleted user with the same unique field (email) instead of creating a new row.
+			$user = User::withTrashed()->where('email', $userData['email'])->first();
+
+			if ($user?->trashed()) {
+				$user->restore();
+				$user->update($userData);
+				$wasRestored = true;
+			} else {
+				$user = User::create($userData);
+			}
+
+			$user->syncRoles([$userRole]);
+
 			if ($userRole === UserRole::EMPLOYEE) {
-				// Validate Employee-specific data with EmployeeRequest
 				$employeeData = $this->validateEmployeeData($userRequest);
+				$employee = $user->employee()->withTrashed()->first();
 
-				// Create the Employee record
-				$employeeData['id'] = $user->id;
-				$user->employee()->create($employeeData);
+				if ($employee) {
+					if ($employee->trashed()) {
+						$employee->restore();
+					}
+					$employee->update($employeeData);
+				} else {
+					$employeeData['id'] = $user->id;
+					$user->employee()->create($employeeData);
+				}
+			} else {
+				if ($user->employee()->exists()) {
+					$user->employee()->delete();
+				}
 			}
 		});
 
-		return redirect()->route('users.index')->with('success', 'Usuario creado correctamente.');
+		$message = $wasRestored
+			? 'Usuario restaurado y actualizado correctamente.'
+			: 'Usuario creado correctamente.';
+
+		return redirect()->route('users.index')->with('success', $message);
 	}
 
 	/**
@@ -209,8 +230,8 @@ class UserController extends Controller implements HasMiddleware
 			// Get the user with the specific role relationship
 			$user->load($this->role);
 
-			// If the user has the specific role, delete the related record
-			if ($user->employee()) {
+			// If the user has a related employee record, delete it
+			if ($user->employee()->exists()) {
 				$user->employee()->delete();
 			}
 
