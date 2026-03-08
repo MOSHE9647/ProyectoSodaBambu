@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CreateClientRequest;
-use App\Http\Requests\UpdateClientRequest;
+use App\Http\Requests\ClientRequest;
 use App\Http\Resources\ClientResource;
 use App\Models\Client;
 use Exception;
@@ -26,13 +25,10 @@ class ClientController extends Controller
 	 */
 	public function index(Request $request)
 	{
-		// Fetch clients
-		$clients = Client::all();
-		$resource = ClientResource::collection($clients);
-
 		// Handle AJAX request for DataTables
 		if ($request->ajax()) {
-			return DataTables::of($resource)->make();
+			// Use query builder to keep DataTables server-side and memory efficient
+			return DataTables::of(Client::query())->toJson();
 		}
 
 		// For non-AJAX requests, return the view
@@ -54,17 +50,25 @@ class ClientController extends Controller
 	 *
 	 * Se eliminó DB::transaction, ya que solo se realiza una acción (crear).
 	 *
-	 * @param CreateClientRequest $request
+	 * @param ClientRequest $request
 	 * @return RedirectResponse
 	 * @throws Throwable
 	 */
-	public function store(CreateClientRequest $request)
+	public function store(ClientRequest $request)
 	{
-		// Create the Client without a transaction
 		$clientData = $request->validated();
-		Client::create($clientData);
+		$client = Client::withTrashed()->where('email', $clientData['email'])->first();
+		$message = 'Cliente creado correctamente.';
 
-		return redirect()->route('clients.index')->with('success', 'Cliente creado correctamente.');
+		if ($client?->trashed()) {
+			$client->restore();
+			$client->update($clientData);
+			$message = 'Cliente restaurado y actualizado correctamente.';
+		} else {
+			Client::create($clientData);
+		}
+
+		return redirect()->route('clients.index')->with('success', $message);
 	}
 
 	/**
@@ -95,12 +99,12 @@ class ClientController extends Controller
 	 *
 	 * Se eliminó DB::transaction, ya que solo se realiza una acción (actualizar).
 	 *
-	 * @param UpdateClientRequest $request
+	 * @param ClientRequest $request
 	 * @param Client $client
 	 * @return RedirectResponse
 	 * @throws Throwable
 	 */
-	public function update(UpdateClientRequest $request, Client $client)
+	public function update(ClientRequest $request, Client $client)
 	{
 		// Update the Client without a transaction
 		$clientData = $request->validated();
