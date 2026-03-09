@@ -10,7 +10,6 @@ const MODEL_NAME = 'proveedor';
 
 // String Constants
 const BTN_CLASS_PRIMARY = 'btn-primary';
-const BADGE_DELETED = '<span class="badge bg-danger">Eliminado</span>';
 
 // Routes Configuration
 const MODEL_ROUTES = {
@@ -27,23 +26,27 @@ const MODEL_ROUTES = {
 window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
-window.deleteSupplier = function deleteSupplier(e) { return deleteModel(e, MODEL_NAME); };
-window.showSupplier = function showSupplier(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
 
 // ==================== Helper Functions ====================
 
 /**
- * Renders the supplier name with a deleted badge if applicable.
- * @param {string} data - The supplier name
- * @param {Object} row - The full row data
- * @returns {string} The formatted name HTML
+ * Shows information for a specific supplier.
+ * @param {string} url - The URL to fetch supplier information from
+ * @param {HTMLElement} anchor - The anchor element for the modal
+ * @returns {Promise<void>} A promise resolving when the modal is shown
  */
-function renderSupplierName(data, row) {
-    if (row?.deleted_at) {
-        return `${data} ${BADGE_DELETED}`;
-    }
-    return data;
-}
+window.showSupplier = function (url, anchor) {
+	return showModelInfo(url, anchor, MODEL_NAME);
+};
+
+/**
+ * Deletes a specific supplier.
+ * @param {Event} e - The event object
+ * @returns {Promise<void>} A promise resolving when the supplier is deleted
+ */
+window.deleteSupplier = function (e) {
+	return deleteModel(e, MODEL_NAME);
+};
 
 // ==================== DataTable Initialization ====================
 
@@ -54,23 +57,22 @@ $(() => {
 		{
 			data: 'name',
 			name: 'name',
-			// Nombre del proveedor con badge si está marcado como eliminado
-			render: (data, _type, row) => renderSupplierName(data, row)
+			// Supplier's name
 		},
 		{
 			data: 'email',
 			name: 'email',
-			// Correo electrónico del proveedor
+			// Supplier's contact email
 		},
 		{
 			data: 'phone',
-			name: 'phone'
-			// Teléfono de contacto del proveedor
+			name: 'phone',
+			// Supplier's contact phone
 		},
 		{
 			data: 'created_at',
 			name: 'created_at',
-			// Fecha de creación formateada como 'DD de Month del YYYY'
+			// Creation date formatted as 'DD of Month of YYYY'
 			render: (data) => formatDate(data),
 		}
 	];
@@ -86,18 +88,21 @@ $(() => {
 	const actions = {
 		show: { 
 			route: MODEL_ROUTES.show, 
-			func: showSupplier, 
+			func: window.showSupplier,
+			funcName: 'showSupplier',
 			tooltip: 'Ver detalles' 
 		},
 		edit: { 
 			route: MODEL_ROUTES.edit, 
 			func: toggleLoadingState, 
+			funcName: 'toggleLoadingState',
 			tooltip: `Editar ${MODEL_NAME}` 
 		},
 		delete: {
 			route: MODEL_ROUTES.delete,
 			tooltip: `Eliminar ${MODEL_NAME}`,
-			func: deleteSupplier,
+			func: window.deleteSupplier,
+			funcName: 'deleteSupplier',
 		}
 	};
 
@@ -114,6 +119,7 @@ $(() => {
 			class: `create-button ${BTN_CLASS_PRIMARY}`,
 			icon: 'bi-building-add',
 			func: toggleLoadingState,
+			funcName: 'toggleLoadingState',
 			params: ['.create-button', 'create', true],
 		}
 	];
