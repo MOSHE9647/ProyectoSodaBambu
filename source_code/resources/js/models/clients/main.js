@@ -26,8 +26,27 @@ const MODEL_ROUTES = {
 window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
-window.deleteClient = function deleteClient(e) { return deleteModel(e, MODEL_NAME); };
-window.showClient = function showClient(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
+
+// ==================== Helper Functions ====================
+
+/**
+ * Shows information for a specific client.
+ * @param {string} url - The URL to fetch client information from
+ * @param {HTMLElement} anchor - The anchor element for the modal
+ * @returns {Promise<void>} A promise resolving when the modal is shown
+ */
+window.showClient = function (url, anchor) {
+    return showModelInfo(url, anchor, MODEL_NAME);
+};
+
+/**
+ * Deletes a specific client.
+ * @param {Event} e - The event object
+ * @returns {Promise<void>} A promise resolving when the client is deleted
+ */
+window.deleteClient = function (e) {
+    return deleteModel(e, MODEL_NAME);
+};
 
 // ==================== DataTable Initialization ====================
 
@@ -75,18 +94,21 @@ $(() => {
 	const actions = {
 		show: { 
 			route: MODEL_ROUTES.show, 
-			func: showClient, 
+            func: window.showClient,
+            funcName: 'showClient',
 			tooltip: 'Ver detalles' 
 		},
 		edit: { 
 			route: MODEL_ROUTES.edit, 
 			func: toggleLoadingState, 
+            funcName: 'toggleLoadingState',
 			tooltip: `Editar ${MODEL_NAME}` 
 		},
 		delete: {
 			route: MODEL_ROUTES.delete,
 			tooltip: `Eliminar ${MODEL_NAME}`,
-			func: deleteClient,
+            func: window.deleteClient,
+            funcName: 'deleteClient',
 		}
 	};
 
@@ -103,6 +125,7 @@ $(() => {
             class: `create-button ${BTN_CLASS_PRIMARY}`,
             icon: 'bi-person-plus-fill',
 			func: toggleLoadingState,
+			funcName: 'toggleLoadingState',
 			params: ['.create-button', 'create', true],
         }
     ];

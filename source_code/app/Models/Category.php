@@ -23,7 +23,6 @@ class Category extends Model
 		'description',
 	];
 
-
     /**
 	 * Get the attributes that should be cast.
 	 *

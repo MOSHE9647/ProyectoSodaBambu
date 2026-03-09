@@ -39,5 +39,15 @@
 	{{-- Additional Scripts --}}
 	@routes
 	@yield('scripts')
+
+	{{-- Success Toast Notification --}}
+	@if(session('success'))
+		<script type="module">
+			SwalToast.fire({
+				icon: SwalNotificationTypes.SUCCESS,
+				title: @json(session('success'))
+			});
+		</script>
+	@endif
 </body>
 </html>

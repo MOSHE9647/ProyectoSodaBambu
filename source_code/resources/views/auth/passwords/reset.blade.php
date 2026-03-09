@@ -73,7 +73,6 @@
 		<x-form.auth.input
 			:id="'password'"
 			:type="'password'"
-			:class="'w-100'"
 			:placeholder="'Nueva Contraseña'"
 			:autocomplete="'new-password'"
 			:autofocus="true"
@@ -87,7 +86,6 @@
 		<x-form.auth.input
 			:id="'password_confirmation'"
 			:type="'password'"
-			:class="'w-100'"
 			:placeholder="'Confirmar Nueva Contraseña'"
 			:autocomplete="'new-password'"
 			:required="true"

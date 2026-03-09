@@ -47,14 +47,4 @@ use App\Enums\UserRole;
 		};
 	</script>
 	@vite(['resources/js/models/users/main.js'])
-
-	{{-- Success Toast Notification --}}
-	@if(session('success'))
-		<script type="module">
-			SwalToast.fire({
-				icon: SwalNotificationTypes.SUCCESS,
-				title: @json(session('success'))
-			});
-		</script>
-	@endif
 @endsection

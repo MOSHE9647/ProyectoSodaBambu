@@ -50,6 +50,8 @@
 			:id="'email'"
 			:type="'email'"
 			:class="'w-100'"
+			:hasErrors="$errors->has('email')"
+			:inputClass="$errors->has('email') ? 'is-invalid' : ''"
 			:placeholder="'Correo Electrónico'"
 			:autocomplete="'email'"
 			:value="old('email')"
@@ -64,8 +66,9 @@
 		<x-form.auth.input
 			:id="'password'"
 			:type="'password'"
-			:class="'w-100'"
 			:placeholder="'Contraseña'"
+			:hasErrors="$errors->has('password')"
+			:inputClass="$errors->has('password') ? 'is-invalid' : ''"
 			:autocomplete="'current-password'"
 			:required="true"
 		>
