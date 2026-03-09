@@ -27,7 +27,15 @@ class EmployeeRequest extends FormRequest
 	public function rules(): array
 	{
 		return [
-			'phone' => ['required', 'string', Rule::unique('employees')->ignore($this->route('user')), 'min:12', 'max:14'],
+			'phone' => [
+				'required',
+				'string',
+				Rule::unique('employees', 'phone')
+					->ignore($this->route('user'))
+					->whereNull('deleted_at'),
+				'min:12',
+				'max:14',
+			],
 			'status' => ['required', new Enum(EmployeeStatus::class)],
 			'hourly_wage' => ['required', 'numeric', 'min:100'],
 			'payment_frequency' => ['required', new Enum(PaymentFrequency::class)],

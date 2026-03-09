@@ -29,10 +29,29 @@ const MODEL_ROUTES = {
 window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
-window.deleteUser = function deleteUser(e) { return deleteModel(e, MODEL_NAME); };
-window.showUserInfo = function showUserInfo(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
 
 // ==================== Helper Functions ====================
+
+/**
+ * Displays the user information in a modal when the "show" action is triggered.
+ * 
+ * @param {string} url - The URL to fetch user information
+ * @param {HTMLElement} anchor - The anchor element triggering the action
+ * @returns {Promise<void>} A promise resolving when the modal is displayed
+ */
+window.showUserInfo = function (url, anchor) {
+	return showModelInfo(url, anchor, MODEL_NAME);
+};
+
+/**
+ * Deletes a user when the "delete" action is triggered.
+ * 
+ * @param {Event} e - The event object triggering the action
+ * @returns {Promise<void>} A promise resolving when the user is deleted
+ */
+window.deleteUser = function (e) {
+	return deleteModel(e, MODEL_NAME);
+};
 
 /**
  * Determines if the delete action should be disabled for a user.
@@ -124,12 +143,14 @@ $(() => {
 	const actions = {
 		show: { 
 			route: MODEL_ROUTES.show, 
-			func: showUserInfo, 
+            func: window.showUserInfo,
+            funcName: 'showUserInfo',
 			tooltip: 'Ver detalles' 
 		},
 		edit: { 
 			route: MODEL_ROUTES.edit, 
 			func: toggleLoadingState, 
+            funcName: 'toggleLoadingState',
 			tooltip: `Editar ${MODEL_NAME}` 
 		},
 		delete: {
@@ -137,7 +158,8 @@ $(() => {
 			disabledIf: (row) => shouldDisableUserDelete(row, MODEL_DATA.user),
 			disabledIfTooltip: (row) => getDeleteDisabledTooltip(row, MODEL_DATA.user),
 			tooltip: `Eliminar ${MODEL_NAME}`,
-			func: deleteUser,
+            func: window.deleteUser,
+            funcName: 'deleteUser',
 		}
 	};
 
@@ -154,6 +176,7 @@ $(() => {
             class: BTN_CLASS_OUTLINE_INFO,
             icon: 'bi-card-checklist',
 			func: underDevelopment,
+            funcName: 'underDevelopment',
 			params: ['.attendance-button', 'attendance', true],
         },
         {
@@ -162,6 +185,7 @@ $(() => {
             class: `create-button ${BTN_CLASS_PRIMARY}`,
             icon: 'bi-person-plus-fill',
 			func: toggleLoadingState,
+            funcName: 'toggleLoadingState',
 			params: ['.create-button', 'create', true],
         }
     ];

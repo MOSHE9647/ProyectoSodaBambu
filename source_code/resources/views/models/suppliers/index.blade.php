@@ -28,14 +28,4 @@
 
 @section('scripts')
 	@vite(['resources/js/models/suppliers/main.js'])
-
-	{{-- Success Toast Notification --}}
-	@if(session('success'))
-		<script type="module">
-			SwalToast.fire({
-				icon: SwalNotificationTypes.SUCCESS,
-				title: @json(session('success'))
-			});
-		</script>
-	@endif
 @endsection
