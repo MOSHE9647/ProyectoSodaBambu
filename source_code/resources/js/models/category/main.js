@@ -26,8 +26,27 @@ const MODEL_ROUTES = {
 window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
-window.deleteCategory = function deleteCategory(e) { return deleteModel(e, MODEL_NAME); };
-window.showCategory = function showCategory(url, anchor) { return showModelInfo(url, anchor, MODEL_NAME); };
+
+// ==================== Helper Functions ====================
+
+/**
+ * Shows information for a specific category.
+ * @param {string} url - The URL to fetch category information from
+ * @param {HTMLElement} anchor - The anchor element for the modal
+ * @returns {Promise<void>} A promise resolving when the modal is shown
+ */
+window.showCategoryInfo = function (url, anchor) {
+    return showModelInfo(url, anchor, MODEL_NAME);
+};
+
+/**
+ * Deletes a specific category.
+ * @param {Event} e - The event object
+ * @returns {Promise<void>} A promise resolving when the category is deleted
+ */
+window.deleteCategory = function (e) {
+    return deleteModel(e, MODEL_NAME);
+};
 
 // ==================== DataTable Initialization ====================
 
@@ -65,18 +84,21 @@ $(() => {
     const actions = {
         show: { 
             route: MODEL_ROUTES.show, 
-            func: showCategory, 
+            func: window.showCategoryInfo,
+            funcName: 'showCategoryInfo',
             tooltip: 'Ver detalles' 
         },
         edit: { 
             route: MODEL_ROUTES.edit, 
             func: toggleLoadingState, 
+            funcName: 'toggleLoadingState',
             tooltip: `Editar ${MODEL_NAME}` 
         },
         delete: {
             route: MODEL_ROUTES.delete,
             tooltip: `Eliminar ${MODEL_NAME}`,
-            func: deleteCategory,
+            func: window.deleteCategory,
+            funcName: 'deleteCategory',
         }
     };
 
@@ -93,6 +115,7 @@ $(() => {
             class: `create-button ${BTN_CLASS_PRIMARY}`,
             icon: 'bi-plus-circle-fill',
             func: toggleLoadingState,
+            funcName: 'toggleLoadingState',
             params: ['.create-button', 'create', true],
         }
     ];
