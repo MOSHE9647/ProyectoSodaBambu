@@ -105,6 +105,14 @@ body {
 	--bs-btn-font-weight: 600;
 }
 
+.btn-primary.btn-password-toggle,
+.btn-danger.btn-password-toggle {
+	--bs-btn-padding-x: 0px;
+	height: 58px;
+	width: 40px !important;
+	margin-left: 0.02rem !important;
+}
+
 .btn-primary:active {
 	transform: translateY(-2px);
 }

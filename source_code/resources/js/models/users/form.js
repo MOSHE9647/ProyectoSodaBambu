@@ -15,7 +15,7 @@ import {
 	validateRole,
 	formatPhoneNumber
 } from '../../utils/validation.js';
-import { setLoadingState } from '../../utils/utils.js';
+import { setLoadingState, togglePasswordVisibility } from '../../utils/utils.js';
 
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
@@ -27,6 +27,8 @@ const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
 const FORM_ID = IS_EDITING ? 'edit-user-form' : 'create-user-form';
 const EMPLOYEE_ROLE = 'employee';
 const EMPLOYEE_FIELDS = ['phone', 'hourly_wage', 'payment_frequency', 'status'];
+
+window.togglePasswordVisibility = togglePasswordVisibility;
 
 const baseFieldValidators = {
 	name: {

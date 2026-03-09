@@ -115,3 +115,24 @@ export function capitalizeSentence(sentence) {
 
 	return capitalized;
 }
+
+export function togglePasswordVisibility(inputId, toggleButtonId) {
+	const input = document.getElementById(inputId);
+	const toggleButton = document.getElementById(toggleButtonId);
+
+	if (!input || !toggleButton) {
+		console.error('Input or toggle button not found:', inputId, toggleButtonId);
+		return;
+	}
+
+	const isPassword = input.type === 'password';
+	input.type = isPassword ? 'text' : 'password';
+
+	const icon = toggleButton.querySelector('i');
+	if (icon) {
+		icon.classList.toggle('bi-eye-slash', isPassword);
+		icon.classList.toggle('bi-eye', !isPassword);
+	}
+
+	toggleButton.setAttribute('aria-pressed', String(!isPassword));
+}
