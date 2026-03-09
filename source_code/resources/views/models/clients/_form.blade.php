@@ -126,6 +126,6 @@
 	</div>
 </div>
 
-@push('scripts')
+@section('scripts')
 	@vite(['resources/js/models/clients/form.js'])
-@endpush
+@endsection

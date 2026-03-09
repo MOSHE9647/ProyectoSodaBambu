@@ -14,13 +14,13 @@ Puedes acceder a la versión en producción del sistema en:
 
 ## 💡 ¿Cómo Funciona el Sistema?
 
-El sistema esta diseñado como una aplicacion web progresiva (PWA) que permite gestionar todos los procesos internos del restaurante de forma centralizada:
+El sistema está diseñado como una aplicación web progresiva (PWA) que permite gestionar todos los procesos internos del restaurante de forma centralizada:
 
 ### Arquitectura General
-- **Backend**: Laravel procesa las peticiones, valida datos y gestiona la lógica de negocio.
-- **Frontend**: Blade templates + Bootstrap 5 proveen una interfaz responsive.
+- **Backend**: Laravel procesa todas las peticiones, valida datos y gestiona la lógica de negocio.
+- **Frontend**: Blade templates + Bootstrap 5 proporcionan una interfaz responsive.
 - **Base de Datos**: MySQL/SQLite almacena la información del negocio.
-- **Autenticacion**: Laravel Fortify maneja el acceso seguro con roles y permisos.
+- **Autenticación**: Laravel Fortify maneja el acceso seguro con roles y permisos.
 
 ### Flujo de Trabajo Típico
 1. El usuario se autentica en el sistema según su rol (Administrador/Empleado).
@@ -37,7 +37,7 @@ El sistema esta diseñado como una aplicacion web progresiva (PWA) que permite g
 2. Inicia sesión con tus credenciales.
 3. Verifica tu correo electrónico (si es requerido).
 
-> **Nota:** La verificación del correo se realiza la primera vez que el usuario inicia sesión (despues de que el Administrador lo haya creado).
+> **Nota:** La verificación del correo se realiza la primera vez que el usuario inicia sesión (después de que el Administrador lo haya creado).
 
 ### Usuarios de Prueba
 
@@ -53,13 +53,13 @@ Para probar el sistema con datos de ejemplo durante el desarrollo:
   - Email: `juan.perez@sodabambu.com`
   - Contraseña: `password123`
 
-## 🔧 Tecnologias
+## 🔧 Tecnologías
 
 ### Backend
 - **PHP**: >= 8.2
 - **Framework**: Laravel ^12.x (PHP)
 - **Base de datos**: MySQL/SQLite
-- **Autenticacion**: Laravel Fortify
+- **Autenticación**: Laravel Fortify
 
 ### Frontend
 - **Templates**: Laravel Blade

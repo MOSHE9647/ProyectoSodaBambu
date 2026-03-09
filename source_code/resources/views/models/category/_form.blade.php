@@ -90,6 +90,6 @@
     </div>
 </div>
 
-@push('scripts')
+@section('scripts')
     @vite(['resources/js/models/category/form.js'])
-@endpush
+@endsection

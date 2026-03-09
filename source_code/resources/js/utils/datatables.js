@@ -192,7 +192,8 @@ function buildButtonHtml(button) {
 		.map(param => typeof param === 'string' ? `'${escapeHtml(param)}'` : param)
 		.join(', ');
 
-	const onclick = button.func ? `onclick="${button.func.name}(${params})"` : '';
+	const handlerName = resolveHandlerName(button.func, button.funcName);
+	const onclick = handlerName ? `onclick="${handlerName}(${params})"` : '';
 
 	// Escape all user inputs
 	const values = {
@@ -281,7 +282,8 @@ function resolveTooltip(disabled, action, defaultTooltip, row) {
  * @private
  */
 function buildShowButton(route, baseClass, baseAttrs, iconClass, action, disabled, extraAttrs) {
-	const onclick = !disabled && action.func ? `onclick="${action.func.name}('${route}', this);"` : '';
+	const handlerName = resolveHandlerName(action.func, action.funcName);
+	const onclick = !disabled && handlerName ? `onclick="${handlerName}('${route}', this);"` : '';
 	return `
         <a class="info-button ${baseClass}" ${onclick} ${baseAttrs} ${extraAttrs}>
             <div class="info-spinner d-none flex-row align-items-center justify-content-center">
@@ -300,7 +302,8 @@ function buildShowButton(route, baseClass, baseAttrs, iconClass, action, disable
  */
 function buildEditButton(route, baseClass, baseAttrs, iconClass, action, disabled, extraAttrs) {
 	const href = disabled ? '#' : route;
-	const onclick = !disabled && action.func ? `onclick="${action.func.name}(this, 'edit', true);"` : '';
+	const handlerName = resolveHandlerName(action.func, action.funcName);
+	const onclick = !disabled && handlerName ? `onclick="${handlerName}(this, 'edit', true);"` : '';
 	return `
         <a href="${href}" class="edit-button ${baseClass}" ${onclick} ${baseAttrs} ${extraAttrs}>
             <div class="edit-spinner d-none flex-row align-items-center justify-content-center">
@@ -318,7 +321,8 @@ function buildEditButton(route, baseClass, baseAttrs, iconClass, action, disable
  * @private
  */
 function buildDeleteButton(route, baseAttrs, iconClass, action, buttonClass, disabled, extraAttrs) {
-	const onsubmit = !disabled && action.func ? `onsubmit="${action.func.name}(event);"` : '';
+	const handlerName = resolveHandlerName(action.func, action.funcName);
+	const onsubmit = !disabled && handlerName ? `onsubmit="${handlerName}(event);"` : '';
 	return `
         <form method="POST" action="${route}" ${onsubmit} ${baseAttrs} ${extraAttrs}>
             <input type="hidden" name="_token" value="${csrfToken}">
@@ -333,4 +337,23 @@ function buildDeleteButton(route, baseAttrs, iconClass, action, buttonClass, dis
             </button>
         </form>
     `;
+}
+
+/**
+ * Resolve a globally callable handler name for inline HTML events.
+ * Uses explicit names first to avoid relying on Function.name in minified builds.
+ * @private
+ */
+function resolveHandlerName(func, explicitName) {
+	const explicit = explicitName?.trim();
+	if (explicit) return explicit;
+	if (typeof func !== 'function') return '';
+	if (func.name) return func.name;
+
+	// Fallback: find the function in the global scope by reference.
+	for (const key in window) {
+		if (window[key] === func) return key;
+	}
+
+	return '';
 }

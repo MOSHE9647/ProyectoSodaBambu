@@ -6,12 +6,9 @@
 
 <div class="container p-0">
 	{{-- Page Header --}}
-	<x-header
+	<x-header 
 		title="{{ isset($user) ? 'Editar Usuario' : 'Crear Usuario' }}"
-		subtitle="{{
-			isset($user) ? 'Modifica la información del usuario existente'
-						 : 'Administre los usuarios existentes'
-		}}"
+		subtitle="{{ isset($user) ? 'Modifica la información del usuario existente' : 'Administre los usuarios existentes' }}"
 	/>
 
 	{{-- Form Container --}}
@@ -42,7 +39,7 @@
 							:class="'border-secondary'"
 							:inputClass="$errors->has('name') ? 'is-invalid' : ''"
 							:placeholder="'Ej: María García López'"
-							:value="old('name', optional($user)->name ?? '')"
+							:value="old('name', $user?->name ?? '')"
 							:errorMessage="$errors->first('name') ?? ''"
 							:iconLeft="'bi bi-person'"
 							:required="true"
@@ -53,11 +50,7 @@
 
 					{{-- User Role --}}
 					@php
-						if (isset($user)) {
-							$userRole = UserRole::tryFrom($user->roles->first()->name);
-						} else {
-							$userRole = null;
-						}
+						$userRole = isset($user) ? UserRole::tryFrom($user->roles->first()->name) : null;
 						$oldRole = old('role', $userRole ?? '');
 					@endphp
 					<div class="col-6">
@@ -72,11 +65,12 @@
 							Rol de Usuario <span class="text-danger">*</span>
 							<x-slot:options>
 								<option value="-1">Seleccionar rol...</option>
-								@foreach(UserRole::cases() as $roleEnum)
-									<option
-										value="{{ $roleEnum->value }}" {{ ($oldRole === $roleEnum || $oldRole === $roleEnum->value) ? 'selected' : '' }}>
-										{{ $roleEnum->label() }}
-									</option>
+								@foreach (UserRole::cases() as $roleEnum)
+									@if ($roleEnum !== UserRole::GUEST)
+										<option value="{{ $roleEnum->value }}" {{ $oldRole === $roleEnum || $oldRole === $roleEnum->value ? 'selected' : '' }}>
+											{{ $roleEnum->label() }}
+										</option>
+									@endif
 								@endforeach
 							</x-slot:options>
 						</x-form.select>
@@ -93,7 +87,7 @@
 							:inputClass="$errors->has('email') ? 'is-invalid' : ''"
 							:errorMessage="$errors->first('email') ?? ''"
 							:placeholder="'usuario@ejemplo.com'"
-							:value="old('email', optional($user)->email ?? '')"
+							:value="old('email', $user?->email ?? '')"
 							:iconLeft="'bi bi-envelope'"
 							:required="true"
 						>
@@ -105,23 +99,19 @@
 
 			{{-- SECTION 2: Employee Information (Conditional) --}}
 			@php
-				$isEmployee = (old('role', $userRole ?? '') === UserRole::EMPLOYEE);
+				$isEmployee = old('role', $userRole ?? '') === UserRole::EMPLOYEE;
 			@endphp
-			<section
-				id="employee-fields"
-				class="flex-column mb-4 gap-3"
-				style="display: {{ $isEmployee ? 'block' : 'none' }};"
-			>
+			<section id="employee-fields" class="flex-column mb-4 gap-3" style="display: {{ $isEmployee ? 'block' : 'none' }};">
 				<h5 class="text-muted pt-2 pb-3 border-bottom border-secondary">
 					<i class="bi bi-briefcase-fill me-3"></i>
 					Información Laboral
 				</h5>
 
 				@php
-					$formattedWage = old('hourly_wage', optional($user)->employee?->hourly_wage ?? '');
-					if (is_string($formattedWage) && !empty($formattedWage)) {
-					    // Convert "1.600,00" → "1600.00"
-					    $formattedWage = str_replace(['.', ','], ['', '.'], $formattedWage);
+					$formattedWage = old('hourly_wage', $user?->employee?->hourly_wage ?? '');
+					if (is_string($formattedWage) && ! empty($formattedWage)) {
+						// Convert "1.600,00" → "1600.00"
+						$formattedWage = str_replace(['.', ','], ['', '.'], $formattedWage);
 					}
 				@endphp
 				<div class="row g-3 mt-2">
@@ -140,14 +130,19 @@
 							:iconLeft="'bi bi-cash-coin'"
 							:textIconRight="true"
 						>
-							Salario por Hora
+							Salario por Hora <span class="text-danger">*</span>
 							<x-slot:iconRight>
-								<x-icons.colon-icon/>
+								<x-icons.colon-icon />
 							</x-slot:iconRight>
 						</x-form.input>
 					</div>
 
 					{{-- Payment Frequency --}}
+					@php
+						$paymentFrequencyValue =
+							$user?->employee?->payment_frequency?->value ?? PaymentFrequency::MONTHLY->value;
+						$paymentFrequencySelected = old('payment_frequency', $paymentFrequencyValue);
+					@endphp
 					<div class="col-md-6">
 						<x-form.select
 							:id="'payment_frequency'"
@@ -155,14 +150,11 @@
 							:selectClass="$errors->has('payment_frequency') ? 'is-invalid' : ''"
 							:errorMessage="$errors->first('payment_frequency') ?? ''"
 							:iconLeft="'bi bi-calendar-check'"
-							:required="true"
 						>
-							Modalidad de Pago
+							Modalidad de Pago <span class="text-danger">*</span>
 							<x-slot:options>
-								<option value="-1">Seleccionar modalidad...</option>
-								@foreach(PaymentFrequency::cases() as $freqEnum)
-									<option
-										value="{{ $freqEnum->value }}" {{ old('payment_frequency', optional($user)->employee?->payment_frequency?->value ?? '') == $freqEnum->value ? 'selected' : '' }}>
+								@foreach (PaymentFrequency::cases() as $freqEnum)
+									<option value="{{ $freqEnum->value }}" {{ $paymentFrequencySelected == $freqEnum->value ? 'selected' : '' }}>
 										{{ $freqEnum->label() }}
 									</option>
 								@endforeach
@@ -179,14 +171,19 @@
 							:inputClass="$errors->has('phone') ? 'is-invalid' : ''"
 							:errorMessage="$errors->first('phone') ?? ''"
 							:placeholder="'+506 XXXX XXXX'"
-							:value="old('phone', optional($user)->employee?->phone ?? '')"
+							:value="old('phone', $user?->employee?->phone ?? '')"
 							:iconLeft="'bi bi-telephone'"
+							:autocomplete="'tel'"
 						>
-							Teléfono
+							Teléfono <span class="text-danger">*</span>
 						</x-form.input>
 					</div>
 
 					{{-- Employee Status --}}
+					@php
+						$employeeStatusValue = $user?->employee?->status?->value ?? EmployeeStatus::ACTIVE->value;
+						$employeeStatusSelected = old('status', $employeeStatusValue);
+					@endphp
 					<div class="col-md-6">
 						<x-form.select
 							:id="'status'"
@@ -194,14 +191,11 @@
 							:selectClass="$errors->has('status') ? 'is-invalid' : ''"
 							:errorMessage="$errors->first('status') ?? ''"
 							:iconLeft="'bi bi-clipboard-check'"
-							:required="true"
 						>
-							Estado del Colaborador
+							Estado del Colaborador <span class="text-danger">*</span>
 							<x-slot:options>
-								<option value="-1">Seleccionar estado...</option>
-								@foreach(EmployeeStatus::cases() as $statusEnum)
-									<option
-										value="{{ $statusEnum->value }}" {{ old('status', optional($user)->employee?->status?->value ?? '') == $statusEnum->value ? 'selected' : '' }}>
+								@foreach (EmployeeStatus::cases() as $statusEnum)
+									<option value="{{ $statusEnum->value }}" {{ $employeeStatusSelected == $statusEnum->value ? 'selected' : '' }}>
 										{{ $statusEnum->label() }}
 									</option>
 								@endforeach
@@ -219,7 +213,7 @@
 				</h5>
 
 				{{-- Info Alert for Password Change --}}
-				@if(isset($user))
+				@if (isset($user))
 					<div class="alert alert-info border-info text-info mb-2">
 						<i class="bi bi-info-circle me-2"></i>
 						Deja estos campos en blanco si no deseas cambiar la contraseña
@@ -238,17 +232,20 @@
 							:placeholder="'Mínimo 8 caracteres'"
 							:minLength="'8'"
 							:iconLeft="'bi bi-lock'"
-							:required="!isset($user)"
+							:required="! isset($user)"
 							:textIconRight="true"
+							:autocomplete="'new-password'"
 						>
 							Contraseña
-							@if(!isset($user))
+							@if (! isset($user))
 								<span class="text-danger">*</span>
 							@endif
 							<x-slot:iconRight>
 								<button
-									class="btn border-0 m-0 p-0" type="button"
-									onclick="togglePasswordVisibility('password', this)"
+									id="toggle-password"
+									class="btn border-0 m-0 p-0"
+									type="button"
+									onclick="togglePasswordVisibility('password', this.id)"
 								>
 									<i class="bi bi-eye"></i>
 								</button>
@@ -273,17 +270,19 @@
 							:placeholder="'Repite la contraseña'"
 							:minLength="'8'"
 							:iconLeft="'bi bi-lock-fill'"
-							:required="!isset($user)"
+							:required="! isset($user)"
 							:textIconRight="true"
+							:autocomplete="'new-password'"
 						>
 							Confirmar Contraseña
-							@if(!isset($user))
+							@if (! isset($user))
 								<span class="text-danger">*</span>
 							@endif
 							<x-slot:iconRight>
 								<button
+									id="toggle-password-confirmation"
 									class="btn border-0 m-0 p-0" type="button"
-									onclick="togglePasswordVisibility('password_confirmation', this)"
+									onclick="togglePasswordVisibility('password_confirmation', this.id)"
 								>
 									<i class="bi bi-eye"></i>
 								</button>
@@ -303,11 +302,11 @@
 				{{-- Submit Button --}}
 				<x-form.submit
 					:id="isset($user) ? 'edit-user-form-button' : 'create-user-form-button'"
+					:class="'btn-primary px-4'" 
 					:spinnerId="isset($user) ? 'edit-user-form-spinner' : 'create-user-form-spinner'"
-					:class="'btn-primary px-4'"
 					:loadingMessage="isset($user) ? 'Actualizando...' : 'Guardando...'"
 				>
-					<div
+					<div 
 						id="{{ isset($user) ? 'edit-user-form-button-text' : 'create-user-form-button-text' }}"
 						class="d-flex flex-row align-items-center justify-content-center"
 					>
@@ -321,45 +320,44 @@
 </div>
 
 @section('scripts')
-	<script type="text/javascript">
+	<script type="module">
 		/**
-		 * Shows or hides the password input field
-		 *
-		 * @param inputId
-		 * @param button
+		 * Adds or removes the 'required' attribute from employee-related fields based on the selected role
+		 * @param isRequired
 		 */
-		function togglePasswordVisibility(inputId, button) {
-			const input = document.getElementById(inputId);
-			const icon = button.querySelector('i');
+		function makeEmployeeFieldsRequired(isRequired) {
+			const $employeeSection = $('#employee-fields');
+			const $requiredInputs = $employeeSection.find('input, select');
 
-			if (input.type === 'password') {
-				input.type = 'text';
-				icon.classList.remove('bi-eye');
-				icon.classList.add('bi-eye-slash');
-			} else {
-				input.type = 'password';
-				icon.classList.remove('bi-eye-slash');
-				icon.classList.add('bi-eye');
-			}
+			$requiredInputs.each(function () {
+				if (isRequired) {
+					$(this).attr('required', true);
+				} else {
+					$(this).removeAttr('required');
+				}
+			});
 		}
 
 		// Show/hide employee fields based on selected role
-		const roleSelect = document.getElementById('role');
-		roleSelect.addEventListener('change', function () {
-			const employeeFields = document.getElementById('employee-fields');
-			const isEmployee = this.value === 'employee';
+		const $roleSelect = $('#role');
+		$roleSelect.on('change', function () {
+			const $employeeFields = $('#employee-fields');
+			const isEmployee = $(this).val() === 'employee';
 
 			if (isEmployee) {
-				employeeFields.style.display = 'block';
+				$employeeFields.show();
+				makeEmployeeFieldsRequired(true);
 			} else {
-				employeeFields.style.display = 'none';
-				// Limpiar campos de empleado si cambia a otro rol
-				document.getElementById('phone').value = '';
-				document.getElementById('hourly_wage').value = '';
+				$employeeFields.hide();
+				$('#phone').val('');
+				$('#hourly_wage').val('');
+				makeEmployeeFieldsRequired(false);
 			}
 		});
-		if (roleSelect.value === 'employee') {
-			roleSelect.dispatchEvent(new Event('change'));
+
+		// If role is employee on page load, ensure fields are shown and required
+		if ($roleSelect.val() === 'employee') {
+			$roleSelect.trigger('change');
 		}
 	</script>
 	@vite(['resources/js/models/users/form.js'])
