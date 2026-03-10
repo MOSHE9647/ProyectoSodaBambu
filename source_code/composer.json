@@ -14,6 +14,7 @@
 		"laravel/framework": "^12.0",
 		"laravel/tinker": "^2.10.1",
 		"spatie/laravel-permission": "^6.21",
+		"tightenco/ziggy": "^2.6",
 		"yajra/laravel-datatables": "^12"
 	},
 	"require-dev": {
@@ -48,6 +49,15 @@
 			"npm install",
 			"npm run build"
 		],
+		"workspace:setup": "@php scripts/setup-workspace.php --no-db",
+		"workspace:sqlite": "@php scripts/setup-workspace.php --db:sqlite --migrate",
+		"workspace:sqlite:seed": "@php scripts/setup-workspace.php --db:sqlite --migrate:seed",
+		"workspace:sqlite:fresh": "@php scripts/setup-workspace.php --db:sqlite --migrate:fresh",
+		"workspace:sqlite:fresh:seed": "@php scripts/setup-workspace.php --db:sqlite --migrate:fresh --seed",
+		"workspace:mysql": "@php scripts/setup-workspace.php --db:mysql --migrate",
+		"workspace:mysql:seed": "@php scripts/setup-workspace.php --db:mysql --migrate:seed",
+		"workspace:mysql:fresh": "@php scripts/setup-workspace.php --db:mysql --migrate:fresh",
+		"workspace:mysql:fresh:seed": "@php scripts/setup-workspace.php --db:mysql --migrate:fresh --seed",
 		"dev": [
 			"Composer\\Config::disableProcessTimeout",
 			"npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"

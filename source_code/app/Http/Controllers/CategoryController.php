@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Exception;
@@ -24,13 +25,10 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        // Fetch categories
-        $categories = Category::all();
-        $resource = CategoryResource::collection($categories);
-
         // Handle AJAX request for DataTables
         if ($request->ajax()) {
-            return DataTables::of($resource)->make();
+            // Use query builder to keep DataTables server-side and memory efficient
+            return DataTables::of(Category::query())->toJson();
         }
 
         // For non-AJAX requests, return the view
@@ -50,21 +48,27 @@ class CategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
+     * @param CategoryRequest $request
      * @return RedirectResponse
      * @throws Throwable
      */
-    public function store(Request $request)
-    {
-        $categoryData = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:255',
-        ]);
+    public function store(CategoryRequest $request)
+    {   
+        $categoryData = $request->validated();
 
-        Category::create($categoryData);
+        $category = Category::withTrashed()->where('name', $categoryData['name'])->first();
+        $message = 'Categoría creada correctamente.';
+
+        if ($category?->trashed()) {
+            $category->restore();
+            $category->update($categoryData);
+            $message = 'Categoría restaurada y actualizada correctamente.';
+        } else {
+            Category::create($categoryData);
+        }
 
         return redirect()->route('categories.index')
-            ->with('success', 'Categoría creada correctamente.');
+            ->with('success', $message);
     }
 
     /**
@@ -93,17 +97,14 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param Request $request
+     * @param CategoryRequest $request
      * @param Category $category
      * @return RedirectResponse
      * @throws Throwable
      */
-    public function update(Request $request, Category $category)
+    public function update(CategoryRequest $request, Category $category)
     {
-        $categoryData = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:255',
-        ]);
+        $categoryData = $request->validated();
 
         $category->update($categoryData);
 

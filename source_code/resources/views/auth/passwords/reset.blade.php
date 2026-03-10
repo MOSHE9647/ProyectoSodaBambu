@@ -73,7 +73,6 @@
 		<x-form.auth.input
 			:id="'password'"
 			:type="'password'"
-			:class="'w-100'"
 			:placeholder="'Nueva Contraseña'"
 			:autocomplete="'new-password'"
 			:autofocus="true"
@@ -87,7 +86,6 @@
 		<x-form.auth.input
 			:id="'password_confirmation'"
 			:type="'password'"
-			:class="'w-100'"
 			:placeholder="'Confirmar Nueva Contraseña'"
 			:autocomplete="'new-password'"
 			:required="true"
@@ -97,7 +95,7 @@
 		</x-form.auth.input>
 
 		{{-- Submit Button --}}
-		<x-form.auth.buttons.submit
+		<x-form.submit
 			:id="'reset-password-button'"
 			:class="'btn-primary w-100 my-3'"
 			:spinnerId="'reset-password-spinner'"
@@ -106,7 +104,7 @@
 				<i class="bi bi-check-circle me-2"></i>
 				Cambiar Contraseña
 			</div>
-		</x-form.auth.buttons.submit>
+		</x-form.submit>
 
 		{{-- Additional Links --}}
 		<a

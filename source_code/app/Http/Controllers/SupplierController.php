@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\SupplierResource;
+use App\Http\Requests\SupplierRequest;
 use App\Models\Supplier;
 use Exception;
 use Illuminate\Contracts\View\Factory;
@@ -24,20 +24,9 @@ class SupplierController extends Controller
      */
     public function index(Request $request)
     {
-
         if ($request->ajax()) {
-            $query = Supplier::query()->select(['id', 'name', 'phone', 'email', 'created_at', 'updated_at', 'deleted_at']);
-            return DataTables::of($query)
-                ->addColumn('actions', function (Supplier $supplier) {
-                    $show = '<button class="btn btn-sm btn-info btn-show" data-id="'. $supplier->id .'"><i class="bi bi-eye"></i></button>';
-                    $edit = '<a href="'. route('suppliers.edit', $supplier->id) .'" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>';
-                    $delete = '<button class="btn btn-sm btn-danger btn-delete" data-id="'. $supplier->id .'"><i class="bi bi-trash"></i></button>';
-                    return '<div class="d-flex gap-1">'.$show.$edit.$delete.'</div>';
-                })
-                ->rawColumns(['actions'])
-                ->make(true);
+            return DataTables::of(Supplier::query())->toJson();
         }
-
 
         return view('models.suppliers.index');
     }
@@ -55,22 +44,26 @@ class SupplierController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
+     * @param SupplierRequest $request
      * @return RedirectResponse
      * @throws Throwable
      */
-    public function store(Request $request)
+    public function store(SupplierRequest $request)
     {
-        $request->validate([
-            'name'  => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'required|email|max:255|unique:suppliers,email',
-        ]);
+        $supplierData = $request->validated();
 
-        $supplierData = $request->only(['name', 'phone', 'email']);
-        Supplier::create($supplierData);
+        $supplier = Supplier::withTrashed()->where('email', $supplierData['email'])->first();
+        $message = 'Proveedor creado exitosamente.';
 
-        return redirect()->route('suppliers.index')->with('success', 'Proveedor creado exitosamente.');
+        if ($supplier?->trashed()) {
+            $supplier->restore();
+            $supplier->update($supplierData);
+            $message = 'Proveedor restaurado y actualizado exitosamente.';
+        } else {
+            Supplier::create($supplierData);
+        }
+
+        return redirect()->route('suppliers.index')->with('success', $message);
     }
 
     /**
@@ -98,20 +91,15 @@ class SupplierController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param Request $request
+     * @param SupplierRequest $request
      * @param Supplier $supplier
      * @return RedirectResponse
      * @throws Throwable
      */
-    public function update(Request $request, Supplier $supplier)
+    public function update(SupplierRequest $request, Supplier $supplier)
     {
-        $request->validate([
-            'name'  => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'required|email|max:255|unique:suppliers,email,' . $supplier->id,
-        ]);
+        $supplierData = $request->validated();
 
-        $supplierData = $request->only(['name', 'phone', 'email']);
         $supplier->update($supplierData);
 
         return redirect()->route('suppliers.index')->with('success', 'Proveedor actualizado exitosamente.');

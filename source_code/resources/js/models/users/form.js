@@ -12,9 +12,10 @@ import {
 	validatePasswordConfirmation,
 	validatePaymentFrequency,
 	validatePhone,
-	validateRole
+	validateRole,
+	formatPhoneNumber
 } from '../../utils/validation.js';
-import {setLoadingState} from '../../utils/utils.js';
+import { setLoadingState, togglePasswordVisibility } from '../../utils/utils.js';
 
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
@@ -22,9 +23,14 @@ if (typeof $ === 'undefined') {
 }
 
 // Constants and Variables
-const isEdit = document.querySelector('form[id^="edit-"]') !== null;
-const formId = isEdit ? 'edit-user-form' : 'create-user-form';
-const fieldValidators = {
+const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
+const FORM_ID = IS_EDITING ? 'edit-user-form' : 'create-user-form';
+const EMPLOYEE_ROLE = 'employee';
+const EMPLOYEE_FIELDS = ['phone', 'hourly_wage', 'payment_frequency', 'status'];
+
+window.togglePasswordVisibility = togglePasswordVisibility;
+
+const baseFieldValidators = {
 	name: {
 		validator: validateName,
 		emptyMsg: 'El nombre es obligatorio.',
@@ -42,7 +48,7 @@ const fieldValidators = {
 	},
 	password: {
 		validator: validatePassword,
-		emptyMsg: isEdit ? '' : 'La contraseña es obligatoria.',
+		emptyMsg: IS_EDITING ? '' : 'La contraseña es obligatoria.',
 		invalidMsg: 'La contraseña debe contener, al menos, 8 caracteres alfanuméricos.'
 	},
 	password_confirmation: {
@@ -50,7 +56,7 @@ const fieldValidators = {
 			const password = $('#password').val().trim();
 			return validatePasswordConfirmation(password, value);
 		},
-		emptyMsg: isEdit ? '' : 'La confirmación de contraseña es obligatoria.',
+		emptyMsg: IS_EDITING ? '' : 'La confirmación de contraseña es obligatoria.',
 		invalidMsg: 'Las contraseñas no coinciden.'
 	},
 	hourly_wage: {
@@ -75,29 +81,38 @@ const fieldValidators = {
 	}
 };
 
+/**
+ * Creates a filtered copy of fieldValidators based on form type and state
+ * @returns {Object}
+ */
+function getActiveFieldValidators() {
+	const $role = $('#role');
+	const role = $role.val();
+	const validators = {...baseFieldValidators};
+
+	// Remove employee fields if role is not employee
+	if (role !== EMPLOYEE_ROLE) {
+		EMPLOYEE_FIELDS.forEach(field => delete validators[field]);
+	}
+
+	// Remove password validation if editing and both password fields are empty
+	if (IS_EDITING && !$('#password').val() && !$('#password_confirmation').val()) {
+		delete validators.password;
+		delete validators.password_confirmation;
+	}
+
+	return validators;
+}
+
 // Validation Functions
 
 /**
  * Validates the user form fields.
  * @param values
+ * @param fieldValidators
  * @returns {boolean}
  */
-function validateUserForm(values) {
-	// If employee fields are not needed, remove them from validation
-	if (values.role !== 'employee') {
-		delete fieldValidators.hourly_wage;
-		delete fieldValidators.payment_frequency;
-		delete fieldValidators.phone;
-		delete fieldValidators.status;
-	}
-
-	// If editing and password fields are empty, remove them from validation
-	if (isEdit && !values.password && !values.password_confirmation) {
-		delete fieldValidators.password;
-		delete fieldValidators.password_confirmation;
-	}
-
-	// Validate common fields
+function validateUserForm(values, fieldValidators) {
 	return validateAndDisplayField(
 		fieldValidators,
 		values,
@@ -115,19 +130,27 @@ function validateUserForm(values) {
  * @returns {boolean}
  */
 function submitUserForm() {
+	const fieldValidators = getActiveFieldValidators();
 	clearAllFieldErrors(fieldValidators);
+
+	// Cache DOM elements
+	const $name = $('#name');
+	const $role = $('#role');
+	const $email = $('#email');
+	const $password = $('#password');
+	const $passwordConfirmation = $('#password_confirmation');
 
 	// Get form values
 	const values = {
-		name: $('#name').val().trim(),
-		role: $('#role').val(),
-		email: $('#email').val().trim(),
-		password: $('#password').val().trim(),
-		password_confirmation: $('#password_confirmation').val().trim(),
+		name: $name.val().trim(),
+		role: $role.val(),
+		email: $email.val().trim(),
+		password: $password.val().trim(),
+		password_confirmation: $passwordConfirmation.val().trim(),
 	};
 
 	// Include employee fields if role is employee
-	if (values.role === 'employee') {
+	if (values.role === EMPLOYEE_ROLE) {
 		values.hourly_wage = $('#hourly_wage').val().trim();
 		values.payment_frequency = $('#payment_frequency').val();
 		values.phone = $('#phone').val().trim();
@@ -135,63 +158,66 @@ function submitUserForm() {
 	}
 
 	// Validate form
-	// If there are validation errors, do not submit the form
-	return validateUserForm(values);
+	return validateUserForm(values, fieldValidators);
 }
 
 // Event Listeners
+
 /**
  * Real-time validation for input fields.
  * Validates fields on input and shows/hides error messages accordingly.
  */
-Object.keys(fieldValidators).forEach((fieldId) => {
-	$(document).on('input change', `#${fieldId}`, function () {
-		const value = $(this).val().trim();
-		const {validator, emptyMsg, invalidMsg} = fieldValidators[fieldId];
-		const role = $('#role').val();
+$(document).on('input change', `#${FORM_ID}`, function(e) {
+	const $target = $(e.target);
+	const fieldId = $target.attr('id');
+	const validators = getActiveFieldValidators();
 
-		// For employee fields, only validate if role is employee
-		const isEmployeeField = ['phone', 'hourly_wage', 'payment_frequency', 'status'].includes(fieldId);
+	// Skip if field is not in validators
+	if (!validators.hasOwnProperty(fieldId)) {
+		return;
+	}
 
-		if (isEmployeeField && role !== 'employee') {
-			// Clear errors for employee fields if not employee
-			clearFieldError(fieldId);
-			return;
-		}
+	let value = $target.val().trim();
+	const {validator, emptyMsg, invalidMsg} = validators[fieldId];
+	const isEmployeeField = EMPLOYEE_FIELDS.includes(fieldId);
+	const $role = $('#role');
+	const role = $role.val();
 
-		if (!value) {
-			const shouldShowEmployeeValidation = (isEmployeeField && role === 'employee') || !isEmployeeField;
-			if (emptyMsg && shouldShowEmployeeValidation) {
-				showFieldError(fieldId, emptyMsg);
-			} else {
-				clearFieldError(fieldId);
-			}
-		} else if (!validator(value)) {
-			showFieldError(fieldId, invalidMsg);
+	// Format phone number in real-time
+	if (fieldId === 'phone') {
+		value = formatPhoneNumber(value);
+		$target.val(value);
+	}
+
+	// For employee fields, only validate if role is employee
+	if (isEmployeeField && role !== EMPLOYEE_ROLE) {
+		clearFieldError(fieldId);
+		return;
+	}
+
+	if (!value) {
+		if (emptyMsg) {
+			showFieldError(fieldId, emptyMsg);
 		} else {
 			clearFieldError(fieldId);
 		}
-
-		// Special case for password confirmation
-		if (fieldId === 'password_confirmation') {
-			const password = $('#password').val().trim();
-			if (value && password !== value) {
-				showFieldError(fieldId, invalidMsg);
-			} else {
-				clearFieldError(fieldId);
-			}
-		}
-	});
+	} else if (!validator(value)) {
+		showFieldError(fieldId, invalidMsg);
+	} else {
+		clearFieldError(fieldId);
+	}
 });
 
 /**
  * Form submission event listener.
  * Validates the form and manages the loading state.
  */
-$(document).on('submit', `#${formId}`, (e) => {
+$(document).on('submit', `#${FORM_ID}`, (e) => {
 	// Prevent default form submission
 	e.preventDefault();
-	setLoadingState(formId, true);
+	setLoadingState(FORM_ID, true);
+
+	// Validate and submit form
 	if (submitUserForm()) e.currentTarget.submit();
-	else setLoadingState(formId, false);
+	else setLoadingState(FORM_ID, false);
 });

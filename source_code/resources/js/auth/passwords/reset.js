@@ -5,12 +5,14 @@ import {
 	validatePasswordConfirmation,
 	validateAndDisplayField
 } from '../../utils/validation.js';
-import {setLoadingState} from '../../utils/utils.js';
+import {setLoadingState, togglePasswordVisibility} from '../../utils/utils.js';
 
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
 	throw new Error('This script requires jQuery');
 }
+
+window.togglePasswordVisibility = togglePasswordVisibility;
 
 // Constants and Variables
 const resetFormId = 'reset-password';

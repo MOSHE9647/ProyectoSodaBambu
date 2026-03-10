@@ -62,3 +62,77 @@ export function toggleLoadingState(element, elementClass, isLoading) {
 	spinner?.querySelector('span:nth-child(2)')?.classList.toggle('visually-hidden', !isLoading);
 	text?.classList.toggle('d-none', isLoading);
 }
+
+/**
+ * Escape HTML special characters in a string to prevent XSS.
+ * @param {*} text 
+ * @returns {string}
+ */
+export function escapeHtml(text) {
+	if (typeof text !== 'string') {
+		return String(text || '');
+	}
+	const map = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#39;'
+	};
+	return text.replace(/[&<>"']/g, char => map[char]);
+}
+
+export function formatDate(dateString) {
+	const date = new Date(dateString);
+
+	if (isNaN(date.getTime())) {
+		console.error('Invalid date:', dateString);
+		return 'Fecha inválida';
+	}
+
+	const day = String(date.getDate()).padStart(2, '0');
+	const month = date.toLocaleDateString('es-ES', { month: 'long' });
+	const year = date.getFullYear();
+	
+	return `${day} de ${month} del ${year}`;
+}
+
+export function capitalizeSentence(sentence) {
+	if (typeof sentence !== 'string' || sentence.length === 0) {
+		return '';
+	}
+
+	// Capitalize the first letter of each word except for small words, unless it's the first word
+	const smallWords = ['de', 'y', 'la', 'las', 'lo', 'los', 'en', 'el', 'a', 'o', 'u'];
+	const capitalized = sentence
+		.split(' ')
+		.map((word, index) => 
+			index === 0 || !smallWords.includes(word.toLowerCase())
+				? word.charAt(0).toUpperCase() + word.slice(1)
+				: word.toLowerCase()
+		)
+		.join(' ');
+
+	return capitalized;
+}
+
+export function togglePasswordVisibility(inputId, toggleButtonId) {
+	const input = document.getElementById(inputId);
+	const toggleButton = document.getElementById(toggleButtonId);
+
+	if (!input || !toggleButton) {
+		console.error('Input or toggle button not found:', inputId, toggleButtonId);
+		return;
+	}
+
+	const isPassword = input.type === 'password';
+	input.type = isPassword ? 'text' : 'password';
+
+	const icon = toggleButton.querySelector('i');
+	if (icon) {
+		icon.classList.toggle('bi-eye-slash', isPassword);
+		icon.classList.toggle('bi-eye', !isPassword);
+	}
+
+	toggleButton.setAttribute('aria-pressed', String(!isPassword));
+}

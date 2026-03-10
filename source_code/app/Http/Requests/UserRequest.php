@@ -27,7 +27,14 @@ class UserRequest extends FormRequest
     {
         return [
 	        'name' => ['required', 'string', 'max:255'],
-	        'email' => ['required', 'string', 'email', Rule::unique('users')->ignore($this->route('user'))],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                Rule::unique('users', 'email')
+                    ->ignore($this->route('user'))
+                    ->whereNull('deleted_at'),
+            ],
 	        'role' => ['required', new Enum(UserRole::class)],
 	        'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ];

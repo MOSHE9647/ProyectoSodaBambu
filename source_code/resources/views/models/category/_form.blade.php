@@ -47,17 +47,18 @@
 
                     {{-- Description --}}
                     <div class="col-12">
-                        <x-form.input
-                            :id="'description'"
-                            :class="'border-secondary'"
-                            :inputClass="$errors->has('description') ? 'is-invalid' : ''"
-                            :placeholder="'Descripción de la categoría'"
-                            :value="old('description', optional($category)->description ?? '')"
-                            :errorMessage="$errors->first('description') ?? ''"
-                            :rows="3"
-                        >
-                            Descripción
-                        </x-form.input>
+						<x-form.textarea
+							:id="'description'"
+							:class="'border-secondary'"
+							:inputClass="$errors->has('description') ? 'is-invalid' : ''"
+							:placeholder="'Descripción de la categoría'"
+							:value="old('description', optional($category)->description ?? '')"
+							:errorMessage="$errors->first('description') ?? ''"
+							:iconLeft="'bi bi-card-text'"
+							:rows="3"
+						>
+							Descripción
+						</x-form.textarea>
                     </div>
                 </div>
             </section>
@@ -89,6 +90,6 @@
     </div>
 </div>
 
-@push('scripts')
+@section('scripts')
     @vite(['resources/js/models/category/form.js'])
-@endpush
+@endsection
