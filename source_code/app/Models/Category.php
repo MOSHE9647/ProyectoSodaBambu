@@ -6,6 +6,7 @@ use App\Casts\CostaRicaDatetime;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Category extends Model
@@ -33,5 +34,14 @@ class Category extends Model
 		'updated_at' => CostaRicaDatetime::class,
 		'deleted_at' => CostaRicaDatetime::class,
 	];
+
+	/**
+	 * Get the products for the category.
+	 * @return HasMany<Product, Category>
+	 */
+	public function products()
+	{
+		return $this->hasMany(Product::class);
+	}
 
 }
