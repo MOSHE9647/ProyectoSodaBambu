@@ -10,6 +10,7 @@ use Database\Factories\EmployeeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Model
@@ -37,8 +38,8 @@ class Employee extends Model
 	protected $fillable = [
 		'id',
 		'phone',
-		'hourly_wage',
 		'status',
+		'hourly_wage',
 		'payment_frequency',
 	];
 
@@ -64,5 +65,15 @@ class Employee extends Model
 	public function user(): BelongsTo
 	{
 		return $this->belongsTo(User::class, 'id', 'id');
+	}
+
+	/**
+	 * Get the timesheets for the employee.
+	 *
+	 * @return HasMany<Timesheet>
+	 */
+	public function timesheets()
+	{
+		return $this->hasMany(Timesheet::class);
 	}
 }
