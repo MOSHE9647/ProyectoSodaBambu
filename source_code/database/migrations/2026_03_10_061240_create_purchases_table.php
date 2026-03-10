@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Table: HorasTrabajadas
-        Schema::create('timesheets', function (Blueprint $table) {
+        Schema::create('purchases', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained()->onDelete('cascade');
-            $table->date('work_date');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->decimal('total_hours', 10, 2);
-            $table->boolean('is_holiday')->default(false);
+            $table->foreignId('supplier_id')->constrained();
+            $table->string('invoice_number');
+            $table->string('payment_status');
+            $table->dateTime('date');
+            $table->decimal('total', 12, 2)->default(0);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -30,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('timesheets');
+        Schema::dropIfExists('purchases');
     }
 };

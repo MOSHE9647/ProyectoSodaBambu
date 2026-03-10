@@ -11,15 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Table: HorasTrabajadas
-        Schema::create('timesheets', function (Blueprint $table) {
+        // Table: Insumos
+        Schema::create('supplies', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained()->onDelete('cascade');
-            $table->date('work_date');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->decimal('total_hours', 10, 2);
-            $table->boolean('is_holiday')->default(false);
+            $table->string('name');
+            $table->string('measure_unit');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -30,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('timesheets');
+        Schema::dropIfExists('supplies');
     }
 };

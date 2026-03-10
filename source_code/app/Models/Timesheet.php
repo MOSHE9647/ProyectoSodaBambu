@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\CostaRicaDatetime;
 use App\Casts\DecimalFormat;
 use Database\Factories\TimesheetFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
