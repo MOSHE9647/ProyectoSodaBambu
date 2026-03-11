@@ -1,15 +1,22 @@
+@php
+    $isEdit = isset($supply);
+@endphp
+
 <div class="container p-0">
     <x-header
-        title="Crear Insumo"
-        subtitle="Registra un nuevo insumo para el inventario"
+        :title="$isEdit ? 'Editar Insumo' : 'Crear Insumo'"
+        :subtitle="$isEdit ? 'Actualice los datos del insumo' : 'Registra un nuevo insumo para el inventario'"
     />
 
     <div class="table-container rounded-2 p-4 w-75 justify-content-start">
         <form
-            id="create-supply-form"
-            action="{{ $action }}" method="POST" class="d-flex flex-column gap-2"
+            id="{{ $isEdit ? 'edit-supply-form' : 'create-supply-form' }}"
+            action="{{ $action }}" 
+            method="POST" 
+            class="d-flex flex-column gap-2"
         >
             @csrf
+            @if($isEdit) @method('PUT') @endif
 
             <section id="basic-information" class="d-flex flex-column mb-4 gap-3">
                 <h5 class="text-muted pb-3 border-bottom border-secondary">
@@ -18,7 +25,6 @@
                 </h5>
 
                 <div class="row g-3">
-                    {{-- Name --}}
                     <div class="col-6">
                         <x-form.input
                             :id="'name'"
@@ -26,7 +32,7 @@
                             :class="'border-secondary'"
                             :inputClass="$errors->has('name') ? 'is-invalid' : ''"
                             :placeholder="'Ej: Harina de Trigo'"
-                            :value="old('name')"
+                            :value="old('name', $supply->name ?? '')"
                             :errorMessage="$errors->first('name') ?? ''"
                             :iconLeft="'bi bi-tag'"
                             :required="true"
@@ -35,7 +41,6 @@
                         </x-form.input>
                     </div>
 
-                    {{-- Measure Unit --}}
                     <div class="col-6">
                         <x-form.input
                             :id="'measure_unit'"
@@ -43,7 +48,7 @@
                             :class="'border-secondary'"
                             :inputClass="$errors->has('measure_unit') ? 'is-invalid' : ''"
                             :placeholder="'Ej: Kilogramos'"
-                            :value="old('measure_unit')"
+                            :value="old('measure_unit', $supply->measure_unit ?? '')"
                             :errorMessage="$errors->first('measure_unit') ?? ''"
                             :iconLeft="'bi bi-rulers'"
                             :required="true"
@@ -60,14 +65,14 @@
                 </a>
 
                 <x-form.submit
-                    :id="'create-supply-form-button'"
-                    :spinnerId="'create-supply-form-spinner'"
+                    :id="$isEdit ? 'edit-supply-form-button' : 'create-supply-form-button'"
+                    :spinnerId="$isEdit ? 'edit-supply-form-spinner' : 'create-supply-form-spinner'"
                     :class="'btn-primary px-4'"
                     :loadingMessage="'Guardando...'"
                 >
-                    <div id="create-supply-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
-                        <i class="bi bi-plus-circle me-2"></i>
-                        Guardar
+                    <div id="{{ $isEdit ? 'edit-supply-form-button-text' : 'create-supply-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
+                        <i class="bi {{ $isEdit ? 'bi-pencil-square' : 'bi-plus-circle' }} me-2"></i>
+                        {{ $isEdit ? 'Actualizar' : 'Guardar' }}
                     </div>
                 </x-form.submit>
             </div>
