@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use App\Models\ProductStock;
+use App\Observers\ProductStockObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
 	 */
 	public function boot(): void
 	{
+
+
+		ProductStock::observe(ProductStockObserver::class);
+
 		if (config('app.env') !== 'local') {
 			URL::forceScheme('https');
 		}
