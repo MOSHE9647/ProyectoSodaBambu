@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Casts\CostaRicaDatetime;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -55,6 +57,31 @@ class User extends Authenticatable implements MustVerifyEmail
 			'deleted_at' => CostaRicaDatetime::class,
 			'password' => 'hashed',
 		];
+	}
+
+	/**
+	 * Scope a query to only include users with the admin role.
+	 * 
+	 * @param Builder $query The query builder instance.
+	 * @return void
+	 */
+	public function scopeAdmins(Builder $query): void
+	{
+		$query->whereHas('roles', function (Builder $query) {
+			$query->where('name', \App\Enums\UserRole::ADMIN->value);
+		});
+	}
+
+	/**
+	 * Interact with the user's password.
+	 * 
+	 * @return Attribute
+	 */
+	protected function password(): Attribute
+	{
+		return Attribute::make(
+			set: fn ($value) => empty($value) ? $this->password : bcrypt($value),
+		);
 	}
 
 	/**
