@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\PurchaseController;
 
 /**
  * Evaluate the user's role and redirect accordingly.
@@ -26,4 +27,5 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
+	Route::resource('purchases', PurchaseController::class)->names('purchases');
 });
