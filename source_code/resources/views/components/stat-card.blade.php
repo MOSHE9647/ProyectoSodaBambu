@@ -1,6 +1,7 @@
 @props([
     'title',
     'value',
+	'currency' => true, // Whether to show currency symbol
     'trend' => null,
     'trendContext' => null,
     'trendDirection' => 'neutral', // 'up', 'down', 'neutral'
@@ -43,25 +44,29 @@
 
 			{{-- Main Value --}}
 			<h4 class="fw-bold mb-2">
-				<x-icons.colon-icon width="18" height="18" />
+				@if ($currency === true)
+					<x-icons.colon-icon width="18" height="18" />
+				@endif
 				{{ $value }}
 			</h4>
 
-			{{-- Trend Information --}}
-            @if($trend)
-                <div class="d-flex align-items-center fs-8 {{ $trendTextClass }}">
-                    {{-- Icono de flecha --}}
-                    <i class="bi-{{ $trendIcon }} me-1"></i>
+			{{-- Trend Information (reserved space to prevent layout shift) --}}
+			<div class="d-flex align-items-center fs-8" style="min-height: 1.25rem;">
+				@if($trend)
+					<div class="d-flex align-items-center {{ $trendTextClass }}">
+						{{-- Icono de flecha --}}
+						<i class="bi-{{ $trendIcon }} me-1"></i>
 
-                    {{-- Valor de la tendencia --}}
-                    <span class="fw-bolder">{{ $trend }}</span>
+						{{-- Valor de la tendencia --}}
+						<span class="fw-bolder">{{ $trend }}</span>
 
-                    {{-- Contexto (vs ayer) --}}
-                    @if($trendContext)
-                        <span class="text-muted ms-1">{{ $trendContext }}</span>
-                    @endif
-                </div>
-            @endif
+						{{-- Contexto (vs ayer) --}}
+						@if($trendContext)
+							<span class="text-muted ms-1">{{ $trendContext }}</span>
+						@endif
+					</div>
+				@endif
+			</div>
 		</div>
 
 		<div class="{{ $iconBgClass }} text-white d-flex align-items-center justify-content-center rounded-3" 

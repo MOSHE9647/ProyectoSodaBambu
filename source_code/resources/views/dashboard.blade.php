@@ -27,6 +27,19 @@
 					/>
 				</div>
 			@endfor
+			{{-- 
+				Stat Card Component - About to Expire supplies
+				Displays a statistical card showing the count of supplies that are nearing expiration.	
+			--}}
+			<div class="col">
+				<x-stat-card
+					title="Próximos a Vencer"
+					value="{{ $aboutToExpire }} Insumos"
+					currency="false"
+					icon="exclamation-triangle"
+					color-theme="red"
+				/>
+			</div>
 		</div>
 
 		{{-- Monthly Income Chart and Other Cards --}}

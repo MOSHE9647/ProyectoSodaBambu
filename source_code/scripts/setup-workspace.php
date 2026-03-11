@@ -253,10 +253,10 @@ success('Carpeta "node_modules" eliminada correctamente.');
 deleteDirectory(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor');
 success('Carpeta "vendor" eliminada correctamente.');
 
-runCommand('composer update', "Actualizando dependencias con \"composer update\"");
+runCommand('composer update -v', "Actualizando dependencias con \"composer update\"");
 
 setDatabase();
-runCommand('composer setup', "Configurando el entorno con \"composer setup\"");
+runCommand('composer setup -v', "Configurando el entorno con \"composer setup\"");
 
 askToRunMigrations();
 generateStorageLink();

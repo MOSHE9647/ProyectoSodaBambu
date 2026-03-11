@@ -29,7 +29,8 @@ class HomeController extends Controller
 
 	public function dashboard()
 	{
-		return view('dashboard');
+		$aboutToExpire = random_int(0, 10);
+		return view('dashboard', compact('aboutToExpire'));
 	}
 
 	public function sales()
