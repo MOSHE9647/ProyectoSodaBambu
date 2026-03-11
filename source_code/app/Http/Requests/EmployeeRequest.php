@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\EmployeeStatus;
 use App\Enums\PaymentFrequency;
+use App\Models\User;
 use Illuminate\Contracts\Validation\Rule as ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
@@ -26,12 +27,26 @@ class EmployeeRequest extends FormRequest
 	 */
 	public function rules(): array
 	{
+		$routeUser = $this->route('user');
+		$userId = $routeUser instanceof User ? $routeUser->id : $routeUser;
+
+		return self::rulesFor($userId ? (int) $userId : null);
+	}
+
+	/**
+	 * Reusable rules for employee data validation.
+	 *
+	 * @param int|null $userId User id used to ignore unique phone on update.
+	 * @return array<string, ValidationRule|array|string>
+	 */
+	public static function rulesFor(?int $userId = null): array
+	{
 		return [
 			'phone' => [
 				'required',
 				'string',
 				Rule::unique('employees', 'phone')
-					->ignore($this->route('user'))
+					->ignore($userId)
 					->whereNull('deleted_at'),
 				'min:12',
 				'max:14',
