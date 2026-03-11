@@ -29,8 +29,9 @@ class HomeController extends Controller
 
 	public function dashboard()
 	{
+		$totalMinStockProducts = random_int(0, 20);
 		$aboutToExpire = random_int(0, 10);
-		return view('dashboard', compact('aboutToExpire'));
+		return view('dashboard', compact('aboutToExpire', 'totalMinStockProducts'));
 	}
 
 	public function sales()

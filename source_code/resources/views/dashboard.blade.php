@@ -14,7 +14,7 @@
 	<div class="container-fluid px-0">
 		{{-- Statistics Cards (Today's Sales, Stock, Contracts, etc.) --}}
 		<div class="row g-3">
-			@for ($i = 0; $i < 4; $i++)
+			@for ($i = 0; $i < 3; $i++)
 				<div class="col">
 					<x-stat-card
 						title="Stat Card {{ $i + 1 }}"
@@ -27,6 +27,15 @@
 					/>
 				</div>
 			@endfor
+			<div class="col">
+				<x-stat-card
+					title="Stock minimo"
+					value="{{ $totalMinStockProducts }} Productos"
+					currency="false"
+					icon="boxes"
+					color-theme="blue"
+				/>
+			</div>
 			{{-- 
 				Stat Card Component - About to Expire supplies
 				Displays a statistical card showing the count of supplies that are nearing expiration.	
@@ -36,7 +45,7 @@
 					title="Próximos a Vencer"
 					value="{{ $aboutToExpire }} Insumos"
 					currency="false"
-					icon="exclamation-triangle"
+					icon="hourglass-split"
 					color-theme="red"
 				/>
 			</div>
