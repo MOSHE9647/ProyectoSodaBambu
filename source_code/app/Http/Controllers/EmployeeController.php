@@ -34,7 +34,7 @@ class EmployeeController extends Controller implements HasMiddleware
 	}
 	public function index()
 	{
-		$employees = Employee::all();
+		$employees = Employee::all(); 
 		return view('models.employees.index', compact('employees'));
 	}
 
