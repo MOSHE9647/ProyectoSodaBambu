@@ -43,8 +43,12 @@ class HomeController extends Controller
         return \App\Models\ProductStock::whereRaw('current_stock <= minimum_stock')->count();
     	});
 
+		$aboutToExpire = Cache::remember('about_to_expire_count', now()->addDay(), function () {
+			return \App\Models\PurchaseDetail::whereNotNull('expiration_date')
+				->whereBetween('expiration_date', [now()->startOfDay(), now()->addDays(7)->endOfDay()])
+				->count();
+		});
 
-		$aboutToExpire = random_int(0, 10);
 		return view('dashboard', compact('aboutToExpire', 'totalMinStockProducts'));
 	}
 

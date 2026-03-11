@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use App\Models\ProductStock;
 use App\Observers\ProductStockObserver;
+use App\Models\PurchaseDetail;
+use App\Observers\PurchaseDetailObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
 
 
 		ProductStock::observe(ProductStockObserver::class);
+		PurchaseDetail::observe(PurchaseDetailObserver::class);
 
 		if (config('app.env') !== 'local') {
 			URL::forceScheme('https');
