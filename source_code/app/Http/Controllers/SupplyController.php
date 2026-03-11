@@ -80,6 +80,17 @@ class SupplyController extends Controller
     }
 
     /**
+     * Show the form for editing the specified resource.
+     *
+     * @param Supply $supply
+     * @return Factory|View|\Illuminate\View\View
+     */
+    public function edit(Supply $supply)
+    {
+        return view('models.supplies.edit', compact('supply'));
+    }
+
+    /**
      * Update the specified resource in storage.
      *
      * @param SupplyRequest $request
