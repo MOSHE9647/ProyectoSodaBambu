@@ -12,7 +12,7 @@
 	/>
 
 	{{-- Form Container --}}
-	<div class="table-container rounded-2 p-4 w-75 justify-content-start">
+	<div class="card-container rounded-2 p-4 w-75 justify-content-start">
 		<form
 			id="{{ isset($user) ? 'edit-user-form' : 'create-user-form' }}"
 			action="{{ $action }}" method="POST" class="d-flex flex-column gap-2"
