@@ -1,0 +1,338 @@
+/* Font Import */
+@import url('https://fonts.bunny.net/css?family=nunito:400,500,600,700,800');
+
+/* Import Bootstrap and Bootstrap Icons */
+@import 'bootstrap';
+@import '../libs/bootstrap/bootstrap-icons.min.css';
+
+/* Base Color Palette */
+:root {
+	--bambu-logo-bg: #28A745;
+	--bambu-body-light: #F6F6F6;
+	--bambu-body-dark: #212529;
+	--bambu-primary: #73BD2C;
+	--bambu-secondary: #81BE3D;
+	--bambu-tertiary: #2A502F;
+	--bambu-light: #F8F9FA;
+	--bambu-dark: #23282A;
+	--bambu-text-dark: #1A1A1A;
+	--bambu-text-light: #FAFAFA;
+	--bambu-text: #2E2E2E;
+	--bambu-danger: #DC3545;
+}
+
+/* Light Theme (default) */
+:root,
+[data-bs-theme="light"] {
+	/* Bootstrap Core */
+	--bs-border-color: rgb(46 46 46 / 12%);
+	--bs-body-bg: var(--bambu-body-light);
+	--bs-body-color: var(--bambu-text-dark);
+
+	/* Theme Colors */
+	--bs-primary: var(--bambu-primary);
+	--bs-secondary: var(--bambu-secondary);
+
+	/* Form Controls */
+	/* Input Focus Styles */
+	--form-control-focus-border-color: var(--bambu-logo-bg);
+	--form-control-focus-box-shadow: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
+
+	/* Checkbox Focus Styles */
+	--form-check-input-checked-bg-color: var(--bambu-logo-bg);
+	--form-check-input-checked-border-color: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
+
+	/* Sidebar */
+	--sidebar-bg: rgb(248 249 250 / 70%);
+	--sidebar-border: rgb(46 46 46 / 10%);
+	--sidebar-color: var(--bambu-text-dark);
+	--sidebar-active-item-bg: var(--bambu-logo-bg);
+	--sidebar-active-item-color: var(--bambu-text-light);
+	--sidebar-active-item-hover-bg: #1E7E34;
+	--sidebar-item-hover-bg: rgb(115 189 44 / 35%);
+	--sidebar-item-hover-color: var(--bambu-text-dark);
+
+	/* Scrollbar Colors */
+	--scrollbar-thumb: var(--bambu-logo-bg);
+	--scrollbar-thumb-hover: #1E7E34;
+
+	/* Table Colors */
+	--table-container-bg: var(--bambu-light);
+	--table-container-border: #C6D4E1;
+	--table-container-shadow: 0 4px 6px rgb(0 0 0 / 10%);
+
+	/* Pagination Colors */
+	--pagination-color: #0E511E;
+	--pagination-bg: transparent;
+	--pagination-border-color: var(--bs-border-color);
+	--pagination-hover-color: var(--bambu-text-light);
+	--pagination-hover-bg: var(--bambu-logo-bg);
+	--pagination-hover-border-color: var(--bambu-logo-bg);
+	--pagination-focus-color: var(--bambu-text-light);
+	--pagination-focus-bg: var(--bambu-logo-bg);
+	--pagination-focus-box-shadow: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
+	--pagination-active-color: var(--bambu-text-light);
+	--pagination-active-bg: var(--bambu-logo-bg);
+	--pagination-active-border-color: var(--bambu-logo-bg);
+	--pagination-disabled-color: rgb(46 46 46 / 50%);
+	--pagination-disabled-bg: transparent;
+	--pagination-disabled-border-color: var(--bs-border-color);
+}
+
+/* Dark Theme */
+[data-bs-theme="dark"] {
+	/* Bootstrap Core */
+	--bs-border-color: rgb(248 249 250 / 20%);
+	--bs-body-bg: var(--bambu-body-dark);
+	--bs-body-color: var(--bambu-text-light);
+
+	/* Theme Colors */
+	--bs-primary: var(--bambu-primary);
+	--bs-secondary: rgb(129 190 61 / 85%);
+
+	/* Checkbox Focus Styles */
+	--form-check-input-checked-bg-color: rgb(115 189 44 / 85%);
+	--form-check-input-checked-border-color: rgb(115 189 44 / 85%);
+
+	/* Sidebar */
+	--sidebar-bg: rgb(26 26 26 / 85%);
+	--sidebar-border: rgb(248 249 250 / 12%);
+	--sidebar-color: var(--bambu-light);
+	--sidebar-active-item-bg: var(--bambu-logo-bg);
+	--sidebar-active-item-color: var(--bambu-light);
+	--sidebar-item-hover-bg: rgb(42 80 47 / 85%);
+	--sidebar-item-hover-color: var(--bambu-light);
+
+	/* Scrollbar Colors */
+	--scrollbar-thumb: var(--bambu-logo-bg);
+	--scrollbar-thumb-hover: #1E7E34;
+
+	/* Table Colors */
+	--table-container-bg: var(--bambu-dark);
+	--table-container-border: #444F54;
+	--table-container-shadow: 0 4px 6px rgb(0 0 0 / 30%);
+
+	/* Pagination Colors */
+	--pagination-color: var(--bambu-logo-bg);
+	--pagination-bg: transparent;
+	--pagination-border-color: var(--bs-border-color);
+	--pagination-hover-color: var(--bambu-light);
+	--pagination-hover-bg: var(--bambu-logo-bg);
+	--pagination-hover-border-color: var(--bambu-logo-bg);
+	--pagination-focus-color: var(--bambu-light);
+	--pagination-focus-bg: var(--bambu-logo-bg);
+	--pagination-focus-box-shadow: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
+	--pagination-active-color: var(--bambu-light);
+	--pagination-active-bg: var(--bambu-logo-bg);
+	--pagination-active-border-color: var(--bambu-logo-bg);
+	--pagination-disabled-color: rgb(248 249 250 / 50%);
+	--pagination-disabled-bg: transparent;
+	--pagination-disabled-border-color: var(--bs-border-color);
+}
+
+/* Smooth Transitions */
+* {
+	transition: all 0.3s ease;
+}
+
+/* Icon Visibility Based on Theme */
+[data-bs-theme="dark"] #moonIcon,
+[data-bs-theme="light"] #sunIcon {
+	display: none;
+}
+
+[data-bs-theme="dark"] #sunIcon,
+[data-bs-theme="light"] #moonIcon {
+	display: inline-block;
+}
+
+/* Form Styles */
+.form-select:focus,
+.form-control:focus,
+.form-check-input:focus {
+	border-color: var(--form-control-focus-border-color);
+	box-shadow: var(--form-control-focus-box-shadow);
+}
+
+.form-check-input:checked {
+	background-color: var(--form-check-input-checked-bg-color);
+	border-color: var(--form-check-input-checked-border-color);
+}
+
+/* Apply background and body color */
+body {
+	background-color: var(--bs-body-bg);
+	font-family: 'Nunito', sans-serif;
+	min-height: 100vh;
+	font-size: 0.9rem;
+	line-height: 1.6;
+}
+
+/* Style scrollbars */
+::-webkit-scrollbar {
+	width: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+	border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--scrollbar-thumb);
+	border-radius: 6px;
+	transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--scrollbar-thumb-hover);
+}
+
+/* Style the theme toggle button */
+#moonIcon {
+	margin-left: 3px;
+	margin-bottom: 1px;
+}
+
+#themeTogglerBtn {
+	width: 44px;
+	height: 44px;
+}
+
+#themeTogglerBtn:hover {
+	background-color: var(--bambu-logo-bg);
+	border-color: var(--bambu-logo-bg);
+	color: var(--bambu-text-dark);
+}
+
+/* Brand Logo Style */
+.brand-logo {
+	background-color: var(--bambu-logo-bg);
+}
+
+/* Global Table and Card Styles */
+.card-container {
+	min-width: 285px;
+}
+
+.table-container,
+.card-container {
+	background: var(--table-container-bg);
+	border: 1px solid var(--table-container-border);
+	box-shadow: var(--table-container-shadow);
+}
+
+.pagination {
+	--bs-pagination-color: var(--pagination-color);
+	--bs-pagination-bg: var(--pagination-bg);
+	--bs-pagination-border-color: var(--pagination-border-color);
+	--bs-pagination-hover-color: var(--pagination-hover-color);
+	--bs-pagination-hover-bg: var(--pagination-hover-bg);
+	--bs-pagination-hover-border-color: var(--pagination-hover-border-color);
+	--bs-pagination-focus-color: var(--pagination-focus-color);
+	--bs-pagination-focus-bg: var(--pagination-focus-bg);
+	--bs-pagination-focus-box-shadow: var(--pagination-focus-box-shadow);
+	--bs-pagination-active-color: var(--pagination-active-color);
+	--bs-pagination-active-bg: var(--pagination-active-bg);
+	--bs-pagination-active-border-color: var(--pagination-active-border-color);
+	--bs-pagination-disabled-color: var(--pagination-disabled-color);
+	--bs-pagination-disabled-bg: var(--pagination-disabled-bg);
+	--bs-pagination-disabled-border-color: var(--pagination-disabled-border-color);
+}
+
+/* Button Styles */
+.btn-primary {
+	--bs-btn-bg: var(--bambu-logo-bg);
+	--bs-btn-border-color: var(--bambu-logo-bg);
+
+	transition: all 0.3s ease;
+}
+
+.btn-primary:active {
+	--bs-btn-active-bg: #1E7E34;
+	--bs-btn-active-border-color: #1E7E34;
+}
+
+.btn-primary:hover {
+	--bs-btn-hover-bg: #1E7E34;
+	--bs-btn-hover-border-color: #1E7E34;
+}
+
+.btn-primary:focus {
+	background: var(--bambu-logo-bg);
+	border: 1px solid #1E7E34;
+	box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.btn.btn-primary:disabled {
+	background: var(--bambu-logo-bg);
+	border: 1px solid var(--bambu-logo-bg);
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+.btn-danger {
+	--bs-btn-bg: var(--bs-danger, #dc3545);
+	--bs-btn-border-color: var(--bs-danger, #dc3545);
+
+	transition: all 0.3s ease;
+}
+
+.btn-danger:active {
+	--bs-btn-active-bg: #a71d2a;
+	--bs-btn-active-border-color: #a71d2a;
+}
+
+.btn-danger:hover {
+	--bs-btn-hover-bg: #bb2d3b;
+	--bs-btn-hover-border-color: #bb2d3b;
+}
+
+.btn-danger:focus {
+	background: var(--bs-danger, #dc3545);
+	border: 1px solid #bb2d3b;
+	box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.btn.btn-danger:disabled {
+	background: var(--bs-danger, #dc3545);
+	border: 1px solid var(--bs-danger, #dc3545);
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+/* SweetAlert2 Styles */
+.swal-popup {
+	--swal2-toast-border: 1px solid var(--bs-border-color-translucent);
+	--swal2-border: 1px solid var(--bs-border-color-translucent);
+	background: var(--bs-body-bg);
+	color: var(--bs-body-color);
+}
+
+.swal-offline-popup {
+	display: flex !important;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	padding-right: 5px !important;
+	min-height: 60px !important;
+	max-height: 80px !important;
+
+	--swal2-color: var(--bs-body-color);
+	--swal2-toast-border: 1px solid var(--bs-border-color-translucent);
+}
+
+.swal-offline-container {
+	min-width: 250px !important;
+	max-width: 90vw !important;
+	width: fit-content !important;
+	overflow: hidden !important;
+}
+
+.swal-close-btn {
+	color: var(--bs-body-color);
+}
+
+.swal-timer-progress-bar {
+	background: var(--bambu-logo-bg);
+}

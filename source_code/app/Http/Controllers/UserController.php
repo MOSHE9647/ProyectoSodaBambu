@@ -1,0 +1,260 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Enums\UserRole;
+use App\Http\Requests\UserRequest;
+use App\Http\Requests\EmployeeRequest;
+use App\Http\Resources\UserResource;
+use App\Models\Employee;
+use App\Models\User;
+use DB;
+use Exception;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Throwable;
+use Yajra\DataTables\DataTables;
+
+class UserController extends Controller implements HasMiddleware
+{
+	// Define the role relationship name based on UserRole enum
+	private string $role;
+
+	/**
+	 * Define middleware for the controller.
+	 * @see https://laravel.com/docs/10.x/controllers#controller-middleware
+	 *
+	 * @return array<int, Middleware>
+	 */
+	public static function middleware(): array
+	{
+		$role = UserRole::ADMIN->value;
+		return [
+			new Middleware("role:$role"),
+		];
+	}
+
+	public function __construct()
+	{
+		// Default role relationship is 'employee'
+		$this->role = UserRole::EMPLOYEE->value;
+	}
+
+	/**
+	 * Display a listing of the resource.
+	 *
+	 * @param Request $request
+	 * @return Factory|View|JsonResponse|\Illuminate\View\View
+	 * @throws Exception
+	 */
+	public function index(Request $request)
+	{
+		// Count the number of admin users
+		$adminCount = User::whereHas('roles', function ($role) {
+			$role->where('name', UserRole::ADMIN->value);
+		})->count();
+
+		// Handle AJAX request for DataTables
+		if ($request->ajax()) {
+			// Use query builder to avoid loading all rows in memory for DataTables
+			$query = User::query()->with([$this->role, 'roles']);
+			return DataTables::of($query)->toJson();
+		}
+
+		// For non-AJAX requests, return the view
+		return view('models.users.index', compact('adminCount'));
+	}
+
+	/**
+	 * Show the form for creating a new resource.
+	 *
+	 * @return Factory|View|\Illuminate\View\View
+	 */
+	public function create()
+	{
+		return view('models.users.create');
+	}
+
+	/**
+	 * Store a newly created resource in storage.
+	 *
+	 * @param UserRequest $userRequest
+	 * @return RedirectResponse
+	 * @throws Throwable
+	 */
+	public function store(UserRequest $userRequest)
+	{
+		$wasRestored = false;
+
+		DB::transaction(function () use ($userRequest, &$wasRestored) {
+			$userData = $userRequest->validated();
+			$userRole = UserRole::from($userRequest['role']);
+
+			// Reuse soft-deleted user with the same unique field (email) instead of creating a new row.
+			$user = User::withTrashed()->where('email', $userData['email'])->first();
+
+			if ($user?->trashed()) {
+				$user->restore();
+				$user->update($userData);
+				$wasRestored = true;
+			} else {
+				$user = User::create($userData);
+			}
+
+			$user->syncRoles([$userRole]);
+
+			if ($userRole === UserRole::EMPLOYEE) {
+				$employeeData = $this->validateEmployeeData($userRequest);
+				$employee = $user->employee()->withTrashed()->first();
+
+				if ($employee) {
+					if ($employee->trashed()) {
+						$employee->restore();
+					}
+					$employee->update($employeeData);
+				} else {
+					$employeeData['id'] = $user->id;
+					$user->employee()->create($employeeData);
+				}
+			} else {
+				if ($user->employee()->exists()) {
+					$user->employee()->delete();
+				}
+			}
+		});
+
+		$message = $wasRestored
+			? 'Usuario restaurado y actualizado correctamente.'
+			: 'Usuario creado correctamente.';
+
+		return redirect()->route('users.index')->with('success', $message);
+	}
+
+	/**
+	 * Display the specified resource.
+	 *
+	 * @param User $user
+	 * @return Factory|View|\Illuminate\View\View
+	 */
+	public function show(User $user)
+	{
+		$userToShow = $user->load([$this->role, 'roles']);
+		$resource = UserResource::make($userToShow);
+		return view('models.users.show', ['user' => $resource]);
+	}
+
+	/**
+	 * Show the form for editing the specified resource.
+	 *
+	 * @param User $user
+	 * @return Factory|View|\Illuminate\View\View
+	 */
+	public function edit(User $user)
+	{
+		$user->load('roles');
+		return view('models.users.edit', compact('user'));
+	}
+
+	/**
+	 * Update the specified resource in storage.
+	 * If the role is changed to EMPLOYEE, create or restore the Employee record.
+	 * If the role is changed from EMPLOYEE to another role, delete the Employee record.
+	 *
+	 * @param UserRequest $userRequest
+	 * @param User $user
+	 * @return RedirectResponse
+	 * @throws Throwable
+	 */
+	public function update(UserRequest $userRequest, User $user)
+	{
+		DB::transaction(function () use ($userRequest, $user) {
+			// Update the User
+			$userData = $userRequest->validated();
+
+			// Remove password if not provided to avoid setting it to null
+			if (empty($userData['password'])) {
+				unset($userData['password']);
+			}
+			$user->update($userData);
+
+			// Sync the role to the user
+			$userRole = UserRole::from($userRequest['role']);
+			$user->syncRoles([$userRole]);
+
+			// If the role is EMPLOYEE, update or create the related Employee record
+			if ($userRole === UserRole::EMPLOYEE) {
+				// Validate Employee-specific data with EmployeeRequest
+				$employeeData = $this->validateEmployeeData($userRequest);
+
+				// Check if there's a soft-deleted employee to restore
+				$trashedEmployee = $user->employee()->onlyTrashed()->first();
+				if ($trashedEmployee) {
+					$trashedEmployee->restore();
+					$trashedEmployee->update($employeeData);
+				} else {
+					// Update or create the Employee record
+					$user->employee()->updateOrCreate([], $employeeData);
+				}
+			} else {
+				// If the role is not EMPLOYEE, delete the related Employee record if it exists
+				if ($user->employee) {
+					$user->employee->delete();
+				}
+			}
+		});
+
+		return redirect()->route('users.index')->with('success', 'Usuario actualizado correctamente.');
+	}
+
+	/**
+	 * Remove the specified resource from storage.
+	 *
+	 * @param User $user
+	 * @return RedirectResponse
+	 * @throws Throwable
+	 */
+	public function destroy(User $user)
+	{
+		$isUniqueAdmin = $user->hasRole(UserRole::ADMIN) && User::role(UserRole::ADMIN)->count() === 1;
+		if ($isUniqueAdmin) {
+			return redirect()->back()->with('error', 'No se puede eliminar el único usuario administrador.');
+		}
+
+		// Use a transaction to ensure data integrity
+		DB::transaction(function () use ($user) {
+			// Get the user with the specific role relationship
+			$user->load($this->role);
+
+			// If the user has a related employee record, delete it
+			if ($user->employee()->exists()) {
+				$user->employee()->delete();
+			}
+
+			// Delete the user record
+			$user->delete();
+		});
+
+		// Redirect back with a success message
+		return redirect()->back()->with('success', 'Usuario eliminado correctamente.');
+	}
+
+	/**
+	 * Validate Employee-specific data using EmployeeRequest.
+	 *
+	 * @param UserRequest $userRequest
+	 * @return array
+	 */
+	private function validateEmployeeData(UserRequest $userRequest): array
+	{
+		// Validate Employee-specific data with EmployeeRequest
+		$employeeRequest = app(EmployeeRequest::class);
+		$employeeRequest->merge($userRequest->only(Employee::$fields));
+		$employeeRequest->validateResolved();
+		return $employeeRequest->validated();
+	}
+}

@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Http\Requests;
+
+use App\Enums\EmployeeStatus;
+use App\Enums\PaymentFrequency;
+use Illuminate\Contracts\Validation\Rule as ValidationRule;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rule;
+
+class EmployeeRequest extends FormRequest
+{
+	/**
+	 * Determine if the user is authorized to make this request.
+	 */
+	public function authorize(): bool
+	{
+		return true;
+	}
+
+	/**
+	 * Get the validation rules that apply to the request.
+	 *
+	 * @return array<string, ValidationRule|array|string>
+	 */
+	public function rules(): array
+	{
+		return [
+			'phone' => [
+				'required',
+				'string',
+				Rule::unique('employees', 'phone')
+					->ignore($this->route('user'))
+					->whereNull('deleted_at'),
+				'min:12',
+				'max:14',
+			],
+			'status' => ['required', new Enum(EmployeeStatus::class)],
+			'hourly_wage' => ['required', 'numeric', 'min:100'],
+			'payment_frequency' => ['required', new Enum(PaymentFrequency::class)],
+		];
+	}
+}
