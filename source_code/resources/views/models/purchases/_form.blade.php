@@ -72,15 +72,16 @@
 
                 <div class="row">
                     <div class="col-12">
-                        <a href="{{ route('suppliers.create') }}" class="btn btn-outline-primary btn-sm">
+                        {{-- Botón que abre el offcanvas --}}
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="offcanvas"
+                            data-bs-target="#offcanvasSupplier">
                             <i class="bi bi-plus-circle"></i> + Nuevo proveedor
-                        </a>
+                        </button>
                     </div>
                 </div>
             </section>
 
             {{-- Productos comprados --}}
-            {{-- Sección de productos comprados --}}
             <section class="d-flex flex-column mb-4 gap-3">
                 <h5 class="text-muted pb-3 border-bottom border-secondary">
                     <i class="bi bi-box-seam me-3"></i> Productos comprados
@@ -88,7 +89,7 @@
 
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover" id="details-table">
-                        <thead class="table-light">
+                        <thead class="table-dark">
                             <tr>
                                 <th>Tipo</th>
                                 <th>Producto/Insumo</th>
@@ -145,6 +146,53 @@
         </form>
     </div>
 </div>
+
+{{-- Offcanvas para crear proveedor rápidamente --}}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasSupplier" aria-labelledby="offcanvasSupplierLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasSupplierLabel">Crear nuevo proveedor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form id="quick-supplier-form" action="{{ route('suppliers.store') }}" method="POST">
+            @csrf
+            <div class="mb-3">
+                <label for="quick-name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="quick-name" name="name" required>
+                <div class="invalid-feedback" id="quick-name-error"></div>
+            </div>
+
+            <div class="mb-3">
+                <label for="quick-phone" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text">+506</span>
+                    <input type="text" class="form-control" id="quick-phone" name="phone" 
+                           placeholder="XXXXXXXX" maxlength="8" inputmode="numeric" required>
+                </div>
+                <div class="invalid-feedback" id="quick-phone-error"></div>
+            </div>
+
+            <div class="mb-3">
+                <label for="quick-email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" id="quick-email" name="email" required>
+                <div class="invalid-feedback" id="quick-email-error"></div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="quick-supplier-submit">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="quick-supplier-spinner"></span>
+                    Guardar proveedor
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Script para pasar el índice de detalles a JavaScript --}}
+<script>
+    window.detailIndex = {{ isset($purchase) ? $purchase->details->count() : 0 }};
+</script>
 
 @section('scripts')
     @vite(['resources/js/models/purchases/form.js'])
