@@ -3,14 +3,20 @@
     'icon' => null,
     'title' => '',
     'active' => false,
+    'container' => false,
+    'containerClass' => '',
     'itemClass' => '',
     'titleClass' => '',
     'iconClass' => '',
 ])
 
+@php
+    $containerClass = $container ? 'card-container rounded-2 p-4' : '';
+@endphp
+
 <section
     id="{{ $id }}"
-    class="{{ trim("tab-pane fade " . ($active ? "show active " : "") . $itemClass) }}"
+    class="{{ trim("$containerClass tab-pane fade " . ($active ? "show active " : "") . $itemClass) }}"
     role="tabpanel"
     aria-labelledby="{{ $id }}-tab"
     tabindex="0"
