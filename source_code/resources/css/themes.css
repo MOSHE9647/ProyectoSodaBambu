@@ -8,6 +8,7 @@
 /* Base Color Palette */
 :root {
 	--bambu-logo-bg: #28A745;
+	--bambu-logo-bg-hover: #1E7E34;
 	--bambu-body-light: #F6F6F6;
 	--bambu-body-dark: #212529;
 	--bambu-primary: #73BD2C;
@@ -19,6 +20,18 @@
 	--bambu-text-light: #FAFAFA;
 	--bambu-text: #2E2E2E;
 	--bambu-danger: #DC3545;
+	--bambu-danger-hover: #BB2D3B;
+	--bambu-danger-active: #A71D2A;
+	--bambu-check-border: #22C55E;
+	--bambu-focus-ring-success: 0 0 0 0.2rem rgb(40 167 69 / 25%);
+	--bambu-focus-ring-danger: 0 0 0 0.2rem rgb(220 53 69 / 25%);
+	--bambu-transition-base: all 0.3s ease;
+	--bambu-scrollbar-size: 8px;
+	--bambu-radius-sm: 6px;
+	--bambu-toggle-size: 44px;
+	--bambu-card-min-width: 285px;
+	--bambu-disabled-opacity: 0.65;
+	--bambu-translucent-border: var(--bs-border-color-translucent, var(--bs-border-color));
 }
 
 /* Light Theme (default) */
@@ -34,13 +47,10 @@
 	--bs-secondary: var(--bambu-secondary);
 
 	/* Form Controls */
-	/* Input Focus Styles */
 	--form-control-focus-border-color: var(--bambu-logo-bg);
-	--form-control-focus-box-shadow: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
-
-	/* Checkbox Focus Styles */
+	--form-control-focus-box-shadow: var(--bambu-focus-ring-success);
 	--form-check-input-checked-bg-color: var(--bambu-logo-bg);
-	--form-check-input-checked-border-color: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
+	--form-check-input-checked-border-color: var(--bambu-logo-bg);
 
 	/* Sidebar */
 	--sidebar-bg: rgb(248 249 250 / 70%);
@@ -48,13 +58,13 @@
 	--sidebar-color: var(--bambu-text-dark);
 	--sidebar-active-item-bg: var(--bambu-logo-bg);
 	--sidebar-active-item-color: var(--bambu-text-light);
-	--sidebar-active-item-hover-bg: #1E7E34;
+	--sidebar-active-item-hover-bg: var(--bambu-logo-bg-hover);
 	--sidebar-item-hover-bg: rgb(115 189 44 / 35%);
 	--sidebar-item-hover-color: var(--bambu-text-dark);
 
 	/* Scrollbar Colors */
 	--scrollbar-thumb: var(--bambu-logo-bg);
-	--scrollbar-thumb-hover: #1E7E34;
+	--scrollbar-thumb-hover: var(--bambu-logo-bg-hover);
 
 	/* Table Colors */
 	--table-container-bg: var(--bambu-light);
@@ -70,13 +80,18 @@
 	--pagination-hover-border-color: var(--bambu-logo-bg);
 	--pagination-focus-color: var(--bambu-text-light);
 	--pagination-focus-bg: var(--bambu-logo-bg);
-	--pagination-focus-box-shadow: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
+	--pagination-focus-box-shadow: var(--bambu-focus-ring-success);
 	--pagination-active-color: var(--bambu-text-light);
 	--pagination-active-bg: var(--bambu-logo-bg);
 	--pagination-active-border-color: var(--bambu-logo-bg);
 	--pagination-disabled-color: rgb(46 46 46 / 50%);
 	--pagination-disabled-bg: transparent;
 	--pagination-disabled-border-color: var(--bs-border-color);
+
+	/* Check Button Colors */
+	--check-button-bg: #E8F9EF;
+	--check-button-hover-bg-color: #C9E4B2;
+	--check-button-hover-border-color: #C9E4B2;
 }
 
 /* Dark Theme */
@@ -90,7 +105,7 @@
 	--bs-primary: var(--bambu-primary);
 	--bs-secondary: rgb(129 190 61 / 85%);
 
-	/* Checkbox Focus Styles */
+	/* Form Controls */
 	--form-check-input-checked-bg-color: rgb(115 189 44 / 85%);
 	--form-check-input-checked-border-color: rgb(115 189 44 / 85%);
 
@@ -105,7 +120,7 @@
 
 	/* Scrollbar Colors */
 	--scrollbar-thumb: var(--bambu-logo-bg);
-	--scrollbar-thumb-hover: #1E7E34;
+	--scrollbar-thumb-hover: var(--bambu-logo-bg-hover);
 
 	/* Table Colors */
 	--table-container-bg: var(--bambu-dark);
@@ -121,18 +136,33 @@
 	--pagination-hover-border-color: var(--bambu-logo-bg);
 	--pagination-focus-color: var(--bambu-light);
 	--pagination-focus-bg: var(--bambu-logo-bg);
-	--pagination-focus-box-shadow: 0 0 0 0.2rem rgb(40, 167, 69, 0.25);
+	--pagination-focus-box-shadow: var(--bambu-focus-ring-success);
 	--pagination-active-color: var(--bambu-light);
 	--pagination-active-bg: var(--bambu-logo-bg);
 	--pagination-active-border-color: var(--bambu-logo-bg);
 	--pagination-disabled-color: rgb(248 249 250 / 50%);
 	--pagination-disabled-bg: transparent;
 	--pagination-disabled-border-color: var(--bs-border-color);
+
+	/* Check Button Colors */
+	--check-button-bg: #23342A;
+	--check-button-hover-bg-color: #2A4B30;
+	--check-button-hover-border-color: #2A4B30;
 }
 
 /* Smooth Transitions */
-* {
-	transition: all 0.3s ease;
+*,
+*::before,
+*::after {
+	transition: var(--bambu-transition-base);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		transition: none !important;
+	}
 }
 
 /* Icon Visibility Based on Theme */
@@ -159,44 +189,47 @@
 	border-color: var(--form-check-input-checked-border-color);
 }
 
-/* Apply background and body color */
+/* Base Layout */
 body {
 	background-color: var(--bs-body-bg);
+	color: var(--bs-body-color);
 	font-family: 'Nunito', sans-serif;
 	min-height: 100vh;
 	font-size: 0.9rem;
 	line-height: 1.6;
 }
 
-/* Style scrollbars */
+/* Scrollbar */
 ::-webkit-scrollbar {
-	width: 8px;
+	width: var(--bambu-scrollbar-size);
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-thumb {
+	border-radius: var(--bambu-radius-sm);
 }
 
 ::-webkit-scrollbar-track {
 	background: transparent;
-	border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
 	background: var(--scrollbar-thumb);
-	border-radius: 6px;
-	transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
 	background: var(--scrollbar-thumb-hover);
 }
 
-/* Style the theme toggle button */
+/* Theme Toggle */
 #moonIcon {
 	margin-left: 3px;
 	margin-bottom: 1px;
 }
 
 #themeTogglerBtn {
-	width: 44px;
-	height: 44px;
+	width: var(--bambu-toggle-size);
+	height: var(--bambu-toggle-size);
 }
 
 #themeTogglerBtn:hover {
@@ -205,18 +238,17 @@ body {
 	color: var(--bambu-text-dark);
 }
 
-/* Brand Logo Style */
+/* Brand */
 .brand-logo {
 	background-color: var(--bambu-logo-bg);
 }
 
-/* Global Table and Card Styles */
+/* Surfaces */
 .card-container {
-	min-width: 285px;
+	min-width: var(--bambu-card-min-width);
 }
 
-.table-container,
-.card-container {
+:is(.table-container, .card-container) {
 	background: var(--table-container-bg);
 	border: 1px solid var(--table-container-border);
 	box-shadow: var(--table-container-shadow);
@@ -240,71 +272,124 @@ body {
 	--bs-pagination-disabled-border-color: var(--pagination-disabled-border-color);
 }
 
-/* Button Styles */
+/* Buttons */
 .btn-primary {
 	--bs-btn-bg: var(--bambu-logo-bg);
 	--bs-btn-border-color: var(--bambu-logo-bg);
-
-	transition: all 0.3s ease;
-}
-
-.btn-primary:active {
-	--bs-btn-active-bg: #1E7E34;
-	--bs-btn-active-border-color: #1E7E34;
 }
 
 .btn-primary:hover {
-	--bs-btn-hover-bg: #1E7E34;
-	--bs-btn-hover-border-color: #1E7E34;
+	--bs-btn-hover-bg: var(--bambu-logo-bg-hover);
+	--bs-btn-hover-border-color: var(--bambu-logo-bg-hover);
 }
 
-.btn-primary:focus {
-	background: var(--bambu-logo-bg);
-	border: 1px solid #1E7E34;
-	box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+.btn-primary:active {
+	--bs-btn-active-bg: var(--bambu-logo-bg-hover);
+	--bs-btn-active-border-color: var(--bambu-logo-bg-hover);
 }
 
-.btn.btn-primary:disabled {
+.btn-primary:focus,
+.check-button .btn-check:checked:focus-visible + .btn {
 	background: var(--bambu-logo-bg);
-	border: 1px solid var(--bambu-logo-bg);
-	cursor: not-allowed;
-	opacity: 0.65;
+	border: 1px solid var(--bambu-logo-bg-hover);
+	box-shadow: var(--bambu-focus-ring-success);
 }
 
 .btn-danger {
 	--bs-btn-bg: var(--bs-danger, #dc3545);
 	--bs-btn-border-color: var(--bs-danger, #dc3545);
-
-	transition: all 0.3s ease;
-}
-
-.btn-danger:active {
-	--bs-btn-active-bg: #a71d2a;
-	--bs-btn-active-border-color: #a71d2a;
 }
 
 .btn-danger:hover {
-	--bs-btn-hover-bg: #bb2d3b;
-	--bs-btn-hover-border-color: #bb2d3b;
+	--bs-btn-hover-bg: var(--bambu-danger-hover);
+	--bs-btn-hover-border-color: var(--bambu-danger-hover);
+}
+
+.btn-danger:active {
+	--bs-btn-active-bg: var(--bambu-danger-active);
+	--bs-btn-active-border-color: var(--bambu-danger-active);
 }
 
 .btn-danger:focus {
 	background: var(--bs-danger, #dc3545);
-	border: 1px solid #bb2d3b;
-	box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+	border: 1px solid var(--bambu-danger-hover);
+	box-shadow: var(--bambu-focus-ring-danger);
+}
+
+.btn.btn-primary:disabled,
+.btn.btn-danger:disabled {
+	cursor: not-allowed;
+	opacity: var(--bambu-disabled-opacity);
+}
+
+.btn.btn-primary:disabled {
+	background: var(--bambu-logo-bg);
+	border: 1px solid var(--bambu-logo-bg);
 }
 
 .btn.btn-danger:disabled {
 	background: var(--bs-danger, #dc3545);
 	border: 1px solid var(--bs-danger, #dc3545);
-	cursor: not-allowed;
-	opacity: 0.65;
 }
 
-/* SweetAlert2 Styles */
+/* Navigation Tabs */
+.nav-pills .nav-link,
+.nav-tabs .nav-link {
+	color: var(--bs-body-color);
+}
+
+.nav-pills .nav-link:hover {
+	background-color: var(--sidebar-item-hover-bg);
+	border-color: var(--sidebar-item-hover-bg);
+	color: var(--sidebar-item-hover-color);
+}
+
+.nav-pills .nav-link.active {
+	background-color: var(--sidebar-active-item-bg);
+	border-color: var(--sidebar-active-item-bg);
+	color: var(--bs-body-color);
+}
+
+.nav-pills .nav-link.active:hover {
+	background-color: var(--bambu-logo-bg-hover);
+	border-color: var(--bambu-logo-bg-hover);
+	color: var(--bs-body-color);
+}
+
+/* Check Button */
+.check-button .btn {
+	--bs-btn-bg: var(--check-button-bg);
+	--bs-btn-border-color: var(--bambu-check-border);
+	color: var(--bs-body-color);
+}
+
+.check-button .btn:hover {
+	--bs-btn-bg: var(--check-button-hover-bg-color);
+	--bs-btn-border-color: var(--bambu-check-border);
+	color: var(--bs-body-color) !important;
+}
+
+.check-button .btn-check:focus-visible + .btn {
+	border-color: var(--bambu-check-border);
+	box-shadow: var(--bambu-focus-ring-success);
+}
+
+.check-button .btn-check:checked + .btn {
+	--bs-btn-active-bg: var(--bambu-logo-bg);
+	--bs-btn-active-border-color: var(--bambu-check-border);
+	color: var(--bambu-text-light) !important;
+}
+
+.check-button .btn-check:checked + .btn:hover {
+	background-color: var(--bambu-logo-bg-hover);
+	border-color: var(--bambu-logo-bg-hover);
+	color: var(--bambu-text-light);
+}
+
+/* SweetAlert2 */
 .swal-popup {
-	--swal2-toast-border: 1px solid var(--bs-border-color-translucent);
-	--swal2-border: 1px solid var(--bs-border-color-translucent);
+	--swal2-toast-border: 1px solid var(--bambu-translucent-border);
+	--swal2-border: 1px solid var(--bambu-translucent-border);
 	background: var(--bs-body-bg);
 	color: var(--bs-body-color);
 }
@@ -314,12 +399,12 @@ body {
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
-	padding-right: 5px !important;
 	min-height: 60px !important;
 	max-height: 80px !important;
+	padding-right: 5px !important;
 
 	--swal2-color: var(--bs-body-color);
-	--swal2-toast-border: 1px solid var(--bs-border-color-translucent);
+	--swal2-toast-border: 1px solid var(--bambu-translucent-border);
 }
 
 .swal-offline-container {

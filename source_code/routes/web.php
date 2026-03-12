@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ConfigController;
-use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SupplierController;
@@ -24,7 +24,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('sales', [HomeController::class, 'sales'])->name('sales');
 	Route::get('config', [ConfigController::class, 'index'])->name('config');
 	Route::resource('users', UserController::class)->names('users');
-	Route::resource('employees', EmployeeController::class)->names('employees');
+	Route::resource('attendance', AttendanceController::class)->names('attendance');
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
