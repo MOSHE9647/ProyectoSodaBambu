@@ -1,10 +1,10 @@
 @php
 	use App\Enums\ProductType;
 
-	$categories = $categories ?? \App\Models\Category::orderBy('name')->get();
+	$categories = $categories ?? collect();
 	$selectedType = old('type', isset($product) ? ($product->type?->value ?? $product->type) : '');
 	$selectedHasInventory = (string) old('has_inventory', isset($product) ? (int) $product->has_inventory : 1);
-	$selectedCategory = (string) old('category_id', $product->category_id ?? '-1');
+	$selectedCategory = (string) old('category_id', isset($product) ? $product->category_id : '-1');
 @endphp
 
 <div class="container p-0">
