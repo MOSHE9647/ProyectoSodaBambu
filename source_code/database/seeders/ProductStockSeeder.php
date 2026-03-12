@@ -19,8 +19,9 @@ class ProductStockSeeder extends Seeder
 
         // Create stock entries for each product with inventory
         foreach ($products as $product) {
-            ProductStock::create([
-                'product_id' => $product->id, 
+            ProductStock::updateOrCreate([
+                'product_id' => $product->id,
+            ], [
                 'current_stock' => rand(20, 100),
                 'minimum_stock' => 15,
             ]);
