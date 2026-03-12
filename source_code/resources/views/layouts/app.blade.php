@@ -43,9 +43,20 @@
 	{{-- Success Toast Notification --}}
 	@if(session('success'))
 		<script type="module">
+			console.debug("mensajes encontrados en la sesión:", @json(session()->all()));
 			SwalToast.fire({
 				icon: SwalNotificationTypes.SUCCESS,
 				title: @json(session('success'))
+			});
+		</script>
+	@endif
+
+	{{-- Toast de Advertencia para Stock Bajo --}}
+	@if(session('warning'))
+		<script type="module">
+			SwalToast.fire({
+				icon: SwalNotificationTypes.WARNING, // Asegúrate de que este tipo exista en tu JS
+				title: @json(session('warning'))
 			});
 		</script>
 	@endif

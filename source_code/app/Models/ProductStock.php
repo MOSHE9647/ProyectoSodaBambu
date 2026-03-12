@@ -7,6 +7,7 @@ use Database\Factories\ProductStockFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Product;
 
 class ProductStock extends Model
 {
@@ -36,4 +37,9 @@ class ProductStock extends Model
         'updated_at' => CostaRicaDatetime::class,
         'deleted_at' => CostaRicaDatetime::class,
     ];
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
 }

@@ -8,6 +8,8 @@ use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
 
+use App\Http\Controllers\TestStockController;
+
 /**
  * Evaluate the user's role and redirect accordingly.
  * If the user is not authenticated, redirect to the login page.
@@ -26,4 +28,6 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
+	
+	Route::get('/test-low-stock/{stock}', [TestStockController::class, 'triggerLowStock'])->name('test.low-stock');
 });

@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\ProductStock;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Session;
 
 class ProductStockObserver
 {
@@ -19,6 +20,13 @@ class ProductStockObserver
     public function updated(ProductStock $productStock): void
     {
         if($productStock->wasChanged('current_stock')){
+            $hasLowStock = $productStock->current_stock < $productStock->minimum_stock;
+            if($hasLowStock){
+                //Log::warning("¡Stock bajo en {$productStock->product->name}! Stock actual: {$productStock->current_stock}, Stock mínimo: {$productStock->minimum_stock}");
+                // Guardar en la sesión un mensaje de advertencia
+                Session::put('warning', "¡Stock bajo en {$productStock->product->name}!");
+            }
+
             $this->countLowStockProducts();
         }
     }
