@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
-use App\Http\Requests\EmployeeRequest;
 use App\Models\Employee;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 
-class EmployeeController extends Controller implements HasMiddleware
+class AttendanceController extends Controller implements HasMiddleware
 {
 	// Define the role relationship name based on UserRole enum
 	private string $role;
@@ -36,29 +35,5 @@ class EmployeeController extends Controller implements HasMiddleware
 	{
 		$employees = Employee::all(); 
 		return view('models.employees.index', compact('employees'));
-	}
-
-	public function store(EmployeeRequest $request)
-	{
-		return Employee::create($request->validated());
-	}
-
-	public function show(Employee $employee)
-	{
-		return $employee;
-	}
-
-	public function update(EmployeeRequest $request, Employee $employee)
-	{
-		$employee->update($request->validated());
-
-		return $employee;
-	}
-
-	public function destroy(Employee $employee)
-	{
-		$employee->delete();
-
-		return response()->json();
 	}
 }

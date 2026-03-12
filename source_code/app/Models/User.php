@@ -73,7 +73,7 @@ class User extends Authenticatable implements MustVerifyEmail
 	}
 
 	/**
-	 * Interact with the user's password.
+	 * Mutator to interact with the user's password.
 	 * 
 	 * @return Attribute
 	 */
