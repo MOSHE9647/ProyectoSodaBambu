@@ -29,5 +29,6 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
 	
+	// Route for testing low stock warning
 	Route::get('/test-low-stock/{stock}', [TestStockController::class, 'triggerLowStock'])->name('test.low-stock');
 });

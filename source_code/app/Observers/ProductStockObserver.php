@@ -22,8 +22,7 @@ class ProductStockObserver
         if($productStock->wasChanged('current_stock')){
             $hasLowStock = $productStock->current_stock < $productStock->minimum_stock;
             if($hasLowStock){
-                //Log::warning("¡Stock bajo en {$productStock->product->name}! Stock actual: {$productStock->current_stock}, Stock mínimo: {$productStock->minimum_stock}");
-                // Guardar en la sesión un mensaje de advertencia
+                 // Save a warning message in the session
                 Session::put('warning', "¡Stock bajo en {$productStock->product->name}!");
             }
 

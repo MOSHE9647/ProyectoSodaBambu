@@ -51,14 +51,6 @@ class Product extends Model
         'deleted_at' => CostaRicaDatetime::class,
     ];
 
-
-    // public function decrementStock(int $quantity): void
-    // {
-    //     if ($this->has_inventory) {
-    //         $this->stock()->decrement('current_stock', $quantity);
-    //     }
-    // }
-
     /**
      * Get the category that owns the product.
      * 

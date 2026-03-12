@@ -9,16 +9,14 @@ class TestStockController extends Controller
 {
     public function triggerLowStock(ProductStock $stock)
     {
-        // 1. Aseguramos que el stock actual sea mayor al mínimo para que el cambio sea evidente
-        // Esto disparará el evento 'updated' en el ProductStockObserver
-        // $stock->current_stock = $stock->minimum_stock - 1;
-        // $stock->save();
+        // 1. We ensure the current stock is greater than the minimum so the change is evident
+        // This will trigger the 'updated' event in the ProductStockObserver
         $stock->update([
             'current_stock' => $stock->minimum_stock - 1
         ]);
 
-        // 3. Redireccionamos a cualquier vista que use app.blade.php
-        // El 'session()->flash('warning', ...)' del observer se mostrará aquí
+        // 3. Redirect to any view that uses app.blade.php
+        // The 'session()->put('warning', ...)' from the observer will be displayed here
         return redirect()->back()->with('success', '¡Simulación completada! Revisa si apareció el Toast de advertencia.');
     }
 }
