@@ -36,8 +36,8 @@ class Timesheet extends Model
      */
     protected $casts = [
         'work_date' => 'date',
-        'start_time' => 'time',
-        'end_time' => 'time',
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
         'is_holiday' => 'boolean',
         'total_hours' => DecimalFormat::class,
         'created_at' => CostaRicaDatetime::class,

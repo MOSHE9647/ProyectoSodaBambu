@@ -24,8 +24,14 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('sales', [HomeController::class, 'sales'])->name('sales');
 	Route::get('config', [ConfigController::class, 'index'])->name('config');
 	Route::resource('users', UserController::class)->names('users');
-	Route::resource('attendance', AttendanceController::class)->names('attendance');
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
+
+	// Attendance routes with role-based access control defined in the controller
+	Route::group(['prefix' => 'attendance'], function () {
+		Route::get('/{tab}', [AttendanceController::class, 'tab'])->name('attendance.tabs');
+		Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
+		Route::resource('/', AttendanceController::class)->names('attendance');
+	});
 });

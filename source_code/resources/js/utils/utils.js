@@ -97,6 +97,22 @@ export function formatDate(dateString) {
 	return `${day} de ${month} del ${year}`;
 }
 
+export function formatTime(timeString) {
+	const date = new Date(timeString);
+
+	if (isNaN(date.getTime())) {
+		console.error('Invalid time:', timeString);
+		return 'Hora inválida';
+	}
+
+	const hours = date.getHours();
+	const minutes = String(date.getMinutes()).padStart(2, '0');
+	const hour12 = hours % 12 || 12;
+	const period = hours >= 12 ? 'PM' : 'AM';
+	
+	return `${String(hour12).padStart(2, '0')}:${minutes} ${period}`;
+}
+
 export function capitalizeSentence(sentence) {
 	if (typeof sentence !== 'string' || sentence.length === 0) {
 		return '';
