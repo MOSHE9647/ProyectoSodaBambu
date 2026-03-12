@@ -12,12 +12,12 @@
 					<tr>
 						<th scope="col">Codigo de Barras</th>
 						<th scope="col">Nombre</th>
+						<th scope="col">Categoria</th>
 						<th scope="col">Tipo</th>
 						<th scope="col">Inventario</th>
 						<th scope="col">Precio Venta</th>
-                        <th scope="col">Porcentaje de Impuesto</th>
-                        <th scope="col">Precio de Referencia</th>
-                        <th scope="col">Margen de Ganancia</th>
+						<th scope="col">Fecha de Creacion</th>
+						<th scope="col">Acciones</th>
 					</tr>
 				</thead>
 				<tbody>
