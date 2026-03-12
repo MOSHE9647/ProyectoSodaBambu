@@ -16,9 +16,7 @@
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody>
-                {{-- Los datos serán cargados por DataTable --}}
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 </div>
