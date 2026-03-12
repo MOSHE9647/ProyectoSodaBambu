@@ -20,18 +20,25 @@
             </x-slot:buttons>
         </x-tabs>
 
-        <form id="employee-attendance-form" class="d-flex flex-column w-50 justify-content-start align-items-center" action="" method="POST">
-            {{-- CSRF Token --}}
-            @csrf
-            @if(isset($user))
-            @method('PUT')
-            @endif
+        {{-- Tabs Content --}}
+        <x-tabs.content navId="main-tab" :container="false">
+            {{-- Attendance Section --}}
+            <x-tabs.item
+                :active="true" 
+                :container="true"
+                :itemClass="'w-50'" 
+                id="nav-attendance"
+                icon="bi bi-calendar-plus" 
+                title="Registrar Horas Trabajadas"
+            >
+                {{-- Attendance Form --}}
+                <form id="employee-attendance-form" action="" method="POST">
+                    {{-- CSRF Token --}}
+                    @csrf
+                    @if(isset($user))
+                        @method('PUT')
+                    @endif
 
-            {{-- Tabs Content --}}
-            <x-tabs.content navId="main-tab">
-                {{-- Attendance Section --}}
-                <x-tabs.item id="nav-attendance" :active="true" icon="bi bi-calendar-plus" title="Registrar Horas Trabajadas">
-                    {{-- Attendance Form --}}
                     <div class="row g-3 mt-1">
                         {{-- Employee --}}
                         @php
@@ -63,7 +70,7 @@
                         <div class="col-12">
                             <x-form.input.check-button :id="'is_holiday'">
                                 <x-slot:label>¿Es Feriado?</x-slot:label>
-                                <i class="bi bi-calendar-event me-2"></i>
+                                {{-- <i class="bi bi-calendar-event me-2"></i> --}}
                                 No, no es feriado
                             </x-form.input.check-button>
                         </div>
@@ -96,15 +103,29 @@
                             </x-tabs.item>
                         </x-tabs.content>
                     </div>
-                </x-tabs.item>
 
-                {{-- History Section --}}
-                <x-tabs.item id="nav-history" icon="bi bi-clock-history" title="Historial de Asistencia" />
+                </form>
+            </x-tabs.item>
 
-                {{-- Salary Calculation Section --}}
-                <x-tabs.item id="nav-salary" icon="bi bi-currency-dollar" title="Cálcular Salario" />
-            </x-tabs>
-        </form>
+            {{-- History Section --}}
+            <x-tabs.item
+                :container="true"
+                id="nav-history"
+                icon="bi bi-clock-history"
+                title="Historial de Asistencia"
+            >
+            </x-tabs.item>
+
+            {{-- Salary Calculation Section --}}
+            <x-tabs.item
+                :container="true"
+                id="nav-salary"
+                itemClass="w-75"
+                icon="bi bi-currency-dollar"
+                title="Cálcular Salario"
+            >
+            </x-tabs.item>
+        </x-tabs>
     </div>
 @endsection
 
