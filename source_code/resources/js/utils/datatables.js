@@ -118,7 +118,7 @@ function buildActionsColumn(actions) {
  * @private
  */
 function renderActionButtons(row, actions) {
-	let html = '<div class="d-flex align-items-center justify-content-between">';
+	let html = '<div class="d-flex align-items-center justify-content-flex-start">';
 
 	ACTION_TYPES.forEach(type => {
 		if (actions[type]) {
