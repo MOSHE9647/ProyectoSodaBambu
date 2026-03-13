@@ -15,6 +15,7 @@ if (typeof $ === 'undefined') {
 // Constants and Variables
 const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
 const FORM_ID = IS_EDITING ? 'edit-product-form' : 'create-product-form';
+const PRODUCT_TYPE_MERCHANDISE = 'merchandise';
 
 function validateSelect(value) {
     return value !== '-1' && value !== '';
@@ -27,6 +28,53 @@ function validateBooleanSelect(value) {
 function validateNonNegativeAmount(value) {
     const amount = parseFloat(value);
     return !isNaN(amount) && amount >= 0;
+}
+
+function validateDecimalPercentage(value) {
+    const amount = parseFloat(value);
+    return !isNaN(amount) && amount >= 0 && amount <= 1;
+}
+
+function normalizePercentage(value) {
+    const amount = parseFloat(value);
+
+    if (isNaN(amount) || amount < 0) {
+        return NaN;
+    }
+
+    return amount > 1 ? amount / 100 : amount;
+}
+
+function calculateSalePrice(referenceCost, taxPercentage, marginPercentage) {
+    const priceWithTax = referenceCost + (referenceCost * taxPercentage);
+    return priceWithTax + (priceWithTax * marginPercentage);
+}
+
+function isMerchandiseSelected() {
+    return ($('#type').val() ?? '').toString().trim() === PRODUCT_TYPE_MERCHANDISE;
+}
+
+function syncSalePriceBehavior() {
+    const isMerchandise = isMerchandiseSelected();
+    const $salePrice = $('#sale_price');
+
+    $salePrice.prop('readonly', isMerchandise);
+
+    if (!isMerchandise) {
+        return;
+    }
+
+    const referenceCost = parseFloat($('#reference_cost').val());
+    const taxPercentage = normalizePercentage($('#tax_percentage').val());
+    const marginPercentage = normalizePercentage($('#margin_percentage').val());
+
+    if ([referenceCost, taxPercentage, marginPercentage].some((value) => isNaN(value))) {
+        $salePrice.val('');
+        return;
+    }
+
+    const salePrice = calculateSalePrice(referenceCost, taxPercentage, marginPercentage);
+    $salePrice.val(salePrice.toFixed(2));
 }
 
 const fieldValidators = {
@@ -56,9 +104,9 @@ const fieldValidators = {
         invalidMsg: 'Ingrese un precio de venta valido mayor o igual a 0.'
     },
     tax_percentage: {
-        validator: validateNonNegativeAmount,
+        validator: validateDecimalPercentage,
         emptyMsg: 'El impuesto es obligatorio.',
-        invalidMsg: 'Ingrese un impuesto valido mayor o igual a 0.'
+        invalidMsg: 'Ingrese un impuesto valido entre 0 y 1. Ej: 0.13'
     },
     reference_cost: {
         validator: validateNonNegativeAmount,
@@ -66,9 +114,9 @@ const fieldValidators = {
         invalidMsg: 'Ingrese un costo de referencia valido mayor o igual a 0.'
     },
     margin_percentage: {
-        validator: validateNonNegativeAmount,
+        validator: validateDecimalPercentage,
         emptyMsg: 'El margen es obligatorio.',
-        invalidMsg: 'Ingrese un margen valido mayor o igual a 0.'
+        invalidMsg: 'Ingrese un margen valido entre 0 y 1. Ej: 0.35'
     },
     category_id: {
         validator: validateSelect,
@@ -83,6 +131,10 @@ const fieldValidators = {
  * @returns {boolean}
  */
 function validateProductForm(values) {
+    if (values.type === PRODUCT_TYPE_MERCHANDISE) {
+        clearFieldError('sale_price');
+    }
+
     return validateAndDisplayField(
         fieldValidators,
         values,
@@ -97,6 +149,7 @@ function validateProductForm(values) {
  */
 function submitProductForm() {
     clearAllFieldErrors(fieldValidators);
+    syncSalePriceBehavior();
 
     const values = {
         barcode: $('#barcode').val().trim(),
@@ -117,10 +170,17 @@ function submitProductForm() {
  * Real-time validation for product form fields.
  */
 $(document).on('input change', `#${FORM_ID}`, function (e) {
+    syncSalePriceBehavior();
+
     const $target = $(e.target);
     const fieldId = $target.attr('id');
 
     if (!Object.prototype.hasOwnProperty.call(fieldValidators, fieldId)) {
+        return;
+    }
+
+    if (fieldId === 'sale_price' && isMerchandiseSelected()) {
+        clearFieldError(fieldId);
         return;
     }
 
@@ -145,4 +205,8 @@ $(document).on('submit', `#${FORM_ID}`, (e) => {
 
     if (submitProductForm()) e.currentTarget.submit();
     else setLoadingState(FORM_ID, false);
+});
+
+$(document).ready(() => {
+    syncSalePriceBehavior();
 });
