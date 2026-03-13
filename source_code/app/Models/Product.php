@@ -80,4 +80,15 @@ class Product extends Model
     {
         return $this->morphMany(PurchaseDetail::class, 'purchasable');
     }
+
+    /**
+     * Calculate sale price using tax and margin percentages in decimal format.
+     */
+    public static function calculateSalePrice(float $referenceCost, float $taxPercentage, float $marginPercentage): float
+    {
+        $basePrice = $referenceCost + ($referenceCost * $taxPercentage);
+        $salePrice = $basePrice + ($basePrice * $marginPercentage);
+
+        return round($salePrice, 2);
+    }
 }
