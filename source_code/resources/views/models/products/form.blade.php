@@ -5,6 +5,7 @@
 	$selectedType = old('type', isset($product) ? ($product->type?->value ?? $product->type) : '');
 	$selectedHasInventory = (string) old('has_inventory', isset($product) ? (int) $product->has_inventory : 1);
 	$selectedCategory = (string) old('category_id', isset($product) ? $product->category_id : '-1');
+	$defaultMargin = isset($product) ? ($product->margin_percentage ?? '') : '0.35';
 @endphp
 
 <div class="container p-0">
@@ -21,6 +22,7 @@
 	<div class="table-container rounded-2 p-4 w-75 justify-content-start">
 		<form
 			id="{{ isset($product) ? 'edit-product-form' : 'create-product-form' }}"
+			data-product-type="{{ $selectedType }}"
 			action="{{ $action }}" method="POST" class="d-flex flex-column gap-2"
 		>
 			{{-- CSRF Token --}}
@@ -124,7 +126,7 @@
 							:min="'0'"
 							:class="'border-secondary'"
 							:inputClass="$errors->has('sale_price') ? 'is-invalid' : ''"
-							:placeholder="'Ej: 3000.00'"
+							:placeholder="'Ej: 4063.50'"
 							:value="old('sale_price', $product->sale_price ?? '')"
 							:errorMessage="$errors->first('sale_price') ?? ''"
 							:iconLeft="'bi bi-currency-dollar'"
@@ -132,6 +134,7 @@
 						>
 							Precio de Venta <span class="text-danger">*</span>
 						</x-form.input>
+						<small class="text-muted">Para Mercaderia este precio se calcula automaticamente.</small>
 					</div>
 
 					{{-- Tax Percentage --}}
@@ -141,9 +144,10 @@
 							:type="'number'"
 							:step="'0.01'"
 							:min="'0'"
+							:max="'1'"
 							:class="'border-secondary'"
 							:inputClass="$errors->has('tax_percentage') ? 'is-invalid' : ''"
-							:placeholder="'Ej: 13.00'"
+							:placeholder="'Ej: 0.13'"
 							:value="old('tax_percentage', $product->tax_percentage ?? '')"
 							:errorMessage="$errors->first('tax_percentage') ?? ''"
 							:iconLeft="'bi bi-percent'"
@@ -181,10 +185,11 @@
 							:type="'number'"
 							:step="'0.01'"
 							:min="'0'"
+							:max="'1'"
 							:class="'border-secondary'"
 							:inputClass="$errors->has('margin_percentage') ? 'is-invalid' : ''"
-							:placeholder="'Ej: 150.00'"
-							:value="old('margin_percentage', $product->margin_percentage ?? '')"
+							:placeholder="'Ej: 0.35'"
+							:value="old('margin_percentage', $defaultMargin)"
 							:errorMessage="$errors->first('margin_percentage') ?? ''"
 							:iconLeft="'bi bi-graph-up-arrow'"
 							:required="true"

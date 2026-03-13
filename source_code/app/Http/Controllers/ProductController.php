@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProductType;
 use App\Http\Requests\ProductRequest;
 use App\Models\Category;
 use App\Models\Product;
@@ -53,7 +54,7 @@ class ProductController extends Controller
 	 */
 	public function store(ProductRequest $request)
 	{
-		$productData = $request->validated();
+		$productData = $this->applyPricingRules($request->validated());
 
 		$product = Product::withTrashed()
 			->where('barcode', $productData['barcode'])
@@ -107,7 +108,7 @@ class ProductController extends Controller
 	 */
 	public function update(ProductRequest $request, Product $product)
 	{
-		$productData = $request->validated();
+		$productData = $this->applyPricingRules($request->validated());
 
 		$product->update($productData);
 
@@ -126,5 +127,24 @@ class ProductController extends Controller
 		$product->delete();
 
 		return redirect()->route('products.index')->with('success', 'Producto eliminado exitosamente.');
+	}
+
+	/**
+	 * Applies pricing business rules based on product type.
+	 *
+	 * @param array<string, mixed> $productData
+	 * @return array<string, mixed>
+	 */
+	private function applyPricingRules(array $productData): array
+	{
+		if (($productData['type'] ?? null) === ProductType::MERCHANDISE->value) {
+			$productData['sale_price'] = Product::calculateSalePrice(
+				(float) $productData['reference_cost'],
+				(float) $productData['tax_percentage'],
+				(float) $productData['margin_percentage'],
+			);
+		}
+
+		return $productData;
 	}
 }
