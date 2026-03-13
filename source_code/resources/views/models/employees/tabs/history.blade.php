@@ -8,7 +8,7 @@
                 <th scope="col">Feriado</th>
                 <th scope="col">Hora Inicio</th>
                 <th scope="col">Hora Fin</th>
-                <th scope="col">Horas</th>
+                <th scope="col">Horas Trabajadas</th>
                 <th scope="col">Acciones</th>
             </tr>
         </thead>

@@ -48,6 +48,7 @@
     <script type="text/javascript">
         window.AttendanceAppData = {
             initialTab: @json($activeTab ?? 'nav-attendance'),
+            employees: @json($attendanceEmployees ?? []),
         };
     </script>
     @vite(['resources/js/models/employees/main.js'])

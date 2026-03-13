@@ -39,9 +39,9 @@ class PurchaseDetail extends Model
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'expiration_date' => 'date',
-        'created_at' => CostaRicaDatetime::class,
-        'updated_at' => CostaRicaDatetime::class,
-        'deleted_at' => CostaRicaDatetime::class,
+        // 'created_at' => CostaRicaDatetime::class,
+        // 'updated_at' => CostaRicaDatetime::class,
+        // 'deleted_at' => CostaRicaDatetime::class,
     ];
 
     /**

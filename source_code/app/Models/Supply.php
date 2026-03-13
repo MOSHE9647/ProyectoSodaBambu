@@ -28,11 +28,11 @@ class Supply extends Model
     * 
     * @return array<string, string>
     */
-    protected $casts = [
-        'created_at' => CostaRicaDatetime::class,
-        'updated_at' => CostaRicaDatetime::class,
-        'deleted_at' => CostaRicaDatetime::class,
-    ];
+    // protected $casts = [
+    //     'created_at' => CostaRicaDatetime::class,
+    //     'updated_at' => CostaRicaDatetime::class,
+    //     'deleted_at' => CostaRicaDatetime::class,
+    // ];
 
     /**
      * Get all of the purchase details for the supply.
