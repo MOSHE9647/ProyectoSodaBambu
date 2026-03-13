@@ -4,37 +4,39 @@ import { formatTime } from "../../utils/utils";
 // ==================== Constants ====================
 
 // Model Configuration
-const MODEL_NAME = 'asistencia';
+const MODEL_NAME = "asistencia";
 const MODEL_DATA = window.AttendanceAppData || {};
-const DATE_FORMATTER = new Intl.DateTimeFormat('es-CR', {
-	day: '2-digit',
-	month: 'long',
-	year: 'numeric',
+const DATE_FORMATTER = new Intl.DateTimeFormat("es-CR", {
+	day: "2-digit",
+	month: "long",
+	year: "numeric",
 });
-const DEFAULT_SELECT_VALUE = 'all';
-const ATTENDANCE_TABLE_ID = 'attendance-table';
-const TAB_NAV_SELECTOR = '#main-tab-tab .nav-link[data-bs-target]';
-const LOADING_TAB_TEMPLATE = '<div class="alert alert-info" role="alert"><i class="bi bi-info-circle me-2"></i><span>Cargando contenido...</span></div>';
-const FAILED_TAB_TEMPLATE = '<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo cargar esta pestaña. Intenta nuevamente.</span></div>';
+const DEFAULT_SELECT_VALUE = "all";
+const ATTENDANCE_TABLE_ID = "attendance-table";
+const TAB_NAV_SELECTOR = "#main-tab-tab .nav-link[data-bs-target]";
+const LOADING_TAB_TEMPLATE =
+	'<div class="alert alert-info" role="alert"><i class="bi bi-info-circle me-2"></i><span>Cargando contenido...</span></div>';
+const FAILED_TAB_TEMPLATE =
+	'<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo cargar esta pestaña. Intenta nuevamente.</span></div>';
 
 // Tab ID Constants
 const TAB_IDS = {
-	attendance: 'nav-attendance',
-	history: 'nav-history',
-	salary: 'nav-salary',
+	attendance: "nav-attendance",
+	history: "nav-history",
+	salary: "nav-salary",
 };
 
 const FILTER_IDS = {
-	employee: '#attendanceEmployeeFilter',
-	date: '#attendanceDateFilter',
+	employee: "#attendanceEmployeeFilter",
+	date: "#attendanceDateFilter",
 };
 
 // Routes Configuration
 const MODEL_ROUTES = {
-	index: 	route('attendance.tabs', { tab: ':tab' }),
-	create: route('attendance.create'),
-	historyData: route('attendance.history.data'),
-	delete: route('attendance.destroy', { attendance: ':id' }),
+	index: route("attendance.tabs", { tab: ":tab" }),
+	create: route("attendance.create"),
+	historyData: route("attendance.history.data"),
+	delete: route("attendance.destroy", { attendance: ":id" }),
 };
 
 /**
@@ -43,13 +45,13 @@ const MODEL_ROUTES = {
  * @param {string} value
  * @returns {string}
  */
-function escapeHtml(value = '') {
+function escapeHtml(value = "") {
 	return String(value)
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#39;');
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
 }
 
 /**
@@ -58,20 +60,17 @@ function escapeHtml(value = '') {
  * @param {string} name
  * @returns {string}
  */
-function getInitials(name = '') {
-	const nameParts = String(name)
-		.trim()
-		.split(/\s+/)
-		.filter(Boolean);
+function getInitials(name = "") {
+	const nameParts = String(name).trim().split(/\s+/).filter(Boolean);
 
 	if (nameParts.length <= 0) {
-		return '??';
+		return "??";
 	}
 
 	return nameParts
 		.slice(0, 2)
 		.map((part) => part.charAt(0).toUpperCase())
-		.join('');
+		.join("");
 }
 
 /**
@@ -82,8 +81,8 @@ function getInitials(name = '') {
  * @returns {{ id: string, name: string }}
  */
 function getNormalizedEmployee(source = {}, sourceMap = {}) {
-	const employeeId = String(source?.[sourceMap.id] ?? '').trim();
-	const employeeName = String(source?.[sourceMap.name] ?? '').trim();
+	const employeeId = String(source?.[sourceMap.id] ?? "").trim();
+	const employeeName = String(source?.[sourceMap.name] ?? "").trim();
 
 	return {
 		id: employeeId,
@@ -100,7 +99,8 @@ function getNormalizedEmployee(source = {}, sourceMap = {}) {
  */
 function collectEmployees(rows = [], employeeFilters = []) {
 	const employees = new Map();
-	const hasDedicatedFilters = Array.isArray(employeeFilters) && employeeFilters.length > 0;
+	const hasDedicatedFilters =
+		Array.isArray(employeeFilters) && employeeFilters.length > 0;
 
 	const assignEmployee = (employee) => {
 		if (!employee.id || !employee.name || employees.has(employee.id)) {
@@ -112,15 +112,17 @@ function collectEmployees(rows = [], employeeFilters = []) {
 
 	if (hasDedicatedFilters) {
 		employeeFilters.forEach((employee) => {
-			assignEmployee(getNormalizedEmployee(employee, { id: 'id', name: 'name' }));
+			assignEmployee(
+				getNormalizedEmployee(employee, { id: "id", name: "name" }),
+			);
 		});
 		return employees;
 	}
 
 	rows.forEach((row) => {
 		assignEmployee({
-			id: String(row?.employee_id ?? '').trim(),
-			name: String(row?.employee?.name ?? '').trim(),
+			id: String(row?.employee_id ?? "").trim(),
+			name: String(row?.employee?.name ?? "").trim(),
 		});
 	});
 
@@ -136,23 +138,26 @@ function collectEmployees(rows = [], employeeFilters = []) {
  * @returns {string}
  */
 function renderEmployeeInfo(data, type, row = {}) {
-	if (type !== 'display') {
-		if (typeof data === 'string') {
+	if (type !== "display") {
+		if (typeof data === "string") {
 			return data;
 		}
 
-		const rawName = data?.name ?? row?.name ?? '';
-		const rawEmail = data?.email ?? row?.email ?? '';
+		const rawName = data?.name ?? row?.name ?? "";
+		const rawEmail = data?.email ?? row?.email ?? "";
 		return `${rawName} ${rawEmail}`.trim();
 	}
 
-	const rawName = data?.name ?? row?.name ?? (typeof data === 'string' ? data : 'Sin nombre');
-	const rawEmail = data?.email ?? row?.email ?? '';
+	const rawName =
+		data?.name ??
+		row?.name ??
+		(typeof data === "string" ? data : "Sin nombre");
+	const rawEmail = data?.email ?? row?.email ?? "";
 	const initials = data?.initials ?? getInitials(rawName);
 
-	const name = escapeHtml(rawName || 'Sin nombre');
-	const email = escapeHtml(rawEmail || 'Sin correo');
-	const safeInitials = escapeHtml(initials || '??');
+	const name = escapeHtml(rawName || "Sin nombre");
+	const email = escapeHtml(rawEmail || "Sin correo");
+	const safeInitials = escapeHtml(initials || "??");
 
 	return `
 		<div class="d-flex align-items-center gap-2">
@@ -177,12 +182,10 @@ function formatCompactDate(value) {
 	const date = new Date(value);
 
 	if (isNaN(date.getTime())) {
-		return 'Fecha inválida';
+		return "Fecha inválida";
 	}
 
-	return DATE_FORMATTER
-		.format(date)
-		.replaceAll('.', '');
+	return DATE_FORMATTER.format(date).replaceAll(".", "");
 }
 
 /**
@@ -193,7 +196,7 @@ function formatCompactDate(value) {
  * @returns {string|boolean}
  */
 function renderHolidayBadge(value, type) {
-	if (type !== 'display') {
+	if (type !== "display") {
 		return value;
 	}
 
@@ -212,8 +215,8 @@ function renderHolidayBadge(value, type) {
  * @returns {string}
  */
 function renderTimeCell(value, type) {
-	if (type !== 'display') {
-		return value ?? '';
+	if (type !== "display") {
+		return value ?? "";
 	}
 
 	if (!value) {
@@ -235,7 +238,7 @@ function renderTotalHoursCell(value, type) {
 		return '<span class="text-muted px-4 py-2">&mdash;</span>';
 	}
 
-	const numericHours = Number.parseFloat(String(value).replace(',', '.'));
+	const numericHours = Number.parseFloat(String(value).replace(",", "."));
 	const compact = `${Math.round(isNaN(numericHours) ? 0 : numericHours)}h`;
 
 	if (!isNaN(numericHours) && numericHours > 8) {
@@ -253,15 +256,17 @@ function renderTotalHoursCell(value, type) {
  * @param {jQuery} $scope - The jQuery scope to search within (defaults to document)
  */
 function toggleIsHolidayButtonLabel($scope = $(document)) {
-	const isHolidayButton = $scope.find('#is_holiday');
+	const isHolidayButton = $scope.find("#is_holiday");
 	const isHolidayButtonLabel = $scope.find('label.btn[for="is_holiday"]');
 
 	if (isHolidayButton.length <= 0 || isHolidayButtonLabel.length <= 0) {
 		return;
 	}
 
-	const isHoliday = isHolidayButton.is(':checked');
-	isHolidayButtonLabel.text(isHoliday ? 'Sí, es feriado' : 'No, no es feriado');
+	const isHoliday = isHolidayButton.is(":checked");
+	isHolidayButtonLabel.text(
+		isHoliday ? "Sí, es feriado" : "No, no es feriado",
+	);
 }
 
 /**
@@ -278,7 +283,9 @@ async function loadTabContent(tabPaneId) {
 		return;
 	}
 
-	const container = document.querySelector(`#${tabPaneId} .js-tab-lazy-content`);
+	const container = document.querySelector(
+		`#${tabPaneId} .js-tab-lazy-content`,
+	);
 	if (!container) {
 		return;
 	}
@@ -293,7 +300,7 @@ async function loadTabContent(tabPaneId) {
 	try {
 		const response = await fetch(url, {
 			headers: {
-				'X-Requested-With': 'XMLHttpRequest',
+				"X-Requested-With": "XMLHttpRequest",
 			},
 		});
 
@@ -336,21 +343,21 @@ function initializeTabBehavior() {
 	const initialTab = MODEL_DATA.initialTab ?? TAB_IDS.attendance;
 
 	// Register lazy-load on tab activation
-	document
-		.querySelectorAll(TAB_NAV_SELECTOR)
-		.forEach((button) => {
-			button.addEventListener("shown.bs.tab", (event) => {
-				const target = event.target?.dataset?.bsTarget;
-				if (!target) {
-					return;
-				}
+	document.querySelectorAll(TAB_NAV_SELECTOR).forEach((button) => {
+		button.addEventListener("shown.bs.tab", (event) => {
+			const target = event.target?.dataset?.bsTarget;
+			if (!target) {
+				return;
+			}
 
-				loadTabContent(target.replace("#", ""));
-			});
+			loadTabContent(target.replace("#", ""));
 		});
+	});
 
 	// Activate the tab indicated by the server (e.g., after a redirect)
-		const targetButton = document.querySelector(`${TAB_NAV_SELECTOR}[data-bs-target="#${initialTab}"]`);
+	const targetButton = document.querySelector(
+		`${TAB_NAV_SELECTOR}[data-bs-target="#${initialTab}"]`,
+	);
 	if (targetButton) {
 		if (targetButton.classList.contains("active")) {
 			// Already active by default: load directly
@@ -378,16 +385,22 @@ function syncEmployeeFilterOptions(rows = [], employeeFilters = []) {
 	const currentValue = String(select.value || DEFAULT_SELECT_VALUE);
 	const employees = collectEmployees(rows, employeeFilters);
 
-	const sortedEmployees = Array.from(employees.entries())
-		.sort((a, b) => a[1].localeCompare(b[1], 'es', { sensitivity: 'base' }));
+	const sortedEmployees = Array.from(employees.entries()).sort((a, b) =>
+		a[1].localeCompare(b[1], "es", { sensitivity: "base" }),
+	);
 
 	const optionsHtml = [
 		`<option value="${DEFAULT_SELECT_VALUE}">Todos</option>`,
-		...sortedEmployees.map(([id, name]) => `<option value="${escapeHtml(id)}">${escapeHtml(name)}</option>`),
-	].join('');
+		...sortedEmployees.map(
+			([id, name]) =>
+				`<option value="${escapeHtml(id)}">${escapeHtml(name)}</option>`,
+		),
+	].join("");
 
 	select.innerHTML = optionsHtml;
-	select.value = employees.has(currentValue) ? currentValue : DEFAULT_SELECT_VALUE;
+	select.value = employees.has(currentValue)
+		? currentValue
+		: DEFAULT_SELECT_VALUE;
 }
 
 /**
@@ -405,14 +418,22 @@ function setupHistoryFilters(dataTable) {
 	const employeeFilter = $(FILTER_IDS.employee);
 	const dateFilter = $(FILTER_IDS.date);
 
-	employeeFilter.off('.attendanceFilters').on('change.attendanceFilters', reloadData);
-	dateFilter.off('.attendanceFilters').on('change.attendanceFilters', reloadData);
+	employeeFilter
+		.off(".attendanceFilters")
+		.on("change.attendanceFilters", reloadData);
+	dateFilter
+		.off(".attendanceFilters")
+		.on("change.attendanceFilters", reloadData);
 
-	dataTable.off('xhr.attendanceFilters').on('xhr.attendanceFilters', (_event, _settings, json) => {
-		const rows = Array.isArray(json?.data) ? json.data : [];
-		const employeeFilters = Array.isArray(json?.employee_filters) ? json.employee_filters : [];
-		syncEmployeeFilterOptions(rows, employeeFilters);
-	});
+	dataTable
+		.off("xhr.attendanceFilters")
+		.on("xhr.attendanceFilters", (_event, _settings, json) => {
+			const rows = Array.isArray(json?.data) ? json.data : [];
+			const employeeFilters = Array.isArray(json?.employee_filters)
+				? json.employee_filters
+				: [];
+			syncEmployeeFilterOptions(rows, employeeFilters);
+		});
 }
 
 /**
@@ -426,13 +447,15 @@ function getHistoryColumns() {
 			data: "employee",
 			name: "employee_id",
 			searchable: false,
-			render: (data, type, row) => renderEmployeeInfo(data ?? row?.employee, type, row),
+			render: (data, type, row) =>
+				renderEmployeeInfo(data ?? row?.employee, type, row),
 			// Employee Information
 		},
 		{
 			data: "work_date",
 			name: "work_date",
-			render: (data, type) => (type === 'display' ? formatCompactDate(data) : data),
+			render: (data, type) =>
+				type === "display" ? formatCompactDate(data) : data,
 			// Attendance registered day
 		},
 		{
@@ -444,7 +467,10 @@ function getHistoryColumns() {
 		{
 			data: "start_time",
 			name: "start_time",
-			render: (data, type) => (type === 'display' ? `<span class="fw-semibold">${escapeHtml(formatTime(data))}</span>` : data),
+			render: (data, type) =>
+				type === "display"
+					? `<span class="fw-semibold">${escapeHtml(formatTime(data))}</span>`
+					: data,
 			// Start time of attendance (in format HH:mm A)
 		},
 		{
@@ -473,11 +499,10 @@ function getHistoryActions() {
 			route: MODEL_ROUTES.delete,
 			tooltip: `Eliminar ${MODEL_NAME}`,
 			func: () => {},
-			funcName: '',
+			funcName: "",
 		},
 	};
 }
-
 
 /**
  * Defines custom filter controls for attendance history DataTable.
@@ -487,28 +512,28 @@ function getHistoryActions() {
 function getHistoryCustomButtons() {
 	return [
 		{
-			type: 'select',
-			id: FILTER_IDS.employee.replace('#', ''),
-			label: 'Colaborador',
-			labelIcon: 'bi-person-fill me-2',
-			class: 'attendance-employee-filter',
-			wrapperClass: 'w-auto',
-			placeholder: 'Todos',
+			type: "select",
+			id: FILTER_IDS.employee.replace("#", ""),
+			label: "Colaborador",
+			labelIcon: "bi-person-fill me-2",
+			class: "attendance-employee-filter",
+			wrapperClass: "w-auto",
+			placeholder: "Todos",
 			placeholderSelected: true,
 			options: [
-				{ value: DEFAULT_SELECT_VALUE, text: 'Todos', selected: true },
+				{ value: DEFAULT_SELECT_VALUE, text: "Todos", selected: true },
 			],
 		},
 		{
-			type: 'date',
-			id: FILTER_IDS.date.replace('#', ''),
-			label: 'Fecha',
-			labelIcon: 'bi-calendar-date me-2',
-			class: 'attendance-date-filter',
-			wrapperClass: 'w-auto',
-			placeholder: 'Selecciona una fecha',
+			type: "date",
+			id: FILTER_IDS.date.replace("#", ""),
+			label: "Fecha",
+			labelIcon: "bi-calendar-date me-2",
+			class: "attendance-date-filter",
+			wrapperClass: "w-auto",
+			placeholder: "Selecciona una fecha",
 		},
-    ];
+	];
 }
 
 /**
@@ -522,8 +547,10 @@ function resolveAttendanceTableRoute(tabPaneId) {
 		return MODEL_ROUTES.historyData;
 	}
 
-	const tabKey = Object.keys(TAB_IDS).find((key) => TAB_IDS[key] === tabPaneId);
-	return MODEL_ROUTES.index.replace(':tab', tabKey);
+	const tabKey = Object.keys(TAB_IDS).find(
+		(key) => TAB_IDS[key] === tabPaneId,
+	);
+	return MODEL_ROUTES.index.replace(":tab", tabKey);
 }
 
 /**
@@ -532,8 +559,10 @@ function resolveAttendanceTableRoute(tabPaneId) {
  * @param {Object} request
  */
 function appendHistoryFiltersToRequest(request) {
-	const employeeFilterValue = String($(FILTER_IDS.employee).val() ?? DEFAULT_SELECT_VALUE).trim();
-	const dateFilterValue = String($(FILTER_IDS.date).val() ?? '').trim();
+	const employeeFilterValue = String(
+		$(FILTER_IDS.employee).val() ?? DEFAULT_SELECT_VALUE,
+	).trim();
+	const dateFilterValue = String($(FILTER_IDS.date).val() ?? "").trim();
 
 	if (employeeFilterValue && employeeFilterValue !== DEFAULT_SELECT_VALUE) {
 		request.employee_id = employeeFilterValue;
@@ -556,13 +585,20 @@ function initializeHistoryDataTable(tabPaneId) {
 	const customButtons = getHistoryCustomButtons();
 	const tableRoute = resolveAttendanceTableRoute(tabPaneId);
 
-	const dataTable = CreateNewDataTable(ATTENDANCE_TABLE_ID, tableRoute, columns, actions, customButtons, {
-		showSearchBar: false,
-		customButtonsPosition: 'top-start',
-		ajax: {
-			data: appendHistoryFiltersToRequest,
-		}
-	});
+	const dataTable = CreateNewDataTable(
+		ATTENDANCE_TABLE_ID,
+		tableRoute,
+		columns,
+		actions,
+		customButtons,
+		{
+			showSearchBar: false,
+			customButtonsPosition: "top-start",
+			ajax: {
+				data: appendHistoryFiltersToRequest,
+			},
+		},
+	);
 
 	setupHistoryFilters(dataTable);
 }
@@ -573,8 +609,8 @@ $(() => {
 	initializeTabBehavior();
 
 	// Handle is_holiday checkbox label toggle when content is injected dynamically
-	$(document).on('change', '#is_holiday', function () {
-		const scope = $(this).closest('.js-tab-lazy-content');
+	$(document).on("change", "#is_holiday", function () {
+		const scope = $(this).closest(".js-tab-lazy-content");
 		toggleIsHolidayButtonLabel(scope.length > 0 ? scope : $(document));
 	});
 });

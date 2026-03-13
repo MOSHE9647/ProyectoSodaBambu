@@ -13,9 +13,6 @@ use Yajra\DataTables\DataTables;
 
 class AttendanceController extends Controller implements HasMiddleware
 {
-	// Define the role relationship name based on UserRole enum
-	private string $role;
-
 	/**
 	 * Define middleware for the controller.
 	 * @see https://laravel.com/docs/10.x/controllers#controller-middleware
@@ -30,11 +27,6 @@ class AttendanceController extends Controller implements HasMiddleware
 		];
 	}
 
-	public function __construct()
-	{
-		// Default role relationship is 'employee'
-		$this->role = UserRole::EMPLOYEE->value;
-	}
 	/**
 	 * Display the attendance management view.
 	 *
@@ -46,7 +38,13 @@ class AttendanceController extends Controller implements HasMiddleware
 	public function index()
 	{
 		$activeTab = session('active_tab', 'nav-attendance');
-		return view('models.employees.index', compact('activeTab'));
+
+		// Get all employees to populate the employee selection dropdown in the attendance form
+		$employees = Employee::with(['user', 'timesheets' => function ($query) {
+			$query->whereDate('work_date', now()->toDateString());
+		}])->get();
+
+		return view('models.employees.index', compact('activeTab', 'employees'));
 	}
 
 	public function store()
@@ -56,6 +54,21 @@ class AttendanceController extends Controller implements HasMiddleware
 			'active_tab' => 'nav-attendance',
 			'success' => 'Asistencia registrada exitosamente.',
 		]);
+	}
+	
+	public function update()
+	{
+		// Test data for development purposes
+		return redirect()->route('attendance.index')->with([
+			'active_tab' => 'nav-attendance',
+			'success' => 'Hora de salida registrada exitosamente.',
+		]);
+	}
+
+	public function destroy()
+	{
+		// This method is not needed since attendance records are not deleted in this implementation
+		abort(404);
 	}
 
 	public function tab(string $tab): View
@@ -71,18 +84,12 @@ class AttendanceController extends Controller implements HasMiddleware
 	private function attendanceTab(): View
 	{
 		$employees = Employee::all();
-
 		return view('models.employees.tabs.attendance', compact('employees'));
 	}
 
 	private function historyTab(): View
 	{
 		return view('models.employees.tabs.history');
-	}
-
-	private function salaryTab(): View
-	{
-		return view('models.employees.tabs.salary');
 	}
 
 	public function historyData(Request $request)
@@ -132,6 +139,11 @@ class AttendanceController extends Controller implements HasMiddleware
 				'employee_filters' => $employeeFilters,
 			])
 			->toJson();
+	}
+
+	private function salaryTab(): View
+	{
+		return view('models.employees.tabs.salary');
 	}
 
 	private function applyHistoryDateFilters($query, string $workDate, string $month): void
