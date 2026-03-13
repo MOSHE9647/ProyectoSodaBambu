@@ -12,7 +12,14 @@
             $oldEmployeeId = old('employee_id', $userEmployeeId ?? '');
         @endphp
         <div class="col-6">
-            <x-form.select :id="'employee_id'" :class="'border-secondary'" :selectClass="$errors->has('employee_id') ? 'is-invalid' : ''" :errorMessage="$errors->first('employee_id') ?? ''" :iconLeft="'bi bi-person'" :required="true">
+            <x-form.select
+                :id="'employee_id'" 
+                :class="'border-secondary'"
+                :selectClass="$errors->has('employee_id') ? 'is-invalid' : ''"
+                :errorMessage="$errors->first('employee_id') ?? ''"
+                :iconLeft="'bi bi-person'" 
+                :required="true"
+            >
                 Empleado <span class="text-danger">*</span>
                 <x-slot:options>
                     <option value="-1">Seleccionar empleado...</option>
@@ -27,14 +34,30 @@
 
         {{-- Date --}}
         <div class="col-6">
-            <x-form.input :id="'attendance_date'" :type="'date'" :class="'border-secondary'" :value="now()->toDateString()" :selectClass="$errors->has('attendance_date') ? 'is-invalid' : ''" :errorMessage="$errors->first('attendance_date') ?? ''" :iconLeft="'bi bi-calendar-date'" :disabled="true" :readonly="true" :required="true">
+            <x-form.input 
+				:id="'work_date_display'" 
+                :type="'date'" 
+				:name="'work_date_display'"
+                :class="'border-secondary'" 
+				:value="$todayDate ?? now('America/Costa_Rica')->toDateString()" 
+                :selectClass="$errors->has('work_date') ? 'is-invalid' : ''" 
+                :errorMessage="$errors->first('work_date') ?? ''" 
+                :iconLeft="'bi bi-calendar-date'" 
+                :disabled="true" 
+                :readonly="true" 
+                :required="true">
                 Fecha
             </x-form.input>
+			<input id="work_date" name="work_date" type="hidden" value="{{ $todayDate ?? now('America/Costa_Rica')->toDateString() }}">
         </div>
     </div>
 
+    <x-alert id="attendance-complete-alert" type="warning" class="d-none mt-3 mb-0">
+        El colaborador seleccionado ya tiene registrada su asistencia de hoy.
+    </x-alert>
+
     @php
-    $oldHoliday = old('is_holiday', '0');
+        $oldHoliday = old('is_holiday', '0');
     @endphp
 
     <x-form.input.radio-group :label="'¿Es feriado?'" :groupClass="'row g-3'" :labelClass="'mt-3'">
@@ -54,7 +77,7 @@
     </x-form.input.radio-group>
 
     <div class="row g-3 p-2 mt-1">
-        <x-alert type="warning" class="d-none mb-3">
+        <x-alert id="attendance-start-time-added-alert" type="warning" class="d-none mb-3">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
             Entrada registrada a las 10:00 AM -- pendiente hora de salida
         </x-alert>
@@ -73,13 +96,12 @@
 
         <x-tabs.content navId="attendance-pills" contentClass="p-0 mt-0 border-top-0 rounded-top-0 shadow-none">
             <x-tabs.item id="nav-start" :active="true">
-                <x-form.input :id="'start_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('start_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('start_time') ?? ''" :iconLeft="'bi bi-clock'" {{-- :disabled="$startTimeDisabled"
-                :readonly="$startTimeReadonly" --}} :required="true">
+                <x-form.input :id="'start_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('start_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('start_time') ?? ''" :iconLeft="'bi bi-clock'" :required="true">
                     Hora de Entrada
                     <span class="text-danger">*</span>
                 </x-form.input>
 
-                <p class="d-none text-muted mt-2 mb-0">
+                <p id="attendance-start-time-cant-be-modify" class="d-none text-muted mt-2 mb-0">
                     La hora de entrada ya fue registrada y no puede modificarse.
                 </p>
             </x-tabs.item>
@@ -88,6 +110,10 @@
                 <x-form.input :id="'end_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('end_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('end_time') ?? ''" :iconLeft="'bi bi-clock'" :required="false">
                     Hora de Salida
                 </x-form.input>
+
+                <p id="attendance-end-time-cant-be-modify" class="d-none text-muted mt-2 mb-0">
+                    La hora de salida ya fue registrada y no puede modificarse.
+                </p>
             </x-tabs.item>
         </x-tabs.content>
     </div>
@@ -113,11 +139,3 @@
         </div>
     </x-form.submit>
 </form>
-
-@section('scripts')
-<script type="text/javascript">
-    const employees = @json($employees);
-    console.log("Employees Data in JS:", employees);
-
-</script>
-@endsection

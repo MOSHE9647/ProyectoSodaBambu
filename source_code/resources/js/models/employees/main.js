@@ -1,69 +1,422 @@
+import { deleteModel } from "../actions.js";
 import { CreateNewDataTable } from "../../utils/datatables";
-import { formatTime } from "../../utils/utils";
+import { escapeHtml, formatTime } from "../../utils/utils";
 
-// ==================== Constants ====================
-
-// Model Configuration
 const MODEL_NAME = "asistencia";
-const MODEL_DATA = window.AttendanceAppData || {};
+const APP_DATA = window.AttendanceAppData ?? {};
+const APP_EMPLOYEES = Array.isArray(APP_DATA.employees) ? APP_DATA.employees : [];
+const DEFAULT_FILTER_VALUE = "all";
+const ATTENDANCE_TABLE_ID = "attendance-table";
+const TAB_BUTTON_SELECTOR = "#main-tab-tab .nav-link[data-bs-target]";
 const DATE_FORMATTER = new Intl.DateTimeFormat("es-CR", {
 	day: "2-digit",
 	month: "long",
 	year: "numeric",
 });
-const DEFAULT_SELECT_VALUE = "all";
-const ATTENDANCE_TABLE_ID = "attendance-table";
-const TAB_NAV_SELECTOR = "#main-tab-tab .nav-link[data-bs-target]";
-const LOADING_TAB_TEMPLATE =
-	'<div class="alert alert-info" role="alert"><i class="bi bi-info-circle me-2"></i><span>Cargando contenido...</span></div>';
-const FAILED_TAB_TEMPLATE =
-	'<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo cargar esta pestaña. Intenta nuevamente.</span></div>';
-
-// Tab ID Constants
 const TAB_IDS = {
 	attendance: "nav-attendance",
 	history: "nav-history",
 	salary: "nav-salary",
 };
-
-const FILTER_IDS = {
+const FILTER_SELECTORS = {
 	employee: "#attendanceEmployeeFilter",
 	date: "#attendanceDateFilter",
 };
-
-// Routes Configuration
+const FORM_SELECTORS = {
+	form: "#employee-attendance-form",
+	employeeId: "#employee_id",
+	attendanceDate: "#work_date_display",
+	workDate: "#work_date",
+	startTime: "#start_time",
+	endTime: "#end_time",
+	isHolidayTrue: "#is_holiday_true",
+	attendanceCompleteAlert: "#attendance-complete-alert",
+	attendanceStartAddedAlert: "#attendance-start-time-added-alert",
+	startTimeCantModifyText: "#attendance-start-time-cant-be-modify",
+	endTimeCantModifyText: "#attendance-end-time-cant-be-modify",
+	totalHoursInfo: "#total-hours-info",
+	totalHoursStartTime: "#start-time",
+	totalHoursEndTime: "#end-time",
+	totalHoursValue: "#total-hours",
+};
 const MODEL_ROUTES = {
-	index: route("attendance.tabs", { tab: ":tab" }),
-	create: route("attendance.create"),
+	index: 		 route("attendance.index"),
 	historyData: route("attendance.history.data"),
-	delete: route("attendance.destroy", { attendance: ":id" }),
+	tabs:		 route("attendance.tabs", { tab: ":tab" }),
+	store: 		 route("attendance.store"),
+	update: 	 route("attendance.update", { timesheet: ":id" }),
+	destroy:	 route("attendance.destroy", { timesheet: ":id" }),
+};
+const TAB_LOADING_HTML =
+	'<div class="alert alert-info" role="alert"><i class="bi bi-info-circle me-2"></i><span>Cargando contenido...</span></div>';
+const TAB_ERROR_HTML =
+	'<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo cargar esta pestaña. Intenta nuevamente.</span></div>';
+
+const loadedTabs = new Set();
+
+window.deleteAttendance = function (event) {
+	return deleteModel(event, MODEL_NAME);
 };
 
-/**
- * Escapes potentially unsafe HTML characters to prevent XSS in rendered cells.
- *
- * @param {string} value
- * @returns {string}
- */
-function escapeHtml(value = "") {
-	return String(value)
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#39;");
+function parseTimeToMinutes(value) {
+	if (!value) {
+		return null;
+	}
+
+	const match = String(value).match(/(\d{2}):(\d{2})/);
+	if (!match) {
+		return null;
+	}
+
+	const hours = Number.parseInt(match[1], 10);
+	const minutes = Number.parseInt(match[2], 10);
+
+	if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+		return null;
+	}
+
+	return (hours * 60) + minutes;
 }
 
-/**
- * Builds initials from a full name (up to 2 characters).
- *
- * @param {string} name
- * @returns {string}
- */
-function getInitials(name = "") {
+function formatMinutesTo12h(totalMinutes) {
+	if (totalMinutes === null || totalMinutes === undefined || Number.isNaN(totalMinutes)) {
+		return "Hora invalida";
+	}
+
+	const normalized = Math.max(0, totalMinutes);
+	const hours = Math.floor(normalized / 60);
+	const minutes = normalized % 60;
+	const hour12 = hours % 12 || 12;
+	const period = hours >= 12 ? "PM" : "AM";
+
+	return `${String(hour12).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${period}`;
+}
+
+function formatTimeFromInput(value) {
+	const minutes = parseTimeToMinutes(value);
+	return formatMinutesTo12h(minutes);
+}
+
+function getWorkedHours(startTime, endTime) {
+	const startMinutes = parseTimeToMinutes(startTime);
+	const endMinutes = parseTimeToMinutes(endTime);
+
+	if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+		return 0;
+	}
+
+	return Math.floor((endMinutes - startMinutes) / 60);
+}
+
+function getEmployeeById(employeeId) {
+	if (!employeeId) {
+		return null;
+	}
+
+	const normalizedId = String(employeeId).trim();
+	return APP_EMPLOYEES.find((employee) => String(employee?.id ?? "").trim() === normalizedId) ?? null;
+}
+
+function toggleElementVisibility(element, shouldShow) {
+	if (!element) {
+		return;
+	}
+
+	element.classList.toggle("d-none", !shouldShow);
+}
+
+function setInputReadonlyAndDisabled(input, shouldLock) {
+	if (!input) {
+		return;
+	}
+
+	input.readOnly = shouldLock;
+	input.disabled = shouldLock;
+}
+
+function setHiddenOverride(form, fieldName, value) {
+	if (!form) {
+		return;
+	}
+
+	let hiddenInput = form.querySelector(`input[type="hidden"][name="${fieldName}"]`);
+	if (!hiddenInput) {
+		hiddenInput = document.createElement("input");
+		hiddenInput.type = "hidden";
+		hiddenInput.name = fieldName;
+		form.appendChild(hiddenInput);
+	}
+
+	hiddenInput.value = value ?? "";
+}
+
+function removeHiddenOverride(form, fieldName) {
+	if (!form) {
+		return;
+	}
+
+	const hiddenInput = form.querySelector(`input[type="hidden"][name="${fieldName}"]`);
+	if (hiddenInput && hiddenInput.id !== "work_date") {
+		hiddenInput.remove();
+	}
+}
+
+function getAttendanceDom() {
+	const form = document.querySelector(FORM_SELECTORS.form);
+	if (!form) {
+		return null;
+	}
+
+	return {
+		form,
+		employeeInput: form.querySelector(FORM_SELECTORS.employeeId),
+		attendanceDateInput: form.querySelector(FORM_SELECTORS.attendanceDate),
+		workDateInput: form.querySelector(FORM_SELECTORS.workDate),
+		startTimeInput: form.querySelector(FORM_SELECTORS.startTime),
+		endTimeInput: form.querySelector(FORM_SELECTORS.endTime),
+		isHolidayTrueInput: form.querySelector(FORM_SELECTORS.isHolidayTrue),
+		attendanceCompleteAlert: form.querySelector(FORM_SELECTORS.attendanceCompleteAlert),
+		attendanceStartAddedAlert: form.querySelector(FORM_SELECTORS.attendanceStartAddedAlert),
+		startTimeCantModifyText: form.querySelector(FORM_SELECTORS.startTimeCantModifyText),
+		endTimeCantModifyText: form.querySelector(FORM_SELECTORS.endTimeCantModifyText),
+		totalHoursInfo: form.querySelector(FORM_SELECTORS.totalHoursInfo),
+		totalHoursStartTime: form.querySelector(FORM_SELECTORS.totalHoursStartTime),
+		totalHoursEndTime: form.querySelector(FORM_SELECTORS.totalHoursEndTime),
+		totalHoursValue: form.querySelector(FORM_SELECTORS.totalHoursValue),
+	};
+}
+
+function updateTotalHoursInfo(dom, startTime, endTime) {
+	if (!dom) {
+		return;
+	}
+
+	const workedHours = getWorkedHours(startTime, endTime);
+	const hasCompleteShift = workedHours > 0;
+
+	toggleElementVisibility(dom.totalHoursInfo, hasCompleteShift);
+
+	if (!hasCompleteShift) {
+		return;
+	}
+
+	if (dom.totalHoursStartTime) {
+		dom.totalHoursStartTime.textContent = formatTimeFromInput(startTime);
+	}
+
+	if (dom.totalHoursEndTime) {
+		dom.totalHoursEndTime.textContent = formatTimeFromInput(endTime);
+	}
+
+	if (dom.totalHoursValue) {
+		dom.totalHoursValue.textContent = `${workedHours}h trabajadas`;
+	}
+}
+
+function setStartTimePendingState(dom, timesheet) {
+	if (!dom || !timesheet?.start_time) {
+		return;
+	}
+
+	if (dom.startTimeInput) {
+		dom.startTimeInput.value = timesheet.start_time;
+		setInputReadonlyAndDisabled(dom.startTimeInput, true);
+	}
+
+	toggleElementVisibility(dom.startTimeCantModifyText, true);
+	toggleElementVisibility(dom.attendanceStartAddedAlert, true);
+
+	if (dom.attendanceStartAddedAlert) {
+		dom.attendanceStartAddedAlert.innerHTML = `
+			<i class="bi bi-exclamation-triangle-fill me-2"></i>
+			Entrada registrada a las ${escapeHtml(formatTimeFromInput(timesheet.start_time))} -- pendiente hora de salida
+		`;
+	}
+
+	if (dom.endTimeInput) {
+		dom.endTimeInput.value = dom.endTimeInput.value || "";
+	}
+}
+
+function setCompleteAttendanceState(dom, timesheet) {
+	if (!dom || !timesheet?.start_time || !timesheet?.end_time) {
+		return;
+	}
+
+	toggleElementVisibility(dom.attendanceCompleteAlert, true);
+
+	if (dom.startTimeInput) {
+		dom.startTimeInput.value = timesheet.start_time;
+		setInputReadonlyAndDisabled(dom.startTimeInput, true);
+	}
+
+	if (dom.endTimeInput) {
+		dom.endTimeInput.value = timesheet.end_time;
+		setInputReadonlyAndDisabled(dom.endTimeInput, true);
+	}
+
+	toggleElementVisibility(dom.startTimeCantModifyText, true);
+	toggleElementVisibility(dom.endTimeCantModifyText, true);
+	updateTotalHoursInfo(dom, timesheet.start_time, timesheet.end_time);
+}
+
+function resetAttendanceFormState(dom) {
+	if (!dom) {
+		return;
+	}
+
+	toggleElementVisibility(dom.attendanceCompleteAlert, false);
+	toggleElementVisibility(dom.attendanceStartAddedAlert, false);
+	toggleElementVisibility(dom.startTimeCantModifyText, false);
+	toggleElementVisibility(dom.endTimeCantModifyText, false);
+	toggleElementVisibility(dom.totalHoursInfo, false);
+
+	if (dom.startTimeInput) {
+		setInputReadonlyAndDisabled(dom.startTimeInput, false);
+		dom.startTimeInput.value = "";
+	}
+
+	if (dom.endTimeInput) {
+		setInputReadonlyAndDisabled(dom.endTimeInput, false);
+		dom.endTimeInput.value = "";
+	}
+
+	if (dom.isHolidayTrueInput) {
+		dom.isHolidayTrueInput.checked = false;
+	}
+}
+
+function fillStaticWorkDate(dom) {
+	if (!dom?.attendanceDateInput || !dom?.workDateInput) {
+		return;
+	}
+
+	dom.workDateInput.value = dom.attendanceDateInput.value;
+}
+
+function applyEmployeeAttendanceState(dom) {
+	if (!dom || !dom.employeeInput) {
+		return;
+	}
+
+	resetAttendanceFormState(dom);
+	fillStaticWorkDate(dom);
+
+	const selectedEmployee = getEmployeeById(dom.employeeInput.value);
+	const todayTimesheet = selectedEmployee?.today_timesheet ?? null;
+
+	if (!todayTimesheet) {
+		removeHiddenOverride(dom.form, "_method");
+		removeHiddenOverride(dom.form, "start_time");
+		removeHiddenOverride(dom.form, "end_time");
+		dom.form.action = MODEL_ROUTES.store;
+		return;
+	}
+
+	if (todayTimesheet.is_holiday && dom.isHolidayTrueInput) {
+		dom.isHolidayTrueInput.checked = true;
+	}
+
+	const hasStartTime = String(todayTimesheet.start_time ?? "").trim().length > 0;
+	const hasEndTime = String(todayTimesheet.end_time ?? "").trim().length > 0;
+	const totalHours = Number.parseFloat(String(todayTimesheet.total_hours ?? "0"));
+	const isPendingEndTime = hasStartTime && (!hasEndTime || Number.isNaN(totalHours) || totalHours <= 0);
+
+	if (hasStartTime && hasEndTime && !isPendingEndTime) {
+		setCompleteAttendanceState(dom, todayTimesheet);
+	} else if (isPendingEndTime) {
+		setStartTimePendingState(dom, todayTimesheet);
+	}
+
+	dom.form.action = MODEL_ROUTES.update.replace(":id", String(todayTimesheet.id));
+	setHiddenOverride(dom.form, "_method", "PUT");
+}
+
+function syncStartTimeHiddenWhenDisabled(dom) {
+	if (!dom?.form || !dom?.startTimeInput) {
+		return;
+	}
+
+	if (dom.startTimeInput.disabled) {
+		setHiddenOverride(dom.form, "start_time", dom.startTimeInput.value);
+		return;
+	}
+
+	removeHiddenOverride(dom.form, "start_time");
+}
+
+function syncEndTimeHiddenWhenDisabled(dom) {
+	if (!dom?.form || !dom?.endTimeInput) {
+		return;
+	}
+
+	if (dom.endTimeInput.disabled) {
+		setHiddenOverride(dom.form, "end_time", dom.endTimeInput.value);
+		return;
+	}
+
+	removeHiddenOverride(dom.form, "end_time");
+}
+
+function validateAttendanceForm(dom) {
+	if (!dom?.employeeInput || !dom?.startTimeInput) {
+		return false;
+	}
+
+	const employeeId = String(dom.employeeInput.value ?? "").trim();
+	const startTime = String(dom.startTimeInput.value ?? "").trim();
+	const endTime = String(dom.endTimeInput?.value ?? "").trim();
+
+	if (!employeeId || employeeId === "-1") {
+		return false;
+	}
+
+	if (!startTime) {
+		return false;
+	}
+
+	if (endTime && getWorkedHours(startTime, endTime) <= 0) {
+		return false;
+	}
+
+	return true;
+}
+
+function bindAttendanceForm() {
+	const dom = getAttendanceDom();
+	if (!dom) {
+		return;
+	}
+
+	applyEmployeeAttendanceState(dom);
+
+	dom.employeeInput?.addEventListener("change", () => {
+		applyEmployeeAttendanceState(dom);
+	});
+
+	dom.startTimeInput?.addEventListener("change", () => {
+		updateTotalHoursInfo(dom, dom.startTimeInput?.value, dom.endTimeInput?.value);
+	});
+
+	dom.endTimeInput?.addEventListener("change", () => {
+		updateTotalHoursInfo(dom, dom.startTimeInput?.value, dom.endTimeInput?.value);
+	});
+
+	dom.form.addEventListener("submit", (event) => {
+		fillStaticWorkDate(dom);
+		syncStartTimeHiddenWhenDisabled(dom);
+		syncEndTimeHiddenWhenDisabled(dom);
+
+		if (!validateAttendanceForm(dom)) {
+			event.preventDefault();
+		}
+	});
+}
+
+function getEmployeeInitials(name = "") {
 	const nameParts = String(name).trim().split(/\s+/).filter(Boolean);
 
-	if (nameParts.length <= 0) {
+	if (nameParts.length === 0) {
 		return "??";
 	}
 
@@ -73,133 +426,39 @@ function getInitials(name = "") {
 		.join("");
 }
 
-/**
- * Returns normalized employee id/name from server payloads.
- *
- * @param {Object} source
- * @param {Object} sourceMap
- * @returns {{ id: string, name: string }}
- */
-function getNormalizedEmployee(source = {}, sourceMap = {}) {
-	const employeeId = String(source?.[sourceMap.id] ?? "").trim();
-	const employeeName = String(source?.[sourceMap.name] ?? "").trim();
-
-	return {
-		id: employeeId,
-		name: employeeName,
-	};
-}
-
-/**
- * Returns all unique employees from either dedicated employee_filters or rows.
- *
- * @param {Array<Object>} rows
- * @param {Array<Object>} employeeFilters
- * @returns {Map<string, string>}
- */
-function collectEmployees(rows = [], employeeFilters = []) {
-	const employees = new Map();
-	const hasDedicatedFilters =
-		Array.isArray(employeeFilters) && employeeFilters.length > 0;
-
-	const assignEmployee = (employee) => {
-		if (!employee.id || !employee.name || employees.has(employee.id)) {
-			return;
-		}
-
-		employees.set(employee.id, employee.name);
-	};
-
-	if (hasDedicatedFilters) {
-		employeeFilters.forEach((employee) => {
-			assignEmployee(
-				getNormalizedEmployee(employee, { id: "id", name: "name" }),
-			);
-		});
-		return employees;
-	}
-
-	rows.forEach((row) => {
-		assignEmployee({
-			id: String(row?.employee_id ?? "").trim(),
-			name: String(row?.employee?.name ?? "").trim(),
-		});
-	});
-
-	return employees;
-}
-
-/**
- * Renders employee info in a compact avatar card style (without status dot).
- *
- * @param {string|Object} data
- * @param {string} type
- * @param {Object} row
- * @returns {string}
- */
-function renderEmployeeInfo(data, type, row = {}) {
-	if (type !== "display") {
-		if (typeof data === "string") {
-			return data;
-		}
-
-		const rawName = data?.name ?? row?.name ?? "";
-		const rawEmail = data?.email ?? row?.email ?? "";
-		return `${rawName} ${rawEmail}`.trim();
-	}
-
-	const rawName =
-		data?.name ??
-		row?.name ??
-		(typeof data === "string" ? data : "Sin nombre");
-	const rawEmail = data?.email ?? row?.email ?? "";
-	const initials = data?.initials ?? getInitials(rawName);
-
-	const name = escapeHtml(rawName || "Sin nombre");
-	const email = escapeHtml(rawEmail || "Sin correo");
-	const safeInitials = escapeHtml(initials || "??");
-
-	return `
-		<div class="d-flex align-items-center gap-2">
-			<div class="rounded-circle d-inline-flex align-items-center justify-content-center fw-semibold bg-secondary-subtle" style="width: 2.5rem; height: 2.5rem; min-width: 2.5rem;">
-				${safeInitials}
-			</div>
-			<div class="d-flex flex-column">
-				<span class="fw-semibold lh-sm">${name}</span>
-				<small class="text-muted lh-sm">${email}</small>
-			</div>
-		</div>
-	`;
-}
-
-/**
- * Formats date to short Spanish style used in the table mockup (e.g. 12 mar 2026).
- *
- * @param {string} value
- * @returns {string}
- */
 function formatCompactDate(value) {
 	const date = new Date(value);
 
 	if (isNaN(date.getTime())) {
-		return "Fecha inválida";
+		return "Fecha invalida";
 	}
 
 	return DATE_FORMATTER.format(date).replaceAll(".", "");
 }
 
-/**
- * Renders holiday as a badge or a muted dash when not holiday.
- *
- * @param {boolean} value
- * @param {string} type
- * @returns {string|boolean}
- */
-function renderHolidayBadge(value, type) {
+function renderEmployeeInfo(data, type, row = {}) {
+	const employee = typeof data === "object" && data !== null ? data : row?.employee ?? {};
+	const name = employee?.name ?? row?.name ?? (typeof data === "string" ? data : "Sin nombre");
+	const email = employee?.email ?? row?.email ?? "";
+
 	if (type !== "display") {
-		return value;
+		return `${name} ${email}`.trim();
 	}
 
+	return `
+		<div class="d-flex align-items-center gap-2">
+			<div class="rounded-circle d-inline-flex align-items-center justify-content-center fw-semibold bg-secondary-subtle" style="width: 2.5rem; height: 2.5rem; min-width: 2.5rem;">
+				${escapeHtml(getEmployeeInitials(name))}
+			</div>
+			<div class="d-flex flex-column">
+				<span class="fw-semibold lh-sm">${escapeHtml(name || "Sin nombre")}</span>
+				<small class="text-muted lh-sm">${escapeHtml(email || "Sin correo")}</small>
+			</div>
+		</div>
+	`;
+}
+
+function renderHolidayBadge(value, type) {
 	if (!value) {
 		return '<span class="text-muted px-4">&mdash;</span>';
 	}
@@ -207,18 +466,7 @@ function renderHolidayBadge(value, type) {
 	return '<span class="badge border rounded-pill text-warning-emphasis bg-warning-subtle px-2 py-2"><i class="bi bi-stars me-1"></i>Feriado</span>';
 }
 
-/**
- * Renders a time value or a pending badge when the value is missing.
- *
- * @param {string|null} value
- * @param {string} type
- * @returns {string}
- */
 function renderTimeCell(value, type) {
-	if (type !== "display") {
-		return value ?? "";
-	}
-
 	if (!value) {
 		return '<span class="badge border rounded-pill text-warning-emphasis bg-warning-subtle px-2 py-2"><i class="bi bi-hourglass-split me-1"></i>Pendiente</span>';
 	}
@@ -226,82 +474,206 @@ function renderTimeCell(value, type) {
 	return `<span class="fw-semibold">${escapeHtml(formatTime(value))}</span>`;
 }
 
-/**
- * Renders total hours with status-like badges, or dash when pending.
- *
- * @param {string|null} value
- * @param {string} type
- * @returns {string}
- */
-function renderTotalHoursCell(value, type) {
+function renderTotalHoursCell(value) {
 	if (!value) {
 		return '<span class="text-muted px-4 py-2">&mdash;</span>';
 	}
 
 	const numericHours = Number.parseFloat(String(value).replace(",", "."));
-	const compact = `${Math.round(isNaN(numericHours) ? 0 : numericHours)}h`;
+	const compactHours = `${Math.round(isNaN(numericHours) ? 0 : numericHours)}h`;
 
 	if (!isNaN(numericHours) && numericHours > 8) {
-		return `<span class="badge border rounded-pill text-danger-emphasis bg-danger-subtle px-2 py-2"><i class="bi bi-lightning-charge-fill me-1"></i>${escapeHtml(compact)}</span>`;
+		return `<span class="badge border rounded-pill text-danger-emphasis bg-danger-subtle px-2 py-2"><i class="bi bi-lightning-charge-fill me-1"></i>${escapeHtml(compactHours)}</span>`;
 	}
 
-	return `<span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2"><i class="bi bi-check-lg me-1"></i>${escapeHtml(compact)}</span>`;
+	if (!isNaN(numericHours) && numericHours === 0) {
+		return `<span class="badge border rounded-pill text-secondary-emphasis bg-secondary-subtle px-2 py-2"><i class="bi bi-x-lg me-1"></i>${escapeHtml(compactHours)}</span>`;
+	}
+
+	return `<span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2"><i class="bi bi-check-lg me-1"></i>${escapeHtml(compactHours)}</span>`;
 }
 
-// ==================== Helper Functions ====================
+function buildEmployeeMap(rows = [], employeeFilters = []) {
+	const employees = new Map();
+	const source = Array.isArray(employeeFilters) && employeeFilters.length > 0
+		? employeeFilters.map(({ id, name }) => ({ id, name }))
+		: rows.length > 0
+			? rows.map((row) => ({ id: row?.employee_id, name: row?.employee?.name }))
+			: APP_EMPLOYEES.map(({ id, name }) => ({ id, name }));
 
-/**
- * Toggles the label of the "is_holiday" checkbox button based on its checked state.
- *
- * @param {jQuery} $scope - The jQuery scope to search within (defaults to document)
- */
-function toggleIsHolidayButtonLabel($scope = $(document)) {
-	const isHolidayButton = $scope.find("#is_holiday");
-	const isHolidayButtonLabel = $scope.find('label.btn[for="is_holiday"]');
+	for (const employee of source) {
+		const id = String(employee?.id ?? "").trim();
+		const name = String(employee?.name ?? "").trim();
 
-	if (isHolidayButton.length <= 0 || isHolidayButtonLabel.length <= 0) {
+		if (!id || !name || employees.has(id)) {
+			continue;
+		}
+
+		employees.set(id, name);
+	}
+
+	return employees;
+}
+
+function updateEmployeeFilter(rows = [], employeeFilters = []) {
+	const select = document.querySelector(FILTER_SELECTORS.employee);
+
+	if (!select) {
 		return;
 	}
 
-	const isHoliday = isHolidayButton.is(":checked");
-	isHolidayButtonLabel.text(
-		isHoliday ? "Sí, es feriado" : "No, no es feriado",
+	const currentValue = String(select.value || DEFAULT_FILTER_VALUE);
+	const employees = buildEmployeeMap(rows, employeeFilters);
+	const sortedEmployees = Array.from(employees.entries()).sort((a, b) =>
+		a[1].localeCompare(b[1], "es", { sensitivity: "base" }),
+	);
+
+	select.innerHTML = [
+		`<option value="${DEFAULT_FILTER_VALUE}">Todos</option>`,
+		...sortedEmployees.map(
+			([id, name]) =>
+				`<option value="${escapeHtml(id)}">${escapeHtml(name)}</option>`,
+		),
+	].join("");
+
+	select.value = employees.has(currentValue) ? currentValue : DEFAULT_FILTER_VALUE;
+}
+
+function appendHistoryFilters(request) {
+	const employeeId = String($(FILTER_SELECTORS.employee).val() ?? DEFAULT_FILTER_VALUE).trim();
+	const workDate = String($(FILTER_SELECTORS.date).val() ?? "").trim();
+
+	if (employeeId && employeeId !== DEFAULT_FILTER_VALUE) {
+		request.employee_id = employeeId;
+	}
+
+	if (workDate) {
+		request.work_date = workDate;
+		request.month = workDate.slice(0, 7);
+	}
+}
+
+function bindHistoryFilters(dataTable) {
+	if (!dataTable) {
+		return;
+	}
+
+	const reloadTable = () => dataTable.ajax.reload();
+
+	$(FILTER_SELECTORS.employee)
+		.off(".attendanceHistory")
+		.on("change.attendanceHistory", reloadTable);
+
+	$(FILTER_SELECTORS.date)
+		.off(".attendanceHistory")
+		.on("change.attendanceHistory", reloadTable);
+
+	dataTable
+		.off("xhr.attendanceHistory")
+		.on("xhr.attendanceHistory", (_event, _settings, response) => {
+			updateEmployeeFilter(
+				Array.isArray(response?.data) ? response.data : [],
+				Array.isArray(response?.employee_filters) ? response.employee_filters : [],
+			);
+		});
+}
+
+function createHistoryTable() {
+	return CreateNewDataTable(
+		ATTENDANCE_TABLE_ID,
+		MODEL_ROUTES.historyData,
+		[
+			{
+				data: "employee",
+				name: "employee_id",
+				searchable: false,
+				render: (data, type, row) => renderEmployeeInfo(data, type, row),
+			},
+			{
+				data: "work_date",
+				name: "work_date",
+				render: (data, type) => (formatCompactDate(data)),
+			},
+			{
+				data: "is_holiday",
+				name: "is_holiday",
+				render: (data, type) => renderHolidayBadge(data, type),
+			},
+			{
+				data: "start_time",
+				name: "start_time",
+				render: (data, type) => renderTimeCell(data, type),
+			},
+			{
+				data: "end_time",
+				name: "end_time",
+				render: (data, type) => renderTimeCell(data, type),
+			},
+			{
+				data: "total_hours",
+				name: "total_hours",
+				render: (data) => renderTotalHoursCell(data),
+			},
+		],
+		{
+			delete: {
+				route: MODEL_ROUTES.destroy,
+				tooltip: `Eliminar ${MODEL_NAME}`,
+				func: window.deleteAttendance,
+				funcName: "deleteAttendance",
+			},
+		},
+		[
+			{
+				type: "select",
+				id: FILTER_SELECTORS.employee.replace("#", ""),
+				label: "Colaborador",
+				labelIcon: "bi-person-fill me-2",
+				class: "attendance-employee-filter",
+				wrapperClass: "w-auto",
+				placeholder: "Todos",
+				placeholderSelected: true,
+				options: [
+					{ value: DEFAULT_FILTER_VALUE, text: "Todos", selected: true },
+				],
+			},
+			{
+				type: "date",
+				id: FILTER_SELECTORS.date.replace("#", ""),
+				label: "Fecha",
+				labelIcon: "bi-calendar-date me-2",
+				class: "attendance-date-filter",
+				wrapperClass: "w-auto",
+				placeholder: "Selecciona una fecha",
+			},
+		],
+		{
+			showSearchBar: false,
+			customButtonsPosition: "top-start",
+			ajax: {
+				data: appendHistoryFilters,
+			},
+		},
 	);
 }
 
-/**
- * Loads the content of a tab pane via AJAX if it hasn't been loaded yet.
- * Uses a Set to track already-loaded tabs and avoid duplicate requests.
- *
- * @param {string} tabPaneId - The ID of the tab pane element to load content into
- * @returns {Promise<void>} A promise that resolves when the content is loaded
- */
-const loadedTabs = new Set();
-
-async function loadTabContent(tabPaneId) {
-	if (loadedTabs.has(tabPaneId)) {
+async function loadTab(tabId) {
+	if (loadedTabs.has(tabId)) {
 		return;
 	}
 
-	const container = document.querySelector(
-		`#${tabPaneId} .js-tab-lazy-content`,
-	);
-	if (!container) {
+	const container = document.querySelector(`#${tabId} .js-tab-lazy-content`);
+	const url = container?.dataset?.url;
+
+	if (!container || !url) {
 		return;
 	}
 
-	const url = container.dataset.url;
-	if (!url) {
-		return;
-	}
-
-	container.innerHTML = LOADING_TAB_TEMPLATE;
+	container.innerHTML = TAB_LOADING_HTML;
 
 	try {
 		const response = await fetch(url, {
-			headers: {
-				"X-Requested-With": "XMLHttpRequest",
-			},
+			headers: { "X-Requested-With": "XMLHttpRequest" },
 		});
 
 		if (!response.ok) {
@@ -309,308 +681,50 @@ async function loadTabContent(tabPaneId) {
 		}
 
 		container.innerHTML = await response.text();
-		loadedTabs.add(tabPaneId);
-		toggleIsHolidayButtonLabel($(container));
+		loadedTabs.add(tabId);
 
-		// If the loaded tab is the attendance history, initialize the DataTable
-		if (tabPaneId === TAB_IDS.history) {
-			initializeHistoryDataTable(tabPaneId);
+		if (tabId === TAB_IDS.attendance) {
+			bindAttendanceForm();
+		}
+
+		if (tabId === TAB_IDS.history) {
+			bindHistoryFilters(createHistoryTable());
 		}
 	} catch (error) {
-		container.innerHTML = FAILED_TAB_TEMPLATE;
+		container.innerHTML = TAB_ERROR_HTML;
 		console.error(error);
 	}
 }
 
-// ==================== Data Initialization ====================
+function initializeTabs() {
+	const initialTabId = APP_DATA.initialTab ?? TAB_IDS.attendance;
 
-/**
- * Initializes the tab behavior for the attendance page.
- *
- * Registers a `shown.bs.tab` listener on every tab button inside `#main-tab-tab`
- * so that tab content is loaded lazily via {@link loadTabContent} the first time
- * each tab is opened.
- *
- * If the server supplied an `initialTab` value (e.g. after a redirect), this
- * function activates that tab programmatically:
- * - If it is already the active tab, content is loaded directly.
- * - Otherwise, Bootstrap's Tab API is used to show it, which fires
- *   `shown.bs.tab` and triggers the lazy-load automatically.
- *
- * @returns {void}
- */
-function initializeTabBehavior() {
-	const initialTab = MODEL_DATA.initialTab ?? TAB_IDS.attendance;
-
-	// Register lazy-load on tab activation
-	document.querySelectorAll(TAB_NAV_SELECTOR).forEach((button) => {
+	document.querySelectorAll(TAB_BUTTON_SELECTOR).forEach((button) => {
 		button.addEventListener("shown.bs.tab", (event) => {
-			const target = event.target?.dataset?.bsTarget;
-			if (!target) {
-				return;
+			const tabId = event.target?.dataset?.bsTarget?.replace("#", "");
+
+			if (tabId) {
+				loadTab(tabId);
 			}
-
-			loadTabContent(target.replace("#", ""));
 		});
 	});
 
-	// Activate the tab indicated by the server (e.g., after a redirect)
-	const targetButton = document.querySelector(
-		`${TAB_NAV_SELECTOR}[data-bs-target="#${initialTab}"]`,
+	const initialTabButton = document.querySelector(
+		`${TAB_BUTTON_SELECTOR}[data-bs-target="#${initialTabId}"]`,
 	);
-	if (targetButton) {
-		if (targetButton.classList.contains("active")) {
-			// Already active by default: load directly
-			loadTabContent(initialTab);
-		} else {
-			// Activate via Bootstrap; shown.bs.tab will trigger loadTabContent
-			bootstrap.Tab.getOrCreateInstance(targetButton).show();
-		}
-	}
-}
 
-/**
- * Syncs collaborator filter options from current DataTable response rows.
- *
- * @param {Array<Object>} rows
- * @param {Array<Object>} employeeFilters
- * @returns {void}
- */
-function syncEmployeeFilterOptions(rows = [], employeeFilters = []) {
-	const select = document.querySelector(FILTER_IDS.employee);
-	if (!select) {
+	if (!initialTabButton) {
 		return;
 	}
 
-	const currentValue = String(select.value || DEFAULT_SELECT_VALUE);
-	const employees = collectEmployees(rows, employeeFilters);
-
-	const sortedEmployees = Array.from(employees.entries()).sort((a, b) =>
-		a[1].localeCompare(b[1], "es", { sensitivity: "base" }),
-	);
-
-	const optionsHtml = [
-		`<option value="${DEFAULT_SELECT_VALUE}">Todos</option>`,
-		...sortedEmployees.map(
-			([id, name]) =>
-				`<option value="${escapeHtml(id)}">${escapeHtml(name)}</option>`,
-		),
-	].join("");
-
-	select.innerHTML = optionsHtml;
-	select.value = employees.has(currentValue)
-		? currentValue
-		: DEFAULT_SELECT_VALUE;
-}
-
-/**
- * Adds filter listeners and updates collaborator select on each AJAX response.
- *
- * @param {*} dataTable
- * @returns {void}
- */
-function setupHistoryFilters(dataTable) {
-	if (!dataTable) {
+	if (initialTabButton.classList.contains("active")) {
+		loadTab(initialTabId);
 		return;
 	}
 
-	const reloadData = () => dataTable.ajax.reload();
-	const employeeFilter = $(FILTER_IDS.employee);
-	const dateFilter = $(FILTER_IDS.date);
-
-	employeeFilter
-		.off(".attendanceFilters")
-		.on("change.attendanceFilters", reloadData);
-	dateFilter
-		.off(".attendanceFilters")
-		.on("change.attendanceFilters", reloadData);
-
-	dataTable
-		.off("xhr.attendanceFilters")
-		.on("xhr.attendanceFilters", (_event, _settings, json) => {
-			const rows = Array.isArray(json?.data) ? json.data : [];
-			const employeeFilters = Array.isArray(json?.employee_filters)
-				? json.employee_filters
-				: [];
-			syncEmployeeFilterOptions(rows, employeeFilters);
-		});
+	bootstrap.Tab.getOrCreateInstance(initialTabButton).show();
 }
 
-/**
- * Defines columns for attendance history table.
- *
- * @returns {Array<Object>}
- */
-function getHistoryColumns() {
-	return [
-		{
-			data: "employee",
-			name: "employee_id",
-			searchable: false,
-			render: (data, type, row) =>
-				renderEmployeeInfo(data ?? row?.employee, type, row),
-			// Employee Information
-		},
-		{
-			data: "work_date",
-			name: "work_date",
-			render: (data, type) =>
-				type === "display" ? formatCompactDate(data) : data,
-			// Attendance registered day
-		},
-		{
-			data: "is_holiday",
-			name: "is_holiday",
-			render: (data, type) => renderHolidayBadge(data, type),
-			// Indicates if the attendance day is a holiday
-		},
-		{
-			data: "start_time",
-			name: "start_time",
-			render: (data, type) =>
-				type === "display"
-					? `<span class="fw-semibold">${escapeHtml(formatTime(data))}</span>`
-					: data,
-			// Start time of attendance (in format HH:mm A)
-		},
-		{
-			data: "end_time",
-			name: "end_time",
-			render: (data, type) => renderTimeCell(data, type),
-			// End time of attendance (in format HH:mm A)
-		},
-		{
-			data: "total_hours",
-			name: "total_hours",
-			render: (data, type) => renderTotalHoursCell(data, type),
-			// Total hours registered for that attendance day
-		},
-	];
-}
-
-/**
- * Defines DataTable actions for attendance history.
- *
- * @returns {Object}
- */
-function getHistoryActions() {
-	return {
-		delete: {
-			route: MODEL_ROUTES.delete,
-			tooltip: `Eliminar ${MODEL_NAME}`,
-			func: () => {},
-			funcName: "",
-		},
-	};
-}
-
-/**
- * Defines custom filter controls for attendance history DataTable.
- *
- * @returns {Array<Object>}
- */
-function getHistoryCustomButtons() {
-	return [
-		{
-			type: "select",
-			id: FILTER_IDS.employee.replace("#", ""),
-			label: "Colaborador",
-			labelIcon: "bi-person-fill me-2",
-			class: "attendance-employee-filter",
-			wrapperClass: "w-auto",
-			placeholder: "Todos",
-			placeholderSelected: true,
-			options: [
-				{ value: DEFAULT_SELECT_VALUE, text: "Todos", selected: true },
-			],
-		},
-		{
-			type: "date",
-			id: FILTER_IDS.date.replace("#", ""),
-			label: "Fecha",
-			labelIcon: "bi-calendar-date me-2",
-			class: "attendance-date-filter",
-			wrapperClass: "w-auto",
-			placeholder: "Selecciona una fecha",
-		},
-	];
-}
-
-/**
- * Returns route used by DataTable according to active tab.
- *
- * @param {string} tabPaneId
- * @returns {string}
- */
-function resolveAttendanceTableRoute(tabPaneId) {
-	if (tabPaneId === TAB_IDS.history) {
-		return MODEL_ROUTES.historyData;
-	}
-
-	const tabKey = Object.keys(TAB_IDS).find(
-		(key) => TAB_IDS[key] === tabPaneId,
-	);
-	return MODEL_ROUTES.index.replace(":tab", tabKey);
-}
-
-/**
- * Appends current DataTable filter values to request payload.
- *
- * @param {Object} request
- */
-function appendHistoryFiltersToRequest(request) {
-	const employeeFilterValue = String(
-		$(FILTER_IDS.employee).val() ?? DEFAULT_SELECT_VALUE,
-	).trim();
-	const dateFilterValue = String($(FILTER_IDS.date).val() ?? "").trim();
-
-	if (employeeFilterValue && employeeFilterValue !== DEFAULT_SELECT_VALUE) {
-		request.employee_id = employeeFilterValue;
-	}
-
-	if (dateFilterValue) {
-		request.work_date = dateFilterValue;
-		request.month = dateFilterValue.slice(0, 7);
-	}
-}
-
-/**
- * Initializes attendance history DataTable for selected tab.
- *
- * @param {string} tabPaneId
- */
-function initializeHistoryDataTable(tabPaneId) {
-	const columns = getHistoryColumns();
-	const actions = getHistoryActions();
-	const customButtons = getHistoryCustomButtons();
-	const tableRoute = resolveAttendanceTableRoute(tabPaneId);
-
-	const dataTable = CreateNewDataTable(
-		ATTENDANCE_TABLE_ID,
-		tableRoute,
-		columns,
-		actions,
-		customButtons,
-		{
-			showSearchBar: false,
-			customButtonsPosition: "top-start",
-			ajax: {
-				data: appendHistoryFiltersToRequest,
-			},
-		},
-	);
-
-	setupHistoryFilters(dataTable);
-}
-
-// Ensure the DOM is fully loaded before initializing tab behavior
 $(() => {
-	// Initialize tab behavior and lazy loading
-	initializeTabBehavior();
-
-	// Handle is_holiday checkbox label toggle when content is injected dynamically
-	$(document).on("change", "#is_holiday", function () {
-		const scope = $(this).closest(".js-tab-lazy-content");
-		toggleIsHolidayButtonLabel(scope.length > 0 ? scope : $(document));
-	});
+	initializeTabs();
 });

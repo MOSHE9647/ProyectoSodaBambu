@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Timesheets\StoreAttendanceAction;
 use App\Enums\UserRole;
+use App\Http\Requests\TimesheetRequest;
 use App\Models\Employee;
 use App\Models\Timesheet;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -13,9 +16,10 @@ use Yajra\DataTables\DataTables;
 
 class AttendanceController extends Controller implements HasMiddleware
 {
+	private const TZ = 'America/Costa_Rica';
+
 	/**
 	 * Define middleware for the controller.
-	 * @see https://laravel.com/docs/10.x/controllers#controller-middleware
 	 *
 	 * @return array<int, Middleware>
 	 */
@@ -25,6 +29,16 @@ class AttendanceController extends Controller implements HasMiddleware
 		return [
 			new Middleware("role:$role"),
 		];
+	}
+
+	/**
+	 * Get today's date in Costa Rica timezone.
+	 *
+	 * @return string Today's date in 'Y-m-d' format.
+	 */
+	private function today(): string
+	{
+		return Carbon::now(self::TZ)->toDateString();
 	}
 
 	/**
@@ -38,37 +52,35 @@ class AttendanceController extends Controller implements HasMiddleware
 	public function index()
 	{
 		$activeTab = session('active_tab', 'nav-attendance');
+		$employees = $this->getAttendanceEmployees();
 
-		// Get all employees to populate the employee selection dropdown in the attendance form
-		$employees = Employee::with(['user', 'timesheets' => function ($query) {
-			$query->whereDate('work_date', now()->toDateString());
-		}])->get();
+		// Transformamos los datos para el JS
+		$attendanceEmployees = $employees->map($this->transformEmployee(...))->values()->all();
 
-		return view('models.employees.index', compact('activeTab', 'employees'));
-	}
-
-	public function store()
-	{
-		// Test data for development purposes
-		return redirect()->route('attendance.index')->with([
-			'active_tab' => 'nav-attendance',
-			'success' => 'Asistencia registrada exitosamente.',
-		]);
-	}
-	
-	public function update()
-	{
-		// Test data for development purposes
-		return redirect()->route('attendance.index')->with([
-			'active_tab' => 'nav-attendance',
-			'success' => 'Hora de salida registrada exitosamente.',
+		return view('models.employees.index', [
+			'activeTab' => $activeTab,
+			'employees' => $employees,
+			'attendanceEmployees' => $attendanceEmployees,
+			'todayDate' => $this->today()
 		]);
 	}
 
-	public function destroy()
+	public function store(TimesheetRequest $request, StoreAttendanceAction $storeAction)
 	{
-		// This method is not needed since attendance records are not deleted in this implementation
-		abort(404);
+		$storeAction->execute($request->validated());
+		return $this->redirectWithSuccess('creado');
+	}
+
+	public function update(TimesheetRequest $request, Timesheet $timesheet, StoreAttendanceAction $storeAction)
+	{
+		$storeAction->execute($request->validated(), $timesheet);
+		return $this->redirectWithSuccess('actualizado');
+	}
+
+	public function destroy(Timesheet $timesheet)
+	{
+		$timesheet->delete();
+		return $this->redirectWithSuccess('eliminado');
 	}
 
 	public function tab(string $tab): View
@@ -83,8 +95,81 @@ class AttendanceController extends Controller implements HasMiddleware
 
 	private function attendanceTab(): View
 	{
-		$employees = Employee::all();
-		return view('models.employees.tabs.attendance', compact('employees'));
+		$employees = $this->getAttendanceEmployees();
+		$todayDate = $this->today();
+
+		return view('models.employees.tabs.attendance', compact('employees', 'todayDate'));
+	}
+
+	private function transformEmployee(Employee $employee): array
+	{
+		$ts = $employee->timesheets->first();
+		return [
+			'id' => $employee->id,
+			'name' => $employee->user?->name,
+			'email' => $employee->user?->email,
+			'today_timesheet' => $ts ? [
+				'id' => $ts->id,
+				'work_date' => $ts->work_date?->toDateString(),
+				'start_time' => $ts->start_time?->format('H:i'),
+				'end_time' => $ts->hours_worked > 0 ? $ts->end_time?->format('H:i') : null,
+				'total_hours' => $ts->hours_worked,
+				'is_holiday' => $ts->is_holiday,
+			] : null,
+		];
+	}
+
+	/**
+	 * Retrieve employees used by attendance views.
+	 */
+	private function getAttendanceEmployees()
+	{
+		return Employee::with([
+			'user',
+			'timesheets' => fn ($q) => $q->whereDate('work_date', $this->today())
+		])->get();
+	}
+
+
+	/**
+	 * Build a lightweight employee payload consumed by attendance JS.
+	 *
+	 * @param \Illuminate\Support\Collection<int, Employee> $employees
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function buildAttendanceAppEmployees($employees): array
+	{
+		return $employees
+			->map(function (Employee $employee) {
+				$todayTimesheet = $employee->timesheets->first();
+
+				return [
+					'id' => $employee->id,
+					'name' => $employee->user?->name,
+					'email' => $employee->user?->email,
+					'today_timesheet' => $todayTimesheet ? [
+						'id' => $todayTimesheet->id,
+						'work_date' => optional($todayTimesheet->work_date)?->toDateString(),
+						'start_time' => optional($todayTimesheet->start_time)?->format('H:i'),
+						'end_time' => (float) ($todayTimesheet->total_hours ?? 0) > 0
+							? optional($todayTimesheet->end_time)?->format('H:i')
+							: null,
+						'total_hours' => (float) ($todayTimesheet->total_hours ?? 0),
+						'is_holiday' => (bool) $todayTimesheet->is_holiday,
+					] : null,
+				];
+			})
+			->filter(fn(array $employee) => filled($employee['id']) && filled($employee['name']))
+			->values()
+			->all();
+	}
+
+	private function redirectWithSuccess(string $action)
+	{
+		return redirect()->route('attendance.index')->with([
+			'active_tab' => 'nav-history',
+			'success' => "Registro de asistencia $action exitosamente.",
+		]);
 	}
 
 	private function historyTab(): View
@@ -94,24 +179,19 @@ class AttendanceController extends Controller implements HasMiddleware
 
 	public function historyData(Request $request)
 	{
-		$workDate = (string) $request->input('work_date');
-		$month = (string) $request->input('month');
+		$workDate = $request->input('work_date');
+		$month = $request->input('month');
 
-		$employeeFiltersQuery = Timesheet::query()
+		$employeeFilters = Timesheet::query()
 			->with(['employee.user'])
-			->select('timesheets.employee_id');
-
-		$this->applyHistoryDateFilters($employeeFiltersQuery, $workDate, $month);
-
-		$employeeFilters = $employeeFiltersQuery
+			->select('timesheets.employee_id')
+			->filterByDate($workDate, $month)
 			->get()
-			->map(function (Timesheet $timesheet): array {
-				return [
-					'id' => $timesheet->employee_id,
-					'name' => $timesheet->employee?->user?->name,
-				];
-			})
-			->filter(fn (array $employee): bool => filled($employee['id']) && filled($employee['name']))
+			->map(fn(Timesheet $t) => [
+				'id' => $t->employee_id,
+				'name' => $t->employee?->user?->name,
+			])
+			->filter(fn(array $e) => filled($e['id']) && filled($e['name']))
 			->unique('id')
 			->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
 			->values()
@@ -119,9 +199,8 @@ class AttendanceController extends Controller implements HasMiddleware
 
 		$query = Timesheet::query()
 			->with(['employee.user'])
-			->select('timesheets.*');
-
-		$this->applyHistoryDateFilters($query, $workDate, $month);
+			->select('timesheets.*')
+			->filterByDate($workDate, $month);
 
 		$employeeId = $request->integer('employee_id');
 		if ($employeeId > 0) {
@@ -129,15 +208,11 @@ class AttendanceController extends Controller implements HasMiddleware
 		}
 
 		return DataTables::of($query)
-			->addColumn('employee', function (Timesheet $timesheet): array {
-				return [
-					'name' => $timesheet->employee?->user?->name,
-					'email' => $timesheet->employee?->user?->email,
-				];
-			})
-			->with([
-				'employee_filters' => $employeeFilters,
+			->addColumn('employee', fn(Timesheet $t) => [
+				'name' => $t->employee?->user?->name,
+				'email' => $t->employee?->user?->email,
 			])
+			->with(['employee_filters' => $employeeFilters])
 			->toJson();
 	}
 
@@ -146,18 +221,4 @@ class AttendanceController extends Controller implements HasMiddleware
 		return view('models.employees.tabs.salary');
 	}
 
-	private function applyHistoryDateFilters($query, string $workDate, string $month): void
-	{
-		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $workDate) === 1) {
-			$query->whereDate('work_date', $workDate);
-			return;
-		}
-
-		if (preg_match('/^\d{4}-\d{2}$/', $month) === 1) {
-			[$year, $monthNumber] = explode('-', $month);
-			$query
-				->whereYear('work_date', (int) $year)
-				->whereMonth('work_date', (int) $monthNumber);
-		}
-	}
 }

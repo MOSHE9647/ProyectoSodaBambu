@@ -17,11 +17,9 @@ class CostaRicaDatetime implements CastsAttributes
 	 * @param array $attributes
 	 * @return string|null
 	 */
-	public function get(Model $model, string $key, mixed $value, array $attributes): ?string
+	public function get(Model $model, string $key, mixed $value, array $attributes): ?Carbon
 	{
-		return $value ?
-			Carbon::parse($value)->timezone('America/Costa_Rica')->format('Y-m-d\TH:i:s')
-			: null;
+		return $value ? Carbon::parse($value)->timezone('America/Costa_Rica') : null;
 	}
 
 	/**
@@ -35,13 +33,13 @@ class CostaRicaDatetime implements CastsAttributes
 	 */
 	public function set(Model $model, string $key, mixed $value, array $attributes): ?string
 	{
-		if ($value === null) {
+		if ($value === null)
 			return null;
-		}
-		// Parse the value as a Carbon instance in Costa Rica timezone, then convert to UTC
-		$dt = $value instanceof Carbon
-			? $value->copy()->setTimezone('America/Costa_Rica')
-			: Carbon::parse($value, 'America/Costa_Rica');
+
+		// If we receive a string (from an input), we parse it assuming it is Costa Rica time
+		// Then we store it in UTC in the database (gold standard)
+		$dt = $value instanceof Carbon ? $value : Carbon::parse($value, 'America/Costa_Rica');
+
 		return $dt->setTimezone('UTC')->format('Y-m-d H:i:s');
 	}
 }
