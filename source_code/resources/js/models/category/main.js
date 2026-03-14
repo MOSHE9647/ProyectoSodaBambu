@@ -54,18 +54,18 @@ $(() => {
         { 
             data: 'name', 
             name: 'name'
-            // Nombre de la categoría
+            // Category name
         },
         { 
             data: 'description',
             name: 'description',
-            // Descripción de la categoría (N/A si no está disponible)
+            // Category description (N/A if not available)
             render: (data) => data ? data : 'N/A',
         },
         {
             data: 'created_at',
             name: 'created_at',
-            // Fecha de creación formateada como 'DD de Month del YYYY'
+            // Creation date formatted as 'DD of Month of YYYY'
             render: (data) => formatDate(data),
         }
     ];

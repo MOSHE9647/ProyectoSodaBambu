@@ -47,42 +47,69 @@ class AttendanceController extends Controller implements HasMiddleware
 	 * Retrieves the active tab from the session and returns the employees index view
 	 * with the attendance tab selected by default.
 	 *
-	 * @return \Illuminate\View\View The employees index view with the active tab information
+	 * @return View The employees index view with active tab and attendance payload.
 	 */
 	public function index()
 	{
 		$activeTab = session('active_tab', 'nav-attendance');
 		$employees = $this->getAttendanceEmployees();
 
-		// Transformamos los datos para el JS
+		// Transform employees for the attendance tab JavaScript payload.
 		$attendanceEmployees = $employees->map($this->transformEmployee(...))->values()->all();
 
 		return view('models.employees.index', [
 			'activeTab' => $activeTab,
 			'employees' => $employees,
 			'attendanceEmployees' => $attendanceEmployees,
-			'todayDate' => $this->today()
+			'todayDate' => $this->today(),
 		]);
 	}
 
+	/**
+	 * Store a new attendance record.
+	 *
+	 * @param TimesheetRequest $request Validated timesheet request.
+	 * @param StoreAttendanceAction $storeAction Attendance persistence action.
+	 * @return \Illuminate\Http\RedirectResponse Redirect to attendance index with success message.
+	 */
 	public function store(TimesheetRequest $request, StoreAttendanceAction $storeAction)
 	{
 		$storeAction->execute($request->validated());
 		return $this->redirectWithSuccess('creado');
 	}
 
+	/**
+	 * Update an existing attendance record.
+	 *
+	 * @param TimesheetRequest $request Validated timesheet request.
+	 * @param Timesheet $timesheet Existing timesheet model.
+	 * @param StoreAttendanceAction $storeAction Attendance persistence action.
+	 * @return \Illuminate\Http\RedirectResponse Redirect to attendance index with success message.
+	 */
 	public function update(TimesheetRequest $request, Timesheet $timesheet, StoreAttendanceAction $storeAction)
 	{
 		$storeAction->execute($request->validated(), $timesheet);
 		return $this->redirectWithSuccess('actualizado');
 	}
 
+	/**
+	 * Soft delete an attendance record.
+	 *
+	 * @param Timesheet $timesheet Timesheet model to delete.
+	 * @return \Illuminate\Http\RedirectResponse Redirect to attendance index with success message.
+	 */
 	public function destroy(Timesheet $timesheet)
 	{
 		$timesheet->delete();
 		return $this->redirectWithSuccess('eliminado');
 	}
 
+	/**
+	 * Resolve and render a lazy-loaded tab view.
+	 *
+	 * @param string $tab Tab key.
+	 * @return View
+	 */
 	public function tab(string $tab): View
 	{
 		return match ($tab) {
@@ -93,6 +120,11 @@ class AttendanceController extends Controller implements HasMiddleware
 		};
 	}
 
+	/**
+	 * Build the attendance tab view.
+	 *
+	 * @return View
+	 */
 	private function attendanceTab(): View
 	{
 		$employees = $this->getAttendanceEmployees();
@@ -101,6 +133,12 @@ class AttendanceController extends Controller implements HasMiddleware
 		return view('models.employees.tabs.attendance', compact('employees', 'todayDate'));
 	}
 
+	/**
+	 * Transform an employee model into the attendance payload expected by the frontend.
+	 *
+	 * @param Employee $employee Employee model instance.
+	 * @return array<string, mixed>
+	 */
 	private function transformEmployee(Employee $employee): array
 	{
 		$ts = $employee->timesheets->first();
@@ -110,10 +148,14 @@ class AttendanceController extends Controller implements HasMiddleware
 			'email' => $employee->user?->email,
 			'today_timesheet' => $ts ? [
 				'id' => $ts->id,
-				'work_date' => $ts->work_date?->toDateString(),
-				'start_time' => $ts->start_time?->format('H:i'),
-				'end_time' => $ts->hours_worked > 0 ? $ts->end_time?->format('H:i') : null,
-				'total_hours' => $ts->hours_worked,
+				'work_date' => $ts->work_date,
+				'start_time' => $ts->start_time
+					? Carbon::parse($ts->start_time)->format('H:i')
+					: null,
+				'end_time' => ($ts->total_hours > 0 && $ts->end_time)
+					? Carbon::parse($ts->end_time)->format('H:i')
+					: null,
+				'total_hours' => $ts->total_hours,
 				'is_holiday' => $ts->is_holiday,
 			] : null,
 		];
@@ -121,6 +163,8 @@ class AttendanceController extends Controller implements HasMiddleware
 
 	/**
 	 * Retrieve employees used by attendance views.
+	 *
+	 * @return \Illuminate\Database\Eloquent\Collection<int, Employee>
 	 */
 	private function getAttendanceEmployees()
 	{
@@ -130,40 +174,12 @@ class AttendanceController extends Controller implements HasMiddleware
 		])->get();
 	}
 
-
 	/**
-	 * Build a lightweight employee payload consumed by attendance JS.
+	 * Redirect to attendance index with a success flash message.
 	 *
-	 * @param \Illuminate\Support\Collection<int, Employee> $employees
-	 * @return array<int, array<string, mixed>>
+	 * @param string $action Action suffix used in the success message.
+	 * @return \Illuminate\Http\RedirectResponse
 	 */
-	private function buildAttendanceAppEmployees($employees): array
-	{
-		return $employees
-			->map(function (Employee $employee) {
-				$todayTimesheet = $employee->timesheets->first();
-
-				return [
-					'id' => $employee->id,
-					'name' => $employee->user?->name,
-					'email' => $employee->user?->email,
-					'today_timesheet' => $todayTimesheet ? [
-						'id' => $todayTimesheet->id,
-						'work_date' => optional($todayTimesheet->work_date)?->toDateString(),
-						'start_time' => optional($todayTimesheet->start_time)?->format('H:i'),
-						'end_time' => (float) ($todayTimesheet->total_hours ?? 0) > 0
-							? optional($todayTimesheet->end_time)?->format('H:i')
-							: null,
-						'total_hours' => (float) ($todayTimesheet->total_hours ?? 0),
-						'is_holiday' => (bool) $todayTimesheet->is_holiday,
-					] : null,
-				];
-			})
-			->filter(fn(array $employee) => filled($employee['id']) && filled($employee['name']))
-			->values()
-			->all();
-	}
-
 	private function redirectWithSuccess(string $action)
 	{
 		return redirect()->route('attendance.index')->with([
@@ -172,11 +188,22 @@ class AttendanceController extends Controller implements HasMiddleware
 		]);
 	}
 
+	/**
+	 * Build the attendance history tab view.
+	 *
+	 * @return View
+	 */
 	private function historyTab(): View
 	{
 		return view('models.employees.tabs.history');
 	}
 
+	/**
+	 * Provide attendance history data for DataTables with optional filters.
+	 *
+	 * @param Request $request HTTP request with table and filter parameters.
+	 * @return \Illuminate\Http\JsonResponse
+	 */
 	public function historyData(Request $request)
 	{
 		$workDate = $request->input('work_date');
@@ -216,6 +243,11 @@ class AttendanceController extends Controller implements HasMiddleware
 			->toJson();
 	}
 
+	/**
+	 * Build the salary tab view.
+	 *
+	 * @return View
+	 */
 	private function salaryTab(): View
 	{
 		return view('models.employees.tabs.salary');
