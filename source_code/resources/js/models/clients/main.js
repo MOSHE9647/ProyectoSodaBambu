@@ -54,28 +54,28 @@ $(() => {
         { 
             data: 'first_name', 
             name: 'first_name'
-            // Nombre del cliente
+            // Client first name
         },
         { 
             data: 'last_name', 
             name: 'last_name'
-            // Apellido del cliente
+            // Client last name
         },
         { 
             data: 'email', 
             name: 'email'
-            // Correo electrónico del cliente
+            // Client email address
         },
         { 
 			data: 'phone', 
 			name: 'phone',
-			// Teléfono de contacto (N/A si no está disponible)
+			// Contact phone number (N/A if not available)
 			render: (data) => data ? data : 'N/A',
 		},
         {
             data: 'created_at',
             name: 'created_at',
-            // Fecha de creación formateada como 'DD de Month del YYYY'
+            // Creation date formatted as 'DD of Month of YYYY'
             render: (data) => formatDate(data),
         }
     ];

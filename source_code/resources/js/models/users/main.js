@@ -111,7 +111,7 @@ $(() => {
             data: 'created_at',
             name: 'created_at',
 			render: (data) => formatDate(data),
-            // Creation date formatted as 'DD de Month del YYYY'
+			// Creation date formatted as 'DD of Month of YYYY'
         }
     ];
 

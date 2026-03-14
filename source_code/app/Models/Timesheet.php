@@ -7,6 +7,7 @@ use App\Casts\DecimalFormat;
 use Carbon\Carbon;
 use Database\Factories\TimesheetFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,12 +40,9 @@ class Timesheet extends Model
     protected $casts = [
         'is_holiday' => 'boolean',
         'total_hours' => DecimalFormat::class,
-        'start_time' => CostaRicaDatetime::class,
         'end_time' => CostaRicaDatetime::class,
+        'start_time' => CostaRicaDatetime::class,
         'work_date' => CostaRicaDatetime::class,
-        'created_at' => CostaRicaDatetime::class,
-        'updated_at' => CostaRicaDatetime::class,
-        'deleted_at' => CostaRicaDatetime::class,
     ];
 
     /**
@@ -58,11 +56,12 @@ class Timesheet extends Model
      */
     public function getHoursWorkedAttribute(): float
     {
-        // Ahora $this->start_time ya es un objeto Carbon gracias al Cast
         if (! $this->start_time || ! $this->end_time)
             return 0;
 
-        return round($this->start_time->diffInMinutes($this->end_time) / 60, 2);
+        $start_time = Carbon::parse($this->start_time);
+        $end_time = Carbon::parse($this->end_time);
+        return round($start_time->diffInMinutes($end_time) / 60, 2);
     }
 
     /**
