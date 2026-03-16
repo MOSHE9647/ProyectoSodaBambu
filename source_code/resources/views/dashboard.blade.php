@@ -28,30 +28,28 @@
 				</div>
 			@endfor
 			<div class="col">
-				<a href="{{ route('products.index', ['filter' => 'low_stock']) }}" class="text-decoration-none">
-					<x-stat-card
-						title="Stock minimo"
-						value="{{ $totalMinStockProducts }} Productos"
-						currency="false"
-						icon="boxes"
-						color-theme="blue"
-					/>
-				</a>
+				<x-stat-card
+					title="Stock minimo"
+					value="{{ $totalMinStockProducts }} Productos"
+					currency="false"
+					icon="boxes"
+					color-theme="blue"
+					:url="route('products.index', ['filter' => 'low_stock'])"
+				/>
 			</div>
 			{{-- 
 				Stat Card Component - About to Expire supplies
 				Displays a statistical card showing the count of supplies that are nearing expiration.	
 			--}}
 			<div class="col">
-				<a href="{{ route('supplies.index', ['filter' => 'expiring_soon']) }}" class="text-decoration-none">
-					<x-stat-card
-						title="Próximos a Vencer"
-						value="{{ $aboutToExpire }} Insumos"
-						currency="false"
-						icon="hourglass-split"
-						color-theme="red"
-					/>
-				</a>
+				<x-stat-card
+					title="Próximos a Vencer"
+					value="{{ $aboutToExpire }} Insumos"
+					currency="false"
+					icon="hourglass-split"
+					color-theme="red"
+					:url="route('supplies.index', ['filter' => 'expiring_soon'])"
+				/>
 			</div>
 		</div>
 
