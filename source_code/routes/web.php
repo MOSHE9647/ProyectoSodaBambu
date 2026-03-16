@@ -5,6 +5,7 @@ use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\SupplyController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\PurchaseController;
@@ -28,4 +29,5 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
 	Route::resource('purchases', PurchaseController::class)->names('purchases');
+	Route::resource('supplies', SupplyController::class)->names('supplies');
 });
