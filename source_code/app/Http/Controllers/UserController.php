@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Users\UpsertUserAction;
 use App\Enums\UserRole;
 use App\Http\Requests\UserRequest;
-use App\Http\Requests\EmployeeRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Employee;
 use App\Models\User;
-use DB;
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,9 @@ use Yajra\DataTables\DataTables;
 
 class UserController extends Controller implements HasMiddleware
 {
+	// Use AuthorizesRequests trait to enable authorization checks in the controller
+	use AuthorizesRequests;
+
 	// Define the role relationship name based on UserRole enum
 	private string $role;
 
@@ -39,6 +43,14 @@ class UserController extends Controller implements HasMiddleware
 		];
 	}
 
+	/**
+	 * Constructor for the UserController.
+	 *
+	 * Initializes the controller by setting the default user role to 'employee'.
+	 * This role assignment is used as the default relationship type when managing user roles.
+	 *
+	 * @return void
+	 */
 	public function __construct()
 	{
 		// Default role relationship is 'employee'
@@ -55,9 +67,7 @@ class UserController extends Controller implements HasMiddleware
 	public function index(Request $request)
 	{
 		// Count the number of admin users
-		$adminCount = User::whereHas('roles', function ($role) {
-			$role->where('name', UserRole::ADMIN->value);
-		})->count();
+		$adminCount = User::admins()->count();
 
 		// Handle AJAX request for DataTables
 		if ($request->ajax()) {
@@ -83,54 +93,23 @@ class UserController extends Controller implements HasMiddleware
 	/**
 	 * Store a newly created resource in storage.
 	 *
-	 * @param UserRequest $userRequest
+	 * @param UserRequest $userRequest The validated request containing user data and role information
+	 * @param UpsertUserAction $upsertUser The action class responsible for creating or updating a user and handling related employee data
 	 * @return RedirectResponse
 	 * @throws Throwable
 	 */
-	public function store(UserRequest $userRequest)
+	public function store(UserRequest $userRequest, UpsertUserAction $upsertUser)
 	{
-		$wasRestored = false;
+		// Mutator handles password hashing, so we can pass the raw password directly
+		$user = $upsertUser->execute(
+			$userRequest->validated(),
+			$userRequest->role,
+			$userRequest->only(Employee::$fields)
+		);
 
-		DB::transaction(function () use ($userRequest, &$wasRestored) {
-			$userData = $userRequest->validated();
-			$userRole = UserRole::from($userRequest['role']);
-
-			// Reuse soft-deleted user with the same unique field (email) instead of creating a new row.
-			$user = User::withTrashed()->where('email', $userData['email'])->first();
-
-			if ($user?->trashed()) {
-				$user->restore();
-				$user->update($userData);
-				$wasRestored = true;
-			} else {
-				$user = User::create($userData);
-			}
-
-			$user->syncRoles([$userRole]);
-
-			if ($userRole === UserRole::EMPLOYEE) {
-				$employeeData = $this->validateEmployeeData($userRequest);
-				$employee = $user->employee()->withTrashed()->first();
-
-				if ($employee) {
-					if ($employee->trashed()) {
-						$employee->restore();
-					}
-					$employee->update($employeeData);
-				} else {
-					$employeeData['id'] = $user->id;
-					$user->employee()->create($employeeData);
-				}
-			} else {
-				if ($user->employee()->exists()) {
-					$user->employee()->delete();
-				}
-			}
-		});
-
-		$message = $wasRestored
-			? 'Usuario restaurado y actualizado correctamente.'
-			: 'Usuario creado correctamente.';
+		$message = $user->wasRecentlyCreated
+			? 'Usuario creado correctamente.'
+			: 'Usuario restaurado y actualizado correctamente.';
 
 		return redirect()->route('users.index')->with('success', $message);
 	}
@@ -165,48 +144,21 @@ class UserController extends Controller implements HasMiddleware
 	 * If the role is changed to EMPLOYEE, create or restore the Employee record.
 	 * If the role is changed from EMPLOYEE to another role, delete the Employee record.
 	 *
-	 * @param UserRequest $userRequest
-	 * @param User $user
+	 * @param UserRequest $userRequest The validated request containing user data and role information
+	 * @param User $user The user being updated
+	 * @param UpsertUserAction $upsertUser The action class responsible for creating or updating a user and handling related employee data
 	 * @return RedirectResponse
 	 * @throws Throwable
 	 */
-	public function update(UserRequest $userRequest, User $user)
+	public function update(UserRequest $userRequest, User $user, UpsertUserAction $upsertUser)
 	{
-		DB::transaction(function () use ($userRequest, $user) {
-			// Update the User
-			$userData = $userRequest->validated();
-
-			// Remove password if not provided to avoid setting it to null
-			if (empty($userData['password'])) {
-				unset($userData['password']);
-			}
-			$user->update($userData);
-
-			// Sync the role to the user
-			$userRole = UserRole::from($userRequest['role']);
-			$user->syncRoles([$userRole]);
-
-			// If the role is EMPLOYEE, update or create the related Employee record
-			if ($userRole === UserRole::EMPLOYEE) {
-				// Validate Employee-specific data with EmployeeRequest
-				$employeeData = $this->validateEmployeeData($userRequest);
-
-				// Check if there's a soft-deleted employee to restore
-				$trashedEmployee = $user->employee()->onlyTrashed()->first();
-				if ($trashedEmployee) {
-					$trashedEmployee->restore();
-					$trashedEmployee->update($employeeData);
-				} else {
-					// Update or create the Employee record
-					$user->employee()->updateOrCreate([], $employeeData);
-				}
-			} else {
-				// If the role is not EMPLOYEE, delete the related Employee record if it exists
-				if ($user->employee) {
-					$user->employee->delete();
-				}
-			}
-		});
+		// Mutator handles password hashing, so we can pass the raw password directly
+		$upsertUser->execute(
+			$userRequest->validated(),
+			$userRequest->role,
+			$userRequest->only(Employee::$fields),
+			$user
+		);
 
 		return redirect()->route('users.index')->with('success', 'Usuario actualizado correctamente.');
 	}
@@ -220,41 +172,18 @@ class UserController extends Controller implements HasMiddleware
 	 */
 	public function destroy(User $user)
 	{
-		$isUniqueAdmin = $user->hasRole(UserRole::ADMIN) && User::role(UserRole::ADMIN)->count() === 1;
-		if ($isUniqueAdmin) {
-			return redirect()->back()->with('error', 'No se puede eliminar el único usuario administrador.');
+		try {
+			// Authorization check using UserPolicy's delete method
+			$this->authorize('delete', $user);
+		} catch (AuthorizationException $e) {
+			// Handle unauthorized deletion
+			return redirect()->back()->with('error', $e->getMessage());
 		}
 
-		// Use a transaction to ensure data integrity
-		DB::transaction(function () use ($user) {
-			// Get the user with the specific role relationship
-			$user->load($this->role);
-
-			// If the user has a related employee record, delete it
-			if ($user->employee()->exists()) {
-				$user->employee()->delete();
-			}
-
-			// Delete the user record
-			$user->delete();
-		});
+		// Deleting the user will trigger the UserObserver's deleted method, which will handle deleting the related employee record if it exists
+		$user->delete();
 
 		// Redirect back with a success message
 		return redirect()->back()->with('success', 'Usuario eliminado correctamente.');
-	}
-
-	/**
-	 * Validate Employee-specific data using EmployeeRequest.
-	 *
-	 * @param UserRequest $userRequest
-	 * @return array
-	 */
-	private function validateEmployeeData(UserRequest $userRequest): array
-	{
-		// Validate Employee-specific data with EmployeeRequest
-		$employeeRequest = app(EmployeeRequest::class);
-		$employeeRequest->merge($userRequest->only(Employee::$fields));
-		$employeeRequest->validateResolved();
-		return $employeeRequest->validated();
 	}
 }

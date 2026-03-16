@@ -1,7 +1,6 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
 import { capitalizeSentence, toggleLoadingState, formatDate } from "../../utils/utils.js";
-import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 // ==================== Constants ====================
 
@@ -23,8 +22,6 @@ const MODEL_ROUTES = {
 // ==================== Global Functions ====================
 
 // Expose functions globally
-window.SwalToast = SwalToast;
-window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
 
 // ==================== Helper Functions ====================
