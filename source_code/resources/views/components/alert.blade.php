@@ -7,6 +7,7 @@
 	'id' => '',
 	'type' => 'info',
 	'message' => 'This is an alert message.',
+	'showIcon' => true,
 	'class' => ''
 ])
 
@@ -20,7 +21,9 @@
 @endphp
 
 <div id="{{ $id }}" class="alert alert-{{ $type }} {{ $class }}" role="alert">
-	<i class="{{ $icon }} me-2"></i>
+	@if ($showIcon)
+		<i class="{{ $icon }} me-2"></i>
+	@endif
 	@isset($slot)
 		{{ $slot }}
 	@else

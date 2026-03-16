@@ -10,12 +10,15 @@ import {
 } from '../../utils/validation.js';
 import { setLoadingState } from '../../utils/utils.js';
 
+// ==================== Environment Checks ====================
+
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
     throw new Error('This script requires jQuery');
 }
 
-// Constants and Variables
+// ==================== Constants ====================
+
 const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
 const FORM_ID = IS_EDITING ? 'edit-supplier-form' : 'create-supplier-form';
 
@@ -37,7 +40,7 @@ const fieldValidators = {
     }
 };
 
-// Validation Functions
+// ==================== Validation Functions ====================
 
 /**
  * Validates the supplier form fields.
@@ -54,7 +57,7 @@ function validateSupplierForm(values, fieldValidators) {
     );
 }
 
-// UI Manipulation Functions
+// ==================== UI Manipulation Functions ====================
 
 /**
  * Handles the form submission process.
@@ -78,7 +81,7 @@ function submitSupplierForm() {
     return validateSupplierForm(values, fieldValidators);
 }
 
-// Event Listeners
+// ==================== Event Listeners ====================
 
 /**
  * Real-time validation and formatting for supplier form fields.

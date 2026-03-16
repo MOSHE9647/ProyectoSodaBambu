@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->date('work_date');
             $table->time('start_time');
-            $table->time('end_time');
+            $table->time('end_time')->nullable();
             $table->decimal('total_hours', 10, 2);
             $table->boolean('is_holiday')->default(false);
             $table->timestamps();
