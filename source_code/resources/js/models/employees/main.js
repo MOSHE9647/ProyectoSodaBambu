@@ -96,6 +96,66 @@ function initHistoryTab() {
 		select.value = currentVal;
 	};
 
+	/**
+	 * Synchronizes the visibility of the clear filters button based on active filter states.
+	 * 
+	 * Checks the current values of the employee and date filters. If either filter contains
+	 * an active value (employee is not the default value or date field has content), the
+	 * clear filters button is displayed. Otherwise, the button is hidden.
+	 * 
+	 * @function syncClearFiltersButtonVisibility
+	 * @returns {void}
+	 */
+	const syncClearFiltersButtonVisibility = () => {
+		const employeeValue = String(
+			$(FILTER_SELECTORS.employee).val() ?? DEFAULT_FILTER_VALUE,
+		);
+		const dateValue = String($(FILTER_SELECTORS.date).val() ?? "").trim();
+		const hasActiveFilters =
+			employeeValue !== DEFAULT_FILTER_VALUE || dateValue.length > 0;
+
+		$("#attendance-clear-filters").toggleClass("d-none", !hasActiveFilters);
+	};
+
+	/**
+	 * Initializes a DataTable for displaying employee attendance records with filtering capabilities.
+	 * 
+	 * @type {DataTable}
+	 * @description Creates a comprehensive attendance tracking table with the following features:
+	 * - Displays employee information (name, email, and avatar initials)
+	 * - Shows work dates formatted according to locale
+	 * - Indicates holiday status with visual badges
+	 * - Tracks clock-in (start_time) and clock-out (end_time) times
+	 * - Calculates and displays total hours worked with color-coded status badges:
+	 *   - Red: Overtime (>8 hours)
+	 *   - Green: Normal hours (≤8 hours)
+	 *   - Gray: No hours recorded
+	 * 
+	 * @param {string} ATTENDANCE_TABLE_ID - The DOM element ID for the DataTable container
+	 * @param {string} MODEL_ROUTES.historyData - API endpoint for fetching attendance data
+	 * 
+	 * @property {Object[]} columns - Column definitions including:
+	 *   - employee: Employee info with avatar and contact details
+	 *   - work_date: Date of attendance record
+	 *   - is_holiday: Holiday status indicator
+	 *   - start_time: Clock-in time (pending badge if not set)
+	 *   - end_time: Clock-out time (pending badge if not set)
+	 *   - total_hours: Total hours with status-based styling and icons
+	 * 
+	 * @property {Object} actions - Row action configurations:
+	 *   - delete: Remove attendance records via deleteAttendance() function
+	 * 
+	 * @property {Object[]} filters - Available filter options:
+	 *   - Employee selector: Filter by specific employee or all employees
+	 *   - Date picker: Filter by specific work date
+	 *   - Clear button: Reset all active filters
+	 * 
+	 * @property {Object} options - DataTable configuration:
+	 *   - Disables search bar
+	 *   - Positions custom buttons at top-left
+	 *   - Dynamic AJAX filtering based on employee_id and work_date parameters
+	 *   - Supports month-based queries
+	 */
 	const dataTable = CreateNewDataTable(
 		ATTENDANCE_TABLE_ID,
 		MODEL_ROUTES.historyData,
@@ -203,6 +263,15 @@ function initHistoryTab() {
 				wrapperClass: "w-auto",
 				placeholder: "Seleccione una fecha",
 			},
+			{
+				type: "button",
+				id: "attendance-clear-filters",
+				text: "Limpiar filtros",
+				icon: "bi-eraser-fill",
+				class: "btn-outline-primary mb-2 d-none",
+				func: window.clearAttendanceFilters,
+				funcName: "clearAttendanceFilters",
+			},
 		],
 		{
 			showSearchBar: false,
@@ -222,15 +291,28 @@ function initHistoryTab() {
 		},
 	);
 
+	window.clearAttendanceFilters = () => {
+		$(FILTER_SELECTORS.employee).val(DEFAULT_FILTER_VALUE);
+		$(FILTER_SELECTORS.date).val("");
+		syncClearFiltersButtonVisibility();
+		dataTable.ajax.reload();
+	};
+
 	$(FILTER_SELECTORS.employee)
 		.add(FILTER_SELECTORS.date)
 		.off(".attendanceHistory")
-		.on("change.attendanceHistory", () => dataTable.ajax.reload());
+		.on("change.attendanceHistory", () => {
+			syncClearFiltersButtonVisibility();
+			dataTable.ajax.reload();
+		});
 	dataTable
 		.off("xhr.attendanceHistory")
-		.on("xhr.attendanceHistory", (_, __, res) =>
-			updateSelectFilter(res?.data, res?.employee_filters),
-		);
+		.on("xhr.attendanceHistory", (_, __, res) => {
+			updateSelectFilter(res?.data, res?.employee_filters);
+			syncClearFiltersButtonVisibility();
+		});
+
+	syncClearFiltersButtonVisibility();
 }
 
 /**
