@@ -4,8 +4,13 @@ import { capitalizeSentence, formatDate, toggleLoadingState } from "../../utils/
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 // ==================== Constants ====================
+
+
 const MODEL_NAME = 'insumo';
+
+
 const BTN_CLASS_PRIMARY = 'btn-primary';
+
 
 const MODEL_ROUTES = {
     index:  route('supplies.index'),
@@ -16,28 +21,55 @@ const MODEL_ROUTES = {
 };
 
 // ==================== Global Functions ====================
+
+// Expose functions globally
 window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
 
+// ==================== Helper Functions ====================
+
+/**
+ * Shows information for a specific supply.
+ */
 window.showSupply = function (url, anchor) {
     return showModelInfo(url, anchor, MODEL_NAME);
 };
 
+/**
+ * Deletes a specific supply.
+ */
 window.deleteSupply = function (e) {
     return deleteModel(e, MODEL_NAME);
 };
 
 // ==================== DataTable Initialization ====================
+
 $(() => {
     const columns = [
         { 
             data: 'name', 
-            name: 'name'
+            name: 'name' 
         },
         { 
             data: 'measure_unit', 
-            name: 'measure_unit'
+            name: 'measure_unit' 
+        },
+        { 
+            data: 'quantity', 
+            name: 'quantity', 
+            className: 'text-center',
+            render: (data) => `<strong>${data}</strong>` 
+        },
+        { 
+            data: 'unit_price', 
+            name: 'unit_price', 
+            className: 'text-end'
+        },
+        { 
+            data: 'expiration_date', 
+            name: 'expiration_date', 
+            className: 'text-center' 
         },
         {
             data: 'created_at',

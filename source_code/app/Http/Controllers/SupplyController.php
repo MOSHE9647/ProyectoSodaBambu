@@ -26,11 +26,34 @@ class SupplyController extends Controller
  public function index(Request $request)
 {
     if ($request->ajax()) {
-        return DataTables::of(Supply::query())->toJson();
+        $query = Supply::with(['purchaseDetails' => function($q) {
+            $q->latest(); 
+        }]);
+
+        return DataTables::of($query)
+            // aqui se le pasa la cantidad
+            ->addColumn('quantity', function($supply) {
+                $last = $supply->purchaseDetails->first();
+                return $last ? $last->quantity : 0;
+            })
+            // aqui se le pasa el precio
+            ->addColumn('unit_price', function($supply) {
+                $last = $supply->purchaseDetails->first();
+                return $last ? '₡' . number_format($last->unit_price, 2) : '₡0.00';
+            })
+            // aquis e le pasa al fecha de vencimento 
+            ->addColumn('expiration_date', function($supply) {
+                $last = $supply->purchaseDetails->first();
+                return ($last && $last->expiration_date) 
+                    ? \Carbon\Carbon::parse($last->expiration_date)->format('d/m/Y') 
+                    : 'N/A';
+            })
+            ->toJson();
     }
 
     return view('models.supplies.index');
 }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -44,7 +67,7 @@ class SupplyController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * Se eliminó DB::transaction, ya que solo se realiza una acción (crear).
+     * 
      *
      * @param SupplyRequest $request
      * @return RedirectResponse

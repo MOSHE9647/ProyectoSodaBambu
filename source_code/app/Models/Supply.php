@@ -39,8 +39,8 @@ class Supply extends Model
      * 
      * @return MorphMany<PurchaseDetail, Supply>
      */
-    public function purchaseDetails()
-    {
-        return $this->morphMany(PurchaseDetail::class, 'purchasable');
-    }
+public function purchaseDetails(): MorphMany
+{
+    return $this->morphMany(PurchaseDetail::class, 'purchasable');
+}
 }

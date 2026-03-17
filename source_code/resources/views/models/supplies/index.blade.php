@@ -9,13 +9,15 @@
                 <thead>
                     <tr>
                         <th scope="col">Nombre</th>
-                        <th scope="col">Unidad de Medida</th>
-                        <th scope="col">Fecha de Creación</th>
+                        <th scope="col">Unidad</th>
+                        <th scope="col">Cant. Disponible</th> 
+                        <th scope="col">Precio Unitario</th>   
+                        <th scope="col">Fecha Vencimiento</th> 
+                        <th scope="col">Fecha Registro</th>
                         <th scope="col">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {{-- Populated by JS --}}
+                <tbody> 
                 </tbody>
             </table>
         </div>
@@ -23,6 +25,5 @@
 @endsection
 
 @section('scripts')
-    {{-- Agregamos 'models' a la ruta para que coincida con tu estructura de carpetas --}}
     @vite(['resources/js/models/supplies/main.js'])
 @endsection
