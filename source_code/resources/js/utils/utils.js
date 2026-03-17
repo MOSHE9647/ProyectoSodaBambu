@@ -1,7 +1,8 @@
 /**
  * Sets the loading state for the form's submit button.
- * @param formId
- * @param isLoading
+ * @param {string} formId - Base form ID (without suffixes like -form or -button).
+ * @param {boolean} isLoading - Whether to show the loading state.
+ * @returns {void}
  */
 export function setLoadingState(formId, isLoading) {
 	// Get necessary elements
@@ -37,7 +38,8 @@ export function setLoadingState(formId, isLoading) {
 
 /**
  * Registers a submit event listener for a form to set loading state on submission.
- * @param formId
+ * @param {string} formId - Base form ID to observe.
+ * @returns {void}
  */
 export const attachLoadingSubmit = (formId) => {
 	$(document).on('submit', `#${formId}-form`, (e) => {
@@ -47,6 +49,13 @@ export const attachLoadingSubmit = (formId) => {
 	});
 };
 
+/**
+ * Enables or disables the loading state on a generic button.
+ * @param {string|HTMLElement|null} element - CSS selector or button reference.
+ * @param {string} elementClass - Class prefix used to locate spinner and text elements.
+ * @param {boolean} isLoading - Whether to show the loading state.
+ * @returns {void}
+ */
 export function toggleLoadingState(element, elementClass, isLoading) {
 	const btn = typeof element === 'string'
 		? document.querySelector(element)
@@ -65,8 +74,8 @@ export function toggleLoadingState(element, elementClass, isLoading) {
 
 /**
  * Escape HTML special characters in a string to prevent XSS.
- * @param {*} text 
- * @returns {string}
+ * @param {*} text - Text to sanitize.
+ * @returns {string} Text with escaped HTML characters.
  */
 export function escapeHtml(text) {
 	if (typeof text !== 'string') {
@@ -82,21 +91,69 @@ export function escapeHtml(text) {
 	return text.replace(/[&<>"']/g, char => map[char]);
 }
 
+/**
+ * Formats a date for display in Costa Rican Spanish locale.
+ * @param {string} dateString - Date in a format parseable by Date.
+ * @returns {string} Formatted date or "Fecha inválida".
+ */
 export function formatDate(dateString) {
+	// Attempt to parse the date string
 	const date = new Date(dateString);
 
-	if (isNaN(date.getTime())) {
-		console.error('Invalid date:', dateString);
-		return 'Fecha inválida';
+	// Check if the date is valid
+	if (isNaN(date.getTime())) return "Fecha inválida";
+
+	// Determine timezone based on the presence of 'Z' or offset in the date string
+	let timezone = "UTC";
+	if (dateString.endsWith("Z")) {
+		timezone = "America/Costa_Rica";
+	} else {
+		// Look for timezone offset in the format ±HH:MM
+		const tzMatch = dateString.match(/([+-]\d{2}:\d{2}|Z)$/);
+		if (tzMatch) {
+			// If it's 'Z', use Costa Rica timezone; otherwise, use the offset as is
+			timezone = tzMatch[1] === "Z" ? "UTC" : tzMatch[1];
+		}
 	}
 
-	const day = String(date.getDate()).padStart(2, '0');
-	const month = date.toLocaleDateString('es-ES', { month: 'long' });
-	const year = date.getFullYear();
-	
-	return `${day} de ${month} del ${year}`;
+	// Format the date using Intl.DateTimeFormat with the determined timezone
+	const formatter = new Intl.DateTimeFormat("es-CR", {
+		timeZone: timezone,
+		day: "2-digit",
+		month: "long",
+		year: "numeric",
+	});
+
+	const formattedDate = formatter.format(date);
+	return formattedDate;
 }
 
+/**
+ * Converts a date/time value to 12-hour format (AM/PM).
+ * @param {string} timeString - Time in a format parseable by Date.
+ * @returns {string} Formatted time or "Hora inválida".
+ */
+export function formatTime(timeString) {
+	const date = new Date(timeString);
+
+	if (isNaN(date.getTime())) {
+		console.error('Invalid time:', timeString);
+		return 'Hora inválida';
+	}
+
+	const hours = date.getUTCHours();
+	const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+	const hour12 = hours % 12 || 12;
+	const period = hours >= 12 ? 'PM' : 'AM';
+	
+	return `${String(hour12).padStart(2, '0')}:${minutes} ${period}`;
+}
+
+/**
+ * Capitalizes a sentence in title style while keeping selected short words lowercase.
+ * @param {string} sentence - Text to capitalize.
+ * @returns {string} Transformed sentence.
+ */
 export function capitalizeSentence(sentence) {
 	if (typeof sentence !== 'string' || sentence.length === 0) {
 		return '';
@@ -116,6 +173,12 @@ export function capitalizeSentence(sentence) {
 	return capitalized;
 }
 
+/**
+ * Toggles visibility of a password field and updates its associated icon.
+ * @param {string} inputId - Password input ID.
+ * @param {string} toggleButtonId - Toggle button ID.
+ * @returns {void}
+ */
 export function togglePasswordVisibility(inputId, toggleButtonId) {
 	const input = document.getElementById(inputId);
 	const toggleButton = document.getElementById(toggleButtonId);
@@ -135,4 +198,105 @@ export function togglePasswordVisibility(inputId, toggleButtonId) {
 	}
 
 	toggleButton.setAttribute('aria-pressed', String(!isPassword));
+}
+
+/**
+ * Utilities for simple DOM element manipulation.
+ */
+export const DOMHelper = {
+	/**
+	 * Shows or hides an element using the d-none class.
+	 * @param {HTMLElement|null} element - Element to show/hide.
+	 * @param {boolean} shouldShow - Whether the element should be visible.
+	 * @returns {void}
+	 */
+    toggleVisibility: (element, shouldShow) => {
+        if (element) element.classList.toggle("d-none", !shouldShow);
+    },
+	/**
+	 * Sets an input as read-only and disabled based on the provided state.
+	 * @param {HTMLInputElement|HTMLTextAreaElement|HTMLElement|null} input - Target field.
+	 * @param {boolean} shouldLock - Whether the field should be locked.
+	 * @returns {void}
+	 */
+    setReadonly: (input, shouldLock) => {
+        if (input) {
+            input.readOnly = shouldLock;
+            input.disabled = shouldLock;
+        }
+    },
+	/**
+	 * Creates or updates a hidden input to override a form value.
+	 * @param {HTMLFormElement|null} form - Target form.
+	 * @param {string} fieldName - Hidden field name.
+	 * @param {string|null|undefined} value - Value to assign.
+	 * @returns {void}
+	 */
+    setHiddenOverride: (form, fieldName, value) => {
+        if (!form) return;
+        let hiddenInput = form.querySelector(`input[type="hidden"][name="${fieldName}"]`);
+        if (!hiddenInput) {
+            hiddenInput = document.createElement("input");
+            hiddenInput.type = "hidden";
+            hiddenInput.name = fieldName;
+            form.appendChild(hiddenInput);
+        }
+        hiddenInput.value = value ?? "";
+    },
+	/**
+	 * Removes a hidden override input, except when its id is work_date.
+	 * @param {HTMLFormElement|null} form - Target form.
+	 * @param {string} fieldName - Hidden field name.
+	 * @returns {void}
+	 */
+    removeHiddenOverride: (form, fieldName) => {
+        if (!form) return;
+        const hiddenInput = form.querySelector(`input[type="hidden"][name="${fieldName}"]`);
+        if (hiddenInput && hiddenInput.id !== "work_date") hiddenInput.remove();
+    }
+};
+
+/**
+ * Gets initials from a full name.
+ * @param {string} [name=""] - Full name.
+ * @returns {string} Uppercase initials or "??" when empty.
+ */
+export function getInitials(name = "") {
+    const nameParts = String(name).trim().split(/\s+/).filter(Boolean);
+    if (nameParts.length === 0) return "??";
+    return nameParts.slice(0, 2).map(part => part.charAt(0).toUpperCase()).join("");
+}
+
+/**
+ * Converts an HH:MM time string to minutes since midnight.
+ * @param {string} value - Time in HH:MM format.
+ * @returns {number|null} Total minutes or null if format is invalid.
+ */
+export function parseTimeToMinutes(value) {
+    const match = String(value || "").match(/(\d{2}):(\d{2})/);
+    return match ? (parseInt(match[1], 10) * 60) + parseInt(match[2], 10) : null;
+}
+
+/**
+ * Formats an HH:MM time string to 12-hour format.
+ * @param {string} timeInput - Time in HH:MM format.
+ * @returns {string} Time in 12-hour format or "Hora inválida".
+ */
+export function format12h(timeInput) {
+    const mins = parseTimeToMinutes(timeInput);
+    if (mins === null) return "Hora inválida";
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return `${String(h % 12 || 12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+}
+
+/**
+ * Calculates worked hours between two HH:MM times.
+ * @param {string} startTime - Start time in HH:MM format.
+ * @param {string} endTime - End time in HH:MM format.
+ * @returns {number} Whole worked hours; 0 when input values are invalid.
+ */
+export function calcWorkedHours(startTime, endTime) {
+    const s = parseTimeToMinutes(startTime);
+    const e = parseTimeToMinutes(endTime);
+    return (s === null || e === null || e <= s) ? 0 : Math.floor((e - s) / 60);
 }
