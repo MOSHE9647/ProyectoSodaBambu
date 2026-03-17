@@ -92,4 +92,54 @@ class ProductRequestValidationTest extends TestCase
         $this->assertSame('0.13', $product->tax_percentage);
         $this->assertSame('0.35', $product->margin_percentage);
     }
+
+    public function test_store_validates_sale_price_greater_than_reference_cost_for_dish(): void
+    {
+        $this->actingAsAdmin();
+
+        $salePriceLessThanCost = $this->from(route('products.create'))->post(route('products.store'), $this->validPayload([
+            'barcode' => '7791234599007',
+            'type' => ProductType::DISH->value,
+            'reference_cost' => 1000,
+            'sale_price' => 500,
+        ]));
+        $salePriceLessThanCost->assertRedirect(route('products.create'));
+        $salePriceLessThanCost->assertSessionHasErrors('sale_price');
+
+        $salePriceGreaterThanCost = $this->post(route('products.store'), $this->validPayload([
+            'barcode' => '7791234599008',
+            'type' => ProductType::DISH->value,
+            'reference_cost' => 1000,
+            'sale_price' => 2000,
+        ]));
+        $salePriceGreaterThanCost->assertRedirect(route('products.index'));
+    }
+
+    public function test_store_rejects_decimals_exceeding_two_precision(): void
+    {
+        $this->actingAsAdmin();
+
+        $costWith3Decimals = $this->from(route('products.create'))->post(route('products.store'), $this->validPayload([
+            'barcode' => '7791234599009',
+            'reference_cost' => 1000.125,
+        ]));
+        $costWith3Decimals->assertRedirect(route('products.create'));
+        $costWith3Decimals->assertSessionHasErrors('reference_cost');
+
+        $priceWith3Decimals = $this->from(route('products.create'))->post(route('products.store'), $this->validPayload([
+            'barcode' => '7791234599010',
+            'type' => ProductType::DISH->value,
+            'sale_price' => 3000.999,
+        ]));
+        $priceWith3Decimals->assertRedirect(route('products.create'));
+        $priceWith3Decimals->assertSessionHasErrors('sale_price');
+
+        $validPriceTwoDecimals = $this->post(route('products.store'), $this->validPayload([
+            'barcode' => '7791234599011',
+            'type' => ProductType::DISH->value,
+            'reference_cost' => 1000.50,
+            'sale_price' => 2000.75,
+        ]));
+        $validPriceTwoDecimals->assertRedirect(route('products.index'));
+    }
 }
