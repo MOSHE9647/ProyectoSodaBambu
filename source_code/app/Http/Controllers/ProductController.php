@@ -24,11 +24,11 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->wantsJson()) {
-            return Product::all(['id', 'name', 'sale_price']);
+        if ($request->ajax()) {
+            return DataTables::of(Product::with('category'))->toJson();
         }
 
-        return view('models.product.index');
+        return view('models.products.index');
     }
 
     /**

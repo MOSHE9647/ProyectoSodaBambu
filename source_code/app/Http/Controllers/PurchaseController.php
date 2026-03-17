@@ -14,6 +14,33 @@ class PurchaseController extends Controller
     public function index(Request $request)
     {
         if ($request->wantsJson()) {
+
+            // Reporte: productos/insumos suministrados por un proveedor
+            if ($request->has('report') && $request->has('supplier_id')) {
+                $supplier = Supplier::findOrFail($request->supplier_id);
+
+                $items = \App\Models\PurchaseDetail::query()
+                    ->whereHas('purchase', fn($q) => $q->where('supplier_id', $supplier->id))
+                    ->with('purchasable')
+                    ->get()
+                    ->groupBy(fn($d) => $d->purchasable_type . '|' . $d->purchasable_id)
+                    ->map(function ($group) {
+                        $first = $group->first();
+                        return [
+                            'type'  => class_basename($first->purchasable_type) === 'Product' ? 'Producto' : 'Insumo',
+                            'name'  => $first->purchasable->name ?? 'N/A',
+                            'times' => $group->count(),
+                        ];
+                    })
+                    ->values();
+
+                return response()->json([
+                    'supplier' => $supplier->name,
+                    'items'    => $items,
+                ]);
+            }
+
+            // DataTable normal
             $columns = [
                 'id', 'invoice_number', 'supplier_id', 'date', 'total', 'payment_status'
             ];
@@ -22,12 +49,12 @@ class PurchaseController extends Controller
 
             if ($request->has('search') && !empty($request->search['value'])) {
                 $search = $request->search['value'];
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('invoice_number', 'like', "%$search%")
                       ->orWhere('date', 'like', "%$search%")
                       ->orWhere('total', 'like', "%$search%")
                       ->orWhere('payment_status', 'like', "%$search%")
-                      ->orWhereHas('supplier', function($sq) use ($search) {
+                      ->orWhereHas('supplier', function ($sq) use ($search) {
                           $sq->where('name', 'like', "%$search%");
                       });
                 });
@@ -54,7 +81,8 @@ class PurchaseController extends Controller
                     return [
                         'id'             => $purchase->id,
                         'invoice_number' => $purchase->invoice_number,
-                        'supplier'       => ['name' => $purchase->supplier->name],
+                        'supplier_id'    => $purchase->supplier_id,
+                        'supplier'       => ['name' => $purchase->supplier->name ?? 'N/A'],
                         'date'           => $purchase->date->format('Y-m-d'),
                         'total'          => $purchase->total,
                         'payment_status' => $purchase->payment_status->value,

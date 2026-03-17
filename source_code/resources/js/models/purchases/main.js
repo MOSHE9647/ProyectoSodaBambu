@@ -9,14 +9,14 @@ const BTN_CLASS_PRIMARY = 'btn-primary';
 const MODEL_ROUTES = {
     index:  route('purchases.index'),
     create: route('purchases.create'),
-    show:   route('purchases.show', { purchase: ':id' }),
-    edit:   route('purchases.edit', { purchase: ':id' }),
+    show:   route('purchases.show',    { purchase: ':id' }),
+    edit:   route('purchases.edit',    { purchase: ':id' }),
     delete: route('purchases.destroy', { purchase: ':id' }),
 };
 
-window.SwalToast = SwalToast;
+window.SwalToast             = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
-window.toggleLoadingState = toggleLoadingState;
+window.toggleLoadingState    = toggleLoadingState;
 
 window.showPurchaseInfo = function (url, anchor) {
     return showModelInfo(url, anchor, MODEL_NAME);
@@ -26,22 +26,84 @@ window.deletePurchase = function (e) {
     return deleteModel(e, MODEL_NAME);
 };
 
+window.showSupplierItems = function (supplierId, supplierName) {
+    const modal      = new bootstrap.Modal(document.getElementById('supplierItemsModal'));
+    const $loading   = $('#supplier-items-loading');
+    const $content   = $('#supplier-items-content');
+    const $empty     = $('#supplier-items-empty');
+    const $tbody     = $('#supplier-items-tbody');
+    const $modalName = $('#modal-supplier-name');
+
+    $loading.removeClass('d-none');
+    $content.addClass('d-none');
+    $empty.addClass('d-none');
+    $tbody.empty();
+    $modalName.text(supplierName);
+
+    modal.show();
+
+    $.ajax({
+        url:     MODEL_ROUTES.index,
+        method:  'GET',
+        data:    { supplier_id: supplierId, report: 1 },
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        success: function (data) {
+            $loading.addClass('d-none');
+
+            if (!data.items || data.items.length === 0) {
+                $empty.removeClass('d-none');
+                return;
+            }
+
+            data.items.forEach(item => {
+                const badgeClass = item.type === 'Producto' ? 'bg-success' : 'bg-info text-dark';
+                $tbody.append(`
+                    <tr>
+                        <td><span class="badge ${badgeClass}">${item.type}</span></td>
+                        <td>${item.name}</td>
+                        <td class="text-center">${item.times}</td>
+                    </tr>
+                `);
+            });
+
+            $content.removeClass('d-none');
+        },
+        error: function () {
+            $loading.addClass('d-none');
+            SwalToast.fire({ icon: 'error', text: 'No se pudo cargar la información del proveedor.' });
+        }
+    });
+};
+
 $(() => {
     const columns = [
         { data: 'invoice_number', name: 'invoice_number', title: 'N° Factura' },
-        { data: 'supplier.name', name: 'supplier.name', title: 'Proveedor', render: (data) => data || 'N/A' },
-        { data: 'date', name: 'date', title: 'Fecha', render: (data) => data ? new Date(data).toLocaleDateString('es-ES') : '' },
-        { data: 'total', name: 'total', title: 'Total', render: (data) => `$${parseFloat(data).toFixed(2)}` },
+        {
+            data: 'supplier',
+            name: 'supplier.name',
+            title: 'Proveedor',
+            render: (data, type, row) => {
+                if (!data?.name) return 'N/A';
+                return `<a href="javascript:void(0)"
+                           class="text-decoration-none fw-semibold"
+                           onclick="showSupplierItems(${row.supplier_id}, '${data.name.replace(/'/g, "\\'")}')"
+                           title="Ver productos/insumos de este proveedor">
+                           <i class="bi bi-truck me-1"></i>${data.name}
+                        </a>`;
+            }
+        },
+        { data: 'date',  name: 'date',  title: 'Fecha',  render: (data) => data ? new Date(data).toLocaleDateString('es-ES') : '' },
+        { data: 'total', name: 'total', title: 'Total',  render: (data) => `$${parseFloat(data).toFixed(2)}` },
         {
             data: 'payment_status',
             name: 'payment_status',
             title: 'Estado de Pago',
             render: (data) => {
                 const badgeClass = {
-                    'Completo': 'bg-success',
-                    'Parcial': 'bg-warning text-dark',
+                    'Completo':  'bg-success',
+                    'Parcial':   'bg-warning text-dark',
                     'Pendiente': 'bg-secondary',
-                    'Anulado': 'bg-danger'
+                    'Anulado':   'bg-danger'
                 }[data] || 'bg-light text-dark';
                 return `<span class="badge ${badgeClass}">${data}</span>`;
             }
@@ -50,34 +112,34 @@ $(() => {
 
     const actions = {
         show: {
-            route: MODEL_ROUTES.show,
-            func: window.showPurchaseInfo,
+            route:    MODEL_ROUTES.show,
+            func:     window.showPurchaseInfo,
             funcName: 'showPurchaseInfo',
-            tooltip: 'Ver detalles'
+            tooltip:  'Ver detalles'
         },
         edit: {
-            route: MODEL_ROUTES.edit,
-            func: toggleLoadingState,
+            route:    MODEL_ROUTES.edit,
+            func:     toggleLoadingState,
             funcName: 'toggleLoadingState',
-            tooltip: `Editar ${MODEL_NAME}`
+            tooltip:  `Editar ${MODEL_NAME}`
         },
         delete: {
-            route: MODEL_ROUTES.delete,
-            tooltip: `Eliminar ${MODEL_NAME}`,
-            func: window.deletePurchase,
+            route:    MODEL_ROUTES.delete,
+            tooltip:  `Eliminar ${MODEL_NAME}`,
+            func:     window.deletePurchase,
             funcName: 'deletePurchase',
         }
     };
 
     const customButtons = [
         {
-            text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
-            href: MODEL_ROUTES.create,
-            class: `create-button ${BTN_CLASS_PRIMARY}`,
-            icon: 'bi-plus-circle-fill',
-            func: toggleLoadingState,
+            text:     `Crear ${capitalizeSentence(MODEL_NAME)}`,
+            href:     MODEL_ROUTES.create,
+            class:    `create-button ${BTN_CLASS_PRIMARY}`,
+            icon:     'bi-plus-circle-fill',
+            func:     toggleLoadingState,
             funcName: 'toggleLoadingState',
-            params: ['.create-button', 'create', true],
+            params:   ['.create-button', 'create', true],
         }
     ];
 
