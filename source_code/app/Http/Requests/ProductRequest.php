@@ -49,6 +49,18 @@ class ProductRequest extends FormRequest
     {
         $isMerchandise = $this->input('type') === ProductType::MERCHANDISE->value;
 
+        $saleRules = [
+            Rule::requiredIf(!$isMerchandise),
+            'nullable',
+            'numeric',
+            'min:0',
+            'regex:/^\d+(\.\d{1,2})?$/',
+        ];
+
+        if (!$isMerchandise) {
+            $saleRules[] = 'gt:reference_cost';
+        }
+
         return [
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'barcode' => [
@@ -62,10 +74,24 @@ class ProductRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', new Enum(ProductType::class)],
             'has_inventory' => ['required', 'boolean'],
-            'reference_cost' => ['required', 'numeric', 'min:0'],
-            'tax_percentage' => ['required', 'numeric', 'min:0', 'max:1'],
-            'margin_percentage' => ['required', 'numeric', 'min:0', 'max:1'],
-            'sale_price' => [Rule::requiredIf(!$isMerchandise), 'nullable', 'numeric', 'min:0'],
+            'reference_cost' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'tax_percentage' => ['required', 'numeric', 'min:0', 'max:1', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'margin_percentage' => ['required', 'numeric', 'min:0', 'max:1', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'sale_price' => $saleRules,
+        ];
+    }
+
+    /**
+     * Get custom validation messages.
+     */
+    public function messages(): array
+    {
+        return [
+            'reference_cost.regex' => 'El costo de referencia debe tener máximo 2 decimales.',
+            'tax_percentage.regex' => 'El impuesto debe tener máximo 2 decimales.',
+            'margin_percentage.regex' => 'El margen debe tener máximo 2 decimales.',
+            'sale_price.regex' => 'El precio de venta debe tener máximo 2 decimales.',
+            'sale_price.gt' => 'El precio de venta debe ser mayor al costo de referencia.',
         ];
     }
 

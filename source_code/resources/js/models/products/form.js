@@ -77,6 +77,39 @@ function syncSalePriceBehavior() {
     $salePrice.val(salePrice.toFixed(2));
 }
 
+function validateSalePriceVsCost() {
+    const $salePrice = $('#sale_price');
+    const $referenceCost = $('#reference_cost');
+    const salePrice = parseFloat($salePrice.val());
+    const referenceCost = parseFloat($referenceCost.val());
+
+    if (isNaN(salePrice) || isNaN(referenceCost)) {
+        return true;
+    }
+
+    return salePrice > referenceCost;
+}
+
+function validateMarginWarning() {
+    const marginPercentage = normalizePercentage($('#margin_percentage').val());
+
+    if (isNaN(marginPercentage)) {
+        return;
+    }
+
+    const $marginWarning = $('#margin-warning');
+
+    if (marginPercentage < 0.10) {
+        if (!$marginWarning.length) {
+            $('#margin_percentage').after(
+                '<small id="margin-warning" class="text-warning d-block mt-1">⚠ Margen bajo (< 10%). Considere aumentarlo.</small>'
+            );
+        }
+    } else {
+        $marginWarning.remove();
+    }
+}
+
 const fieldValidators = {
     barcode: {
         validator: validateName,
@@ -99,9 +132,13 @@ const fieldValidators = {
         invalidMsg: 'Seleccione una opcion valida para inventario.'
     },
     sale_price: {
-        validator: validateNonNegativeAmount,
+        validator: (value) => {
+            if (!validateNonNegativeAmount(value)) return false;
+            if (isMerchandiseSelected()) return true;
+            return validateSalePriceVsCost();
+        },
         emptyMsg: 'El precio de venta es obligatorio.',
-        invalidMsg: 'Ingrese un precio de venta valido mayor o igual a 0.'
+        invalidMsg: 'Ingrese un precio de venta mayor al costo de referencia.'
     },
     tax_percentage: {
         validator: validateDecimalPercentage,
@@ -171,6 +208,7 @@ function submitProductForm() {
  */
 $(document).on('input change', `#${FORM_ID}`, function (e) {
     syncSalePriceBehavior();
+    validateMarginWarning();
 
     const $target = $(e.target);
     const fieldId = $target.attr('id');
@@ -209,4 +247,5 @@ $(document).on('submit', `#${FORM_ID}`, (e) => {
 
 $(document).ready(() => {
     syncSalePriceBehavior();
+    validateMarginWarning();
 });
