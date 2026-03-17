@@ -30,11 +30,11 @@ class Supplier extends Model
 	 *
 	 * @return array<string, string>
 	 */
-	protected $casts = [
-		'created_at' => CostaRicaDatetime::class,
-		'updated_at' => CostaRicaDatetime::class,
-		'deleted_at' => CostaRicaDatetime::class,
-	];
+	// protected $casts = [
+	// 	'created_at' => CostaRicaDatetime::class,
+	// 	'updated_at' => CostaRicaDatetime::class,
+	// 	'deleted_at' => CostaRicaDatetime::class,
+	// ];
 
 	/**
 	 * Get the purchases for the supplier.
