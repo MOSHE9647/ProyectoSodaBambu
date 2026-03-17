@@ -27,6 +27,10 @@
 					/>
 				</div>
 			@endfor
+			{{-- 
+				Stat Card Component - Minimum Stock Products
+				Displays a statistical card showing the count of products that are at minimum stock levels.	
+			--}}
 			<div class="col">
 				<x-stat-card
 					title="Stock minimo"
