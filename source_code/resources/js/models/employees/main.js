@@ -327,8 +327,23 @@ async function loadTab(tabId) {
 	const url = container?.dataset?.url;
 	if (!container || !url) return;
 
-	container.innerHTML =
-		'<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i><span>Cargando contenido...</span></div>';
+	const isSalaryTab = tabId === TAB_IDS.salary;
+	const renderTabContent = (content) => {
+		if (!isSalaryTab) return content;
+		return `
+			<div class="card-container rounded-2 p-4">
+				<h5 class="text-muted pb-3 border-bottom border-secondary">
+					<i class="bi bi-currency-dollar me-3"></i>
+					Calcular Salario por Colaborador
+				</h5>
+				${content}
+			</div>
+		`;
+	};
+
+	container.innerHTML = renderTabContent(
+		'<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i><span>Cargando contenido...</span></div>',
+	);
 
 	try {
 		const response = await fetch(url, {
@@ -342,8 +357,9 @@ async function loadTab(tabId) {
 		if (tabId === TAB_IDS.attendance) initAttendanceForm();
 		if (tabId === TAB_IDS.history) initHistoryTab();
 	} catch (error) {
-		container.innerHTML =
-			'<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo cargar el contenido de esta pestaña. Inténtalo de nuevo.</span></div>';
+		container.innerHTML = renderTabContent(
+			'<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo cargar el contenido de esta pestaña. Inténtalo de nuevo.</span></div>',
+		);
 		console.error(error);
 	}
 }

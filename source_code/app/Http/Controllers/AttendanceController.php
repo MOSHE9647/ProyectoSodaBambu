@@ -250,7 +250,9 @@ class AttendanceController extends Controller implements HasMiddleware
 	 */
 	private function salaryTab(): View
 	{
-		return view('models.employees.tabs.salary');
+		$employees = Employee::with(['user', 'timesheets'])->get();
+		$employee = $employees->get(0);
+		return view('models.employees.tabs.salary', compact('employees', 'employee'));
 	}
 
 }

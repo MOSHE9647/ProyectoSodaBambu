@@ -9,7 +9,7 @@
     <div class="row g-3 mt-1">
         {{-- Employee --}}
         @php
-            $oldEmployeeId = old('employee_id', $userEmployeeId ?? '');
+            $oldEmployeeId = old('employee_id', '');
         @endphp
         <div class="col-6">
             <x-form.select
@@ -20,12 +20,12 @@
                 :iconLeft="'bi bi-person'" 
                 :required="true"
             >
-                Empleado <span class="text-danger">*</span>
+                Colaborador <span class="text-danger">*</span>
                 <x-slot:options>
-                    <option value="-1">Seleccionar empleado...</option>
+                    <option value="-1">Seleccionar colaborador...</option>
                     @foreach ($employees as $employee)
                     <option value="{{ $employee->id }}" {{ $oldEmployeeId === $employee->id ? 'selected' : '' }}>
-                        {{ $employee->user?->name ?? 'Empleado sin nombre' }}
+                        {{ $employee->user?->name ?? 'Colaborador sin nombre' }}
                     </option>
                     @endforeach
                 </x-slot:options>
