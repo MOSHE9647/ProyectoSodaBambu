@@ -7,12 +7,15 @@ import {
 } from '../../utils/validation.js';
 import { setLoadingState } from '../../utils/utils.js';
 
+// ==================== Environment Checks ====================
+
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
     throw new Error('This script requires jQuery');
 }
 
-// Constants and Variables
+// ==================== Constants ====================
+
 const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
 const FORM_ID = IS_EDITING ? 'edit-category-form' : 'create-category-form';
 
@@ -24,7 +27,7 @@ const fieldValidators = {
     }
 };
 
-// Validation Functions
+// ==================== Validation Functions ====================
 
 /**
  * Validates the category form fields.
@@ -40,7 +43,7 @@ function validateCategoryForm(values) {
     );
 }
 
-// UI Manipulation Functions
+// ==================== UI Manipulation Functions ====================
 
 /**
  * Handles the form submission process.
@@ -59,7 +62,7 @@ function submitCategoryForm() {
     return validateCategoryForm(values);
 }
 
-// Event Listeners
+// ==================== Event Listeners ====================
 
 /**
  * Real-time validation for category form fields.
