@@ -72,7 +72,6 @@
 
                 <div class="row">
                     <div class="col-12">
-                        {{-- Botón que abre el offcanvas --}}
                         <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="offcanvas"
                             data-bs-target="#offcanvasSupplier">
                             <i class="bi bi-plus-circle"></i> + Nuevo proveedor
@@ -86,6 +85,16 @@
                 <h5 class="text-muted pb-3 border-bottom border-secondary">
                     <i class="bi bi-box-seam me-3"></i> Productos comprados
                 </h5>
+
+                {{-- Botones para crear producto/insumo rápidamente --}}
+                <div class="d-flex gap-2 mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="offcanvas" data-bs-target="#offcanvasProduct">
+                        <i class="bi bi-plus-circle"></i> Nuevo Producto
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSupply">
+                        <i class="bi bi-plus-circle"></i> Nuevo Insumo
+                    </button>
+                </div>
 
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover" id="details-table">
@@ -111,8 +120,8 @@
                                     ])
                                 @endforeach
                             @else
-                                <tr class="detail-row">
-                                    <td colspan="7" class="text-center">No hay productos agregados.</td>
+                                <tr id="empty-details-row">
+                                    <td colspan="7" class="text-center text-muted fst-italic">No hay productos agregados.</td>
                                 </tr>
                             @endif
                         </tbody>
@@ -129,7 +138,6 @@
                     </div>
                 </div>
 
-                {{-- Campo oculto para el total --}}
                 <input type="hidden" name="total" id="total" value="0.00" />
             </section>
 
@@ -161,7 +169,6 @@
                 <input type="text" class="form-control" id="quick-name" name="name" required>
                 <div class="invalid-feedback" id="quick-name-error"></div>
             </div>
-
             <div class="mb-3">
                 <label for="quick-phone" class="form-label">Teléfono <span class="text-danger">*</span></label>
                 <div class="input-group">
@@ -171,13 +178,11 @@
                 </div>
                 <div class="invalid-feedback" id="quick-phone-error"></div>
             </div>
-
             <div class="mb-3">
                 <label for="quick-email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
                 <input type="email" class="form-control" id="quick-email" name="email" required>
                 <div class="invalid-feedback" id="quick-email-error"></div>
             </div>
-
             <div class="d-flex justify-content-end gap-2">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancelar</button>
                 <button type="submit" class="btn btn-primary" id="quick-supplier-submit">
@@ -189,11 +194,108 @@
     </div>
 </div>
 
-{{-- Script para pasar el índice de detalles a JavaScript --}}
+{{-- Offcanvas para crear producto rápidamente --}}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasProduct" aria-labelledby="offcanvasProductLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasProductLabel">Crear nuevo producto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form id="quick-product-form" action="{{ route('products.store') }}" method="POST">
+            @csrf
+            <div class="mb-3">
+                <label for="quick-product-category" class="form-label">Categoría <span class="text-danger">*</span></label>
+                <select class="form-select" id="quick-product-category" name="category_id" required>
+                    <option value="">Seleccionar categoría</option>
+                </select>
+                <div class="invalid-feedback" id="quick-product-category-error"></div>
+            </div>
+            <div class="mb-3">
+                <label for="quick-product-name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="quick-product-name" name="name" required>
+                <div class="invalid-feedback" id="quick-product-name-error"></div>
+            </div>
+            <div class="mb-3">
+                <label for="quick-product-type" class="form-label">Tipo <span class="text-danger">*</span></label>
+                <select class="form-select" id="quick-product-type" name="type" required>
+                    <option value="">Seleccionar tipo</option>
+                    @foreach(App\Enums\ProductType::cases() as $type)
+                        <option value="{{ $type->value }}">{{ $type->name }}</option>
+                    @endforeach
+                </select>
+                <div class="invalid-feedback" id="quick-product-type-error"></div>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="quick-product-has-inventory" name="has_inventory" value="1">
+                <label class="form-check-label" for="quick-product-has-inventory">¿Maneja inventario?</label>
+            </div>
+            <div class="mb-3">
+                <label for="quick-product-reference-cost" class="form-label">Costo de referencia</label>
+                <input type="number" step="0.01" class="form-control" id="quick-product-reference-cost" name="reference_cost">
+                <div class="invalid-feedback" id="quick-product-reference-cost-error"></div>
+            </div>
+            <div class="mb-3">
+                <label for="quick-product-tax-percentage" class="form-label">Porcentaje de impuesto</label>
+                <input type="number" step="0.01" class="form-control" id="quick-product-tax-percentage" name="tax_percentage">
+                <div class="invalid-feedback" id="quick-product-tax-percentage-error"></div>
+            </div>
+            <div class="mb-3">
+                <label for="quick-product-margin-percentage" class="form-label">Porcentaje de margen</label>
+                <input type="number" step="0.01" class="form-control" id="quick-product-margin-percentage" name="margin_percentage">
+                <div class="invalid-feedback" id="quick-product-margin-percentage-error"></div>
+            </div>
+            <div class="mb-3">
+                <label for="quick-product-sale-price" class="form-label">Precio de venta</label>
+                <input type="number" step="0.01" class="form-control" id="quick-product-sale-price" name="sale_price">
+                <div class="invalid-feedback" id="quick-product-sale-price-error"></div>
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancelar</button>
+                <button type="submit" class="btn btn-success" id="quick-product-submit">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="quick-product-spinner"></span>
+                    Guardar producto
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Offcanvas para crear insumo rápidamente --}}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasSupply" aria-labelledby="offcanvasSupplyLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasSupplyLabel">Crear nuevo insumo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form id="quick-supply-form" action="{{ route('supplies.store') }}" method="POST">
+            @csrf
+            <div class="mb-3">
+                <label for="quick-supply-name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="quick-supply-name" name="name" required>
+                <div class="invalid-feedback" id="quick-supply-name-error"></div>
+            </div>
+            <div class="mb-3">
+                <label for="quick-supply-measure-unit" class="form-label">Unidad de medida <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="quick-supply-measure-unit" name="measure_unit" required placeholder="Ej: kg, litro, unidad">
+                <div class="invalid-feedback" id="quick-supply-measure-unit-error"></div>
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancelar</button>
+                <button type="submit" class="btn btn-info" id="quick-supply-submit">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="quick-supply-spinner"></span>
+                    Guardar insumo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     window.detailIndex = {{ isset($purchase) ? $purchase->details->count() : 0 }};
+    window.products = @json($products->map(fn($p) => ['id' => $p->id, 'name' => $p->name, 'price' => $p->sale_price ?? 0]));
+    window.supplies = @json($supplies->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'price' => 0]));
+    window.categoriesIndexUrl = "{{ route('categories.index') }}";
 </script>
-
 @section('scripts')
     @vite(['resources/js/models/purchases/form.js'])
 @endsection

@@ -7,10 +7,33 @@ import {
 import { setLoadingState } from '../../utils/utils.js';
 import { fetchWithErrorHandling } from '../../utils/error-handling.js';
 
-// Variables para detalles (tomada de window definido en la vista)
 let detailIndex = window.detailIndex || 0;
+let productsList = window.products || [];
+let suppliesList = window.supplies || [];
 
-// Función para recalcular total
+function populateSelect(selectElement, type) {
+    const list = type === 'product' ? productsList : suppliesList;
+    selectElement.empty().append('<option value="">Seleccionar</option>');
+    list.forEach(item => {
+        selectElement.append(`<option value="${item.id}" data-price="${item.price}">${item.name}</option>`);
+    });
+}
+
+function refreshAllSelectsOfType(type) {
+    $(`.detail-row`).each(function() {
+        const rowType = $(this).find('.purchasable-type').val();
+        if (rowType === type) {
+            const select = $(this).find('.purchasable-id');
+            populateSelect(select, type);
+        }
+    });
+}
+
+function toggleEmptyRow() {
+    const hasRows = $('#details-container .detail-row').length > 0;
+    $('#empty-details-row').toggle(!hasRows);
+}
+
 function recalcTotal() {
     let total = 0;
     $('#details-container .detail-row').each(function() {
@@ -20,11 +43,10 @@ function recalcTotal() {
         $(this).find('.subtotal').text(subtotal.toFixed(2));
         total += subtotal;
     });
-    $('#total, #total-display').text(total.toFixed(2));
+    $('#total-display').text(total.toFixed(2));
     $('#total').val(total.toFixed(2));
 }
 
-// Agregar fila
 $('#add-detail').on('click', function() {
     const index = detailIndex++;
     const template = `
@@ -58,37 +80,27 @@ $('#add-detail').on('click', function() {
         </tr>
     `;
     $('#details-container').append(template);
+    const newRow = $('#details-container tr').last();
+    populateSelect(newRow.find('.purchasable-id'), 'product');
+    toggleEmptyRow();
     recalcTotal();
 });
 
-// Eliminar fila
 $(document).on('click', '.remove-detail', function() {
     $(this).closest('tr').remove();
+    toggleEmptyRow();
     recalcTotal();
 });
 
-// Cambiar tipo (producto/insumo) -> recargar opciones
 $(document).on('change', '.purchasable-type', function() {
     const row = $(this).closest('tr');
     const type = $(this).val();
-    const selectId = row.find('.purchasable-id');
-    selectId.empty().append('<option value="">Seleccionar</option>');
-    
-    // Aquí deberías cargar los datos según el tipo (AJAX o datos precargados)
-    let options = [];
-    if (type === 'product') {
-        // options = @json($products->map(fn($p) => ['id' => $p->id, 'name' => $p->name, 'price' => $p->price]));
-    } else {
-        // options = @json($supplies->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'price' => $s->price]));
-    }
-    
-    options.forEach(item => {
-        selectId.append(`<option value="${item.id}" data-price="${item.price}">${item.name}</option>`);
-    });
+    const select = row.find('.purchasable-id');
+    populateSelect(select, type);
     row.find('.unit-price').val('');
+    recalcTotal();
 });
 
-// Al seleccionar un item, auto-completar precio
 $(document).on('change', '.purchasable-id', function() {
     const row = $(this).closest('tr');
     const price = $(this).find('option:selected').data('price');
@@ -98,40 +110,38 @@ $(document).on('change', '.purchasable-id', function() {
     recalcTotal();
 });
 
-// Recalcular al cambiar cantidad o precio
 $(document).on('input', '.quantity, .unit-price', function() {
     recalcTotal();
 });
 
-// Validación del formulario principal
 function submitPurchaseForm() {
-    clearAllFieldErrors(fieldValidators);
-
     const $invoice = $('#invoice_number');
     const $date = $('#date');
     const $supplier = $('#supplier_id');
     const $payment = $('#payment_status');
 
-    const values = {
-        invoice_number: $invoice.val().trim(),
-        date: $date.val(),
-        supplier_id: $supplier.val(),
-        payment_status: $payment.val()
-    };
-
-    // Aquí debes tener tu función de validación para los campos principales
-    // if (!validatePurchaseForm(values)) return false;
-
-    // Validar que haya al menos un detalle
-    if ($('#details-container .detail-row').length === 0) {
-        SwalToast.fire({
-            icon: 'error',
-            text: 'Debe agregar al menos un producto/insumo.'
-        });
+    if (!$invoice.val().trim()) {
+        SwalToast.fire({ icon: 'error', text: 'El número de factura es obligatorio.' });
+        return false;
+    }
+    if (!$date.val()) {
+        SwalToast.fire({ icon: 'error', text: 'La fecha es obligatoria.' });
+        return false;
+    }
+    if (!$supplier.val()) {
+        SwalToast.fire({ icon: 'error', text: 'Debe seleccionar un proveedor.' });
+        return false;
+    }
+    if (!$payment.val()) {
+        SwalToast.fire({ icon: 'error', text: 'Debe seleccionar un estado de pago.' });
         return false;
     }
 
-    // Validar cada detalle
+    if ($('#details-container .detail-row').length === 0) {
+        SwalToast.fire({ icon: 'error', text: 'Debe agregar al menos un producto/insumo.' });
+        return false;
+    }
+
     let valid = true;
     $('#details-container .detail-row').each(function() {
         const purchasableId = $(this).find('.purchasable-id').val();
@@ -160,7 +170,6 @@ function submitPurchaseForm() {
     return valid;
 }
 
-// Envío del formulario principal
 $(document).on('submit', 'form[id$="-purchase-form"]', (e) => {
     e.preventDefault();
     const formId = e.currentTarget.id;
@@ -174,10 +183,9 @@ $(document).on('submit', 'form[id$="-purchase-form"]', (e) => {
 });
 
 // --------------------------------------------------------------
-// Quick supplier creation via offcanvas
+// Quick supplier creation
 // --------------------------------------------------------------
 
-// Validación en tiempo real para el teléfono: solo dígitos, máximo 8
 $('#quick-phone').on('input', function() {
     this.value = this.value.replace(/\D/g, '').slice(0, 8);
 });
@@ -188,19 +196,13 @@ $(document).on('submit', '#quick-supplier-form', async function(e) {
     const $form = $(this);
     const $submitBtn = $('#quick-supplier-submit');
     const $spinner = $('#quick-supplier-spinner');
-    const url = $form.attr('action'); // route('suppliers.store')
+    const url = $form.attr('action');
 
-    // Limpiar errores previos
     $form.find('.is-invalid').removeClass('is-invalid');
     $form.find('.invalid-feedback').text('');
 
-    // Mostrar estado de carga
     $submitBtn.prop('disabled', true);
     $spinner.removeClass('d-none');
-
-    // Concatenar el prefijo +506 al teléfono antes de enviar
-    const phoneInput = $('#quick-phone');
-    const rawPhone = phoneInput.val().replace(/\D/g, ''); // solo dígitos
 
     try {
         const response = await fetch(url, {
@@ -214,31 +216,27 @@ $(document).on('submit', '#quick-supplier-form', async function(e) {
 
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('La respuesta no es JSON. Posible redirección.');
+            throw new Error('La respuesta no es JSON.');
         }
 
         const data = await response.json();
 
         if (data.success) {
-            // Agregar nuevo proveedor al select
             const $select = $('#supplier_id');
             const newOption = new Option(data.supplier.name, data.supplier.id, true, true);
             $select.append(newOption).trigger('change');
 
-            // Cerrar offcanvas y resetear formulario
             const offcanvasEl = document.getElementById('offcanvasSupplier');
             const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
             if (offcanvas) offcanvas.hide();
             
             $form[0].reset();
 
-            // Mostrar mensaje de éxito
             SwalToast.fire({
                 icon: 'success',
                 text: 'Proveedor creado correctamente.'
             });
         } else {
-            // Mostrar errores de validación
             if (data.errors) {
                 $.each(data.errors, function(field, messages) {
                     const $input = $(`#quick-${field}`);
@@ -256,7 +254,7 @@ $(document).on('submit', '#quick-supplier-form', async function(e) {
         console.error('Error en la petición:', error);
         SwalToast.fire({
             icon: 'error',
-            text: 'Ocurrió un error inesperado. Verifica la consola.'
+            text: 'Ocurrió un error inesperado.'
         });
     } finally {
         $submitBtn.prop('disabled', false);
@@ -264,9 +262,210 @@ $(document).on('submit', '#quick-supplier-form', async function(e) {
     }
 });
 
-// Resetear formulario al cerrar el offcanvas
-$('#offcanvasSupplier').on('hidden.bs.offcanvas', function() {
-    $('#quick-supplier-form')[0].reset();
-    $('#quick-supplier-form').find('.is-invalid').removeClass('is-invalid');
-    $('#quick-supplier-form').find('.invalid-feedback').text('');
+// --------------------------------------------------------------
+// Quick product creation
+// --------------------------------------------------------------
+
+function loadCategories() {
+    const $categorySelect = $('#quick-product-category');
+    $categorySelect.prop('disabled', true).empty().append('<option value="">Cargando categorías...</option>');
+
+    $.ajax({
+        url: window.categoriesIndexUrl,
+        method: 'GET',
+        data: { simple: 1 },
+        dataType: 'json',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        success: function(data) {
+            $categorySelect.empty().append('<option value="">Seleccionar categoría</option>');
+            $.each(data, function(i, cat) {
+                $categorySelect.append(`<option value="${cat.id}">${cat.name}</option>`);
+            });
+        },
+        error: function(xhr) {
+            console.error('Error cargando categorías:', xhr.status, xhr.responseText);
+            $categorySelect.empty().append('<option value="">Error al cargar</option>');
+            SwalToast.fire({
+                icon: 'error',
+                text: 'No se pudieron cargar las categorías. Intente de nuevo.'
+            });
+        },
+        complete: function() {
+            $categorySelect.prop('disabled', false);
+        }
+    });
+}
+
+document.addEventListener('show.bs.offcanvas', function(e) {
+    if (e.target && e.target.id === 'offcanvasProduct') {
+        loadCategories();
+    }
+});
+
+$('#quick-product-form').on('submit', async function(e) {
+    e.preventDefault();
+
+    const $form = $(this);
+    const $submitBtn = $('#quick-product-submit');
+    const $spinner = $('#quick-product-spinner');
+    const url = $form.attr('action');
+
+    $form.find('.is-invalid').removeClass('is-invalid');
+    $form.find('.invalid-feedback').text('');
+
+    $submitBtn.prop('disabled', true);
+    $spinner.removeClass('d-none');
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: new FormData($form[0]),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('La respuesta no es JSON.');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            productsList.push({
+                id: data.product.id,
+                name: data.product.name,
+                price: data.product.sale_price || 0
+            });
+            refreshAllSelectsOfType('product');
+
+            const offcanvasEl = document.getElementById('offcanvasProduct');
+            const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+            if (offcanvas) offcanvas.hide();
+
+            $form[0].reset();
+
+            SwalToast.fire({
+                icon: 'success',
+                text: 'Producto creado correctamente.'
+            });
+        } else {
+            if (data.errors) {
+                $.each(data.errors, function(field, messages) {
+                    const $input = $(`#quick-product-${field}`);
+                    $input.addClass('is-invalid');
+                    $(`#quick-product-${field}-error`).text(messages[0]);
+                });
+            } else {
+                SwalToast.fire({
+                    icon: 'error',
+                    text: data.message || 'Error al crear el producto.'
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error en la petición:', error);
+        SwalToast.fire({
+            icon: 'error',
+            text: 'Ocurrió un error inesperado.'
+        });
+    } finally {
+        $submitBtn.prop('disabled', false);
+        $spinner.addClass('d-none');
+    }
+});
+
+// --------------------------------------------------------------
+// Quick supply creation
+// --------------------------------------------------------------
+
+$('#quick-supply-form').on('submit', async function(e) {
+    e.preventDefault();
+
+    const $form = $(this);
+    const $submitBtn = $('#quick-supply-submit');
+    const $spinner = $('#quick-supply-spinner');
+    const url = $form.attr('action');
+
+    $form.find('.is-invalid').removeClass('is-invalid');
+    $form.find('.invalid-feedback').text('');
+
+    $submitBtn.prop('disabled', true);
+    $spinner.removeClass('d-none');
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: new FormData($form[0]),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('La respuesta no es JSON.');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            suppliesList.push({
+                id: data.supply.id,
+                name: data.supply.name,
+                price: 0
+            });
+            refreshAllSelectsOfType('supply');
+
+            const offcanvasEl = document.getElementById('offcanvasSupply');
+            const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+            if (offcanvas) offcanvas.hide();
+
+            $form[0].reset();
+
+            SwalToast.fire({
+                icon: 'success',
+                text: 'Insumo creado correctamente.'
+            });
+        } else {
+            if (data.errors) {
+                $.each(data.errors, function(field, messages) {
+                    const $input = $(`#quick-supply-${field}`);
+                    $input.addClass('is-invalid');
+                    $(`#quick-supply-${field}-error`).text(messages[0]);
+                });
+            } else {
+                SwalToast.fire({
+                    icon: 'error',
+                    text: data.message || 'Error al crear el insumo.'
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error en la petición:', error);
+        SwalToast.fire({
+            icon: 'error',
+            text: 'Ocurrió un error inesperado.'
+        });
+    } finally {
+        $submitBtn.prop('disabled', false);
+        $spinner.addClass('d-none');
+    }
+});
+
+$('#offcanvasProduct, #offcanvasSupply, #offcanvasSupplier').on('hidden.bs.offcanvas', function() {
+    let formId;
+    if (this.id === 'offcanvasProduct') formId = '#quick-product-form';
+    else if (this.id === 'offcanvasSupply') formId = '#quick-supply-form';
+    else formId = '#quick-supplier-form';
+    
+    $(formId)[0].reset();
+    $(formId).find('.is-invalid').removeClass('is-invalid');
+    $(formId).find('.invalid-feedback').text('');
 });

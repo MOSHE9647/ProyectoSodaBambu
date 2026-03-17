@@ -14,11 +14,11 @@
             <option value="">Seleccionar</option>
             @if($purchasableType == 'product')
                 @foreach($products as $product)
-                    <option value="{{ $product->id }}" data-price="{{ $product->price }}" {{ $purchasableId == $product->id ? 'selected' : '' }}>{{ $product->name }}</option>
+                    <option value="{{ $product->id }}" data-price="{{ $product->sale_price ?? 0 }}" {{ $purchasableId == $product->id ? 'selected' : '' }}>{{ $product->name }}</option>
                 @endforeach
             @else
                 @foreach($supplies as $supply)
-                    <option value="{{ $supply->id }}" data-price="{{ $supply->price }}" {{ $purchasableId == $supply->id ? 'selected' : '' }}>{{ $supply->name }}</option>
+                    <option value="{{ $supply->id }}" data-price="0" {{ $purchasableId == $supply->id ? 'selected' : '' }}>{{ $supply->name }}</option>
                 @endforeach
             @endif
         </select>

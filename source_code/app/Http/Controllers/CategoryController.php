@@ -20,25 +20,28 @@ class CategoryController extends Controller
      * Display a listing of the resource.
      *
      * @param Request $request
-     * @return Factory|View|JsonResponse|\Illuminate\View\View
+     * @return Factory|View|JsonResponse
      * @throws Exception
      */
     public function index(Request $request)
     {
-        // Handle AJAX request for DataTables
-        if ($request->ajax()) {
-            // Use query builder to keep DataTables server-side and memory efficient
+        // Lista simple para selects (no requiere ajax estricto)
+        if ($request->has('simple') && $request->wantsJson()) {
+            return response()->json(Category::select('id', 'name')->get());
+        }
+
+        // DataTables
+        if ($request->ajax() && $request->wantsJson()) {
             return DataTables::of(Category::query())->toJson();
         }
 
-        // For non-AJAX requests, return the view
         return view('models.category.index');
     }
 
     /**
      * Show the form for creating a new resource.
      *
-     * @return Factory|View|\Illuminate\View\View
+     * @return Factory|View
      */
     public function create()
     {
@@ -53,7 +56,7 @@ class CategoryController extends Controller
      * @throws Throwable
      */
     public function store(CategoryRequest $request)
-    {   
+    {
         $categoryData = $request->validated();
 
         $category = Category::withTrashed()->where('name', $categoryData['name'])->first();
@@ -75,7 +78,7 @@ class CategoryController extends Controller
      * Display the specified resource.
      *
      * @param Category $category
-     * @return Factory|View|\Illuminate\View\View
+     * @return Factory|View
      */
     public function show(Category $category)
     {
@@ -87,7 +90,7 @@ class CategoryController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param Category $category
-     * @return Factory|View|\Illuminate\View\View
+     * @return Factory|View
      */
     public function edit(Category $category)
     {

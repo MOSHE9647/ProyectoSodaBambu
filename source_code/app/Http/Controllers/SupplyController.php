@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\SupplyRequest; 
+use App\Http\Requests\SupplyRequest;
 use App\Http\Resources\SupplyResource;
 use App\Models\Supply;
 use Exception;
@@ -23,14 +23,14 @@ class SupplyController extends Controller
      * @return Factory|View|JsonResponse|\Illuminate\View\View
      * @throws Exception
      */
- public function index(Request $request)
-{
-    if ($request->ajax()) {
-        return DataTables::of(Supply::query())->toJson();
-    }
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            return DataTables::of(Supply::query())->toJson();
+        }
 
-    return view('models.supplies.index');
-}
+        return view('models.supplies.index');
+    }
     /**
      * Show the form for creating a new resource.
      *
@@ -61,7 +61,18 @@ class SupplyController extends Controller
             $supply->update($supplyData);
             $message = 'Insumo restaurado y actualizado correctamente.';
         } else {
-            Supply::create($supplyData);
+            $supply = Supply::create($supplyData);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'supply' => [
+                    'id'   => $supply->id,
+                    'name' => $supply->name,
+                ]
+            ]);
         }
 
         return redirect()->route('supplies.index')->with('success', $message);
