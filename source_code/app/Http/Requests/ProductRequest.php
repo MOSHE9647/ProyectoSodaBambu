@@ -25,6 +25,11 @@ class ProductRequest extends FormRequest
     {
         $type = $this->input('type');
         $isMerchandise = $type === ProductType::MERCHANDISE->value;
+        $requiresManualSalePrice = in_array($type, [
+            ProductType::DISH->value,
+            ProductType::DRINK->value,
+            ProductType::PACKAGED->value,
+        ], true);
         $marginInput = $this->input('margin_percentage');
         $barcode = $this->input('barcode');
 
@@ -40,14 +45,10 @@ class ProductRequest extends FormRequest
         $referenceCost = $this->input('reference_cost');
         $salePrice = $this->input('sale_price');
 
-        if ($type === ProductType::DRINK->value || $type === ProductType::PACKAGED->value) {
-            $salePrice = 0;
-        }
-
         $this->merge([
             'barcode' => $barcode === null || trim((string) $barcode) === '' ? null : trim((string) $barcode),
             'reference_cost' => $referenceCost === '' ? null : $referenceCost,
-            'sale_price' => $salePrice === '' ? null : $salePrice,
+            'sale_price' => $salePrice === '' ? ($requiresManualSalePrice ? '' : null) : $salePrice,
             'tax_percentage' => $isMerchandise ? $this->normalizePercentage($taxInput) : null,
             'margin_percentage' => $isMerchandise ? $this->normalizePercentage($marginInput) : null,
             'current_stock' => $this->input('current_stock') === '' ? null : $this->input('current_stock'),
@@ -63,6 +64,11 @@ class ProductRequest extends FormRequest
     public function rules(): array
     {
         $isMerchandise = $this->input('type') === ProductType::MERCHANDISE->value;
+        $requiresManualSalePrice = in_array($this->input('type'), [
+            ProductType::DISH->value,
+            ProductType::DRINK->value,
+            ProductType::PACKAGED->value,
+        ], true);
         $hasInventory = $this->boolean('has_inventory');
 
         $pricingRules = [
@@ -74,6 +80,7 @@ class ProductRequest extends FormRequest
         ];
 
         $saleRules = [
+            Rule::requiredIf($requiresManualSalePrice),
             'nullable',
             'numeric',
             'min:0',
@@ -169,6 +176,7 @@ class ProductRequest extends FormRequest
             'sale_price.numeric' => 'El precio de venta debe ser un número válido.',
             'sale_price.min' => 'El precio de venta no puede ser menor a 0.',
             'sale_price.regex' => 'El precio de venta debe tener máximo 2 decimales.',
+            'sale_price.required' => 'El precio de venta es obligatorio para Platillo, Bebida y Empaquetado.',
             'sale_price.gt' => 'El precio de venta debe ser mayor al costo de referencia.',
             'current_stock.integer' => 'El stock actual debe ser un número entero.',
             'current_stock.min' => 'El stock actual no puede ser menor a 0.',
