@@ -3,6 +3,7 @@
 @section('content')
     @include('models.products.form', [
         'action' => route('products.update', $product->id),
-        'product' => $product
+        'product' => $product,
+        'productStock' => $productStock ?? null,
     ])
 @endsection
