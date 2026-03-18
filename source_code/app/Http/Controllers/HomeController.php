@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
+use Illuminate\Support\Facades\Cache;
+use App\Models\ProductStock;
 
 class HomeController extends Controller
 {
@@ -28,8 +30,25 @@ class HomeController extends Controller
 	}
 
 	public function dashboard()
-	{
-		return view('dashboard');
+	{	
+
+		/**
+		 * Retrieves the count of products with stock levels at or below their minimum threshold.
+		 * 
+		 * The result is cached indefinitely to improve performance on subsequent requests.
+		 * The cache key is 'low_stock_count' and will persist until manually cleared.
+		 */
+		$totalMinStockProducts = Cache::rememberForever('low_stock_count', function () {
+        return \App\Models\ProductStock::whereRaw('current_stock <= minimum_stock')->count();
+    	});
+
+		$aboutToExpire = Cache::remember('about_to_expire_count', now()->addDay(), function () {
+			return \App\Models\PurchaseDetail::whereNotNull('expiration_date')
+				->whereBetween('expiration_date', [now()->startOfDay(), now()->addDays(7)->endOfDay()])
+				->count();
+		});
+
+		return view('dashboard', compact('aboutToExpire', 'totalMinStockProducts'));
 	}
 
 	public function sales()
