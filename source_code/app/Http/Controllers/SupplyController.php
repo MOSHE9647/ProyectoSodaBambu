@@ -41,24 +41,22 @@ class SupplyController extends Controller implements HasMiddleware
  public function index(Request $request)
 {
     if ($request->ajax()) {
-        $query = Supply::with(['purchaseDetails' => function($q) {
-            $q->latest(); 
-        }]);
+        $query = Supply::query();
 
         return DataTables::of($query)
             // aqui se le pasa la cantidad
             ->addColumn('quantity', function($supply) {
-                $last = $supply->purchaseDetails->first();
+                $last = $supply->purchaseDetails()->latest()->first();
                 return $last ? $last->quantity : 0;
             })
             // aqui se le pasa el precio
             ->addColumn('unit_price', function($supply) {
-                $last = $supply->purchaseDetails->first();
+                $last = $supply->purchaseDetails()->latest()->first();
                 return $last ? '₡' . number_format($last->unit_price, 2) : '₡0.00';
             })
             // aquis e le pasa al fecha de vencimento 
             ->addColumn('expiration_date', function($supply) {
-                $last = $supply->purchaseDetails->first();
+                $last = $supply->purchaseDetails()->latest()->first();
                 return ($last && $last->expiration_date) 
                     ? \Carbon\Carbon::parse($last->expiration_date)->format('d/m/Y') 
                     : 'N/A';
