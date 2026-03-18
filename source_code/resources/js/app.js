@@ -6,13 +6,20 @@ import $ from 'jquery';
 import ApexCharts from 'apexcharts';
 import * as bootstrap from 'bootstrap';
 import { applyTheme } from './utils/theme-toggler.js';
+import { SwalNotificationTypes, SwalToast } from "./utils/sweetalert.js";
 import { scrollToItem, checkScrollbarVisibility } from './utils/scrollbar.js';
 import { checkConnectionStatus, updateConnectionStatus } from './utils/connection-status.js';
 
-window.$ = $; // Make jQuery globally available
-window.bootstrap = bootstrap; // Make Bootstrap globally available
-window.ApexCharts = ApexCharts; // Make ApexCharts globally available
+// ==================== Global Functions ====================
+
+window.$ = $;
+window.SwalToast = SwalToast;
+window.bootstrap = bootstrap;
+window.ApexCharts = ApexCharts; 
+window.SwalNotificationTypes = SwalNotificationTypes; 
 window.updateConnectionStatus = updateConnectionStatus;
+
+// ==================== Main Initialization ====================
 
 $(document).ready(function () {
 	// Enable theme toggler button functionality

@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
 		User::factory()->withRole(UserRole::ADMIN)->create([
 			'name' => 'Administrator',
 			'email' => 'admin@admin.com',
-			'password' => bcrypt('admin1234'),
+			'password' => 'admin1234', // Password is hashed automatically by the User model's mutator.
 		]);
 
 		// Create 9 additional employees with real data.

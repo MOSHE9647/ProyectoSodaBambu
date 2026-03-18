@@ -46,9 +46,9 @@ class Product extends Model
         'margin_percentage' => 'decimal:2',
         'sale_price' => 'decimal:2',
         'type' => ProductType::class,
-        'created_at' => CostaRicaDatetime::class,
-        'updated_at' => CostaRicaDatetime::class,
-        'deleted_at' => CostaRicaDatetime::class,
+        // 'created_at' => CostaRicaDatetime::class,
+        // 'updated_at' => CostaRicaDatetime::class,
+        // 'deleted_at' => CostaRicaDatetime::class,
     ];
 
     /**
