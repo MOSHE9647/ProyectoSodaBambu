@@ -3,7 +3,7 @@
 
 	$categories = $categories ?? collect();
 	$selectedType = old('type', isset($product) ? ($product->type?->value ?? $product->type) : '');
-	$selectedHasInventory = (string) old('has_inventory', isset($product) ? (int) $product->has_inventory : 1);
+	$selectedHasInventory = (string) old('has_inventory', isset($product) ? (int) $product->has_inventory : 0);
 	$selectedCategory = (string) old('category_id', isset($product) ? $product->category_id : '-1');
 	$stockSource = $productStock ?? (isset($product) ? $product->stock : null);
 	$selectedCurrentStock = old('current_stock', $stockSource?->current_stock ?? 0);
@@ -180,9 +180,9 @@
 							:value="old('sale_price', $product->sale_price ?? '')"
 							:errorMessage="$errors->first('sale_price') ?? ''"
 							:iconLeft="'bi bi-cash-stack'"
-							:required="false"
+							:required="in_array($selectedType, [ProductType::DISH->value, ProductType::DRINK->value, ProductType::PACKAGED->value], true)"
 						>
-							Precio de Venta
+							Precio de Venta <span id="sale-price-required" class="text-danger d-none">*</span>
 						</x-form.input>
 						<small id="sale-price-help" class="text-muted">Para Mercadería este precio se calcula automáticamente</small>
 					</div>
@@ -272,6 +272,18 @@
 								@endforeach
 							</x-slot:options>
 						</x-form.select>
+						<div class="d-flex justify-content-end mt-2">
+							<button
+								type="button"
+								id="open-create-category-modal"
+								class="btn btn-outline-secondary btn-sm"
+								data-bs-toggle="modal"
+								data-bs-target="#quick-create-category-modal"
+							>
+								<i class="bi bi-plus-circle me-1"></i>
+								Crear categoría rápida
+							</button>
+						</div>
 					</div>
 				</div>
 			</section>
@@ -300,6 +312,55 @@
 				</x-form.submit>
 			</div>
 		</form>
+	</div>
+
+	<div class="modal fade" id="quick-create-category-modal" tabindex="-1" aria-labelledby="quick-create-category-modal-label" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="quick-create-category-modal-label">
+						<i class="bi bi-tag-fill me-2"></i>
+						Nueva Categoría
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<form id="quick-create-category-form" class="d-flex flex-column">
+					<div class="modal-body d-flex flex-column gap-3">
+						<div>
+							<label for="quick-category-name" class="form-label fw-semibold">
+								Nombre <span class="text-danger">*</span>
+							</label>
+							<input
+								type="text"
+								id="quick-category-name"
+								class="form-control border-secondary"
+								placeholder="Ej: Bebidas frías"
+								maxlength="255"
+								required
+							>
+							<small id="quick-category-name-error" class="text-danger d-none"></small>
+						</div>
+						<div>
+							<label for="quick-category-description" class="form-label fw-semibold">Descripción</label>
+							<textarea
+								id="quick-category-description"
+								class="form-control border-secondary"
+								rows="3"
+								placeholder="Descripción breve de la categoría"
+								maxlength="255"
+							></textarea>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
+						<button type="submit" id="quick-create-category-submit" class="btn btn-primary">
+							<i class="bi bi-save me-1"></i>
+							Guardar categoría
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
 	</div>
 </div>
 

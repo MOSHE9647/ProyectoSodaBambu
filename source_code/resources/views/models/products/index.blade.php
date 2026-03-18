@@ -12,14 +12,6 @@
 					<strong>Alerta de stock bajo:</strong>
 					<span>{{ $lowStockProducts->count() }} producto(s) con stock actual menor o igual al mínimo.</span>
 				</div>
-				<ul class="mb-0 ps-3">
-					@foreach($lowStockProducts as $stock)
-						<li>
-							{{ $stock->product?->name ?? 'Producto sin nombre' }}
-							({{ $stock->current_stock }} / mínimo {{ $stock->minimum_stock }})
-						</li>
-					@endforeach
-				</ul>
 			</div>
 		@endif
 

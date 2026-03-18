@@ -20,6 +20,8 @@ const PRODUCT_TYPE_DRINK = 'drink';
 const PRODUCT_TYPE_PACKAGED = 'packaged';
 const MERCHANDISE_ONLY_FIELDS = ['reference_cost', 'tax_percentage', 'margin_percentage'];
 const INVENTORY_FIELDS = ['current_stock', 'minimum_stock'];
+const QUICK_CATEGORY_MODAL_ID = 'quick-create-category-modal';
+const QUICK_CATEGORY_FORM_ID = 'quick-create-category-form';
 
 function validateOptionalBarcode(value) {
     return value === '' || validateName(value);
@@ -62,13 +64,9 @@ function isMerchandiseSelected() {
     return ($('#type').val() ?? '').toString().trim() === PRODUCT_TYPE_MERCHANDISE;
 }
 
-function isDishSelected() {
-    return ($('#type').val() ?? '').toString().trim() === PRODUCT_TYPE_DISH;
-}
-
-function isDrinkOrPackagedSelected() {
+function requiresManualSalePrice() {
     const currentType = ($('#type').val() ?? '').toString().trim();
-    return currentType === PRODUCT_TYPE_DRINK || currentType === PRODUCT_TYPE_PACKAGED;
+    return [PRODUCT_TYPE_DISH, PRODUCT_TYPE_DRINK, PRODUCT_TYPE_PACKAGED].includes(currentType);
 }
 
 function hasInventorySelected() {
@@ -87,21 +85,21 @@ function toggleFieldGroup(groupId, show) {
 
 function syncPricingFieldBehavior() {
     const isMerchandise = isMerchandiseSelected();
-    const isDish = isDishSelected();
-    const isDrinkOrPackaged = isDrinkOrPackagedSelected();
+    const manualSalePrice = requiresManualSalePrice();
     const $salePrice = $('#sale_price');
     const $tax = $('#tax_percentage');
     const $referenceCost = $('#reference_cost');
     const $margin = $('#margin_percentage');
+    let helperMessage = 'Para Platillo, Bebida y Empaquetado el precio de venta es obligatorio.';
 
-    toggleFieldGroup('sale-price-group', !isDrinkOrPackaged);
+    toggleFieldGroup('sale-price-group', true);
     toggleFieldGroup('tax-percentage-group', isMerchandise);
     toggleFieldGroup('reference-cost-group', isMerchandise);
     toggleFieldGroup('margin-percentage-group', isMerchandise);
 
     $salePrice.prop('readonly', isMerchandise);
-    $salePrice.prop('disabled', isDrinkOrPackaged);
-    $salePrice.prop('required', false);
+    $salePrice.prop('disabled', false);
+    $salePrice.prop('required', manualSalePrice);
 
     $tax.prop('required', isMerchandise);
     $referenceCost.prop('required', isMerchandise);
@@ -114,15 +112,10 @@ function syncPricingFieldBehavior() {
     toggleConditionalRequiredMarker('merchandise-tax-required', isMerchandise);
     toggleConditionalRequiredMarker('merchandise-reference-cost-required', isMerchandise);
     toggleConditionalRequiredMarker('merchandise-margin-required', isMerchandise);
-
-    let helperMessage = 'Para este tipo de producto el precio de venta se ingresa manualmente de forma opcional.';
+    toggleConditionalRequiredMarker('sale-price-required', manualSalePrice);
 
     if (isMerchandise) {
         helperMessage = 'Para Mercadería este precio se calcula automáticamente con costo, impuesto y margen.';
-    }
-
-    if (isDrinkOrPackaged) {
-        helperMessage = 'Para Bebida y Empaquetado el precio de venta se registra automáticamente en 0.00.';
     }
 
     $('#sale-price-help').text(helperMessage);
@@ -130,16 +123,7 @@ function syncPricingFieldBehavior() {
     const merchandiseHelpClass = isMerchandise ? 'text-muted' : 'text-secondary';
     $('#sale-price-help').removeClass('text-muted text-secondary').addClass(merchandiseHelpClass);
 
-    if (isDrinkOrPackaged) {
-        $salePrice.val('0.00');
-        $tax.val('');
-        $referenceCost.val('');
-        $margin.val('');
-        $('#margin-warning').remove();
-        return;
-    }
-
-    if (isDish) {
+    if (manualSalePrice) {
         $tax.val('');
         $referenceCost.val('');
         $margin.val('');
@@ -177,6 +161,7 @@ function toggleConditionalRequiredMarker(elementId, isVisible) {
 
 function isFieldRequired(fieldId, values) {
     const isMerchandise = values.type === PRODUCT_TYPE_MERCHANDISE;
+    const manualSalePrice = [PRODUCT_TYPE_DISH, PRODUCT_TYPE_DRINK, PRODUCT_TYPE_PACKAGED].includes(values.type);
     const hasInventory = values.has_inventory === '1';
 
     if (MERCHANDISE_ONLY_FIELDS.includes(fieldId)) {
@@ -192,7 +177,7 @@ function isFieldRequired(fieldId, values) {
     }
 
     if (fieldId === 'sale_price') {
-        return false;
+        return manualSalePrice;
     }
 
     return true;
@@ -253,6 +238,116 @@ function syncInventoryFieldBehavior() {
     toggleConditionalRequiredMarker('minimum-stock-required', hasInventory);
 }
 
+function getQuickCategoryModal() {
+    const modalElement = document.getElementById(QUICK_CATEGORY_MODAL_ID);
+
+    if (!modalElement || !window.bootstrap?.Modal) {
+        return null;
+    }
+
+    return window.bootstrap.Modal.getOrCreateInstance(modalElement);
+}
+
+function showQuickCategoryError(message = '') {
+    const $error = $('#quick-category-name-error');
+    const $name = $('#quick-category-name');
+
+    if (!message) {
+        $error.addClass('d-none').text('');
+        $name.removeClass('is-invalid');
+        return;
+    }
+
+    $error.removeClass('d-none').text(message);
+    $name.addClass('is-invalid');
+}
+
+function resetQuickCategoryForm() {
+    const $form = $(`#${QUICK_CATEGORY_FORM_ID}`);
+
+    if (!$form.length) {
+        return;
+    }
+
+    $form[0].reset();
+    showQuickCategoryError('');
+}
+
+function appendOrSelectCategory(category) {
+    const $categorySelect = $('#category_id');
+
+    if (!$categorySelect.length || !category || !category.id) {
+        return;
+    }
+
+    const categoryId = String(category.id);
+    const existingOption = $categorySelect.find(`option[value="${categoryId}"]`);
+
+    if (!existingOption.length) {
+        $categorySelect.append(`<option value="${categoryId}">${category.name}</option>`);
+    }
+
+    $categorySelect.val(categoryId).trigger('change');
+    clearFieldError('category_id');
+}
+
+async function submitQuickCategoryForm() {
+    const $name = $('#quick-category-name');
+    const $description = $('#quick-category-description');
+    const $submitButton = $('#quick-create-category-submit');
+    const name = ($name.val() ?? '').toString().trim();
+    const description = ($description.val() ?? '').toString().trim();
+    const csrf = typeof csrfToken !== 'undefined' ? csrfToken : '';
+
+    showQuickCategoryError('');
+
+    if (!name) {
+        showQuickCategoryError('El nombre de la categoría es obligatorio.');
+        return;
+    }
+
+    $submitButton.prop('disabled', true);
+
+    try {
+        const response = await fetch(route('categories.store'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrf,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({
+                name,
+                description: description || null,
+            }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            const message = data?.errors?.name?.[0] || data?.message || 'No se pudo crear la categoría.';
+            showQuickCategoryError(message);
+            return;
+        }
+
+        appendOrSelectCategory(data.category);
+        getQuickCategoryModal()?.hide();
+        resetQuickCategoryForm();
+
+        if (window.SwalToast) {
+            window.SwalToast.fire({
+                icon: window.SwalNotificationTypes.SUCCESS,
+                title: data?.message || 'Categoría creada correctamente.',
+            });
+        }
+    } catch (_error) {
+        showQuickCategoryError('Ocurrió un error de red al crear la categoría. Inténtelo de nuevo.');
+    } finally {
+        $submitButton.prop('disabled', false);
+    }
+}
+
 const fieldValidators = {
     barcode: {
         validator: validateOptionalBarcode,
@@ -278,10 +373,9 @@ const fieldValidators = {
         validator: (value) => {
             if (!validateNonNegativeAmount(value)) return false;
             if (isMerchandiseSelected()) return true;
-            if (isDrinkOrPackagedSelected()) return true;
             return validateSalePriceVsCost();
         },
-        emptyMsg: '',
+        emptyMsg: 'El precio de venta es obligatorio para Platillo, Bebida y Empaquetado.',
         invalidMsg: 'Ingrese un precio de venta mayor al costo de referencia.'
     },
     tax_percentage: {
@@ -438,6 +532,15 @@ $(document).on('submit', `#${FORM_ID}`, (e) => {
 
     if (submitProductForm()) e.currentTarget.submit();
     else setLoadingState(FORM_ID, false);
+});
+
+$(document).on('click', '#open-create-category-modal', () => {
+    resetQuickCategoryForm();
+});
+
+$(document).on('submit', `#${QUICK_CATEGORY_FORM_ID}`, async (e) => {
+    e.preventDefault();
+    await submitQuickCategoryForm();
 });
 
 $(document).ready(() => {
