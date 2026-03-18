@@ -5,7 +5,13 @@
 	$selectedType = old('type', isset($product) ? ($product->type?->value ?? $product->type) : '');
 	$selectedHasInventory = (string) old('has_inventory', isset($product) ? (int) $product->has_inventory : 1);
 	$selectedCategory = (string) old('category_id', isset($product) ? $product->category_id : '-1');
-	$defaultMargin = isset($product) ? ($product->margin_percentage ?? '') : '0.35';
+	$stockSource = $productStock ?? (isset($product) ? $product->stock : null);
+	$selectedCurrentStock = old('current_stock', $stockSource?->current_stock ?? 0);
+	$selectedMinimumStock = old('minimum_stock', $stockSource?->minimum_stock ?? '');
+	$showInventoryStock = $selectedHasInventory === '1';
+	$defaultMargin = $selectedType === ProductType::MERCHANDISE->value
+		? old('margin_percentage', isset($product) ? ($product->margin_percentage ?? '') : '0.35')
+		: old('margin_percentage', isset($product) ? ($product->margin_percentage ?? '') : '');
 @endphp
 
 <div class="container p-0">
@@ -46,14 +52,15 @@
 							:type="'text'"
 							:class="'border-secondary'"
 							:inputClass="$errors->has('barcode') ? 'is-invalid' : ''"
-							:placeholder="'Ej: 1234567890123'"
+							:placeholder="'Opcional'"
 							:value="old('barcode', $product->barcode ?? '')"
 							:errorMessage="$errors->first('barcode') ?? ''"
 							:iconLeft="'bi bi-upc-scan'"
-							:required="true"
+							:required="false"
 						>
-							Codigo de Barras <span class="text-danger">*</span>
+							Código de Barras
 						</x-form.input>
+						<small class="text-muted">Si lo deja vacío, el sistema lo mostrará como N/A.</small>
 					</div>
 
 					{{-- Name --}}
@@ -116,9 +123,51 @@
 					</div>
 				</div>
 
+				<div id="inventory-stock-row" class="row g-3 {{ $showInventoryStock ? '' : 'd-none' }}">
+					@if(isset($product))
+						<div class="col-12 col-md-6">
+							<x-form.input
+								:id="'current_stock'"
+								:type="'number'"
+								:step="'1'"
+								:min="'0'"
+								:class="'border-secondary'"
+								:inputClass="$errors->has('current_stock') ? 'is-invalid' : ''"
+								:placeholder="'Ej: 25'"
+								:value="$selectedCurrentStock"
+								:errorMessage="$errors->first('current_stock') ?? ''"
+								:iconLeft="'bi bi-archive'"
+								:required="false"
+								:readonly="true"
+							>
+								Stock Actual
+							</x-form.input>
+							<small class="text-muted">Se asigna automáticamente al crear el inventario.</small>
+						</div>
+					@endif
+
+					<div class="col-12 col-md-{{ isset($product) ? '6' : '12' }}">
+						<x-form.input
+							:id="'minimum_stock'"
+							:type="'number'"
+							:step="'1'"
+							:min="'0'"
+							:class="'border-secondary'"
+							:inputClass="$errors->has('minimum_stock') ? 'is-invalid' : ''"
+							:placeholder="'Ej: 10'"
+							:value="$selectedMinimumStock"
+							:errorMessage="$errors->first('minimum_stock') ?? ''"
+							:iconLeft="'bi bi-exclamation-triangle'"
+							:required="false"
+						>
+							Stock Mínimo <span id="minimum-stock-required" class="text-danger">*</span>
+						</x-form.input>
+					</div>
+				</div>
+
 				<div class="row g-3">
 					{{-- Sale Price --}}
-					<div class="col-12 col-md-4">
+					<div id="sale-price-group" class="col-12 col-md-4">
 						<x-form.input
 							:id="'sale_price'"
 							:type="'number'"
@@ -130,16 +179,16 @@
 							:placeholder="'Ej: 4063.50'"
 							:value="old('sale_price', $product->sale_price ?? '')"
 							:errorMessage="$errors->first('sale_price') ?? ''"
-							:iconLeft="'bi bi-currency-dollar'"
-							:required="true"
+							:iconLeft="'bi bi-cash-stack'"
+							:required="false"
 						>
-							Precio de Venta <span class="text-danger">*</span>
+							Precio de Venta
 						</x-form.input>
-						<small class="text-muted">Para Mercaderia este precio se calcula automaticamente.</small>
+						<small id="sale-price-help" class="text-muted">Para Mercadería este precio se calcula automáticamente</small>
 					</div>
 
 					{{-- Tax Percentage --}}
-					<div class="col-12 col-md-4">
+					<div id="tax-percentage-group" class="col-12 col-md-4">
 						<x-form.input
 							:id="'tax_percentage'"
 							:type="'number'"
@@ -153,14 +202,14 @@
 							:value="old('tax_percentage', $product->tax_percentage ?? '')"
 							:errorMessage="$errors->first('tax_percentage') ?? ''"
 							:iconLeft="'bi bi-percent'"
-							:required="true"
+							:required="false"
 						>
-							Impuesto (%) <span class="text-danger">*</span>
+							Impuesto (%) <span id="merchandise-tax-required" class="text-danger">*</span>
 						</x-form.input>
 					</div>
 
 					{{-- Reference Cost --}}
-					<div class="col-12 col-md-4">
+					<div id="reference-cost-group" class="col-12 col-md-4">
 						<x-form.input
 							:id="'reference_cost'"
 							:type="'number'"
@@ -173,16 +222,16 @@
 							:value="old('reference_cost', $product->reference_cost ?? '')"
 							:errorMessage="$errors->first('reference_cost') ?? ''"
 							:iconLeft="'bi bi-cash-coin'"
-							:required="true"
+							:required="false"
 						>
-							Costo de Referencia <span class="text-danger">*</span>
+							Costo de Referencia <span id="merchandise-reference-cost-required" class="text-danger">*</span>
 						</x-form.input>
 					</div>
 				</div>
 
 				<div class="row g-3">
 					{{-- Margin Percentage --}}
-					<div class="col-12 col-md-6">
+					<div id="margin-percentage-group" class="col-12 col-md-6">
 						<x-form.input
 							:id="'margin_percentage'"
 							:type="'number'"
@@ -196,10 +245,11 @@
 							:value="old('margin_percentage', $defaultMargin)"
 							:errorMessage="$errors->first('margin_percentage') ?? ''"
 							:iconLeft="'bi bi-graph-up-arrow'"
-							:required="true"
+							:required="false"
 						>
-							Margen (%) <span class="text-danger">*</span>
+							Margen (%) <span id="merchandise-margin-required" class="text-danger">*</span>
 						</x-form.input>
+						<small class="text-muted">Obligatorio solo para Mercadería.</small>
 					</div>
 
 					{{-- Category --}}
