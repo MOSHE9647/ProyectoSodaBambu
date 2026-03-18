@@ -5,17 +5,32 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SupplyRequest; 
 use App\Http\Resources\SupplyResource;
 use App\Models\Supply;
+use App\Enums\UserRole;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Throwable;
 use Yajra\DataTables\DataTables;
 
-class SupplyController extends Controller
+class SupplyController extends Controller implements HasMiddleware
 {
+    /**
+     * Get the middleware that should be assigned to the controller.
+     *
+     * @return array<int, \Illuminate\Routing\Controllers\Middleware>
+     */
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('role:' . UserRole::ADMIN->value),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      *
