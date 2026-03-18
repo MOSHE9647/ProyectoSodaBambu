@@ -14,11 +14,15 @@ class SupplyResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $createdAt = $this->created_at;
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'measure_unit' => $this->measure_unit,
-            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
+            'created_at' => $createdAt instanceof \DateTimeInterface
+                ? $createdAt->format('Y-m-d H:i:s')
+                : (is_string($createdAt) ? $createdAt : null),
         ];
     }
 }
