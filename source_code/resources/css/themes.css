@@ -355,6 +355,16 @@ body {
 	color: var(--bs-body-color);
 }
 
+.nav-pills .nav-link:focus-visible {
+	background: var(--bambu-logo-bg);
+	border: 1px solid var(--bambu-logo-bg-hover);
+	box-shadow: var(--bambu-focus-ring-success);
+}
+
+.nav-tabs .nav-link:focus-visible {
+	box-shadow: var(--bambu-focus-ring-success);
+}
+
 .nav-pills .nav-link:hover {
 	background-color: var(--sidebar-item-hover-bg);
 	border-color: var(--sidebar-item-hover-bg);
@@ -364,13 +374,13 @@ body {
 .nav-pills .nav-link.active {
 	background-color: var(--sidebar-active-item-bg);
 	border-color: var(--sidebar-active-item-bg);
-	color: var(--bs-body-color);
+	color: var(--bambu-text-light);
 }
 
 .nav-pills .nav-link.active:hover {
 	background-color: var(--bambu-logo-bg-hover);
 	border-color: var(--bambu-logo-bg-hover);
-	color: var(--bs-body-color);
+	color: var(--bambu-text-light);
 }
 
 /* Radio Button */

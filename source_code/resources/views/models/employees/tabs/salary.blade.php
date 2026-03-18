@@ -5,10 +5,11 @@
     </h5>
 
     @php
-        $selectedEmployeeId = (string) data_get($employee, 'selected_employee_id', '-1');
+        $selectedEmployeeId = (string) request('employee_id', '-1');
         $selectedPayrollPeriod = data_get($employee, 'payroll_period', now('America/Costa_Rica')->format('Y-m'));
-        $selectedPayrollHalf = data_get($employee, 'payroll_half', 'first_half');
-        $showPayrollHalf = (bool) data_get($employee, 'is_biweekly', false);
+        $defaultPayrollHalf = now('America/Costa_Rica')->day <= 15 ? 'first_half' : 'second_half';
+        $selectedPayrollHalf = (string) request('payroll_half', data_get($employee, 'payroll_half', $defaultPayrollHalf));
+        $showPayrollHalf = $selectedEmployeeId !== '-1' && (bool) data_get($employee, 'is_biweekly', false);
     @endphp
 
     <form id="employee-salary-form" action="{{ route('attendance.tabs', ['tab' => 'salary']) }}" method="GET">
@@ -71,7 +72,10 @@
 </div>
 
 @php
-    $hasSalaryCalcResults = filled($employee);
+    $hasSalaryCalcResults =
+        $selectedEmployeeId !== '-1'
+        && filled($employee)
+        && (string) data_get($employee, 'id') === $selectedEmployeeId;
     $timesheets = collect(data_get($employee, 'timesheets', []));
 @endphp
 
@@ -132,6 +136,7 @@
             @foreach ($timesheets as $ts)
             <div class="d-flex flex-row w-100 align-items-center rounded-3 border px-4 py-3" style="background-color: var(--employee-salary-card-bg);">
                 <div class="d-flex flex-row me-auto gap-4 justify-content-between align-items-center">
+                    {{-- TODO: Work Date isn't showing appropriately --}}
                     <span class="fw-semibold fs-6">{{ data_get($ts, 'work_date_label') }}</span>
                     @if (data_get($ts, 'is_holiday', false))
                     <span class="badge border rounded-pill text-warning-emphasis bg-warning-subtle px-2 py-2">
@@ -175,6 +180,13 @@
             <span class="fw-bold fs-5" style="text-align: right;">Total a Pagar: {{ data_get($employee, 'total_salary_amount_label', 'CRC 0') }}</span>
         </div>
         @endif
+    </div>
+</div>
+@else
+<div id="salary-calculation-result-empty" class="card-container rounded-3 p-3 p-lg-4 mt-4">
+    <div class="d-flex flex-column gap-3 justify-content-center align-items-center text-center">
+        <i class="bi bi-person-badge fs-1 text-muted"></i>
+        <span class="text-muted">Selecciona un colaborador y presiona "Calcular Salario" para ver el desglose.</span>
     </div>
 </div>
 @endif
