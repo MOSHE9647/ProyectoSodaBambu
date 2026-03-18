@@ -59,17 +59,23 @@ $(() => {
             data: 'quantity', 
             name: 'quantity', 
             className: 'text-center',
-            render: (data) => `<strong>${data}</strong>` 
+            render: (data) => `<strong>${data}</strong>`,
+            orderable: false,
+            searchable: false,
+
         },
         { 
             data: 'unit_price', 
             name: 'unit_price', 
-            className: 'text-end'
+            className: 'text-end',
+            orderable: false,
+            searchable: false,
         },
         { 
             data: 'expiration_date', 
             name: 'expiration_date', 
-            className: 'text-center' 
+            className: 'text-center',
+            searchable: false,
         },
         {
             data: 'created_at',
