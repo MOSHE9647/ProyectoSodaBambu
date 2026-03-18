@@ -25,26 +25,33 @@ if (typeof $ === 'undefined') {
 // ==================== Constants ====================
 
 const FORM_ID = 'employee-attendance-form';
-const SUBMIT_FORM_ID = 'submit-attendance-form';
+const SUBMIT_FORM_ID = 'attendance-submit-form';
 const APP_DATA = window.AttendanceAppData ?? {};
 const APP_EMPLOYEES = Array.isArray(APP_DATA.employees) ? APP_DATA.employees : [];
 
 const FORM_SELECTORS = {
 	form: `#${FORM_ID}`,
-	employeeId: '#employee_id',
-	attendanceDate: '#work_date_display',
-	workDate: '#work_date',
-	startTime: '#start_time',
-	endTime: '#end_time',
-	isHolidayTrue: '#is_holiday_true',
+	employeeId: '#attendance-employee_id',
+	attendanceDate: '#attendance-work_date_display',
+	workDate: '#attendance-work_date',
+	startTime: '#attendance-start_time',
+	endTime: '#attendance-end_time',
+	isHolidayTrue: '#attendance-is_holiday_true',
 	attendanceCompleteAlert: '#attendance-complete-alert',
 	attendanceStartAddedAlert: '#attendance-start-time-added-alert',
 	startTimeCantModifyText: '#attendance-start-time-cant-be-modify',
 	endTimeCantModifyText: '#attendance-end-time-cant-be-modify',
-	totalHoursInfo: '#total-hours-info',
-	totalHoursStartTime: '#start-time',
-	totalHoursEndTime: '#end-time',
-	totalHoursValue: '#total-hours',
+	totalHoursInfo: '#attendance-total-hours-info',
+	totalHoursStartTime: '#attendance-start-time-display',
+	totalHoursEndTime: '#attendance-end-time-display',
+	totalHoursValue: '#attendance-total-hours',
+};
+
+// Map of HTML element IDs to field validator keys
+const idToFieldName = {
+	'attendance-employee_id': 'employee_id',
+	'attendance-start_time': 'start_time',
+	'attendance-end_time': 'end_time',
 };
 
 const MODEL_ROUTES = {
@@ -135,15 +142,16 @@ function submitAttendanceForm() {
 $(document).on('input change', `#${FORM_ID}`, function (e) {
 	const $target = $(e.target);
 	const fieldId = $target.attr('id');
+	const fieldName = idToFieldName[fieldId] || fieldId;
 	const validators = getActiveFieldValidators();
 
 	// Skip if field is not in validators
-	if (!validators.hasOwnProperty(fieldId)) {
+	if (!validators.hasOwnProperty(fieldName)) {
 		return;
 	}
 
 	const value = $target.val().trim();
-	const { validator, emptyMsg, invalidMsg } = validators[fieldId];
+	const { validator, emptyMsg, invalidMsg } = validators[fieldName];
 
 	if (!value) {
 		if (emptyMsg) {

@@ -75,7 +75,6 @@ class Timesheet extends Model
         return mb_convert_case(
             str_replace('.', '', Carbon::parse($this->work_date)
                 ->locale('es')
-                ->timezone(self::TZ)
                 ->isoFormat('ddd, DD MMM')),
             MB_CASE_TITLE,
             'UTF-8',
@@ -88,7 +87,7 @@ class Timesheet extends Model
     public function getStartTimeLabelAttribute(): string
     {
         return $this->start_time
-            ? Carbon::parse($this->start_time)->timezone(self::TZ)->format('g:i A')
+            ? Carbon::parse($this->start_time)->format('g:i A')
             : 'N/A';
     }
 
@@ -98,7 +97,7 @@ class Timesheet extends Model
     public function getEndTimeLabelAttribute(): string
     {
         return $this->end_time
-            ? Carbon::parse($this->end_time)->timezone(self::TZ)->format('g:i A')
+            ? Carbon::parse($this->end_time)->format('g:i A')
             : 'N/A';
     }
 

@@ -15,7 +15,7 @@
     <form id="employee-salary-form" action="{{ route('attendance.tabs', ['tab' => 'salary']) }}" method="GET">
         <div class="row g-3 mt-1">
             <div class="col-6">
-                <x-form.select :id="'employee_id'" :name="'employee_id'" :class="'border-secondary'" :selectClass="$errors->has('employee_id') ? 'is-invalid' : ''" :errorMessage="$errors->first('employee_id') ?? ''" :iconLeft="'bi bi-person'" :required="true">
+                <x-form.select :id="'salary-employee_id'" :name="'employee_id'" :class="'border-secondary'" :selectClass="$errors->has('employee_id') ? 'is-invalid' : ''" :errorMessage="$errors->first('employee_id') ?? ''" :iconLeft="'bi bi-person'" :required="true">
                     Colaborador <span class="text-danger">*</span>
                     <x-slot:options>
                         <option value="-1">Seleccionar colaborador...</option>
@@ -32,16 +32,16 @@
             </div>
 
             <div class="col-6">
-                <x-form.input :id="'payroll_period_display'" :type="'month'" :name="'payroll_period_display'" :class="'border-secondary'" :max="now('America/Costa_Rica')->format('Y-m')" :value="$selectedPayrollPeriod" :selectClass="$errors->has('payroll_period') ? 'is-invalid' : ''" :errorMessage="$errors->first('payroll_period') ?? ''" :iconLeft="'bi bi-calendar-month'" :required="true">
+                <x-form.input :id="'salary-payroll_period_display'" :type="'month'" :name="'payroll_period_display'" :class="'border-secondary'" :max="now('America/Costa_Rica')->format('Y-m')" :value="$selectedPayrollPeriod" :selectClass="$errors->has('payroll_period') ? 'is-invalid' : ''" :errorMessage="$errors->first('payroll_period') ?? ''" :iconLeft="'bi bi-calendar-month'" :required="true">
                     Periodo <span class="text-danger">*</span>
                 </x-form.input>
-                <input id="payroll_period" name="payroll_period" type="hidden" value="{{ $selectedPayrollPeriod }}">
+                <input id="salary-payroll_period" name="payroll_period" type="hidden" value="{{ $selectedPayrollPeriod }}">
             </div>
 
             <div class="{{ $showPayrollHalf ? '' : 'd-none' }}" data-payroll-half-group>
                 <x-form.input.radio-group :label="'Quincena'" :groupClass="'row g-3'">
                     <div class="col-6">
-                        <x-form.input.radio-button :id="'first_half'" :name="'payroll_half'" :value="'first_half'" :checked="$selectedPayrollHalf === 'first_half'">
+                        <x-form.input.radio-button :id="'salary-first_half'" :name="'payroll_half'" :value="'first_half'" :checked="$selectedPayrollHalf === 'first_half'">
                             <div class="d-flex flex-row gap-2 justify-content-center align-items-center">
                                 Primera Quincena
                                 <small class="text-muted">Dias 1-15</small>
@@ -49,7 +49,7 @@
                         </x-form.input.radio-button>
                     </div>
                     <div class="col-6">
-                        <x-form.input.radio-button :id="'second_half'" :name="'payroll_half'" :value="'second_half'" :checked="$selectedPayrollHalf === 'second_half'">
+                        <x-form.input.radio-button :id="'salary-second_half'" :name="'payroll_half'" :value="'second_half'" :checked="$selectedPayrollHalf === 'second_half'">
                             <div class="d-flex flex-row gap-2 justify-content-center align-items-center">
                                 Segunda Quincena
                                 <small class="text-muted">Dias 16-31</small>
@@ -61,8 +61,8 @@
         </div>
 
         <div class="d-flex justify-content-end mt-4">
-            <x-form.submit :id="'submit-salary-form-button'" :spinnerId="'submit-salary-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="'Calculando salario...'">
-                <div id="submit-salary-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
+            <x-form.submit :id="'salary-submit-form-button'" :spinnerId="'salary-submit-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="'Calculando salario...'">
+                <div id="salary-submit-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-currency-dollar me-2"></i>
                     Calcular Salario
                 </div>
@@ -136,7 +136,6 @@
             @foreach ($timesheets as $ts)
             <div class="d-flex flex-row w-100 align-items-center rounded-3 border px-4 py-3" style="background-color: var(--employee-salary-card-bg);">
                 <div class="d-flex flex-row me-auto gap-4 justify-content-between align-items-center">
-                    {{-- TODO: Work Date isn't showing appropriately --}}
                     <span class="fw-semibold fs-6">{{ data_get($ts, 'work_date_label') }}</span>
                     @if (data_get($ts, 'is_holiday', false))
                     <span class="badge border rounded-pill text-warning-emphasis bg-warning-subtle px-2 py-2">
@@ -148,7 +147,7 @@
                 <div class="d-flex flex-row ms-auto gap-4 align-items-center">
                     <div class="d-flex flex-row gap-4 justify-content-between align-items-end">
                         <span class="text-muted">{{ data_get($ts, 'start_time_label', 'N/A') }} -> {{ data_get($ts, 'end_time_label', 'N/A') }}</span>
-                        <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2">
+                        <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2" style="width: 80px;">
                             <i class="bi bi-stopwatch"></i>
                             {{ data_get($ts, 'total_hours_label', '0h') }}
                         </span>
