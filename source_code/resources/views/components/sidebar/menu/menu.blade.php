@@ -137,9 +137,11 @@
 	$currentRoute = Route::currentRouteName();
 	$routePrefix = explode('.', $currentRoute)[0] ?? $currentRoute;
 
-	function getNavLinkClass($routePrefix, $item): string {
-	    $itemPrefix = explode('.', $item['route'])[0] ?? $item['route'];
-	    return $routePrefix === $itemPrefix ? ' active' : ' link-body-emphasis';
+	if (!function_exists('getNavLinkClass')) {
+		function getNavLinkClass($routePrefix, $item): string {
+			$itemPrefix = explode('.', $item['route'])[0] ?? $item['route'];
+			return $routePrefix === $itemPrefix ? ' active' : ' link-body-emphasis';
+		}
 	}
 @endphp
 
