@@ -20,6 +20,11 @@ const MODEL_ROUTES = {
     delete: route('supplies.destroy', { supply: ':id' }),
 };
 
+const urlParams = new URLSearchParams(window.location.search);
+let showOnlyExpiring = urlParams.get('filter') === 'expiring_soon';
+
+let suppliesDataTable = null;
+
 // ==================== Global Functions ====================
 
 // Expose functions globally
@@ -41,6 +46,18 @@ window.showSupply = function (url, anchor) {
  */
 window.deleteSupply = function (e) {
     return deleteModel(e, MODEL_NAME);
+};
+
+window.toggleExpiringFilter = function () {
+    showOnlyExpiring = !showOnlyExpiring;
+
+    const $button = $('.expiring-filter-button');
+    $button.toggleClass('btn-outline-danger btn-danger');
+    $('.expiring-filter-button-text').text(showOnlyExpiring ? 'Mostrar todos' : 'Próximos a vencer');
+
+    if (suppliesDataTable) {
+        suppliesDataTable.ajax.reload(null, true);
+    }
 };
 
 // ==================== DataTable Initialization ====================
@@ -106,6 +123,15 @@ $(() => {
     };
 
     const customButtons = [
+
+        {
+            text: 'Próximos a vencer',
+            href: 'javascript:void(0)',
+            class: 'expiring-filter-button btn-outline-danger',
+            icon: 'bi-hourglass-split',
+            func: window.toggleExpiringFilter,
+            funcName: 'toggleExpiringFilter',
+        },
         {
             text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
             href: MODEL_ROUTES.create,
@@ -117,5 +143,20 @@ $(() => {
         }
     ];
 
-    CreateNewDataTable('supplies-table', MODEL_ROUTES.index, columns, actions, customButtons);
+     if (showOnlyExpiring) {
+        setTimeout(() => {
+            const $button = $('.expiring-filter-button');
+            $button.removeClass('btn-outline-danger').addClass('btn-danger');
+            $('.expiring-filter-button-text').text('Mostrar todos');
+        }, 100);
+    }
+
+    suppliesDataTable = CreateNewDataTable('supplies-table', MODEL_ROUTES.index, columns, actions, customButtons, {
+        ajax: {
+            url: MODEL_ROUTES.index,
+            data: (d) => {
+                d.expiring_soon = showOnlyExpiring ? 1 : 0;
+            }
+        }
+    });
 });
