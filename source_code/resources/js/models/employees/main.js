@@ -5,6 +5,7 @@ import {
 	formatTime,
 	getInitials,
 	formatDate,
+	setLoadingState,
 } from "../../utils/utils";
 import { initAttendanceForm } from "./form.js";
 
@@ -339,12 +340,22 @@ function initSalaryTab() {
 		const selectedOption = employeeSelect?.selectedOptions?.[0];
 		const paymentFrequency = selectedOption?.dataset?.paymentFrequency;
 		const isBiweekly = paymentFrequency === "biweekly";
+		const today = new Date();
+		const defaultHalf = today.getDate() <= 15 ? "first_half" : "second_half";
+		const checkedRadio = Array.from(halfRadios).find((radio) => radio.checked);
 
 		halfGroup?.classList.toggle("d-none", !isBiweekly);
 		halfRadios.forEach((radio) => {
 			radio.disabled = !isBiweekly;
 			if (!isBiweekly) radio.checked = false;
 		});
+
+		if (isBiweekly && !checkedRadio) {
+			const defaultRadio = Array.from(halfRadios).find(
+				(radio) => radio.value === defaultHalf,
+			);
+			if (defaultRadio) defaultRadio.checked = true;
+		}
 	};
 
 	periodInput?.addEventListener("change", syncPayrollPeriod);
@@ -355,6 +366,7 @@ function initSalaryTab() {
 	form.addEventListener("submit", async (event) => {
 		event.preventDefault();
 		syncPayrollPeriod();
+		setLoadingState("submit-salary-form", true);
 
 		const formData = new FormData(form);
 		const params = new URLSearchParams();
@@ -365,21 +377,6 @@ function initSalaryTab() {
 
 		const baseUrl = MODEL_ROUTES.tabs.replace(":tab", "salary");
 		const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
-		const renderContent = (content) => {
-			return `
-				<div class="card-container rounded-2 p-4">
-					<h5 class="text-muted pb-3 border-bottom border-secondary">
-						<i class="bi bi-currency-dollar me-3"></i>
-						Calcular Salario por Colaborador
-					</h5>
-					${content}
-				</div>
-			`;
-		};
-
-		container.innerHTML = renderContent(
-			'<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i><span>Calculando salario...</span></div>',
-		);
 
 		try {
 			const response = await fetch(url, {
@@ -390,10 +387,23 @@ function initSalaryTab() {
 			container.innerHTML = await response.text();
 			initSalaryTab();
 		} catch (error) {
+			const renderContent = (content) => {
+				return `
+					<div class="card-container rounded-2 p-4">
+						<h5 class="text-muted pb-3 border-bottom border-secondary">
+							<i class="bi bi-currency-dollar me-3"></i>
+							Calcular Salario por Colaborador
+						</h5>
+						${content}
+					</div>
+				`;
+			};
+
 			container.innerHTML = renderContent(
 				'<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo calcular el salario. Intentalo de nuevo.</span></div>'
 			);
 			console.error(error);
+			setLoadingState("submit-salary-form", false);
 		}
 	});
 }
