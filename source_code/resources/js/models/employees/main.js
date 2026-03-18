@@ -316,6 +316,89 @@ function initHistoryTab() {
 }
 
 /**
+ * Initializes salary tab filters and dynamic submit behavior.
+ * @returns {void}
+ */
+function initSalaryTab() {
+	const container = document.querySelector(`#${TAB_IDS.salary} .js-tab-lazy-content`);
+	const form = container?.querySelector("#employee-salary-form");
+	if (!container || !form) return;
+
+	const employeeSelect = form.querySelector("#employee_id");
+	const periodInput = form.querySelector("#payroll_period_display");
+	const periodHidden = form.querySelector("#payroll_period");
+	const halfGroup = form.querySelector("[data-payroll-half-group]");
+	const halfRadios = form.querySelectorAll('input[name="payroll_half"]');
+
+	const syncPayrollPeriod = () => {
+		if (periodInput && periodHidden)
+			periodHidden.value = String(periodInput.value || "").trim();
+	};
+
+	const syncPayrollHalfVisibility = () => {
+		const selectedOption = employeeSelect?.selectedOptions?.[0];
+		const paymentFrequency = selectedOption?.dataset?.paymentFrequency;
+		const isBiweekly = paymentFrequency === "biweekly";
+
+		halfGroup?.classList.toggle("d-none", !isBiweekly);
+		halfRadios.forEach((radio) => {
+			radio.disabled = !isBiweekly;
+			if (!isBiweekly) radio.checked = false;
+		});
+	};
+
+	periodInput?.addEventListener("change", syncPayrollPeriod);
+	employeeSelect?.addEventListener("change", syncPayrollHalfVisibility);
+	syncPayrollPeriod();
+	syncPayrollHalfVisibility();
+
+	form.addEventListener("submit", async (event) => {
+		event.preventDefault();
+		syncPayrollPeriod();
+
+		const formData = new FormData(form);
+		const params = new URLSearchParams();
+		for (const [key, value] of formData.entries()) {
+			const normalizedValue = String(value ?? "").trim();
+			if (normalizedValue.length) params.set(key, normalizedValue);
+		}
+
+		const baseUrl = MODEL_ROUTES.tabs.replace(":tab", "salary");
+		const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+		const renderContent = (content) => {
+			return `
+				<div class="card-container rounded-2 p-4">
+					<h5 class="text-muted pb-3 border-bottom border-secondary">
+						<i class="bi bi-currency-dollar me-3"></i>
+						Calcular Salario por Colaborador
+					</h5>
+					${content}
+				</div>
+			`;
+		};
+
+		container.innerHTML = renderContent(
+			'<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i><span>Calculando salario...</span></div>',
+		);
+
+		try {
+			const response = await fetch(url, {
+				headers: { "X-Requested-With": "XMLHttpRequest" },
+			});
+			if (!response.ok) throw new Error(`Error ${response.status}`);
+
+			container.innerHTML = await response.text();
+			initSalaryTab();
+		} catch (error) {
+			container.innerHTML = renderContent(
+				'<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo calcular el salario. Intentalo de nuevo.</span></div>'
+			);
+			console.error(error);
+		}
+	});
+}
+
+/**
  * Lazily loads tab content and initializes tab-specific behaviors once.
  * @param {string} tabId - Tab content container ID.
  * @returns {Promise<void>}
@@ -356,6 +439,7 @@ async function loadTab(tabId) {
 
 		if (tabId === TAB_IDS.attendance) initAttendanceForm();
 		if (tabId === TAB_IDS.history) initHistoryTab();
+		if (tabId === TAB_IDS.salary) initSalaryTab();
 	} catch (error) {
 		container.innerHTML = renderTabContent(
 			'<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo cargar el contenido de esta pestaña. Inténtalo de nuevo.</span></div>',

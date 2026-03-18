@@ -39,7 +39,7 @@ class StoreAttendanceAction
         );
     }
 
-    private function calculateTotalHours(string $workDate, string $startTime, ?string $endTime): int
+    private function calculateTotalHours(string $workDate, string $startTime, ?string $endTime): float
     {
         if (blank($endTime)) {
             return 0;
@@ -52,6 +52,6 @@ class StoreAttendanceAction
             return 0;
         }
 
-        return $start->diffInHours($end);
+        return round($start->diffInMinutes($end) / 60, 2);
     }
 }
