@@ -17,9 +17,10 @@ class ProductStockSeeder extends Seeder
         // Get all products that have inventory
         $products = Product::where('has_inventory', true)->get();
 
-        // Create stock entries for each product with inventory
+        // Create stock entries only when they are missing.
+        // ProductSeeder is the source of truth for predefined demo stock values.
         foreach ($products as $product) {
-            ProductStock::updateOrCreate([
+            ProductStock::firstOrCreate([
                 'product_id' => $product->id,
             ], [
                 'current_stock' => rand(20, 100),
