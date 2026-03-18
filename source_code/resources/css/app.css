@@ -115,11 +115,13 @@ main {
 }
 
 .stat-card {
+	background-color: var(--employee-salary-card-bg);
 	font-size: 0.72rem;
 }
 
-.stat-card.total-salary {
+.stat-card.total-salary,
+.total-salary-amount {
 	background-color: var(--radio-button-bg) !important;
-	border-color: var(--bambu-check-border) !important;
+	border-color: var(--radio-button-hover-border-color) !important;
 	color: var(--bambu-logo-bg) !important;
 }

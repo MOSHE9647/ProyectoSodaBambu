@@ -93,6 +93,7 @@
         return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
     }
 @endphp
+
 @if($hasSalaryCalcResults)
 @php
     $employeeName = escapeHtml($employee->user->name ?? 'Colaborador sin nombre');
@@ -106,7 +107,7 @@
     $hourlyWageLabel = '₡' . number_format($hourlyWageRaw, 0, ',', ' ') . '/hr';
 
     $workedDays ??= 2;
-    $totalHours ??= 16;
+    $totalWorkedHours ??= 16;
     $totalSalaryAmount ??= 40000;
 @endphp
 <div id="salary-calculation-result" class="card-container rounded-3 p-3 p-lg-4 mt-4">
@@ -119,7 +120,7 @@
                 <span class="fw-semibold fs-5 lh-sm">{{ $employeeName }}</span>
                 <small class="lh-sm">{{ $employeeEmail }}</small>
                 <div class="d-flex align-items-center gap-1 mt-2">
-                    <span class="badge border rounded-pill {{ !$employeeIsActive ? 'text-success-emphasis bg-success-subtle' : 'text-danger-emphasis bg-danger-subtle' }} px-3 py-2">
+                    <span class="badge border rounded-pill {{ $employeeIsActive ? 'text-success-emphasis bg-success-subtle' : 'text-danger-emphasis bg-danger-subtle' }} px-3 py-2">
                         {{ $employeeStatusLabel }}
                     </span>
                     <span class="badge border rounded-pill text-info-emphasis bg-info-subtle px-3 py-2">
@@ -130,17 +131,17 @@
         </div>
 
         <div class="salary-stats d-flex flex-wrap gap-2 justify-content-start justify-content-xxl-end">
-            <div class="stat-card rounded-3 border bg-secondary-subtle px-4 py-3">
+            <div class="stat-card rounded-3 border px-4 py-3">
                 <small class="text-uppercase text-muted fw-semibold d-block mb-1">Días Trab.</small>
                 <span class="fw-bold fs-4 lh-1">{{ $workedDays }}</span>
             </div>
 
-            <div class="stat-card total-hours rounded-3 border bg-secondary-subtle px-4 py-3">
+            <div class="stat-card total-hours rounded-3 border px-4 py-3">
                 <small class="text-uppercase text-muted fw-semibold d-block mb-1">Horas Totales</small>
-                <span class="fw-bold fs-4 lh-1">{{ number_format((float) $totalHours) }}h</span>
+                <span class="fw-bold fs-4 lh-1">{{ number_format((float) $totalWorkedHours) }}h</span>
             </div>
 
-            <div class="stat-card total-salary rounded-3 border bg-secondary-subtle px-4 py-3">
+            <div class="stat-card total-salary rounded-3 border px-4 py-3">
                 <small class="text-uppercase text-muted fw-semibold d-block mb-1">Salario Total</small>
                 <span class="fw-bold fs-4 lh-1">₡{{ number_format((float) $totalSalaryAmount, 0, ',', ' ') }}</span>
             </div>
@@ -149,41 +150,80 @@
 
     <div class="d-flex flex-column gap-3">
         <hr class="mt-4 mb-0 border-secondary">
+
+        @if ($timesheets->isEmpty())
+        <div class="d-flex flex-column gap-3 mt-4 justify-content-center align-items-center">
+            <i class="bi bi-emoji-frown fs-1 text-muted"></i>
+            <span class="text-muted">No se encontraron registros de asistencia para este colaborador en el período seleccionado.</span>
+        </div>
+        @else
         <span class="form-label mb-0">Desglose por Día</span>
 
         <div class="d-flex flex-column gap-2 justify-content-center align-items-center">
             @foreach ($timesheets as $ts)
-                @php
-                    $workDate = mb_convert_case(
-                        str_replace('.', '', Carbon\Carbon::parse($ts->work_date)
-                            ->locale('es')
-                            ->timezone('America/Costa_Rica')
-                            ->isoFormat('ddd, DD MMM')
-                        ),
-                        MB_CASE_TITLE,
-                        'UTF-8'
-                    );
-                    $startTime = Carbon\Carbon::parse($ts->start_time)->timezone('America/Costa_Rica')->format('g:i A');
-                    $endTime = Carbon\Carbon::parse($ts->end_time)->timezone('America/Costa_Rica')->format('g:i A') ?? 'N/A';
-                    $totalHours = number_format((float) $ts->total_hours);
-                    $salaryAmount = '₡' . number_format($ts->salary_amount ?? rand(100000, 10000000), 0, ',', ' ');
-                @endphp
+            @php
+            $workDate = mb_convert_case(
+            str_replace('.', '', Carbon\Carbon::parse($ts->work_date)
+            ->locale('es')
+            ->timezone('America/Costa_Rica')
+            ->isoFormat('ddd, DD MMM')
+            ),
+            MB_CASE_TITLE,
+            'UTF-8'
+            );
+            $startTime = Carbon\Carbon::parse($ts->start_time)->timezone('America/Costa_Rica')->format('g:i A');
+            $endTime = Carbon\Carbon::parse($ts->end_time)->timezone('America/Costa_Rica')->format('g:i A') ?? 'N/A';
+            $totalHours = number_format((float) $ts->total_hours);
+            $salaryAmount = '₡' . number_format($ts->salary_amount ?? rand(100000, 10000000), 0, ',', ' ');
+            $isHoliday = $ts->is_holiday;
+            @endphp
 
-                <div class="d-flex flex-row w-100 align-items-center rounded-3 border bg-secondary-subtle px-4 py-3">
-                    <span class="fw-semibold">{{ $workDate }}</span>
-                    <div class="d-flex flex-row ms-auto gap-4 align-items-center">
-                        <div class="d-flex flex-row gap-4 justify-content-between align-items-end">
-                            <span class="text-muted">{{ $startTime }} → {{ $endTime }}</span>
-                            <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2">
-                                <i class="bi bi-stopwatch"></i>
-                                {{ $totalHours }}h
-                            </span>
-                        </div>
-                        <span class="fw-bold" style="min-width: 150px; text-align: right;">{{ $salaryAmount }}</span>
-                    </div>
+            <div class="d-flex flex-row w-100 align-items-center rounded-3 border px-4 py-3" style="background-color: var(--employee-salary-card-bg);">
+                <div class="d-flex flex-row me-auto gap-4 justify-content-between align-items-center">
+                    <span class="fw-semibold fs-6">{{ $workDate }}</span>
+                    @if ($isHoliday)
+                    <span class="badge border rounded-pill text-warning-emphasis bg-warning-subtle px-2 py-2">
+                        <i class="bi bi-stars me-1"></i>Feriado
+                        @if ($isHoliday) <small class="">(x2)</small> @endif
+                    </span>
+                    @endif
                 </div>
+                <div class="d-flex flex-row ms-auto gap-4 align-items-center">
+                    <div class="d-flex flex-row gap-4 justify-content-between align-items-end">
+                        <span class="text-muted">{{ $startTime }} → {{ $endTime }}</span>
+                        <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2">
+                            <i class="bi bi-stopwatch"></i>
+                            {{ $totalHours }}h
+                        </span>
+                    </div>
+                    <span class="fw-bolder fs-6 @if($isHoliday) text-warning-emphasis @endif" style="min-width: 130px; text-align: right; @if(!$isHoliday) color: var(--bambu-logo-bg); @endif">
+                        {{ $salaryAmount }}
+                    </span>
+                </div>
+            </div>
             @endforeach
         </div>
+
+        <div class="d-flex flex-row total-salary-amount w-100 justify-content-between align-items-center rounded-3 border px-4 py-3">
+            <div class="d-flex flex-row gap-2 justify-content-center align-items-start text-muted">
+                <span>
+                    <i class="bi bi-calendar-check me-1"></i>
+                    {{ $workedDays }} días trabajados
+                </span>
+                <span>&centerdot;</span>
+                <span>
+                    <i class="bi bi-stopwatch me-1"></i>
+                    {{ number_format((float) $totalWorkedHours) }}h totales
+                </span>
+                @if ($isHoliday)
+                <span>&centerdot;</span>
+                <span><i class="bi bi-stars me-1"></i>Incluye días feriados</span>
+                @endif
+            </div>
+            <span class="fw-bold fs-5" style="text-align: right;">Total a Pagar: ₡{{ number_format((float) $totalSalaryAmount, 0, ',', ' ') }}</span>
+        </div>
+        @endif
     </div>
+    
 </div>
 @endif
