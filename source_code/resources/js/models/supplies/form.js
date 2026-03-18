@@ -23,9 +23,9 @@ const fieldValidators = {
         invalidMsg: 'El nombre no puede exceder 255 caracteres.'
     },
     measure_unit: {
-        validator: (val) => val.length > 0 && val.length <= 50,
+        validator: (val) => val.length > 0 && val.length <= 255,
         emptyMsg: 'La unidad de medida es obligatoria.',
-        invalidMsg: 'La unidad de medida no puede exceder 50 caracteres.'
+        invalidMsg: 'La unidad de medida no puede exceder 255 caracteres.'
     }
 };
 
