@@ -25,10 +25,10 @@ class ProductFactory extends Factory
             'name' => $this->faker->word(),
             'type' => $this->faker->randomElement(ProductType::cases()),
             'has_inventory' => $this->faker->boolean(),
-            'reference_cost' => $this->faker->randomFloat(2, 1, 100),
-            'tax_percentage' => $this->faker->randomFloat(2, 0, 25),
-            'margin_percentage' => $this->faker->randomFloat(2, 0, 100),
             'sale_price' => $this->faker->randomFloat(2, 1, 200),
+            'tax_percentage' => $this->faker->randomFloat(2, 0, 25),
+            'reference_cost' => $this->faker->randomFloat(2, 1, 100),
+            'margin_percentage' => $this->faker->randomFloat(2, 0, 100),
         ];
     }
 }
