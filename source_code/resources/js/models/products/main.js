@@ -1,6 +1,6 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
-import { capitalizeSentence, formatDate, toggleLoadingState } from '../../utils/utils.js';
+import { capitalizeSentence, toggleLoadingState } from '../../utils/utils.js';
 import { SwalNotificationTypes, SwalToast } from '../../utils/sweetalert.js';
 
 // ==================== Constants ====================
@@ -24,6 +24,7 @@ const PRODUCT_TYPE_LABELS = {
 	merchandise: 'Mercaderia',
 	dish: 'Platillo',
 	drink: 'Bebida',
+	packaged: 'Empaquetado',
 };
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat('es-CR', {
@@ -32,6 +33,10 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('es-CR', {
 	minimumFractionDigits: 2,
 	maximumFractionDigits: 2,
 });
+
+let showOnlyLowStock = false;
+let productsDataTable = null;
+const canManageProducts = ($('#products-table').data('can-manage-products') ?? '').toString() === '1';
 
 // ==================== Global Functions ====================
 
@@ -47,9 +52,31 @@ function formatProductType(type) {
 	return PRODUCT_TYPE_LABELS[type] || type;
 }
 
-function formatInventory(hasInventory) {
-	const normalized = hasInventory === true || hasInventory === 1 || hasInventory === '1';
-	return normalized ? 'Si' : 'No';
+function formatStockValue(value) {
+	if (value === null || typeof value === 'undefined' || value === '') {
+		return 'N/A';
+	}
+
+	return value;
+}
+
+function formatCurrentStock(currentStockValue, minimumStockValue) {
+	if (currentStockValue === null || minimumStockValue === null || typeof currentStockValue === 'undefined' || typeof minimumStockValue === 'undefined') {
+		return 'N/A';
+	}
+
+	const currentStock = Number.parseInt(currentStockValue, 10);
+	const minimumStock = Number.parseInt(minimumStockValue, 10);
+
+	if (Number.isNaN(currentStock) || Number.isNaN(minimumStock)) {
+		return 'N/A';
+	}
+
+	if (currentStock <= minimumStock) {
+		return `<span class="badge text-bg-danger">${currentStock}</span>`;
+	}
+
+	return currentStock;
 }
 
 function formatCurrency(value) {
@@ -75,6 +102,25 @@ window.showProduct = function (url, anchor) {
  */
 window.deleteProduct = function (e) {
 	return deleteModel(e, MODEL_NAME);
+};
+
+window.toggleLowStockFilter = function () {
+	showOnlyLowStock = !showOnlyLowStock;
+
+	const $button = $('.low-stock-filter-button');
+	$button.toggleClass('btn-outline-warning btn-warning');
+	$('.low-stock-filter-button-text').text(showOnlyLowStock ? 'Mostrar todos' : 'Solo stock bajo');
+
+	if (productsDataTable) {
+		productsDataTable.ajax.reload(null, true);
+
+		setTimeout(() => {
+			productsDataTable.columns.adjust();
+			if (productsDataTable.responsive) {
+				productsDataTable.responsive.recalc();
+			}
+		}, 0);
+	}
 };
 
 // ==================== DataTable Initialization ====================
@@ -103,19 +149,19 @@ $(() => {
 			render: (data) => formatProductType(data),
 		},
 		{
-			data: 'has_inventory',
-			name: 'has_inventory',
-			render: (data) => formatInventory(data),
+			data: 'current_stock',
+			name: 'ps.current_stock',
+			render: (data, _type, row) => formatCurrentStock(data, row.minimum_stock),
+		},
+		{
+			data: 'minimum_stock',
+			name: 'ps.minimum_stock',
+			render: (data) => formatStockValue(data),
 		},
 		{
 			data: 'sale_price',
 			name: 'sale_price',
 			render: (data) => formatCurrency(data),
-		},
-		{
-			data: 'created_at',
-			name: 'created_at',
-			render: (data) => formatDate(data),
 		},
 	];
 
@@ -129,25 +175,41 @@ $(() => {
 			funcName: 'showProduct',
 			tooltip: 'Ver detalles',
 		},
-		edit: {
+	};
+
+	if (canManageProducts) {
+		actions.edit = {
 			route: MODEL_ROUTES.edit,
 			func: toggleLoadingState,
 			funcName: 'toggleLoadingState',
 			tooltip: `Editar ${MODEL_NAME}`,
-		},
-		delete: {
+		};
+
+		actions.delete = {
 			route: MODEL_ROUTES.delete,
 			tooltip: `Eliminar ${MODEL_NAME}`,
 			func: window.deleteProduct,
 			funcName: 'deleteProduct',
-		},
-	};
+		};
+	}
 
 	/**
 	 * Define custom buttons for the DataTable interface.
 	 */
 	const customButtons = [
 		{
+			text: 'Solo stock bajo',
+			href: 'javascript:void(0)',
+			class: 'low-stock-filter-button btn-outline-warning',
+			icon: 'bi-exclamation-triangle',
+			func: window.toggleLowStockFilter,
+			funcName: 'toggleLowStockFilter',
+			params: ['.low-stock-filter-button', 'low-stock-filter'],
+		},
+	];
+
+	if (canManageProducts) {
+		customButtons.unshift({
 			text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
 			href: MODEL_ROUTES.create,
 			class: `create-button ${BTN_CLASS_PRIMARY}`,
@@ -155,9 +217,30 @@ $(() => {
 			func: toggleLoadingState,
 			funcName: 'toggleLoadingState',
 			params: ['.create-button', 'create', true],
-		},
-	];
+		});
+	}
 
 	// Initialize the CRUD DataTable
-	CreateNewDataTable('products-table', MODEL_ROUTES.index, columns, actions, customButtons);
+	productsDataTable = CreateNewDataTable('products-table', MODEL_ROUTES.index, columns, actions, customButtons, {
+		ajax: {
+			url: MODEL_ROUTES.index,
+			data: (d) => {
+				d.low_stock = showOnlyLowStock ? 1 : 0;
+			}
+		},
+		columnControl: [],
+		columnDefs: [{ target: -1, columnControl: [] }],
+		ordering: {
+			indicators: false,
+			handler: true,
+		},
+	});
+
+	productsDataTable.on('draw.dt', () => {
+		productsDataTable.columns.adjust();
+		if (productsDataTable.responsive) {
+			productsDataTable.responsive.recalc();
+		}
+	});
+
 });
