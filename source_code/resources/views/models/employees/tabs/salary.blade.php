@@ -4,65 +4,61 @@
         Calcular Salario por Colaborador
     </h5>
 
-    <form id="employee-salary-form" action="#" method="POST">
-        {{-- CSRF Token --}}
-        @csrf
+    @php
+        $selectedEmployeeId = (string) data_get($employee, 'selected_employee_id', '-1');
+        $selectedPayrollPeriod = data_get($employee, 'payroll_period', now('America/Costa_Rica')->format('Y-m'));
+        $selectedPayrollHalf = data_get($employee, 'payroll_half', 'first_half');
+        $showPayrollHalf = (bool) data_get($employee, 'is_biweekly', false);
+    @endphp
 
+    <form id="employee-salary-form" action="{{ route('attendance.tabs', ['tab' => 'salary']) }}" method="GET">
         <div class="row g-3 mt-1">
-            {{-- Employee --}}
-            @php
-                $oldEmployeeId = old('employee_id', '');
-            @endphp
-            
             <div class="col-6">
                 <x-form.select :id="'employee_id'" :name="'employee_id'" :class="'border-secondary'" :selectClass="$errors->has('employee_id') ? 'is-invalid' : ''" :errorMessage="$errors->first('employee_id') ?? ''" :iconLeft="'bi bi-person'" :required="true">
                     Colaborador <span class="text-danger">*</span>
                     <x-slot:options>
                         <option value="-1">Seleccionar colaborador...</option>
-                        @foreach ($employees as $employee)
-                        <option value="{{ $employee->id }}" {{ $oldEmployeeId === $employee->id ? 'selected' : '' }}>
-                            {{ $employee->user?->name ?? 'Colaborador sin nombre' }}
+                        @foreach ($employees as $employeeOption)
+                        <option
+                            value="{{ $employeeOption->id }}"
+                            data-payment-frequency="{{ $employeeOption->payment_frequency?->value }}"
+                            {{ $selectedEmployeeId === (string) $employeeOption->id ? 'selected' : '' }}>
+                            {{ $employeeOption->display_name }}
                         </option>
                         @endforeach
                     </x-slot:options>
                 </x-form.select>
             </div>
 
-            {{-- Date --}}
             <div class="col-6">
-                <x-form.input :id="'payroll_period_display'" :type="'month'" :name="'payroll_period_display'" :class="'border-secondary'" :max="now('America/Costa_Rica')->format('Y-m')" :value="$currentMonth ?? now('America/Costa_Rica')->format('Y-m')" :selectClass="$errors->has('payroll_period') ? 'is-invalid' : ''" :errorMessage="$errors->first('payroll_period') ?? ''" :iconLeft="'bi bi-calendar-month'" :required="true">
-                    Período <span class="text-danger">*</span>
+                <x-form.input :id="'payroll_period_display'" :type="'month'" :name="'payroll_period_display'" :class="'border-secondary'" :max="now('America/Costa_Rica')->format('Y-m')" :value="$selectedPayrollPeriod" :selectClass="$errors->has('payroll_period') ? 'is-invalid' : ''" :errorMessage="$errors->first('payroll_period') ?? ''" :iconLeft="'bi bi-calendar-month'" :required="true">
+                    Periodo <span class="text-danger">*</span>
                 </x-form.input>
-                <input id="payroll_period" name="payroll_period" type="hidden" value="{{ $currentMonth ?? now('America/Costa_Rica')->format('Y-m') }}">
+                <input id="payroll_period" name="payroll_period" type="hidden" value="{{ $selectedPayrollPeriod }}">
             </div>
 
-            {{-- Payroll Half --}}
-            @php
-                $paymentFrequencyIsBiweekly = true;
-            @endphp
-            @if ($paymentFrequencyIsBiweekly)
-            <x-form.input.radio-group :label="'Quincena'" :groupClass="'row g-3'">
-                <div class="col-6">
-                    <x-form.input.radio-button :id="'first_half'" :name="'payroll_half'" :value="'first_half'" :checked="old('payroll_half') === 'first_half'">
-                        <div class="d-flex flex-row gap-2 justify-content-center align-items-center">
-                            Primera Quincena
-                            <small class="text-muted">Días 1-15</small>
-                        </div>
-                    </x-form.input.radio-button>
-                </div>
-                <div class="col-6">
-                    <x-form.input.radio-button :id="'second_half'" :name="'payroll_half'" :value="'second_half'" :checked="old('payroll_half') === 'second_half'">
-                        <div class="d-flex flex-row gap-2 justify-content-center align-items-center">
-                            Segunda Quincena
-                            <small class="text-muted">Días 16-30</small>
-                        </div>
-                    </x-form.input.radio-button>
-                </div>
-            </x-form.input.radio-group>
-            @endif
+            <div class="{{ $showPayrollHalf ? '' : 'd-none' }}" data-payroll-half-group>
+                <x-form.input.radio-group :label="'Quincena'" :groupClass="'row g-3'">
+                    <div class="col-6">
+                        <x-form.input.radio-button :id="'first_half'" :name="'payroll_half'" :value="'first_half'" :checked="$selectedPayrollHalf === 'first_half'">
+                            <div class="d-flex flex-row gap-2 justify-content-center align-items-center">
+                                Primera Quincena
+                                <small class="text-muted">Dias 1-15</small>
+                            </div>
+                        </x-form.input.radio-button>
+                    </div>
+                    <div class="col-6">
+                        <x-form.input.radio-button :id="'second_half'" :name="'payroll_half'" :value="'second_half'" :checked="$selectedPayrollHalf === 'second_half'">
+                            <div class="d-flex flex-row gap-2 justify-content-center align-items-center">
+                                Segunda Quincena
+                                <small class="text-muted">Dias 16-31</small>
+                            </div>
+                        </x-form.input.radio-button>
+                    </div>
+                </x-form.input.radio-group>
+            </div>
         </div>
 
-        {{-- Submit Button --}}
         <div class="d-flex justify-content-end mt-4">
             <x-form.submit :id="'submit-salary-form-button'" :spinnerId="'submit-salary-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="'Calculando salario...'">
                 <div id="submit-salary-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
@@ -74,57 +70,30 @@
     </form>
 </div>
 
-{{-- Salary Calculation Results --}}
 @php
-    $hasSalaryCalcResults = $employee !== null;
-
-    function getInitials($name) {
-        $initials = '';
-        $nameParts = explode(' ', $name);
-        foreach ($nameParts as $part) {
-            if (!empty($part)) {
-                $initials .= strtoupper($part[0]);
-            }
-        }
-        return $initials;
-    }
-
-    function escapeHtml($string) {
-        return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
-    }
+    $hasSalaryCalcResults = filled($employee);
+    $timesheets = collect(data_get($employee, 'timesheets', []));
 @endphp
 
 @if($hasSalaryCalcResults)
-@php
-    $employeeName = escapeHtml($employee->user->name ?? 'Colaborador sin nombre');
-    $employeeEmail = escapeHtml($employee->user->email ?? 'Sin correo');
-    $employeeStatusLabel = $employee->status?->label() ?? 'Activo';
-    $employeeIsActive = ($employee->status?->value ?? 'active') === 'active';
-
-    $timesheets = $employee->timesheets ?? collect();
-
-    $hourlyWageRaw = (float) ($employee->getRawOriginal('hourly_wage') ?? 0);
-    $hourlyWageLabel = '₡' . number_format($hourlyWageRaw, 0, ',', ' ') . '/hr';
-
-    $workedDays ??= 2;
-    $totalWorkedHours ??= 16;
-    $totalSalaryAmount ??= 40000;
-@endphp
 <div id="salary-calculation-result" class="card-container rounded-3 p-3 p-lg-4 mt-4">
     <div class="d-flex flex-column flex-xxl-row align-items-stretch justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3 flex-grow-1">
             <div class="rounded-circle d-inline-flex align-items-center justify-content-center fs-5 fw-semibold bg-secondary-subtle" style="width: 3.4rem; height: 3.4rem; min-width: 3.4rem;">
-                {{ getInitials($employeeName) }}
+                {{ data_get($employee, 'initials', 'SN') }}
             </div>
             <div class="d-flex flex-column gap-1 justify-content-center">
-                <span class="fw-semibold fs-5 lh-sm">{{ $employeeName }}</span>
-                <small class="lh-sm">{{ $employeeEmail }}</small>
+                <span class="fw-semibold fs-5 lh-sm">{{ data_get($employee, 'name', 'Colaborador sin nombre') }}</span>
+                <small class="lh-sm">{{ data_get($employee, 'email', 'Sin correo') }}</small>
                 <div class="d-flex align-items-center gap-1 mt-2">
-                    <span class="badge border rounded-pill {{ $employeeIsActive ? 'text-success-emphasis bg-success-subtle' : 'text-danger-emphasis bg-danger-subtle' }} px-3 py-2">
-                        {{ $employeeStatusLabel }}
+                    <span class="badge border rounded-pill {{ data_get($employee, 'is_active', true) ? 'text-success-emphasis bg-success-subtle' : 'text-danger-emphasis bg-danger-subtle' }} px-3 py-2">
+                        {{ data_get($employee, 'status_label', 'Activo') }}
                     </span>
                     <span class="badge border rounded-pill text-info-emphasis bg-info-subtle px-3 py-2">
-                        {{ $hourlyWageLabel }}
+                        {{ data_get($employee, 'hourly_wage_label', 'CRC 0/hr') }}
+                    </span>
+                    <span class="badge border rounded-pill text-primary-emphasis bg-primary-subtle px-3 py-2">
+                        {{ data_get($employee, 'payment_frequency_label', 'Sin definir') }}
                     </span>
                 </div>
             </div>
@@ -132,18 +101,18 @@
 
         <div class="salary-stats d-flex flex-wrap gap-2 justify-content-start justify-content-xxl-end">
             <div class="stat-card rounded-3 border px-4 py-3">
-                <small class="text-uppercase text-muted fw-semibold d-block mb-1">Días Trab.</small>
-                <span class="fw-bold fs-4 lh-1">{{ $workedDays }}</span>
+                <small class="text-uppercase text-muted fw-semibold d-block mb-1">Dias Trab.</small>
+                <span class="fw-bold fs-4 lh-1">{{ data_get($employee, 'worked_days', 0) }}</span>
             </div>
 
             <div class="stat-card total-hours rounded-3 border px-4 py-3">
                 <small class="text-uppercase text-muted fw-semibold d-block mb-1">Horas Totales</small>
-                <span class="fw-bold fs-4 lh-1">{{ number_format((float) $totalWorkedHours) }}h</span>
+                <span class="fw-bold fs-4 lh-1">{{ data_get($employee, 'total_worked_hours_label', '0h') }}</span>
             </div>
 
             <div class="stat-card total-salary rounded-3 border px-4 py-3">
                 <small class="text-uppercase text-muted fw-semibold d-block mb-1">Salario Total</small>
-                <span class="fw-bold fs-4 lh-1">₡{{ number_format((float) $totalSalaryAmount, 0, ',', ' ') }}</span>
+                <span class="fw-bold fs-4 lh-1">{{ data_get($employee, 'total_salary_amount_label', 'CRC 0') }}</span>
             </div>
         </div>
     </div>
@@ -154,50 +123,33 @@
         @if ($timesheets->isEmpty())
         <div class="d-flex flex-column gap-3 mt-4 justify-content-center align-items-center">
             <i class="bi bi-emoji-frown fs-1 text-muted"></i>
-            <span class="text-muted">No se encontraron registros de asistencia para este colaborador en el período seleccionado.</span>
+            <span class="text-muted">No se encontraron registros de asistencia para este colaborador en el periodo seleccionado.</span>
         </div>
         @else
-        <span class="form-label mb-0">Desglose por Día</span>
+        <span class="form-label mb-0">Desglose por Dia</span>
 
         <div class="d-flex flex-column gap-2 justify-content-center align-items-center">
             @foreach ($timesheets as $ts)
-            @php
-            $workDate = mb_convert_case(
-            str_replace('.', '', Carbon\Carbon::parse($ts->work_date)
-            ->locale('es')
-            ->timezone('America/Costa_Rica')
-            ->isoFormat('ddd, DD MMM')
-            ),
-            MB_CASE_TITLE,
-            'UTF-8'
-            );
-            $startTime = Carbon\Carbon::parse($ts->start_time)->timezone('America/Costa_Rica')->format('g:i A');
-            $endTime = Carbon\Carbon::parse($ts->end_time)->timezone('America/Costa_Rica')->format('g:i A') ?? 'N/A';
-            $totalHours = number_format((float) $ts->total_hours);
-            $salaryAmount = '₡' . number_format($ts->salary_amount ?? rand(100000, 10000000), 0, ',', ' ');
-            $isHoliday = $ts->is_holiday;
-            @endphp
-
             <div class="d-flex flex-row w-100 align-items-center rounded-3 border px-4 py-3" style="background-color: var(--employee-salary-card-bg);">
                 <div class="d-flex flex-row me-auto gap-4 justify-content-between align-items-center">
-                    <span class="fw-semibold fs-6">{{ $workDate }}</span>
-                    @if ($isHoliday)
+                    <span class="fw-semibold fs-6">{{ data_get($ts, 'work_date_label') }}</span>
+                    @if (data_get($ts, 'is_holiday', false))
                     <span class="badge border rounded-pill text-warning-emphasis bg-warning-subtle px-2 py-2">
                         <i class="bi bi-stars me-1"></i>Feriado
-                        @if ($isHoliday) <small class="">(x2)</small> @endif
+                        <small>(x2)</small>
                     </span>
                     @endif
                 </div>
                 <div class="d-flex flex-row ms-auto gap-4 align-items-center">
                     <div class="d-flex flex-row gap-4 justify-content-between align-items-end">
-                        <span class="text-muted">{{ $startTime }} → {{ $endTime }}</span>
+                        <span class="text-muted">{{ data_get($ts, 'start_time_label', 'N/A') }} -> {{ data_get($ts, 'end_time_label', 'N/A') }}</span>
                         <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2">
                             <i class="bi bi-stopwatch"></i>
-                            {{ $totalHours }}h
+                            {{ data_get($ts, 'total_hours_label', '0h') }}
                         </span>
                     </div>
-                    <span class="fw-bolder fs-6 @if($isHoliday) text-warning-emphasis @endif" style="min-width: 130px; text-align: right; @if(!$isHoliday) color: var(--bambu-logo-bg); @endif">
-                        {{ $salaryAmount }}
+                    <span class="fw-bolder fs-6 {{ data_get($ts, 'is_holiday', false) ? 'text-warning-emphasis' : '' }}" style="min-width: 130px; text-align: right; {{ data_get($ts, 'is_holiday', false) ? '' : 'color: var(--bambu-logo-bg);' }}">
+                        {{ data_get($ts, 'salary_amount_label', 'CRC 0') }}
                     </span>
                 </div>
             </div>
@@ -208,22 +160,21 @@
             <div class="d-flex flex-row gap-2 justify-content-center align-items-start text-muted">
                 <span>
                     <i class="bi bi-calendar-check me-1"></i>
-                    {{ $workedDays }} días trabajados
+                    {{ data_get($employee, 'worked_days', 0) }} dias trabajados
                 </span>
                 <span>&centerdot;</span>
                 <span>
                     <i class="bi bi-stopwatch me-1"></i>
-                    {{ number_format((float) $totalWorkedHours) }}h totales
+                    {{ data_get($employee, 'total_worked_hours_label', '0h') }} totales
                 </span>
-                @if ($isHoliday)
+                @if (data_get($employee, 'includes_holiday_days', false))
                 <span>&centerdot;</span>
-                <span><i class="bi bi-stars me-1"></i>Incluye días feriados</span>
+                <span><i class="bi bi-stars me-1"></i>Incluye dias feriados</span>
                 @endif
             </div>
-            <span class="fw-bold fs-5" style="text-align: right;">Total a Pagar: ₡{{ number_format((float) $totalSalaryAmount, 0, ',', ' ') }}</span>
+            <span class="fw-bold fs-5" style="text-align: right;">Total a Pagar: {{ data_get($employee, 'total_salary_amount_label', 'CRC 0') }}</span>
         </div>
         @endif
     </div>
-    
 </div>
 @endif

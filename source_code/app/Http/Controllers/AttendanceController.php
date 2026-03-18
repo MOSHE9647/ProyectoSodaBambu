@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Timesheets\BuildSalaryTabDataAction;
 use App\Actions\Timesheets\StoreAttendanceAction;
 use App\Enums\UserRole;
 use App\Http\Requests\TimesheetRequest;
@@ -110,12 +111,12 @@ class AttendanceController extends Controller implements HasMiddleware
 	 * @param string $tab Tab key.
 	 * @return View
 	 */
-	public function tab(string $tab): View
+	public function tab(string $tab, Request $request, BuildSalaryTabDataAction $buildSalaryTabDataAction): View
 	{
 		return match ($tab) {
 			'attendance' => $this->attendanceTab(),
 			'history' => $this->historyTab(),
-			'salary' => $this->salaryTab(),
+			'salary' => $this->salaryTab($request, $buildSalaryTabDataAction),
 			default => abort(404),
 		};
 	}
@@ -248,10 +249,14 @@ class AttendanceController extends Controller implements HasMiddleware
 	 *
 	 * @return View
 	 */
-	private function salaryTab(): View
+	private function salaryTab(Request $request, BuildSalaryTabDataAction $buildSalaryTabDataAction): View
 	{
-		$employees = Employee::with(['user', 'timesheets'])->get();
-		$employee = $employees->first();
-		return view('models.employees.tabs.salary', compact('employees', 'employee'));
+		$salaryData = $buildSalaryTabDataAction->execute(
+			$request->integer('employee_id'),
+			$request->input('payroll_period'),
+			$request->input('payroll_half'),
+		);
+
+		return view('models.employees.tabs.salary', $salaryData);
 	}
 }
