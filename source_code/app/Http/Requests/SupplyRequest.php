@@ -31,7 +31,7 @@ class SupplyRequest extends FormRequest
         $requiredOnCreate = $this->isMethod('post') ? 'required' : 'sometimes';
 
         return [
-            'name' => [$requiredOnCreate, 'string', 'max:255', $nameRule],
+            'name' => [$requiredOnCreate, 'string', 'max:50', $nameRule],
             'measure_unit' => [$requiredOnCreate, 'string', 'max:255'],
         ];
     }
