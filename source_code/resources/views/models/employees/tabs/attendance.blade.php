@@ -13,7 +13,7 @@
         @endphp
         <div class="col-6">
             <x-form.select
-                :id="'employee_id'" 
+                :id="'attendance-employee_id'" 
                 :class="'border-secondary'"
                 :selectClass="$errors->has('employee_id') ? 'is-invalid' : ''"
                 :errorMessage="$errors->first('employee_id') ?? ''"
@@ -35,7 +35,7 @@
         {{-- Date --}}
         <div class="col-6">
             <x-form.input 
-				:id="'work_date_display'" 
+				:id="'attendance-work_date_display'" 
                 :type="'date'" 
 				:name="'work_date_display'"
                 :class="'border-secondary'" 
@@ -48,7 +48,7 @@
                 :required="true">
                 Fecha
             </x-form.input>
-			<input id="work_date" name="work_date" type="hidden" value="{{ $todayDate ?? now('America/Costa_Rica')->toDateString() }}">
+			<input id="attendance-work_date" name="work_date" type="hidden" value="{{ $todayDate ?? now('America/Costa_Rica')->toDateString() }}">
         </div>
     </div>
 
@@ -62,14 +62,14 @@
 
     <x-form.input.radio-group :label="'¿Es feriado?'" :groupClass="'row g-3'" :labelClass="'mt-3'">
         <div class="col-6">
-            <x-form.input.radio-button :id="'is_holiday_false'" :name="'is_holiday'" :value="'0'" :checked="$oldHoliday === '0'">
+            <x-form.input.radio-button :id="'attendance-is_holiday_false'" :name="'is_holiday'" :value="'0'" :checked="$oldHoliday === '0'">
                 <i class="bi bi-x-circle me-2"></i>
                 No, no es feriado
             </x-form.input.radio-button>
         </div>
 
         <div class="col-6">
-            <x-form.input.radio-button :id="'is_holiday_true'" :name="'is_holiday'" :value="'1'" :checked="$oldHoliday === '1'">
+            <x-form.input.radio-button :id="'attendance-is_holiday_true'" :name="'is_holiday'" :value="'1'" :checked="$oldHoliday === '1'">
                 <i class="bi bi-check-circle me-2"></i>
                 Sí, es feriado
             </x-form.input.radio-button>
@@ -83,20 +83,20 @@
         </x-alert>
 
         {{-- Start / End Time --}}
-        <x-tabs id="attendance-pills" navType="tabs" navContainerClass="p-0">
+        <x-tabs id="attendance-pills-menu" navType="tabs" navContainerClass="p-0">
             <x-slot:buttons>
-                <x-tabs.button target="nav-start" icon="bi bi-box-arrow-in-right" :active="true">
+                <x-tabs.button target="attendance-nav-start" icon="bi bi-box-arrow-in-right" :active="true">
                     Entrada
                 </x-tabs.button>
-                <x-tabs.button target="nav-end" icon="bi bi-box-arrow-right">
+                <x-tabs.button target="attendance-nav-end" icon="bi bi-box-arrow-right">
                     Salida
                 </x-tabs.button>
             </x-slot:buttons>
         </x-tabs>
 
-        <x-tabs.content navId="attendance-pills" contentClass="p-0 mt-0 border-top-0 rounded-top-0 shadow-none">
-            <x-tabs.item id="nav-start" :active="true">
-                <x-form.input :id="'start_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('start_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('start_time') ?? ''" :iconLeft="'bi bi-clock'" :required="true">
+        <x-tabs.content navId="attendance-pills-menu" contentClass="p-0 mt-0 border-top-0 rounded-top-0 shadow-none">
+            <x-tabs.item id="attendance-attendance-nav-start" :active="true">
+                <x-form.input :id="'attendance-start_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('start_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('start_time') ?? ''" :iconLeft="'bi bi-clock'" :required="true">
                     Hora de Entrada
                     <span class="text-danger">*</span>
                 </x-form.input>
@@ -106,8 +106,8 @@
                 </p>
             </x-tabs.item>
 
-            <x-tabs.item id="nav-end">
-                <x-form.input :id="'end_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('end_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('end_time') ?? ''" :iconLeft="'bi bi-clock'" :required="false">
+            <x-tabs.item id="attendance-nav-end">
+                <x-form.input :id="'attendance-end_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('end_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('end_time') ?? ''" :iconLeft="'bi bi-clock'" :required="false">
                     Hora de Salida
                 </x-form.input>
 
@@ -118,22 +118,22 @@
         </x-tabs.content>
     </div>
 
-    <x-alert id="total-hours-info" type="success" class="d-none mt-3 mb-1" :showIcon="false">
+    <x-alert id="attendance-total-hours-info" type="success" class="d-none mt-3 mb-1" :showIcon="false">
         <div class="d-flex flex-row w-100 justify-content-between">
             <div>
-                <span id="start-time">08:00 AM</span>
+                <span id="attendance-start-time-display">08:00 AM</span>
                 <span>&RightArrow;</span>
-                <span id="end-time">06:00 PM</span>
+                <span id="attendance-end-time-display">06:00 PM</span>
             </div>
             <span class="fw-bold" style="color: #22C55E;">
                 <i class="bi bi-stopwatch me-1"></i>
-                <span id="total-hours">12h trabajadas</span>
+                <span id="attendance-total-hours">12h trabajadas</span>
             </span>
         </div>
     </x-alert>
 
-    <x-form.submit :id="'submit-attendance-form-button'" :spinnerId="'submit-attendance-form-spinner'" :class="'btn-primary w-100 mt-3'">
-        <div id="submit-attendance-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
+    <x-form.submit :id="'attendance-submit-form-button'" :spinnerId="'attendance-submit-form-spinner'" :class="'btn-primary w-100 mt-3'">
+        <div id="attendance-submit-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
             <i class="bi bi-clipboard-check-fill me-2"></i>
             Registrar Asistencia
         </div>

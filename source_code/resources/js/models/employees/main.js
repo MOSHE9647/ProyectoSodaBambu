@@ -8,6 +8,7 @@ import {
 	setLoadingState,
 } from "../../utils/utils";
 import { initAttendanceForm } from "./form.js";
+import { clearAllFieldErrors, clearFieldError, showFieldError, validateAndDisplayField } from "../../utils/validation.js";
 
 // ==================== Constants ====================
 
@@ -321,13 +322,15 @@ function initHistoryTab() {
  * @returns {void}
  */
 function initSalaryTab() {
-	const container = document.querySelector(`#${TAB_IDS.salary} .js-tab-lazy-content`);
+	const container = document.querySelector(
+		`#${TAB_IDS.salary} .js-tab-lazy-content`,
+	);
 	const form = container?.querySelector("#employee-salary-form");
 	if (!container || !form) return;
 
-	const employeeSelect = form.querySelector("#employee_id");
-	const periodInput = form.querySelector("#payroll_period_display");
-	const periodHidden = form.querySelector("#payroll_period");
+	const employeeSelect = form.querySelector("#salary-employee_id");
+	const periodInput = form.querySelector("#salary-payroll_period_display");
+	const periodHidden = form.querySelector("#salary-payroll_period");
 	const halfGroup = form.querySelector("[data-payroll-half-group]");
 	const halfRadios = form.querySelectorAll('input[name="payroll_half"]');
 
@@ -341,8 +344,11 @@ function initSalaryTab() {
 		const paymentFrequency = selectedOption?.dataset?.paymentFrequency;
 		const isBiweekly = paymentFrequency === "biweekly";
 		const today = new Date();
-		const defaultHalf = today.getDate() <= 15 ? "first_half" : "second_half";
-		const checkedRadio = Array.from(halfRadios).find((radio) => radio.checked);
+		const defaultHalf =
+			today.getDate() <= 15 ? "first_half" : "second_half";
+		const checkedRadio = Array.from(halfRadios).find(
+			(radio) => radio.checked,
+		);
 
 		halfGroup?.classList.toggle("d-none", !isBiweekly);
 		halfRadios.forEach((radio) => {
@@ -358,6 +364,41 @@ function initSalaryTab() {
 		}
 	};
 
+	const validateSalaryCalcForm = () => {
+		const FIELD_KEYS = {
+			EMPLOYEE: "salary-employee_id",
+			PERIOD: "salary-payroll_period_display",
+		};
+
+		const FIELD_VALIDATORS = {
+			[FIELD_KEYS.EMPLOYEE]: {
+				validator: (val) => val && val !== "-1",
+				invalidMsg: "Selecciona un colaborador válido",
+			},
+			[FIELD_KEYS.PERIOD]: {
+				validator: (val) => /^\d{4}-\d{2}$/.test(String(val).trim()),
+				emptyMsg: "Selecciona un período de nómina",
+				invalidMsg: "Formato YYYY-MM requerido",
+			},
+		};
+
+		const values = {
+			[FIELD_KEYS.EMPLOYEE]: form.querySelector(`#${FIELD_KEYS.EMPLOYEE}`)
+				?.value,
+			[FIELD_KEYS.PERIOD]: form.querySelector(`#${FIELD_KEYS.PERIOD}`)
+				?.value,
+		};
+
+		clearAllFieldErrors(FIELD_VALIDATORS);
+
+		return validateAndDisplayField(
+			FIELD_VALIDATORS,
+			values,
+			showFieldError,
+			clearFieldError,
+		);
+	};
+
 	periodInput?.addEventListener("change", syncPayrollPeriod);
 	employeeSelect?.addEventListener("change", syncPayrollHalfVisibility);
 	syncPayrollPeriod();
@@ -366,29 +407,32 @@ function initSalaryTab() {
 	form.addEventListener("submit", async (event) => {
 		event.preventDefault();
 		syncPayrollPeriod();
-		setLoadingState("submit-salary-form", true);
+		setLoadingState("salary-submit-form", true);
 
-		const formData = new FormData(form);
-		const params = new URLSearchParams();
-		for (const [key, value] of formData.entries()) {
-			const normalizedValue = String(value ?? "").trim();
-			if (normalizedValue.length) params.set(key, normalizedValue);
-		}
+		if (validateSalaryCalcForm()) {
+			const formData = new FormData(form);
+			const params = new URLSearchParams();
+			for (const [key, value] of formData.entries()) {
+				const normalizedValue = String(value ?? "").trim();
+				if (normalizedValue.length) params.set(key, normalizedValue);
+			}
 
-		const baseUrl = MODEL_ROUTES.tabs.replace(":tab", "salary");
-		const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+			const baseUrl = MODEL_ROUTES.tabs.replace(":tab", "salary");
+			const url = params.toString()
+				? `${baseUrl}?${params.toString()}`
+				: baseUrl;
 
-		try {
-			const response = await fetch(url, {
-				headers: { "X-Requested-With": "XMLHttpRequest" },
-			});
-			if (!response.ok) throw new Error(`Error ${response.status}`);
+			try {
+				const response = await fetch(url, {
+					headers: { "X-Requested-With": "XMLHttpRequest" },
+				});
+				if (!response.ok) throw new Error(`Error ${response.status}`);
 
-			container.innerHTML = await response.text();
-			initSalaryTab();
-		} catch (error) {
-			const renderContent = (content) => {
-				return `
+				container.innerHTML = await response.text();
+				initSalaryTab();
+			} catch (error) {
+				const renderContent = (content) => {
+					return `
 					<div class="card-container rounded-2 p-4">
 						<h5 class="text-muted pb-3 border-bottom border-secondary">
 							<i class="bi bi-currency-dollar me-3"></i>
@@ -397,13 +441,16 @@ function initSalaryTab() {
 						${content}
 					</div>
 				`;
-			};
+				};
 
-			container.innerHTML = renderContent(
-				'<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo calcular el salario. Intentalo de nuevo.</span></div>'
-			);
-			console.error(error);
-			setLoadingState("submit-salary-form", false);
+				container.innerHTML = renderContent(
+					'<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i><span>No se pudo calcular el salario. Intentalo de nuevo.</span></div>',
+				);
+				console.error(error);
+				setLoadingState("salary-submit-form", false);
+			}
+		} else {
+			setLoadingState("salary-submit-form", false);
 		}
 	});
 }
