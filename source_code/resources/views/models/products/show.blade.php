@@ -12,7 +12,7 @@
                 :id="'barcode'"
                 :type="'text'"
                 :readonly="true"
-                :value="$product->barcode"
+                :value="$product->barcode ?: 'N/A'"
                 :placeholder="'Código de Barras'"
                 :iconLeft="'bi bi-upc-scan'"
             >
@@ -59,13 +59,39 @@
             </x-form.input.floating-label>
         </div>
 
+        <div class="col-12 col-md-6">
+            <x-form.input.floating-label
+                :id="'current_stock'"
+                :type="'text'"
+                :readonly="true"
+                :value="$product->stock?->current_stock ?? 'N/A'"
+                :iconLeft="'bi bi-archive'"
+                :placeholder="'Stock Actual'"
+            >
+                Stock Actual
+            </x-form.input.floating-label>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <x-form.input.floating-label
+                :id="'minimum_stock'"
+                :type="'text'"
+                :readonly="true"
+                :value="$product->stock?->minimum_stock ?? 'N/A'"
+                :iconLeft="'bi bi-exclamation-triangle'"
+                :placeholder="'Stock Mínimo'"
+            >
+                Stock Mínimo
+            </x-form.input.floating-label>
+        </div>
+
         <div class="col-12 col-md-4">
             <x-form.input.floating-label
                 :id="'sale_price'"
                 :type="'text'"
                 :readonly="true"
                 :value="'₡ ' . number_format((float) $product->sale_price, 2, '.', ',')"
-                :iconLeft="'bi bi-currency-dollar'"
+                :iconLeft="'bi bi-cash-stack'"
                 :placeholder="'Precio de Venta'"
             >
                 Precio de Venta
