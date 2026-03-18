@@ -10,15 +10,15 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('supplies', function (Blueprint $table) {
-        $table->id();
-        $table->string('name');
-        $table->string('measure_unit', 50); // Corrección solicitada por Melanie
-        $table->timestamps();
-        $table->softDeletes();
-    });
-}
+    {
+        Schema::create('supplies', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('measure_unit', 50); // Corrección solicitada por Melanie
+            $table->timestamps();
+            $table->softDeletes();
+        });
+    }
 
     /**
      * Reverse the migrations.
