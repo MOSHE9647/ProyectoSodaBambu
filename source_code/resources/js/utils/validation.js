@@ -119,6 +119,15 @@ export function validateEmployeeStatus(status) {
 }
 
 /**
+ * Validates if the provided value is a valid time in HH:MM format.
+ * @param {string} value
+ * @returns {boolean}
+ */
+export function validateTime(value) {
+	return /^\d{2}:\d{2}$/.test(value);
+}
+
+/**
  * Validation configuration for different fields.
  * @param {Object} fieldValidators
  * @param {Object} values

@@ -34,9 +34,9 @@ class ProductStock extends Model
     protected $casts = [
         'current_stock' => 'integer',
         'minimum_stock' => 'integer',
-        'created_at' => CostaRicaDatetime::class,
-        'updated_at' => CostaRicaDatetime::class,
-        'deleted_at' => CostaRicaDatetime::class,
+        // 'created_at' => CostaRicaDatetime::class,
+        // 'updated_at' => CostaRicaDatetime::class,
+        // 'deleted_at' => CostaRicaDatetime::class,
     ];
 
     /**

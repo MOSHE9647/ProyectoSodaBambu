@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\HomeController;
@@ -28,4 +29,14 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::resource('products', ProductController::class)->names('products');
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
+	
+	// Attendance routes with role-based access control defined in the controller
+	Route::group(['prefix' => 'attendance'], function () {
+		Route::get('/', [AttendanceController::class, 'index'])->name('attendance.index');
+		Route::post('/', [AttendanceController::class, 'store'])->name('attendance.store');
+		Route::put('/{timesheet}', [AttendanceController::class, 'update'])->name('attendance.update');
+		Route::delete('/{timesheet}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
+		Route::get('/tabs/{tab}', [AttendanceController::class, 'tab'])->name('attendance.tabs');
+		Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
+	});
 });
