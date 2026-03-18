@@ -5,17 +5,32 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SupplyRequest; 
 use App\Http\Resources\SupplyResource;
 use App\Models\Supply;
+use App\Enums\UserRole;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Throwable;
 use Yajra\DataTables\DataTables;
 
-class SupplyController extends Controller
+class SupplyController extends Controller implements HasMiddleware
 {
+    /**
+     * Get the middleware that should be assigned to the controller.
+     *
+     * @return array<int, \Illuminate\Routing\Controllers\Middleware>
+     */
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('role:' . UserRole::ADMIN->value),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -26,24 +41,22 @@ class SupplyController extends Controller
  public function index(Request $request)
 {
     if ($request->ajax()) {
-        $query = Supply::with(['purchaseDetails' => function($q) {
-            $q->latest(); 
-        }]);
+        $query = Supply::query();
 
         return DataTables::of($query)
             // aqui se le pasa la cantidad
             ->addColumn('quantity', function($supply) {
-                $last = $supply->purchaseDetails->first();
+                $last = $supply->purchaseDetails()->latest()->first();
                 return $last ? $last->quantity : 0;
             })
             // aqui se le pasa el precio
             ->addColumn('unit_price', function($supply) {
-                $last = $supply->purchaseDetails->first();
+                $last = $supply->purchaseDetails()->latest()->first();
                 return $last ? '₡' . number_format($last->unit_price, 2) : '₡0.00';
             })
             // aquis e le pasa al fecha de vencimento 
             ->addColumn('expiration_date', function($supply) {
-                $last = $supply->purchaseDetails->first();
+                $last = $supply->purchaseDetails()->latest()->first();
                 return ($last && $last->expiration_date) 
                     ? \Carbon\Carbon::parse($last->expiration_date)->format('d/m/Y') 
                     : 'N/A';
