@@ -2,7 +2,7 @@
 
 ## 📋 Descripción del Proyecto
 
-Esta parte del repositorio contiene el código fuente del sistema de gestión interna para Soda y Restaurante El Bambú. El sistema centraliza la operación del restaurante para optimizar ventas, inventario, reportes, reservas y administración interna.
+Esta parte del repositorio contiene el código fuente del sistema de gestión interna para Soda y Restaurante El Bambú. El sistema centraliza la operación del restaurante para optimizar ventas, inventario, asistencia del personal y administración interna por roles.
 
 ## 🌐 Proyecto Desplegado
 
@@ -28,6 +28,16 @@ El sistema está diseñado como una aplicación web progresiva (PWA) que permite
 3. Realiza operaciones CRUD sobre las entidades del negocio.
 4. El sistema valida, procesa y almacena la información.
 5. Genera reportes y estadísticas en tiempo real.
+
+### Funcionalidades Actuales
+- **Acceso y seguridad**: autenticación con Laravel Fortify, verificación de correo y control de acceso por roles/permisos con Spatie Permission.
+- **Dashboard administrativo**: visualización de indicadores de inventario (stock bajo y productos próximos a vencer).
+- **Ventas**: módulo de ventas disponible para administradores y empleados.
+- **Gestión de catálogo e inventario**: CRUD de productos, categorías, proveedores, clientes e insumos.
+- **Asistencia de personal**: registro de entrada/salida, historial con filtros y cálculo de salario por periodo desde el módulo de asistencia.
+- **Tablas avanzadas**: listados con búsqueda, filtros, ordenamiento y exportación.
+- **Notificaciones y UX**: alertas del sistema, soporte de estados de conexión y diseño responsive.
+- **PWA**: recursos para instalación como aplicación web progresiva y soporte offline básico.
 
 ## 📖 Guía de Uso
 
@@ -72,8 +82,7 @@ Para probar el sistema con datos de ejemplo durante el desarrollo:
 
 ### Herramientas de Desarrollo
 - **Control de versiones**: Git + Gitflow
-- **Gestor de dependencias PHP**: Composer
-- **Gestor de dependencias JS**: npm
+- **Gestión de dependencias**: Composer + npm
 - **Entorno de desarrollo**: XAMPP / Laragon
 - **IDE recomendado**: Visual Studio Code / PHPStorm
 
@@ -81,23 +90,36 @@ Para probar el sistema con datos de ejemplo durante el desarrollo:
 
 ```
 source_code/
-├── app/                      # Lógica de negocio
-│   ├── Http/Controllers/     # Controladores
-│   ├── Models/               # Modelos Eloquent
-│   └── ...
-├── config/                   # Configuración
+├── api/                             # Entrada para despliegue serverless
+├── app/                             # Lógica de negocio
+│   ├── Actions/                     # Casos de uso (Fortify, Timesheets, Users)
+│   ├── Enums/                       # Enumeraciones del dominio
+│   ├── Http/
+│   │   ├── Controllers/             # Controladores web
+│   │   ├── Middleware/              # Middlewares personalizados
+│   │   ├── Requests/                # Validaciones de formularios
+│   │   └── Resources/               # Transformadores de respuesta
+│   ├── Models/                      # Modelos Eloquent
+│   ├── Observers/                   # Observadores de eventos de modelos
+│   ├── Policies/                    # Políticas de autorización
+│   └── Providers/                   # Service providers
+├── bootstrap/                       # Arranque de aplicación
+├── config/                          # Configuración de Laravel/paquetes
 ├── database/
-│   ├── migrations/           # Migraciones de BD
-│   ├── seeders/              # Datos de prueba
-│   └── factories/            # Factories para testing
-├── public/                   # Punto de entrada y assets públicos
+│   ├── migrations/                  # Migraciones de BD
+│   ├── seeders/                     # Datos iniciales/de prueba
+│   └── factories/                   # Factories para testing
+├── lang/                            # Traducciones (es/en)
+├── public/                          # Punto de entrada, build y PWA assets
 ├── resources/
-│   ├── views/                # Plantillas Blade
-│   ├── css/                  # Estilos
-│   └── js/                   # JavaScript
-├── routes/
-│   └── web.php               # Rutas web
-└── tests/                    # Tests automatizados
+│   ├── css/                         # Estilos globales/temas
+│   ├── js/                          # Módulos JS por dominio
+│   ├── libs/                        # Librerías front integradas
+│   └── views/                       # Vistas Blade y componentes
+├── routes/                          # Definición de rutas
+├── scripts/                         # Scripts de configuración de workspace
+├── storage/                         # Logs, cache y archivos de aplicación
+└── tests/                           # Pruebas Feature/Unit
 ```
 
 ## 🚀 Configuración Inicial

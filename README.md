@@ -1,6 +1,6 @@
 # Sistema de Gestión Interna El Bambú
 
-![PHP](https://img.shields.io/badge/PHP->=8.2-777BB4?style=flat&logo=php)
+![PHP](https://img.shields.io/badge/PHP-^8.4-777BB4?style=flat&logo=php)
 ![Laravel](https://img.shields.io/badge/Laravel-^12.x-FF2D20?style=flat&logo=laravel)
 ![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?style=flat&logo=mysql)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=flat&logo=bootstrap)
@@ -112,38 +112,31 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
 #### 👤 Para Administradores
 
 1. **Gestión de Usuarios**
-   - Navega a "Usuarios" desde el menú lateral
-   - Crea, edita o elimina cuentas de empleados
-   - Asigna roles
+  - Crea, edita y elimina cuentas
+  - Asigna roles y controla permisos de acceso
 
-2. **Gestión de Clientes**
-   - Accede al módulo "Clientes"
-   - Registra nuevos clientes con su información de contacto
-   - Consulta el historial de pedidos por cliente
+2. **Dashboard e Indicadores**
+  - Visualiza métricas clave del sistema
+  - Monitorea productos con stock bajo y próximos a vencer
 
-3. **Gestión de Proveedores**
-   - Administra la información de proveedores
-   - Mantén actualizado el catálogo de contactos
+3. **Gestión de Catálogo**
+  - Administra productos, categorías, proveedores, clientes e insumos
+  - Gestiona inventario con validaciones de negocio
 
-4. **Categorías y Productos**
-   - Organiza el inventario por categorías
-   - Define precios, stock mínimo y descripciones
+4. **Asistencia y Nómina**
+  - Registra entradas y salidas del personal
+  - Consulta historial por filtros y calcula salarios por periodo
 
-5. **Reportes y Dashboard**
-   - Visualiza estadísticas de ventas
-   - Genera reportes financieros y operativos
-   - Monitorea el estado del inventario
+5. **Administración de Datos**
+  - Opera listados con búsqueda, filtros, ordenamiento y exportación
 
 #### 💼 Para Empleados
 
 1. **Punto de Venta**
-   - Registra ventas de forma rápida
-   - Selecciona productos del catálogo
-   - Procesa diferentes métodos de pago
+  - Accede al módulo de ventas según permisos
 
 2. **Consulta de Inventario**
-   - Verifica disponibilidad de productos
-   - Notifica productos con stock bajo
+  - Consulta disponibilidad de productos en el sistema
   
 > **Nota:** Las funcionalidades disponibles pueden variar según el rol asignado a cada usuario. Asegúrate de iniciar sesión con el rol correcto para acceder a las funciones correspondientes.
 
@@ -155,13 +148,14 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
 ### Características Especiales
 
 - **🌓 Tema Oscuro/Claro**: Cambia el tema según tu preferencia
-- **📊 Exportación de Datos**: Descarga reportes en PDF, Excel o CSV
-- **🔔 Notificaciones**: Recibe alertas de stock bajo, pedidos pendientes, etc.
+- **📊 Exportación de Datos**: Exporta listados de tablas en formatos comunes
+- **🔔 Notificaciones**: Recibe alertas y mensajes del sistema
+- **📱 PWA**: Instalación como aplicación web y soporte offline básico
 
 ## 🔧 Tecnologías
 
 ### Backend
-- **PHP**: >= 8.2
+- **PHP**: ^8.4
 - **Framework**: Laravel ^12.x (PHP)
 - **Base de datos**: MySQL/SQLite
 - **Autenticación**: Laravel Fortify
@@ -177,8 +171,7 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
 
 ### Herramientas de Desarrollo
 - **Control de versiones**: Git + Gitflow
-- **Gestor de dependencias PHP**: Composer
-- **Gestor de dependencias JS**: npm
+- **Gestión de dependencias**: Composer + npm
 - **Entorno de desarrollo**: XAMPP / Laragon
 - **IDE recomendado**: Visual Studio Code / PHPStorm
 
@@ -187,7 +180,7 @@ Para ver información técnica más detallada, revisa la documentación en la ca
 ## 🚀 Instalación y Configuración
 
 ### Requisitos Previos
-- PHP >= 8.2
+- PHP ^8.4
 - Composer
 - Node.js y NPM
 - MySQL/SQLite
