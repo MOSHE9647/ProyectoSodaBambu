@@ -14,6 +14,7 @@
         <div class="col-6">
             <x-form.select
                 :id="'attendance-employee_id'" 
+				:name="'employee_id'"
                 :class="'border-secondary'"
                 :selectClass="$errors->has('employee_id') ? 'is-invalid' : ''"
                 :errorMessage="$errors->first('employee_id') ?? ''"
@@ -95,8 +96,8 @@
         </x-tabs>
 
         <x-tabs.content navId="attendance-pills-menu" contentClass="p-0 mt-0 border-top-0 rounded-top-0 shadow-none">
-            <x-tabs.item id="attendance-attendance-nav-start" :active="true">
-                <x-form.input :id="'attendance-start_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('start_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('start_time') ?? ''" :iconLeft="'bi bi-clock'" :required="true">
+            <x-tabs.item id="attendance-nav-start" :active="true">
+                <x-form.input :id="'attendance-start_time'" :name="'start_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('start_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('start_time') ?? ''" :iconLeft="'bi bi-clock'" :required="true">
                     Hora de Entrada
                     <span class="text-danger">*</span>
                 </x-form.input>
@@ -107,7 +108,7 @@
             </x-tabs.item>
 
             <x-tabs.item id="attendance-nav-end">
-                <x-form.input :id="'attendance-end_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('end_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('end_time') ?? ''" :iconLeft="'bi bi-clock'" :required="false">
+                <x-form.input :id="'attendance-end_time'" :name="'end_time'" :type="'time'" :class="'border-secondary'" :selectClass="$errors->has('end_time') ? 'is-invalid' : ''" :errorMessage="$errors->first('end_time') ?? ''" :iconLeft="'bi bi-clock'" :required="false">
                     Hora de Salida
                 </x-form.input>
 

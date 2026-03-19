@@ -109,14 +109,17 @@ function initHistoryTab() {
 	 * @returns {void}
 	 */
 	const syncClearFiltersButtonVisibility = () => {
-		const employeeValue = String(
-			$(FILTER_SELECTORS.employee).val() ?? DEFAULT_FILTER_VALUE,
-		);
-		const dateValue = String($(FILTER_SELECTORS.date).val() ?? "").trim();
+		const employeeValue =
+			document.querySelector(FILTER_SELECTORS.employee)?.value ??
+			DEFAULT_FILTER_VALUE;
+		const dateValue =
+			document.querySelector(FILTER_SELECTORS.date)?.value?.trim() ?? "";
 		const hasActiveFilters =
 			employeeValue !== DEFAULT_FILTER_VALUE || dateValue.length > 0;
 
-		$("#attendance-clear-filters").toggleClass("d-none", !hasActiveFilters);
+		document
+			.getElementById("attendance-clear-filters")
+			?.classList.toggle("d-none", !hasActiveFilters);
 	};
 
 	/**
@@ -280,8 +283,8 @@ function initHistoryTab() {
 			customButtonsPosition: "top-start",
 			ajax: {
 				data: (req) => {
-					const empId = $(FILTER_SELECTORS.employee).val();
-					const date = $(FILTER_SELECTORS.date).val();
+					const empId = document.querySelector(FILTER_SELECTORS.employee)?.value;
+					const date = document.querySelector(FILTER_SELECTORS.date)?.value;
 					if (empId && empId !== DEFAULT_FILTER_VALUE)
 						req.employee_id = empId;
 					if (date) {
@@ -294,8 +297,11 @@ function initHistoryTab() {
 	);
 
 	window.clearAttendanceFilters = () => {
-		$(FILTER_SELECTORS.employee).val(DEFAULT_FILTER_VALUE);
-		$(FILTER_SELECTORS.date).val("");
+		const empSelect = document.querySelector(FILTER_SELECTORS.employee);
+		const dateInput = document.querySelector(FILTER_SELECTORS.date);
+		if (empSelect) empSelect.value = DEFAULT_FILTER_VALUE;
+		if (dateInput) dateInput.value = "";
+
 		syncClearFiltersButtonVisibility();
 		dataTable.ajax.reload();
 	};
@@ -341,14 +347,9 @@ function initSalaryTab() {
 
 	const syncPayrollHalfVisibility = () => {
 		const selectedOption = employeeSelect?.selectedOptions?.[0];
-		const paymentFrequency = selectedOption?.dataset?.paymentFrequency;
-		const isBiweekly = paymentFrequency === "biweekly";
-		const today = new Date();
-		const defaultHalf =
-			today.getDate() <= 15 ? "first_half" : "second_half";
-		const checkedRadio = Array.from(halfRadios).find(
-			(radio) => radio.checked,
-		);
+		const isBiweekly = selectedOption?.dataset?.paymentFrequency === "biweekly";
+		const defaultHalf = new Date().getDate() <= 15 ? "first_half" : "second_half";
+		const checkedRadio = Array.from(halfRadios).find((r) => r.checked);
 
 		halfGroup?.classList.toggle("d-none", !isBiweekly);
 		halfRadios.forEach((radio) => {
@@ -357,31 +358,29 @@ function initSalaryTab() {
 		});
 
 		if (isBiweekly && !checkedRadio) {
-			const defaultRadio = Array.from(halfRadios).find(
-				(radio) => radio.value === defaultHalf,
-			);
+			const defaultRadio = Array.from(halfRadios).find((r) => r.value === defaultHalf);
 			if (defaultRadio) defaultRadio.checked = true;
 		}
 	};
+	
+	const FIELD_KEYS = {
+		EMPLOYEE: "salary-employee_id",
+		PERIOD: "salary-payroll_period_display",
+	};
+
+	const FIELD_VALIDATORS = {
+		[FIELD_KEYS.EMPLOYEE]: {
+			validator: (val) => val && val !== "-1",
+			invalidMsg: "Selecciona un colaborador válido",
+		},
+		[FIELD_KEYS.PERIOD]: {
+			validator: (val) => /^\d{4}-\d{2}$/.test(String(val).trim()),
+			emptyMsg: "Selecciona un período de nómina",
+			invalidMsg: "Formato YYYY-MM requerido",
+		},
+	};
 
 	const validateSalaryCalcForm = () => {
-		const FIELD_KEYS = {
-			EMPLOYEE: "salary-employee_id",
-			PERIOD: "salary-payroll_period_display",
-		};
-
-		const FIELD_VALIDATORS = {
-			[FIELD_KEYS.EMPLOYEE]: {
-				validator: (val) => val && val !== "-1",
-				invalidMsg: "Selecciona un colaborador válido",
-			},
-			[FIELD_KEYS.PERIOD]: {
-				validator: (val) => /^\d{4}-\d{2}$/.test(String(val).trim()),
-				emptyMsg: "Selecciona un período de nómina",
-				invalidMsg: "Formato YYYY-MM requerido",
-			},
-		};
-
 		const values = {
 			[FIELD_KEYS.EMPLOYEE]: form.querySelector(`#${FIELD_KEYS.EMPLOYEE}`)
 				?.value,
@@ -410,17 +409,14 @@ function initSalaryTab() {
 		setLoadingState("salary-submit-form", true);
 
 		if (validateSalaryCalcForm()) {
-			const formData = new FormData(form);
-			const params = new URLSearchParams();
-			for (const [key, value] of formData.entries()) {
-				const normalizedValue = String(value ?? "").trim();
-				if (normalizedValue.length) params.set(key, normalizedValue);
+			const params = new URLSearchParams(new FormData(form));
+			for (const [key, value] of [...params.entries()]) {
+				if (!value.trim()) params.delete(key);
 			}
 
 			const baseUrl = MODEL_ROUTES.tabs.replace(":tab", "salary");
-			const url = params.toString()
-				? `${baseUrl}?${params.toString()}`
-				: baseUrl;
+			const queryString = params.toString();
+			const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
 
 			try {
 				const response = await fetch(url, {
@@ -451,6 +447,33 @@ function initSalaryTab() {
 			}
 		} else {
 			setLoadingState("salary-submit-form", false);
+		}
+	});
+
+	$(document).on("input change", '#employee-salary-form', (event) => {
+		const target = $(event.target);
+		const fieldId = target.attr("id");
+		const fieldName = FIELD_KEYS[fieldId] || fieldId;
+		const validators = FIELD_VALIDATORS;
+
+		if (!validators.hasOwnProperty(fieldName)) {
+			console.warn(`No validator defined for field: ${fieldName}`);
+			return;
+		}
+
+		const value = target.val().trim();
+		const { validator, emptyMsg, invalidMsg } = validators[fieldName];
+
+		if (!value) {
+			if (emptyMsg) {
+				showFieldError(fieldId, emptyMsg);
+			} else {
+				clearFieldError(fieldId);
+			}
+		} else if (!validator(value)) {
+			showFieldError(fieldId, invalidMsg);
+		} else {
+			clearFieldError(fieldId);
 		}
 	});
 }
