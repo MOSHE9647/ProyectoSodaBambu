@@ -11,6 +11,9 @@ use App\Http\Controllers\SupplyController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
 
+// imports for testing routes
+use App\Http\Controllers\TestStockController;;
+
 /**
  * Evaluate the user's role and redirect accordingly.
  * If the user is not authenticated, redirect to the login page.
@@ -28,8 +31,8 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::resource('users', UserController::class)->names('users');
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
 	Route::resource('products', ProductController::class)->names('products');
-  Route::resource('categories', CategoryController::class)->names('categories');
-  Route::resource('clients', ClientController::class)->names('clients');
+  	Route::resource('categories', CategoryController::class)->names('categories');
+  	Route::resource('clients', ClientController::class)->names('clients');
 	Route::resource('supplies', SupplyController::class)->names('supplies');
 	
 	// Attendance routes with role-based access control defined in the controller
@@ -41,4 +44,9 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 		Route::get('/tabs/{tab}', [AttendanceController::class, 'tab'])->name('attendance.tabs');
 		Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
 	});
+
+	// Route for testing low stock warning
+	 Route::get('/test-low-stock/{stock}', [TestStockController::class, 'triggerLowStock'])->name('test.low-stock');
+
+
 });

@@ -61,7 +61,7 @@ class ProductController extends Controller implements HasMiddleware
 					'ps.minimum_stock',
 				]);
 
-			if ($request->boolean('low_stock')) {
+			if ($request->boolean('low_stock') || $request->filter === 'low_stock') {
 				$query
 					->where('has_inventory', true)
 					->whereNotNull('ps.current_stock')
