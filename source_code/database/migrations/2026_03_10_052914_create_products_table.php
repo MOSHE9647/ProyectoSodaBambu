@@ -20,10 +20,10 @@ return new class extends Migration
             $table->boolean('has_inventory')->default(false);
 
             // Cost and pricing fields
-            $table->decimal('reference_cost', 10, 2)->default(0);
-            $table->decimal('tax_percentage', 5, 2)->default(0);
-            $table->decimal('margin_percentage', 5, 2)->default(0.32);
             $table->decimal('sale_price', 10, 2)->default(0);
+            $table->decimal('tax_percentage', 5, 2)->default(0);
+            $table->decimal('reference_cost', 10, 2)->default(0);
+            $table->decimal('margin_percentage', 5, 2)->default(0.32);
 
             $table->timestamps();
             $table->softDeletes();
