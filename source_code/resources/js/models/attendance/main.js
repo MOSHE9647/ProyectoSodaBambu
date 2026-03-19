@@ -373,10 +373,15 @@ function initHistoryTab() {
 		{
 			showSearchBar: false,
 			customButtonsPosition: "top-start",
+			order: [[1, "desc"]],
 			ajax: {
 				data: (req) => {
-					const empId = document.querySelector(FILTER_SELECTORS.employee)?.value;
-					const date = document.querySelector(FILTER_SELECTORS.date)?.value;
+					const empId = document.querySelector(
+						FILTER_SELECTORS.employee,
+					)?.value;
+					const date = document.querySelector(
+						FILTER_SELECTORS.date,
+					)?.value;
 					if (empId && empId !== DEFAULT_FILTER_VALUE)
 						req.employee_id = empId;
 					if (date) {
