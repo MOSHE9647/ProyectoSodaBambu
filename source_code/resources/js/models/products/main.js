@@ -34,7 +34,10 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('es-CR', {
 	maximumFractionDigits: 2,
 });
 
-let showOnlyLowStock = false;
+// retrieve initial filter state from URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+let showOnlyLowStock = urlParams.get('filter') === 'low_stock';
+
 let productsDataTable = null;
 const canManageProducts = ($('#products-table').data('can-manage-products') ?? '').toString() === '1';
 
@@ -207,6 +210,13 @@ $(() => {
 			params: ['.low-stock-filter-button', 'low-stock-filter'],
 		},
 	];
+
+	// Set initial state of low stock filter button based on URL parameter
+	if (showOnlyLowStock) {
+        const $button = $('.low-stock-filter-button');
+        $button.removeClass('btn-outline-warning').addClass('btn-warning');
+        $('.low-stock-filter-button-text').text('Mostrar todos');
+    }	
 
 	if (canManageProducts) {
 		customButtons.unshift({
