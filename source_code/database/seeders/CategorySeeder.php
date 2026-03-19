@@ -14,16 +14,16 @@ class CategorySeeder extends Seeder
     {
         // Manually create categories with realistic data
         $categories = [
-            ['name' => 'Bebidas', 'description' => 'Bebidas alcohólicas y no alcohólicas'],
-            ['name' => 'Comidas', 'description' => 'Platos principales y acompañamientos'],
-            ['name' => 'Postres', 'description' => 'Dulces y postres variados'],
-            ['name' => 'Aperitivos', 'description' => 'Snacks y aperitivos para compartir'],
-            ['name' => 'Ensaladas', 'description' => 'Ensaladas frescas y saludables'],
-            ['name' => 'Sopas', 'description' => 'Sopas calientes y frías'],
-            ['name' => 'Carnes', 'description' => 'Carnes de res, cerdo, pollo y otros animales'],
-            ['name' => 'Pescados y Mariscos', 'description' => 'Pescados frescos y mariscos variados'],
-            ['name' => 'Vegetariano', 'description' => 'Platos vegetarianos sin productos animales'],
-            ['name' => 'Vegano', 'description' => 'Platos veganos sin productos de origen animal'],
+            ['name' => 'Desayunos', 'description' => 'Opciones para iniciar el día'],
+            ['name' => 'Entradas', 'description' => 'Bocas y acompañamientos'],
+            ['name' => 'Platos Fuertes', 'description' => 'Platos principales'],
+            ['name' => 'Bebidas Naturales', 'description' => 'Frutas de temporada'],
+            ['name' => 'Bebidas Gaseosas', 'description' => 'Refrescos embotellados'],
+            ['name' => 'Cafetería', 'description' => 'Café de especialidad y repostería'],
+            ['name' => 'Postres', 'description' => 'Dulces y helados'],
+            ['name' => 'Licores', 'description' => 'Cervezas y coctelería'],
+            ['name' => 'Menú Infantil', 'description' => 'Porciones para niños'],
+            ['name' => 'Extras', 'description' => 'Adicionales para los platos'],
         ];
 
         // Insert categories into the database

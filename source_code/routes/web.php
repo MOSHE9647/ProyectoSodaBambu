@@ -3,10 +3,13 @@
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\SupplyController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\PurchaseController;
 
 /**
  * Evaluate the user's role and redirect accordingly.
@@ -24,6 +27,12 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('config', [ConfigController::class, 'index'])->name('config');
 	Route::resource('users', UserController::class)->names('users');
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
+	Route::resource('products', ProductController::class)->names('products');
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
+	Route::resource('purchases', PurchaseController::class)->names('purchases');
+	Route::resource('supplies', SupplyController::class)->names('supplies');
+	Route::resource('products', ProductController::class)->names('products');
+
+	Route::post('/purchases/quick-product', [PurchaseController::class, 'quickStoreProduct'])->name('purchases.quick-product');
 });
