@@ -64,7 +64,17 @@ class CategoryController extends Controller
             $category->update($categoryData);
             $message = 'Categoría restaurada y actualizada correctamente.';
         } else {
-            Category::create($categoryData);
+            $category = Category::create($categoryData);
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'message' => $message,
+                'category' => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                ],
+            ]);
         }
 
         return redirect()->route('categories.index')

@@ -24,23 +24,12 @@ class Supply extends Model
     ];
 
     /**
-    * Get the attributes that should be cast.
-    * 
-    * @return array<string, string>
-    */
-    // protected $casts = [
-    //     'created_at' => CostaRicaDatetime::class,
-    //     'updated_at' => CostaRicaDatetime::class,
-    //     'deleted_at' => CostaRicaDatetime::class,
-    // ];
-
-    /**
      * Get all of the purchase details for the supply.
      * 
      * @return MorphMany<PurchaseDetail, Supply>
      */
-    public function purchaseDetails()
-    {
-        return $this->morphMany(PurchaseDetail::class, 'purchasable');
-    }
+public function purchaseDetails(): MorphMany
+{
+    return $this->morphMany(PurchaseDetail::class, 'purchasable');
+}
 }

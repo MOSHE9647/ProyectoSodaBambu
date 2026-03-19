@@ -8,6 +8,13 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
+use App\Models\ProductStock;
+use App\Observers\ProductStockObserver;
+use App\Models\PurchaseDetail;
+use App\Observers\PurchaseDetailObserver;
+
+
+
 class AppServiceProvider extends ServiceProvider
 {
 	/**
@@ -25,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
 	{
 		// Register Observers
 		User::observe(UserObserver::class);
+		ProductStock::observe(ProductStockObserver::class);
+		PurchaseDetail::observe(PurchaseDetailObserver::class);
 
 		// Force HTTPS in production
 		if (config('app.env') !== 'local') {

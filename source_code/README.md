@@ -56,7 +56,7 @@ Para probar el sistema con datos de ejemplo durante el desarrollo:
 ## 🔧 Tecnologías
 
 ### Backend
-- **PHP**: >= 8.2
+- **PHP**: ^8.4
 - **Framework**: Laravel ^12.x (PHP)
 - **Base de datos**: MySQL/SQLite
 - **Autenticación**: Laravel Fortify
