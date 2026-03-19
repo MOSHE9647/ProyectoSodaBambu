@@ -54,6 +54,7 @@ const MODEL_ROUTES = {
 
 const FIELD_KEYS = {
 	employeeId: FORM_SELECTORS.employeeId.replace('#', ''),
+	workDate: FORM_SELECTORS.attendanceDate.replace('#', ''),
 	startTime: FORM_SELECTORS.startTime.replace('#', ''),
 	endTime: FORM_SELECTORS.endTime.replace('#', ''),
 };
@@ -65,6 +66,14 @@ const baseFieldValidators = {
 		validator: validateRole,
 		emptyMsg: 'Debe seleccionar un colaborador.',
 		invalidMsg: 'Seleccione un colaborador válido.',
+	},
+	[FIELD_KEYS.workDate]: {
+		validator: (value) => {
+			const today = new Date().toISOString().split('T')[0];
+			return value === today;
+		},
+		emptyMsg: 'La fecha de asistencia es obligatoria.',
+		invalidMsg: 'La fecha de asistencia debe ser la de hoy.',
 	},
 	[FIELD_KEYS.startTime]: {
 		validator: validateTime,
@@ -150,6 +159,7 @@ function submitAttendanceForm() {
 
 	const values = {
 		[FIELD_KEYS.employeeId]: getFieldValue(FORM_SELECTORS.employeeId),
+		[FIELD_KEYS.workDate]: getFieldValue(FORM_SELECTORS.attendanceDate),
 		[FIELD_KEYS.startTime]: getFieldValue(FORM_SELECTORS.startTime),
 		[FIELD_KEYS.endTime]: getFieldValue(FORM_SELECTORS.endTime),
 	};
@@ -294,6 +304,7 @@ export function initAttendanceForm() {
 
 		setInputState(els.startTime, { value: '', required: true, readonly: false });
 		setInputState(els.endTime, { value: '', required: false, readonly: false });
+		setInputState(els.attendanceDate, { value: new Date().toISOString().split('T')[0] });
 
 		if (els.isHolidayTrue) els.isHolidayTrue.checked = false;
 		if (els.workDate && els.attendanceDate)
