@@ -38,7 +38,7 @@
             <x-form.input 
 				:id="'attendance-work_date_display'" 
                 :type="'date'" 
-				:name="'work_date_display'"
+				:name="'work_date'"
                 :class="'border-secondary'" 
 				:value="$todayDate ?? now('America/Costa_Rica')->toDateString()" 
                 :selectClass="$errors->has('work_date') ? 'is-invalid' : ''" 
