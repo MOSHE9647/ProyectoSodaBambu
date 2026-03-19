@@ -105,3 +105,23 @@ main {
 #sidebar .link-body-emphasis {
 	color: var(--sidebar-item-hover-color);
 }
+
+.salary-stats {
+	min-width: 130px;
+}
+
+.salary-stats .stat-card:is(.total-hours, .total-salary) span {
+	color: var(--bambu-logo-bg);
+}
+
+.stat-card {
+	background-color: var(--employee-salary-card-bg);
+	font-size: 0.72rem;
+}
+
+.stat-card.total-salary,
+.total-salary-amount {
+	background-color: var(--radio-button-bg) !important;
+	border-color: var(--radio-button-hover-border-color) !important;
+	color: var(--bambu-logo-bg) !important;
+}

@@ -44,7 +44,7 @@ class TimesheetRequest extends FormRequest
                 'integer',
                 Rule::exists('employees', 'id')->whereNull('deleted_at'),
             ],
-            'work_date' => ['required', 'date'],
+            'work_date' => ['required', 'date', 'date_equals:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
             'is_holiday' => ['required', 'boolean'],

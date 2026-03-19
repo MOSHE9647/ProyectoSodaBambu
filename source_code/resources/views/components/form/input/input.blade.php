@@ -72,7 +72,7 @@
 		@endisset
 
 		{{-- Error Message --}}
-		<div id="{{ $name ?? $id }}-error" class="invalid-feedback ps-4 ms-4" role="alert">
+		<div id="{{ $id ?? $name }}-error" class="invalid-feedback ps-4 ms-4" role="alert">
 			<strong>{{ $errorMessage ?? 'Error no especificado' }}</strong>
 		</div>
 	</div>

@@ -36,7 +36,7 @@
     </x-tabs.item>
 
     {{-- Salary Calculation Section --}}
-    <x-tabs.item :container="true" id="nav-salary" itemClass="w-75" icon="bi bi-currency-dollar" title="Cálcular Salario">
+    <x-tabs.item :container="false" id="nav-salary" itemClass="w-75">
         <div class="js-tab-lazy-content" data-tab="salary" data-url="{{ route('attendance.tabs', ['tab' => 'salary']) }}">
             <x-alert type="info" message="Abre esta pestaña para calcular el salario." />
         </div>
@@ -51,5 +51,5 @@
             employees: @json($attendanceEmployees ?? []),
         };
     </script>
-    @vite(['resources/js/models/employees/main.js'])
+    @vite(['resources/js/models/attendance/main.js'])
 @endsection
