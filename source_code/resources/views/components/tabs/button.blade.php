@@ -17,7 +17,7 @@
     aria-selected="{{ $active ? 'true' : 'false' }}"
 >
     @if($icon)
-        <i class="{{ trim($icon . ' me-2 ' . $iconClass) }}"></i>
+        <i class="{{ trim("$icon me-2 $iconClass") }}"></i>
     @endif
     {{ $slot }}
 </button>

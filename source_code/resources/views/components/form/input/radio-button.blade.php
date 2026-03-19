@@ -15,7 +15,8 @@
         type="radio" 
         value="{{ $value }}" 
         class="btn-check {{ $checkClass }}" 
-        autocomplete="off" @checked($checked)
+        autocomplete="off" 
+        @checked($checked)
     >
 
     <label class="btn btn-outline-primary check-button w-100 {{ $labelClass }} {{ $class }}" for="{{ $id }}">

@@ -94,6 +94,9 @@
 	--radio-button-hover-border-color: #C9E4B2;
 	--radio-button-unselected-bg: #F6F6F6;
 	--radio-button-unselected-border: #CACBCC;
+	
+	/* Employee Salary Calculation Cards */
+	--employee-salary-card-bg: var(--bs-secondary-bg-subtle);
 }
 
 /* Dark Theme */
@@ -147,11 +150,15 @@
 	--pagination-disabled-border-color: var(--bs-border-color);
 
 	/* Radio Button Colors */
-	--radio-button-bg: #23342A;
+	/* --radio-button-bg: #23342A; */
+	--radio-button-bg: #232F28;
 	--radio-button-hover-bg-color: #2A4B30;
 	--radio-button-hover-border-color: #2A4B30;
 	--radio-button-unselected-bg: #212529;
 	--radio-button-unselected-border: #75787C;
+
+	/* Employee Salary Calculation Cards */
+	--employee-salary-card-bg: #212529;
 }
 
 /* Smooth Transitions */
@@ -348,6 +355,16 @@ body {
 	color: var(--bs-body-color);
 }
 
+.nav-pills .nav-link:focus-visible {
+	background: var(--bambu-logo-bg);
+	border: 1px solid var(--bambu-logo-bg-hover);
+	box-shadow: var(--bambu-focus-ring-success);
+}
+
+.nav-tabs .nav-link:focus-visible {
+	box-shadow: var(--bambu-focus-ring-success);
+}
+
 .nav-pills .nav-link:hover {
 	background-color: var(--sidebar-item-hover-bg);
 	border-color: var(--sidebar-item-hover-bg);
@@ -357,13 +374,13 @@ body {
 .nav-pills .nav-link.active {
 	background-color: var(--sidebar-active-item-bg);
 	border-color: var(--sidebar-active-item-bg);
-	color: var(--bs-body-color);
+	color: var(--bambu-text-light);
 }
 
 .nav-pills .nav-link.active:hover {
 	background-color: var(--bambu-logo-bg-hover);
 	border-color: var(--bambu-logo-bg-hover);
-	color: var(--bs-body-color);
+	color: var(--bambu-text-light);
 }
 
 /* Radio Button */
