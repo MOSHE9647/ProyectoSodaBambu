@@ -7,6 +7,7 @@ enum ProductType: string
     case MERCHANDISE = 'merchandise';
     case DISH = 'dish';
     case DRINK = 'drink';
+    case PACKAGED = 'packaged';
 
     /**
      * Label used for showing the Product Type name
@@ -18,6 +19,7 @@ enum ProductType: string
             self::MERCHANDISE => 'Mercadería',
             self::DISH => 'Platillo',
             self::DRINK => 'Bebida',
+            self::PACKAGED => 'Empaquetado',
         };
     }
 

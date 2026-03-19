@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Table: Insumos
         Schema::create('supplies', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('measure_unit');
+            $table->string('measure_unit', 50); // Corrección solicitada por Melanie
             $table->timestamps();
             $table->softDeletes();
         });

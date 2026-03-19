@@ -14,9 +14,9 @@ class SupplySeeder extends Seeder
     public function run(): void
     {
         $supplies = [
-            ['name' => 'Arroz Blanco (Saco 50kg)', 'measure_unit' => 'Saco'],
-            ['name' => 'Frijoles Negros (Saco 45kg)', 'measure_unit' => 'Saco'],
-            ['name' => 'Aceite Vegetal (18L)', 'measure_unit' => 'Pichinga'],
+            ['name' => 'Arroz Blanco', 'measure_unit' => 'Saco'],
+            ['name' => 'Frijoles Negros', 'measure_unit' => 'Saco'],
+            ['name' => 'Aceite Vegetal', 'measure_unit' => 'Pichinga'],
             ['name' => 'Azúcar Blanca', 'measure_unit' => 'Kg'],
             ['name' => 'Sal Refinada', 'measure_unit' => 'Kg'],
             ['name' => 'Harina de Trigo', 'measure_unit' => 'Kg'],
