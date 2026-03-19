@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductRequest;
+use App\Models\Category;
 use App\Models\Product;
 use Exception;
 use Illuminate\Contracts\View\Factory;
@@ -25,7 +26,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            return DataTables::of(Product::with('category'))->toJson();
+            return DataTables::of(Product::with('category')->select('products.*'))->toJson();
         }
 
         return view('models.products.index');
@@ -38,7 +39,8 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $categories = \App\Models\Category::all();
+        $categories = Category::orderBy('name')->get();
+
         return view('models.products.create', compact('categories'));
     }
 
@@ -51,12 +53,25 @@ class ProductController extends Controller
      */
     public function store(ProductRequest $request)
     {
-        $product = Product::create($request->validated());
+        $productData = $request->validated();
+
+        $product = Product::withTrashed()
+            ->where('barcode', $productData['barcode'])
+            ->first();
+        $message = 'Producto creado exitosamente.';
+
+        if ($product?->trashed()) {
+            $product->restore();
+            $product->update($productData);
+            $message = 'Producto restaurado y actualizado exitosamente.';
+        } else {
+            $product = Product::create($productData);
+        }
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Producto creado correctamente.',
+                'message' => $message,
                 'product' => [
                     'id'         => $product->id,
                     'name'       => $product->name,
@@ -65,7 +80,7 @@ class ProductController extends Controller
             ]);
         }
 
-        return redirect()->route('products.index')->with('success', 'Producto creado correctamente.');
+        return redirect()->route('products.index')->with('success', $message);
     }
 
     /**
@@ -76,6 +91,8 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
+        $product->load('category');
+
         return view('models.products.show', compact('product'));
     }
 
@@ -87,7 +104,8 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        $categories = \App\Models\Category::all();
+        $categories = Category::orderBy('name')->get();
+
         return view('models.products.edit', compact('product', 'categories'));
     }
 
@@ -103,7 +121,7 @@ class ProductController extends Controller
     {
         $product->update($request->validated());
 
-        return redirect()->route('products.index')->with('success', 'Producto actualizado correctamente.');
+        return redirect()->route('products.index')->with('success', 'Producto actualizado exitosamente.');
     }
 
     /**
@@ -117,6 +135,6 @@ class ProductController extends Controller
     {
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Producto eliminado correctamente.');
+        return redirect()->route('products.index')->with('success', 'Producto eliminado exitosamente.');
     }
 }
