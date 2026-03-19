@@ -22,7 +22,9 @@ class AttendanceController extends Controller implements HasMiddleware
 	/**
 	 * Define middleware for the controller.
 	 *
-	 * @return array<int, Middleware>
+	 * Restricts access to authenticated users with the ADMIN role. Applied to all controller actions.
+	 *
+	 * @return array<int, Middleware> Array with admin role middleware requirement
 	 */
 	public static function middleware(): array
 	{
@@ -43,12 +45,13 @@ class AttendanceController extends Controller implements HasMiddleware
 	}
 
 	/**
-	 * Display the attendance management view.
+	 * Display the attendance management interface.
 	 *
-	 * Retrieves the active tab from the session and returns the employees index view
-	 * with the attendance tab selected by default.
+	 * Loads active employees with their today's timesheet records and renders the main
+	 * attendance view. Attaches employee data in two formats: raw models and transformed
+	 * JavaScript-ready payload. Restores the last visited tab from session.
 	 *
-	 * @return View The employees index view with active tab and attendance payload.
+	 * @return View The attendance index view with active tab, employees, and today's date
 	 */
 	public function index()
 	{
@@ -58,7 +61,7 @@ class AttendanceController extends Controller implements HasMiddleware
 		// Transform employees for the attendance tab JavaScript payload.
 		$attendanceEmployees = $employees->map($this->transformEmployee(...))->values()->all();
 
-		return view('models.employees.index', [
+		return view('models.attendance.index', [
 			'activeTab' => $activeTab,
 			'employees' => $employees,
 			'attendanceEmployees' => $attendanceEmployees,
@@ -67,11 +70,15 @@ class AttendanceController extends Controller implements HasMiddleware
 	}
 
 	/**
-	 * Store a new attendance record.
+	 * Create and store a new attendance record.
 	 *
-	 * @param TimesheetRequest $request Validated timesheet request.
-	 * @param StoreAttendanceAction $storeAction Attendance persistence action.
-	 * @return \Illuminate\Http\RedirectResponse Redirect to attendance index with success message.
+	 * Persists timesheet data for an employee. Uses validated request data to create
+	 * a new timesheet entry or update existing if already present for the date.
+	 * Redirects to history tab with success confirmation.
+	 *
+	 * @param TimesheetRequest $request Validated timesheet data (employee_id, work_date, start_time, end_time, is_holiday)
+	 * @param StoreAttendanceAction $storeAction Action handler for timesheet persistence
+	 * @return \Illuminate\Http\RedirectResponse Redirect to attendance.index with success message
 	 */
 	public function store(TimesheetRequest $request, StoreAttendanceAction $storeAction)
 	{
@@ -82,10 +89,14 @@ class AttendanceController extends Controller implements HasMiddleware
 	/**
 	 * Update an existing attendance record.
 	 *
-	 * @param TimesheetRequest $request Validated timesheet request.
-	 * @param Timesheet $timesheet Existing timesheet model.
-	 * @param StoreAttendanceAction $storeAction Attendance persistence action.
-	 * @return \Illuminate\Http\RedirectResponse Redirect to attendance index with success message.
+	 * Modifies an existing timesheet entry with new clock-in/out times, break adjustments,
+	 * or holiday status. Route model binding automatically resolves the timesheet from URL.
+	 * Redirects to history tab with success confirmation.
+	 *
+	 * @param TimesheetRequest $request Validated timesheet data to apply
+	 * @param Timesheet $timesheet Existing timesheet (auto-resolved via route model binding)
+	 * @param StoreAttendanceAction $storeAction Action handler for timesheet updates
+	 * @return \Illuminate\Http\RedirectResponse Redirect to attendance.index with success message
 	 */
 	public function update(TimesheetRequest $request, Timesheet $timesheet, StoreAttendanceAction $storeAction)
 	{
@@ -94,10 +105,14 @@ class AttendanceController extends Controller implements HasMiddleware
 	}
 
 	/**
-	 * Soft delete an attendance record.
+	 * Delete (soft delete) an attendance record.
 	 *
-	 * @param Timesheet $timesheet Timesheet model to delete.
-	 * @return \Illuminate\Http\RedirectResponse Redirect to attendance index with success message.
+	 * Performs a soft delete on the timesheet, preserving data for audit trails while
+	 * removing it from active records. Route model binding automatically resolves the timesheet.
+	 * Redirects to history tab with success confirmation.
+	 *
+	 * @param Timesheet $timesheet Timesheet to delete (auto-resolved via route model binding)
+	 * @return \Illuminate\Http\RedirectResponse Redirect to attendance.index with success message
 	 */
 	public function destroy(Timesheet $timesheet)
 	{
@@ -106,10 +121,18 @@ class AttendanceController extends Controller implements HasMiddleware
 	}
 
 	/**
-	 * Resolve and render a lazy-loaded tab view.
+	 * Resolve and render a lazy-loaded attendance tab view.
 	 *
-	 * @param string $tab Tab key.
-	 * @return View
+	 * Routes tab requests to appropriate sub-views based on tab identifier:
+	 * - 'attendance': Current day clock in/out form
+	 * - 'history': Past records with filters and DataTable
+	 * - 'salary': Payroll calculation with employee and period selection
+	 *
+	 * @param string $tab Tab identifier (attendance, history, or salary)
+	 * @param Request $request HTTP request with filter/selection parameters
+	 * @param BuildSalaryTabDataAction $buildSalaryTabDataAction Action to prepare salary tab data
+	 * @return View Rendered tab partial view with appropriate data
+	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException If tab key is invalid
 	 */
 	public function tab(string $tab, Request $request, BuildSalaryTabDataAction $buildSalaryTabDataAction): View
 	{
@@ -122,23 +145,30 @@ class AttendanceController extends Controller implements HasMiddleware
 	}
 
 	/**
-	 * Build the attendance tab view.
+	 * Render the attendance (clock in/out) tab view.
 	 *
-	 * @return View
+	 * Displays the current day's clock in/out form with active employees and today's date.
+	 * Used for real-time attendance recording.
+	 *
+	 * @return View The attendance tab partial with employees and today's date
 	 */
 	private function attendanceTab(): View
 	{
 		$employees = $this->getAttendanceEmployees();
 		$todayDate = $this->today();
 
-		return view('models.employees.tabs.attendance', compact('employees', 'todayDate'));
+		return view('models.attendance.tabs.attendance', compact('employees', 'todayDate'));
 	}
 
 	/**
-	 * Transform an employee model into the attendance payload expected by the frontend.
+	 * Transform an employee model into JavaScript-ready attendance data.
 	 *
-	 * @param Employee $employee Employee model instance.
-	 * @return array<string, mixed>
+	 * Extracts essential employee info and today's timesheet (if exists), formats time values
+	 * as H:i strings, and omits end_time unless hours are logged. Used to populate the
+	 * attendance form's employee dropdown with pre-filled data.
+	 *
+	 * @param Employee $employee Employee model with user and timesheet relations loaded
+	 * @return array<string, mixed> Transformed data: id, name, email, today_timesheet (or null)
 	 */
 	private function transformEmployee(Employee $employee): array
 	{
@@ -163,9 +193,12 @@ class AttendanceController extends Controller implements HasMiddleware
 	}
 
 	/**
-	 * Retrieve employees used by attendance views.
+	 * Load all employees with today's timesheet records.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection<int, Employee>
+	 * Eager-loads employee relationships: user data and today's timesheets filtered by
+	 * current date in Costa Rica timezone. Used to populate attendance interface.
+	 *
+	 * @return \Illuminate\Database\Eloquent\Collection<int, Employee> Employees with user and today's timesheet relations
 	 */
 	private function getAttendanceEmployees()
 	{
@@ -176,10 +209,13 @@ class AttendanceController extends Controller implements HasMiddleware
 	}
 
 	/**
-	 * Redirect to attendance index with a success flash message.
+	 * Redirect to attendance index with a localized success flash message.
 	 *
-	 * @param string $action Action suffix used in the success message.
-	 * @return \Illuminate\Http\RedirectResponse
+	 * Routes to attendance.index, sets active_tab to history, and flashes a Spanish success
+	 * message with the provided action verb (e.g., 'creado' → 'Registro de asistencia creado exitosamente.').
+	 *
+	 * @param string $action Action verb to include in message (creado, actualizado, eliminado, etc.)
+	 * @return \Illuminate\Http\RedirectResponse Redirect to attendance.index with flash data
 	 */
 	private function redirectWithSuccess(string $action)
 	{
@@ -190,20 +226,29 @@ class AttendanceController extends Controller implements HasMiddleware
 	}
 
 	/**
-	 * Build the attendance history tab view.
+	 * Render the attendance history tab view.
 	 *
-	 * @return View
+	 * Displays the history interface with filters and DataTable for browsing past attendance records.
+	 * DataTable data is loaded dynamically via historyData() endpoint.
+	 *
+	 * @return View The history tab partial view
 	 */
 	private function historyTab(): View
 	{
-		return view('models.employees.tabs.history');
+		return view('models.attendance.tabs.history');
 	}
 
 	/**
-	 * Provide attendance history data for DataTables with optional filters.
+	 * Fetch attendance history records as JSON for DataTable rendering.
 	 *
-	 * @param Request $request HTTP request with table and filter parameters.
-	 * @return \Illuminate\Http\JsonResponse
+	 * Queries timesheets with employee relations, applies optional date/month filters,
+	 * and returns employee filter dropdown options. Supports filtering by specific date,
+	 * month (YYYY-MM format), and/or individual employee_id.
+	 *
+	 * Query parameters: work_date (optional), month (optional, YYYY-MM), employee_id (optional)
+	 *
+	 * @param Request $request HTTP request with DataTables parameters and filters
+	 * @return \Illuminate\Http\JsonResponse DataTables-formatted JSON with timesheet rows and employee filter options
 	 */
 	public function historyData(Request $request)
 	{
@@ -245,9 +290,16 @@ class AttendanceController extends Controller implements HasMiddleware
 	}
 
 	/**
-	 * Build the salary tab view.
+	 * Render the payroll calculation tab view.
 	 *
-	 * @return View
+	 * Loads salary calculation data for a selected employee and payroll period, then
+	 * renders the salary tab with daily breakdown, totals, and formatted amounts.
+	 *
+	 * Query parameters: employee_id (int), payroll_period (string), payroll_half (string)
+	 *
+	 * @param Request $request HTTP request with employee_id, payroll_period, and payroll_half
+	 * @param BuildSalaryTabDataAction $buildSalaryTabDataAction Action to compute salary data
+	 * @return View The salary tab partial with computed salary data
 	 */
 	private function salaryTab(Request $request, BuildSalaryTabDataAction $buildSalaryTabDataAction): View
 	{
@@ -257,6 +309,6 @@ class AttendanceController extends Controller implements HasMiddleware
 			$request->input('payroll_half'),
 		);
 
-		return view('models.employees.tabs.salary', $salaryData);
+		return view('models.attendance.tabs.salary', $salaryData);
 	}
 }

@@ -9,10 +9,26 @@ use Illuminate\Support\Collection;
 class CalculatePayrollSalaryAction
 {
     /**
-     * Build salary totals and daily breakdown with cent-level precision.
+     * Calculate payroll salary totals and daily breakdown with cent-level precision.
      *
-     * @param Collection<int, Timesheet> $timesheets
-     * @return array<string, mixed>
+     * Processes all timesheets for an employee and builds a comprehensive salary report including:
+     * - Individual daily salary calculations with holiday multiplier adjustments
+     * - Aggregated totals for worked hours, regular hours, holiday hours, and salary
+     * - Formatted labels for display in UI (currency and time formats)
+     *
+     * @param Employee $employee The employee for whom payroll is being calculated
+     * @param Collection<int, Timesheet> $timesheets Collection of timesheets to process
+     * @return array<string, mixed> Associative array containing:
+     *     - timesheets: Processed timesheet rows with salary calculations
+     *     - worked_days: Count of days with work hours > 0
+     *     - regular_hours: Total hours worked on non-holiday days
+     *     - holiday_hours: Total hours worked on holiday days
+     *     - total_worked_hours: Combined regular and holiday hours
+     *     - total_worked_hours_label: Formatted hours display string
+     *     - total_salary_amount: Final salary in decimal format (CRC)
+     *     - total_salary_amount_cents: Final salary in cents (integer)
+     *     - total_salary_amount_label: Formatted currency display string
+     *     - includes_holiday_days: Boolean indicating if period includes holidays
      */
     public function execute(Employee $employee, Collection $timesheets): array
     {
@@ -57,7 +73,19 @@ class CalculatePayrollSalaryAction
     }
 
     /**
-     * Calculate day salary from hourly wage, worked hours and holiday multiplier.
+     * Calculate daily salary in cents from hourly wage, worked hours, and holiday multiplier.
+     *
+     * Uses cent-level precision arithmetic to avoid floating-point rounding errors.
+     * Converts hours to hundredths for integer multiplication, then applies the holiday multiplier
+     * to calculate the final gross salary for the day.
+     *
+     * Formula: (hourlyWageCents × hoursHundredths × multiplier) / 100
+     * where hourly wage is in cents and hours are multiplied by 100 (e.g., 8.5 hours = 850)
+     *
+     * @param int $hourlyWageCents Employee's hourly wage in cents (e.g., 1000 = ₡10.00)
+     * @param float $hours Total hours worked in the day (e.g., 8.5)
+     * @param int $multiplier Holiday multiplier (1 = regular, 2 = double pay, etc.)
+     * @return int Daily salary amount in cents
      */
     private function calculateDailySalaryCents(int $hourlyWageCents, float $hours, int $multiplier): int
     {
@@ -66,9 +94,13 @@ class CalculatePayrollSalaryAction
     }
 
     /**
-     * Sum worked hours in the payroll period.
+     * Sum all worked hours across the payroll period.
      *
-     * @param Collection<int, array<string, mixed>> $timesheetRows
+     * Iterates through timesheet rows and accumulates total hours worked,
+     * regardless of whether they are regular or holiday hours.
+     *
+     * @param Collection<int, array<string, mixed>> $timesheetRows Processed timesheet data
+     * @return float Total hours worked in the period
      */
     private function sumWorkedHours(Collection $timesheetRows): float
     {
@@ -76,9 +108,15 @@ class CalculatePayrollSalaryAction
     }
 
     /**
-     * Sum worked hours separated by holiday type.
+     * Sum worked hours filtered by holiday status.
      *
-     * @param Collection<int, array<string, mixed>> $timesheetRows
+     * Separates worked hours into two categories: regular days (is_holiday=false)
+     * and holiday days (is_holiday=true). Used to track overtime or special
+     * compensation requirements based on day type.
+     *
+     * @param Collection<int, array<string, mixed>> $timesheetRows Processed timesheet data
+     * @param bool $isHoliday Filter flag: true for holidays, false for regular days
+     * @return float Total hours for the specified day type
      */
     private function sumHoursByHolidayType(Collection $timesheetRows, bool $isHoliday): float
     {
@@ -88,7 +126,16 @@ class CalculatePayrollSalaryAction
     }
 
     /**
-     * Convert decimal amount to cents.
+     * Convert a decimal monetary amount to cents (integer).
+     *
+     * Multiplies by 100 and rounds to the nearest integer to handle floating-point
+     * precision issues. Essential for maintaining cent-level accuracy throughout
+     * all salary calculations without accumulating rounding errors.
+     *
+     * Example: 10.5 → 1050 (₡10.50 in cents)
+     *
+     * @param float $amount Decimal amount in currency units (e.g., 10.50 for ₡10.50)
+     * @return int Amount in cents (e.g., 1050 for ₡10.50)
      */
     private function toCents(float $amount): int
     {
@@ -96,7 +143,18 @@ class CalculatePayrollSalaryAction
     }
 
     /**
-     * Format amount in CRC with 2 decimals.
+     * Format an amount in cents as a Costa Rican currency display string.
+     *
+     * Converts cent-based amounts back to decimal representation and formats with:
+     * - Currency symbol (₡)
+     * - Exactly 2 decimal places
+     * - Space as thousands separator
+     * - Comma as decimal separator (following Costa Rican locale conventions)
+     *
+     * Example: 1050 cents → "₡10,50"
+     *
+     * @param int $cents Amount in cents (e.g., 1050 for ₡10.50)
+     * @return string Formatted currency display (e.g., "₡10,50" or "₡1 234,56")
      */
     public function formatCurrencyFromCents(int $cents): string
     {
@@ -104,7 +162,19 @@ class CalculatePayrollSalaryAction
     }
 
     /**
-     * Format worked hours preserving 2 decimals only when required.
+     * Format worked hours for display with intelligent decimal handling.
+     *
+     * Formats hours to 2 decimal places, then removes trailing zeros and decimal point
+     * to show the simplest representation. Uses comma as decimal separator following
+     * Costa Rican locale conventions, and appends 'h' suffix.
+     *
+     * Examples:
+     * - 8.5 hours → "8,5h"
+     * - 8.0 hours → "8h"
+     * - 24.25 hours → "24,25h"
+     *
+     * @param float $hours Decimal hours to format
+     * @return string Formatted hours display with 'h' suffix
      */
     private function formatHours(float $hours): string
     {

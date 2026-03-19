@@ -51,5 +51,5 @@
             employees: @json($attendanceEmployees ?? []),
         };
     </script>
-    @vite(['resources/js/models/employees/main.js'])
+    @vite(['resources/js/models/attendance/main.js'])
 @endsection

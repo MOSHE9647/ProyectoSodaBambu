@@ -58,6 +58,8 @@ const FIELD_KEYS = {
 	endTime: FORM_SELECTORS.endTime.replace('#', ''),
 };
 
+const HIDDEN_OVERRIDE_FIELDS = ['start_time', 'end_time'];
+
 const baseFieldValidators = {
 	[FIELD_KEYS.employeeId]: {
 		validator: validateRole,
@@ -82,8 +84,14 @@ const baseFieldValidators = {
 // ==================== Validation Functions ====================
 
 /**
- * Creates a filtered copy of fieldValidators, excluding end_time if not filled (it is optional).
- * @returns {Object}
+ * Builds the active validator map used by the attendance form.
+ *
+ * The `end_time` field is optional, so its validator is dynamically removed
+ * whenever the input is empty. This avoids showing invalid-state errors for
+ * a field that the user is not required to complete.
+ *
+ * @returns {Record<string, {validator: Function, emptyMsg?: string, invalidMsg: string}>}
+ * A shallow-cloned validator map containing only currently enforceable rules.
  */
 function getActiveFieldValidators() {
 	const validators = { ...baseFieldValidators };
@@ -97,10 +105,25 @@ function getActiveFieldValidators() {
 }
 
 /**
- * Validates the attendance form fields.
- * @param {Object} values
- * @param {Object} fieldValidators
- * @returns {boolean}
+ * Reads a form field value from the DOM and normalizes it.
+ *
+ * @param {string} selector - jQuery selector for the target input/select element.
+ * @returns {string} The field value converted to string and trimmed.
+ */
+function getFieldValue(selector) {
+	return String($(selector).val() ?? '').trim();
+}
+
+/**
+ * Runs field-level validation and paints error UI for the attendance form.
+ *
+ * Delegates the heavy lifting to the shared `validateAndDisplayField` utility,
+ * injecting local UI handlers for showing and clearing field-specific errors.
+ *
+ * @param {Record<string, string>} values - Current form values keyed by field id.
+ * @param {Record<string, {validator: Function, emptyMsg?: string, invalidMsg: string}>} fieldValidators
+ * Active validator configuration.
+ * @returns {boolean} `true` when all active fields are valid; otherwise `false`.
  */
 function validateAttendanceForm(values, fieldValidators) {
 	return validateAndDisplayField(
@@ -114,44 +137,42 @@ function validateAttendanceForm(values, fieldValidators) {
 // ==================== UI Manipulation Functions ====================
 
 /**
- * Form Submission Handler.
+ * Executes full-form validation for attendance submission.
  *
- * Collects form values and runs validation.
- * @returns {boolean}
+ * It first clears previous validation errors, then gathers normalized values,
+ * and finally validates against the active rule set.
+ *
+ * @returns {boolean} `true` if submit can proceed; otherwise `false`.
  */
 function submitAttendanceForm() {
 	const fieldValidators = getActiveFieldValidators();
 	clearAllFieldErrors(fieldValidators);
 
 	const values = {
-		[FIELD_KEYS.employeeId]: $(FORM_SELECTORS.employeeId).val() ?? '',
-		[FIELD_KEYS.startTime]: $(FORM_SELECTORS.startTime).val() ?? '',
-		[FIELD_KEYS.endTime]: $(FORM_SELECTORS.endTime).val() ?? '',
+		[FIELD_KEYS.employeeId]: getFieldValue(FORM_SELECTORS.employeeId),
+		[FIELD_KEYS.startTime]: getFieldValue(FORM_SELECTORS.startTime),
+		[FIELD_KEYS.endTime]: getFieldValue(FORM_SELECTORS.endTime),
 	};
 
 	return validateAttendanceForm(values, fieldValidators);
 }
 
-// ==================== Event Listeners ====================
-
 /**
- * Real-time validation for input and select fields.
- * Uses event delegation so it works even after the form is lazy-loaded.
+ * Validates a single field and updates its inline error state.
+ *
+ * @param {string} fieldId - DOM id of the field being validated.
+ * @param {string} value - Current trimmed field value.
+ * @param {Record<string, {validator: Function, emptyMsg?: string, invalidMsg: string}>} validators
+ * Validator map to resolve the field rule.
+ * @returns {void}
  */
-$(document).on('input change', `#${FORM_ID}`, function (e) {
-	const $target = $(e.target);
-	const fieldId = $target.attr('id');
-	const fieldName = FIELD_KEYS[fieldId] || fieldId;
-	const validators = getActiveFieldValidators();
-
-	// Skip if field is not in validators
-	if (!validators.hasOwnProperty(fieldName)) {
-		console.warn(`No validator defined for field: ${fieldName}`);
+function validateSingleField(fieldId, value, validators) {
+	if (!Object.hasOwn(validators, fieldId)) {
+		console.warn(`No validator defined for field: ${fieldId}`);
 		return;
 	}
 
-	const value = $target.val().trim();
-	const { validator, emptyMsg, invalidMsg } = validators[fieldName];
+	const { validator, emptyMsg, invalidMsg } = validators[fieldId];
 
 	if (!value) {
 		if (emptyMsg) {
@@ -159,16 +180,52 @@ $(document).on('input change', `#${FORM_ID}`, function (e) {
 		} else {
 			clearFieldError(fieldId);
 		}
-	} else if (!validator(value)) {
-		showFieldError(fieldId, invalidMsg);
-	} else {
-		clearFieldError(fieldId);
+		return;
 	}
+
+	if (!validator(value)) {
+		showFieldError(fieldId, invalidMsg);
+		return;
+	}
+
+	clearFieldError(fieldId);
+}
+
+// ==================== Event Listeners ====================
+
+/**
+ * Real-time validation for input and select fields.
+ *
+ * Uses delegated binding on `document` so it keeps working when the form
+ * is injected/re-rendered by lazy-loaded tab content.
+ *
+ * @param {JQuery.TriggeredEvent} e - jQuery event object.
+ * @returns {void}
+ */
+$(document).on('input change', `#${FORM_ID}`, function (e) {
+	const $target = $(e.target);
+	const fieldId = $target.attr('id');
+	if (!fieldId) return;
+
+	const validators = getActiveFieldValidators();
+	const value = String($target.val() ?? '').trim();
+
+	validateSingleField(fieldId, value, validators);
 });
 
 /**
- * Initializes the attendance form behavior, including state handling,
- * validation, and hidden override synchronization.
+ * Initializes all attendance form behaviors for the active tab content.
+ *
+ * Responsibilities:
+ * 1. Cache required DOM references.
+ * 2. Manage UI state for create/update attendance flows.
+ * 3. Keep hidden override inputs in sync for read-only/disabled fields.
+ * 4. Wire live updates for worked-hours summary.
+ * 5. Validate and submit the form safely.
+ *
+ * Safe to call repeatedly after tab lazy-reloads because listeners are bound
+ * to the currently resolved form elements.
+ *
  * @returns {void}
  */
 export function initAttendanceForm() {
@@ -184,7 +241,11 @@ export function initAttendanceForm() {
 	);
 
 	/**
-	 * Recalculates worked hours and updates the summary section.
+	 * Recomputes and renders the worked-hours summary block.
+	 *
+	 * It toggles visibility based on computed hours and formats both start/end
+	 * times for human-readable display.
+	 *
 	 * @returns {void}
 	 */
 	const updateTotalHours = () => {
@@ -202,29 +263,71 @@ export function initAttendanceForm() {
 	};
 
 	/**
-	 * Applies form state based on the selected employee and today's timesheet.
+	 * Applies a compact input state update (value/required/readonly).
+	 *
+	 * @param {HTMLInputElement|null} input - Target input element.
+	 * @param {{ value?: string, required?: boolean, readonly?: boolean }} options
+	 * Partial state descriptor.
+	 * @returns {void}
+	 */
+	const setInputState = (input, { value = '', required, readonly }) => {
+		if (!input) return;
+		input.value = value;
+		if (typeof required === 'boolean') input.required = required;
+		if (typeof readonly === 'boolean') DOMHelper.setReadonly(input, readonly);
+	};
+
+	/**
+	 * Resets UI and field states before applying employee-specific timesheet data.
+	 *
+	 * This ensures a deterministic baseline whenever employee selection changes.
+	 * @returns {void}
+	 */
+	const resetBaseState = () => {
+		[
+			els.attendanceCompleteAlert,
+			els.attendanceStartAddedAlert,
+			els.startTimeCantModifyText,
+			els.endTimeCantModifyText,
+			els.totalHoursInfo,
+		].forEach((el) => DOMHelper.toggleVisibility(el, false));
+
+		setInputState(els.startTime, { value: '', required: true, readonly: false });
+		setInputState(els.endTime, { value: '', required: false, readonly: false });
+
+		if (els.isHolidayTrue) els.isHolidayTrue.checked = false;
+		if (els.workDate && els.attendanceDate)
+			els.workDate.value = els.attendanceDate.value;
+	};
+
+	/**
+	 * Removes update-specific hidden overrides from the form.
+	 *
+	 * Used when switching back to "create" mode to avoid stale `_method`
+	 * and time override payloads.
+	 * @returns {void}
+	 */
+	const clearHiddenOverrides = () => {
+		DOMHelper.removeHiddenOverride(form, '_method');
+		HIDDEN_OVERRIDE_FIELDS.forEach((field) => {
+			DOMHelper.removeHiddenOverride(form, field);
+		});
+	};
+
+	/**
+	 * Applies UI state according to the selected employee and today's timesheet.
+	 *
+	 * Behavior summary:
+	 * - No timesheet: prepare a clean create flow (`POST` store route).
+	 * - Existing timesheet: switch to update flow (`PUT` update route).
+	 * - Start time present and pending end: show pending alert.
+	 * - Start+end present: lock both fields and display completion summary.
+	 *
 	 * @returns {void}
 	 */
 	const applyState = () => {
 		// 1. Reset base state
-		DOMHelper.toggleVisibility(els.attendanceCompleteAlert, false);
-		DOMHelper.toggleVisibility(els.attendanceStartAddedAlert, false);
-		DOMHelper.toggleVisibility(els.startTimeCantModifyText, false);
-		DOMHelper.toggleVisibility(els.endTimeCantModifyText, false);
-		DOMHelper.toggleVisibility(els.totalHoursInfo, false);
-		DOMHelper.setReadonly(els.startTime, false);
-		DOMHelper.setReadonly(els.endTime, false);
-		if (els.startTime) {
-			els.startTime.value = "";
-			els.startTime.required = true; // Restore required on reset
-		}
-		if (els.endTime) {
-			els.endTime.value = "";
-			els.endTime.required = false; // end_time is optional
-		}
-		if (els.isHolidayTrue) els.isHolidayTrue.checked = false;
-		if (els.workDate && els.attendanceDate)
-			els.workDate.value = els.attendanceDate.value;
+		resetBaseState();
 
 		// 2. Lookup employee data
 		const employee = APP_EMPLOYEES.find(
@@ -235,9 +338,7 @@ export function initAttendanceForm() {
 		// If there is no timesheet, prepare for create (Store)
 		if (!ts) {
 			form.action = MODEL_ROUTES.store;
-			DOMHelper.removeHiddenOverride(form, '_method');
-			DOMHelper.removeHiddenOverride(form, 'start_time');
-			DOMHelper.removeHiddenOverride(form, 'end_time');
+			clearHiddenOverrides();
 			return;
 		}
 
@@ -254,9 +355,11 @@ export function initAttendanceForm() {
 			hasStart && (!hasEnd || isNaN(totalHrs) || totalHrs <= 0);
 
 		if (hasStart) {
-			els.startTime.value = ts.start_time;
-			els.startTime.required = false; // Remove required when readonly to avoid native validation error
-			DOMHelper.setReadonly(els.startTime, true);
+			setInputState(els.startTime, {
+				value: ts.start_time,
+				required: false,
+				readonly: true,
+			});
 			DOMHelper.toggleVisibility(els.startTimeCantModifyText, true);
 		}
 
@@ -266,9 +369,11 @@ export function initAttendanceForm() {
 				els.attendanceStartAddedAlert.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i>Entrada registrada a las ${escapeHtml(format12h(ts.start_time))} -- pendiente hora de salida`;
 			}
 		} else if (hasStart && hasEnd) {
-			els.endTime.value = ts.end_time;
-			els.endTime.required = false; // Remove required when readonly
-			DOMHelper.setReadonly(els.endTime, true);
+			setInputState(els.endTime, {
+				value: ts.end_time,
+				required: false,
+				readonly: true,
+			});
 			DOMHelper.toggleVisibility(els.endTimeCantModifyText, true);
 			DOMHelper.toggleVisibility(els.attendanceCompleteAlert, true);
 			updateTotalHours();
@@ -280,6 +385,12 @@ export function initAttendanceForm() {
 	els.startTime?.addEventListener('change', updateTotalHours);
 	els.endTime?.addEventListener('change', updateTotalHours);
 
+	/**
+	 * Handles form submission with validation and hidden field synchronization.
+	 *
+	 * @param {SubmitEvent} event - Native form submit event.
+	 * @returns {void}
+	 */
 	const handleFormSubmit = (event) => {
 		event.preventDefault();
 		setLoadingState(SUBMIT_FORM_ID, true);
@@ -288,13 +399,16 @@ export function initAttendanceForm() {
 			els.workDate.value = els.attendanceDate.value;
 
 		// Sync hidden inputs when fields are disabled
-		if (els.startTime?.disabled)
-			DOMHelper.setHiddenOverride(form, 'start_time', els.startTime.value);
-		else DOMHelper.removeHiddenOverride(form, 'start_time');
-
-		if (els.endTime?.disabled)
-			DOMHelper.setHiddenOverride(form, 'end_time', els.endTime.value);
-		else DOMHelper.removeHiddenOverride(form, 'end_time');
+		[
+			{ input: els.startTime, field: 'start_time' },
+			{ input: els.endTime, field: 'end_time' },
+		].forEach(({ input, field }) => {
+			if (input?.disabled) {
+				DOMHelper.setHiddenOverride(form, field, input.value);
+			} else {
+				DOMHelper.removeHiddenOverride(form, field);
+			}
+		});
 
 		if (submitAttendanceForm()) {
 			event.currentTarget.submit();
