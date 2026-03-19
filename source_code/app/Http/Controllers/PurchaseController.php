@@ -6,6 +6,9 @@ use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Models\Product;
 use App\Models\Supply;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Validator;
+use App\Models\ProductStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -42,7 +45,12 @@ class PurchaseController extends Controller
 
             // DataTable normal
             $columns = [
-                'id', 'invoice_number', 'supplier_id', 'date', 'total', 'payment_status'
+                'id',
+                'invoice_number',
+                'supplier_id',
+                'date',
+                'total',
+                'payment_status'
             ];
 
             $query = Purchase::with('supplier:id,name');
@@ -51,12 +59,12 @@ class PurchaseController extends Controller
                 $search = $request->search['value'];
                 $query->where(function ($q) use ($search) {
                     $q->where('invoice_number', 'like', "%$search%")
-                      ->orWhere('date', 'like', "%$search%")
-                      ->orWhere('total', 'like', "%$search%")
-                      ->orWhere('payment_status', 'like', "%$search%")
-                      ->orWhereHas('supplier', function ($sq) use ($search) {
-                          $sq->where('name', 'like', "%$search%");
-                      });
+                        ->orWhere('date', 'like', "%$search%")
+                        ->orWhere('total', 'like', "%$search%")
+                        ->orWhere('payment_status', 'like', "%$search%")
+                        ->orWhereHas('supplier', function ($sq) use ($search) {
+                            $sq->where('name', 'like', "%$search%");
+                        });
                 });
             }
 
@@ -70,8 +78,8 @@ class PurchaseController extends Controller
             $recordsFiltered = $query->count();
 
             $purchases = $query->skip($request->start)
-                               ->take($request->length)
-                               ->get();
+                ->take($request->length)
+                ->get();
 
             return response()->json([
                 'draw'            => $request->draw,
@@ -116,7 +124,7 @@ class PurchaseController extends Controller
             'details.*.purchasable_id'   => 'required|integer',
             'details.*.quantity'         => 'required|integer|min:1',
             'details.*.unit_price'       => 'required|numeric|min:0',
-            'details.*.expiration_date'  => 'nullable|date',
+            'details.*.expiration_date'  => 'nullable|date|after_or_equal:today',
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -180,7 +188,7 @@ class PurchaseController extends Controller
             'details.*.purchasable_id'   => 'required|integer',
             'details.*.quantity'         => 'required|integer|min:1',
             'details.*.unit_price'       => 'required|numeric|min:0',
-            'details.*.expiration_date'  => 'nullable|date',
+            'details.*.expiration_date'  => 'nullable|date|after_or_equal:today',
         ]);
 
         DB::transaction(function () use ($validated, $purchase) {
@@ -227,6 +235,67 @@ class PurchaseController extends Controller
 
         return redirect()->route('purchases.index')->with('success', 'Compra actualizada correctamente.');
     }
+
+
+    public function quickStoreProduct(Request $request): JsonResponse
+    {
+        $rules = [
+            'category_id'       => 'required|integer|exists:categories,id',
+            'barcode'           => 'nullable|...',
+            'name'              => 'required|string|max:255',
+            'type'              => 'required|string|in:' . implode(',', array_column(\App\Enums\ProductType::cases(), 'value')),
+            'has_inventory'     => 'required|boolean',
+            'reference_cost'    => 'required|numeric|min:0',
+            'tax_percentage'    => 'required|numeric|min:0',
+            'margin_percentage' => 'required|numeric|min:0',
+            'sale_price'        => 'required|numeric|min:0',
+        ];
+
+        // Si maneja inventario, se requieren stock_minimo y stock_actual
+        if ($request->boolean('has_inventory')) {
+            $rules['stock_minimo'] = 'required|integer|min:0';
+            $rules['stock_actual'] = 'required|integer|min:0';
+        } else {
+            $rules['stock_minimo'] = 'nullable|integer|min:0';
+            $rules['stock_actual'] = 'nullable|integer|min:0';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $product = DB::transaction(function () use ($request, $validator) {
+            // Crear producto
+            $product = Product::create($validator->validated());
+
+            // Si maneja inventario, crear registro en product_stocks
+            if ($request->boolean('has_inventory')) {
+                ProductStock::create([
+                    'product_id'    => $product->id,
+                    'current_stock' => $request->input('stock_actual'),
+                    'minimum_stock' => $request->input('stock_minimo'),
+                ]);
+            }
+
+            return $product;
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Producto creado exitosamente.',
+            'product' => [
+                'id'         => $product->id,
+                'name'       => $product->name,
+                'sale_price' => $product->sale_price,
+            ],
+        ]);
+    }
+
 
     public function destroy(Purchase $purchase)
     {

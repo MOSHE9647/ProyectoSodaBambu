@@ -201,7 +201,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        <form id="quick-product-form" action="{{ route('products.store') }}" method="POST">
+        <form id="quick-product-form" action="{{ route('purchases.quick-product') }}" method="POST">
             @csrf
             <div class="mb-3">
                 <label for="quick-product-category" class="form-label">Categoría <span class="text-danger">*</span></label>
@@ -229,6 +229,21 @@
                 <input type="checkbox" class="form-check-input" id="quick-product-has-inventory" name="has_inventory" value="1">
                 <label class="form-check-label" for="quick-product-has-inventory">¿Maneja inventario?</label>
             </div>
+
+            {{-- Campos de stock (ocultos inicialmente) --}}
+            <div id="quick-product-stock-fields" style="display: none;">
+                <div class="mb-3">
+                    <label for="quick-product-stock-minimo" class="form-label">Stock mínimo <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="quick-product-stock-minimo" name="stock_minimo" min="0" step="1">
+                    <div class="invalid-feedback" id="quick-product-stock-minimo-error"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="quick-product-stock-actual" class="form-label">Stock actual <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="quick-product-stock-actual" name="stock_actual" min="0" step="1">
+                    <div class="invalid-feedback" id="quick-product-stock-actual-error"></div>
+                </div>
+            </div>
+
             <div class="mb-3">
                 <label for="quick-product-reference-cost" class="form-label">Costo de referencia</label>
                 <input type="number" step="0.01" class="form-control" id="quick-product-reference-cost" name="reference_cost">

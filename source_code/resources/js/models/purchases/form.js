@@ -6,7 +6,7 @@ import {
 } from '../../utils/validation.js';
 import { setLoadingState } from '../../utils/utils.js';
 import { fetchWithErrorHandling } from '../../utils/error-handling.js';
-
+import { SwalNotificationTypes, SwalToast } from '../../utils/sweetalert.js';
 let detailIndex = window.detailIndex || 0;
 let productsList = window.products || [];
 let suppliesList = window.supplies || [];
@@ -20,7 +20,7 @@ function populateSelect(selectElement, type) {
 }
 
 function refreshAllSelectsOfType(type) {
-    $(`.detail-row`).each(function() {
+    $(`.detail-row`).each(function () {
         const rowType = $(this).find('.purchasable-type').val();
         if (rowType === type) {
             const select = $(this).find('.purchasable-id');
@@ -36,7 +36,7 @@ function toggleEmptyRow() {
 
 function recalcTotal() {
     let total = 0;
-    $('#details-container .detail-row').each(function() {
+    $('#details-container .detail-row').each(function () {
         const qty = $(this).find('.quantity').val() || 0;
         const price = $(this).find('.unit-price').val() || 0;
         const subtotal = qty * price;
@@ -47,7 +47,7 @@ function recalcTotal() {
     $('#total').val(total.toFixed(2));
 }
 
-$('#add-detail').on('click', function() {
+$('#add-detail').on('click', function () {
     const index = detailIndex++;
     const template = `
         <tr class="detail-row" data-index="${index}">
@@ -86,13 +86,13 @@ $('#add-detail').on('click', function() {
     recalcTotal();
 });
 
-$(document).on('click', '.remove-detail', function() {
+$(document).on('click', '.remove-detail', function () {
     $(this).closest('tr').remove();
     toggleEmptyRow();
     recalcTotal();
 });
 
-$(document).on('change', '.purchasable-type', function() {
+$(document).on('change', '.purchasable-type', function () {
     const row = $(this).closest('tr');
     const type = $(this).val();
     const select = row.find('.purchasable-id');
@@ -101,7 +101,7 @@ $(document).on('change', '.purchasable-type', function() {
     recalcTotal();
 });
 
-$(document).on('change', '.purchasable-id', function() {
+$(document).on('change', '.purchasable-id', function () {
     const row = $(this).closest('tr');
     const price = $(this).find('option:selected').data('price');
     if (price !== undefined) {
@@ -110,7 +110,7 @@ $(document).on('change', '.purchasable-id', function() {
     recalcTotal();
 });
 
-$(document).on('input', '.quantity, .unit-price', function() {
+$(document).on('input', '.quantity, .unit-price', function () {
     recalcTotal();
 });
 
@@ -143,10 +143,14 @@ function submitPurchaseForm() {
     }
 
     let valid = true;
-    $('#details-container .detail-row').each(function() {
+    const today = new Date().toISOString().split('T')[0];
+
+    $('#details-container .detail-row').each(function () {
         const purchasableId = $(this).find('.purchasable-id').val();
         const quantity = $(this).find('.quantity').val();
         const unitPrice = $(this).find('.unit-price').val();
+        const expDate = $(this).find('input[name$="[expiration_date]"]').val();
+
         if (!purchasableId) {
             $(this).find('.purchasable-id').addClass('is-invalid');
             valid = false;
@@ -165,6 +169,24 @@ function submitPurchaseForm() {
         } else {
             $(this).find('.unit-price').removeClass('is-invalid');
         }
+        if (!expDate) {
+            $(this).find('input[name$="[expiration_date]"]').addClass('is-invalid');
+            if (!$(this).find('.expiration-error').length) {
+                $(this).find('input[name$="[expiration_date]"]').closest('td')
+                    .append('<div class="text-danger small expiration-error">La fecha de vencimiento es obligatoria.</div>');
+            }
+            valid = false;
+        } else if (expDate <= today) {
+            $(this).find('input[name$="[expiration_date]"]').addClass('is-invalid');
+            if (!$(this).find('.expiration-error').length) {
+                $(this).find('input[name$="[expiration_date]"]').closest('td')
+                    .append('<div class="text-danger small expiration-error">La fecha debe ser mayor al dia de hoy.</div>');
+            }
+            valid = false;
+        } else {
+            $(this).find('input[name$="[expiration_date]"]').removeClass('is-invalid');
+            $(this).find('.expiration-error').remove();
+        }
     });
 
     return valid;
@@ -182,17 +204,18 @@ $(document).on('submit', 'form[id$="-purchase-form"]', (e) => {
     }
 });
 
+
 // --------------------------------------------------------------
 // Quick supplier creation
 // --------------------------------------------------------------
 
-$('#quick-phone').on('input', function() {
+$('#quick-phone').on('input', function () {
     this.value = this.value.replace(/\D/g, '').slice(0, 8);
 });
 
-$(document).on('submit', '#quick-supplier-form', async function(e) {
+$(document).on('submit', '#quick-supplier-form', async function (e) {
     e.preventDefault();
-    
+
     const $form = $(this);
     const $submitBtn = $('#quick-supplier-submit');
     const $spinner = $('#quick-supplier-spinner');
@@ -229,7 +252,7 @@ $(document).on('submit', '#quick-supplier-form', async function(e) {
             const offcanvasEl = document.getElementById('offcanvasSupplier');
             const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
             if (offcanvas) offcanvas.hide();
-            
+
             $form[0].reset();
 
             SwalToast.fire({
@@ -238,7 +261,7 @@ $(document).on('submit', '#quick-supplier-form', async function(e) {
             });
         } else {
             if (data.errors) {
-                $.each(data.errors, function(field, messages) {
+                $.each(data.errors, function (field, messages) {
                     const $input = $(`#quick-${field}`);
                     $input.addClass('is-invalid');
                     $(`#quick-${field}-error`).text(messages[0]);
@@ -266,6 +289,22 @@ $(document).on('submit', '#quick-supplier-form', async function(e) {
 // Quick product creation
 // --------------------------------------------------------------
 
+// --------------------------------------------------------------
+// Quick product creation (offcanvas)
+// --------------------------------------------------------------
+
+// Mostrar/ocultar campos de stock según checkbox
+$('#quick-product-has-inventory').on('change', function () {
+    if ($(this).is(':checked')) {
+        $('#quick-product-stock-fields').slideDown();
+        $('#quick-product-stock-minimo, #quick-product-stock-actual').prop('required', true);
+    } else {
+        $('#quick-product-stock-fields').slideUp();
+        $('#quick-product-stock-minimo, #quick-product-stock-actual').prop('required', false).val('');
+    }
+});
+
+// Cargar categorías al abrir el offcanvas
 function loadCategories() {
     const $categorySelect = $('#quick-product-category');
     $categorySelect.prop('disabled', true).empty().append('<option value="">Cargando categorías...</option>');
@@ -279,13 +318,13 @@ function loadCategories() {
             'X-Requested-With': 'XMLHttpRequest',
             'Accept': 'application/json'
         },
-        success: function(data) {
+        success: function (data) {
             $categorySelect.empty().append('<option value="">Seleccionar categoría</option>');
-            $.each(data, function(i, cat) {
+            $.each(data, function (i, cat) {
                 $categorySelect.append(`<option value="${cat.id}">${cat.name}</option>`);
             });
         },
-        error: function(xhr) {
+        error: function (xhr) {
             console.error('Error cargando categorías:', xhr.status, xhr.responseText);
             $categorySelect.empty().append('<option value="">Error al cargar</option>');
             SwalToast.fire({
@@ -293,19 +332,19 @@ function loadCategories() {
                 text: 'No se pudieron cargar las categorías. Intente de nuevo.'
             });
         },
-        complete: function() {
+        complete: function () {
             $categorySelect.prop('disabled', false);
         }
     });
 }
 
-document.addEventListener('show.bs.offcanvas', function(e) {
+document.addEventListener('show.bs.offcanvas', function (e) {
     if (e.target && e.target.id === 'offcanvasProduct') {
         loadCategories();
     }
 });
 
-$('#quick-product-form').on('submit', async function(e) {
+$('#quick-product-form').on('submit', async function (e) {
     e.preventDefault();
 
     const $form = $(this);
@@ -316,13 +355,40 @@ $('#quick-product-form').on('submit', async function(e) {
     $form.find('.is-invalid').removeClass('is-invalid');
     $form.find('.invalid-feedback').text('');
 
+    // Validación extra de stock si maneja inventario
+    if ($('#quick-product-has-inventory').is(':checked')) {
+        const stockMinimo = $('#quick-product-stock-minimo').val();
+        const stockActual = $('#quick-product-stock-actual').val();
+        if (!stockMinimo || stockMinimo < 0) {
+            $('#quick-product-stock-minimo').addClass('is-invalid');
+            $('#quick-product-stock-minimo-error').text('El stock mínimo es obligatorio y debe ser mayor o igual a 0.');
+            return;
+        }
+        if (!stockActual || stockActual < 0) {
+            $('#quick-product-stock-actual').addClass('is-invalid');
+            $('#quick-product-stock-actual-error').text('El stock actual es obligatorio y debe ser mayor o igual a 0.');
+            return;
+        }
+    }
+
     $submitBtn.prop('disabled', true);
     $spinner.removeClass('d-none');
 
     try {
+        const formData = new FormData($form[0]);
+
+        // 1. Checkbox desmarcado = ausente en FormData -> usar .has() para detectarlo
+        if (!formData.has('has_inventory')) formData.set('has_inventory', '0');
+
+        // 2. Campos numéricos vacíos -> string vacío falla 'numeric', forzar '0'
+        if (!formData.has('barcode'))           formData.set('barcode',           '');
+        if (!formData.get('reference_cost')) formData.set('reference_cost', '0');
+        if (!formData.get('tax_percentage')) formData.set('tax_percentage', '0');
+        if (!formData.get('margin_percentage')) formData.set('margin_percentage', '0');
+        if (!formData.get('sale_price')) formData.set('sale_price', '0');
         const response = await fetch(url, {
             method: 'POST',
-            body: new FormData($form[0]),
+            body: formData,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
@@ -349,6 +415,7 @@ $('#quick-product-form').on('submit', async function(e) {
             if (offcanvas) offcanvas.hide();
 
             $form[0].reset();
+            $('#quick-product-stock-fields').hide(); // Ocultar campos de stock al resetear
 
             SwalToast.fire({
                 icon: 'success',
@@ -356,7 +423,7 @@ $('#quick-product-form').on('submit', async function(e) {
             });
         } else {
             if (data.errors) {
-                $.each(data.errors, function(field, messages) {
+                $.each(data.errors, function (field, messages) {
                     const $input = $(`#quick-product-${field}`);
                     $input.addClass('is-invalid');
                     $(`#quick-product-${field}-error`).text(messages[0]);
@@ -380,11 +447,41 @@ $('#quick-product-form').on('submit', async function(e) {
     }
 });
 
+// Al cerrar el offcanvas, resetear campos de stock
+$('#offcanvasProduct').on('hidden.bs.offcanvas', function () {
+    $('#quick-product-form')[0].reset();
+    $('#quick-product-stock-fields').hide();
+    $('#quick-product-stock-minimo, #quick-product-stock-actual').prop('required', false);
+    $('#quick-product-form').find('.is-invalid').removeClass('is-invalid');
+    $('#quick-product-form').find('.invalid-feedback').text('');
+});
+
+// Validación en tiempo real para fecha de vencimiento
+$(document).on('change', 'input[name$="[expiration_date]"]', function () {
+    const today = new Date().toISOString().split('T')[0];
+    const expDate = $(this).val();
+    const row = $(this).closest('tr');
+    if (!expDate) {
+        $(this).addClass('is-invalid');
+        if (!row.find('.expiration-error').length) {
+            $(this).closest('td').append('<div class="text-danger small expiration-error">La fecha de vencimiento es obligatoria.</div>');
+        }
+    } else if (expDate <= today) {
+        $(this).addClass('is-invalid');
+        if (!row.find('.expiration-error').length) {
+            $(this).closest('td').append('<div class="text-danger small expiration-error">La fecha debe ser mayor al dia de hoy.</div>');
+        }
+    } else {
+        $(this).removeClass('is-invalid');
+        row.find('.expiration-error').remove();
+    }
+});
+
 // --------------------------------------------------------------
 // Quick supply creation
 // --------------------------------------------------------------
 
-$('#quick-supply-form').on('submit', async function(e) {
+$('#quick-supply-form').on('submit', async function (e) {
     e.preventDefault();
 
     const $form = $(this);
@@ -435,7 +532,7 @@ $('#quick-supply-form').on('submit', async function(e) {
             });
         } else {
             if (data.errors) {
-                $.each(data.errors, function(field, messages) {
+                $.each(data.errors, function (field, messages) {
                     const $input = $(`#quick-supply-${field}`);
                     $input.addClass('is-invalid');
                     $(`#quick-supply-${field}-error`).text(messages[0]);
@@ -459,12 +556,12 @@ $('#quick-supply-form').on('submit', async function(e) {
     }
 });
 
-$('#offcanvasProduct, #offcanvasSupply, #offcanvasSupplier').on('hidden.bs.offcanvas', function() {
+$('#offcanvasProduct, #offcanvasSupply, #offcanvasSupplier').on('hidden.bs.offcanvas', function () {
     let formId;
     if (this.id === 'offcanvasProduct') formId = '#quick-product-form';
     else if (this.id === 'offcanvasSupply') formId = '#quick-supply-form';
     else formId = '#quick-supplier-form';
-    
+
     $(formId)[0].reset();
     $(formId).find('.is-invalid').removeClass('is-invalid');
     $(formId).find('.invalid-feedback').text('');
