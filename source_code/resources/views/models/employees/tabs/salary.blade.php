@@ -133,30 +133,52 @@
         <span class="form-label mb-0">Desglose por Dia</span>
 
         <div class="d-flex flex-column gap-2 justify-content-center align-items-center">
-            @foreach ($timesheets as $ts)
-            <div class="d-flex flex-row w-100 align-items-center rounded-3 border px-4 py-3" style="background-color: var(--employee-salary-card-bg);">
-                <div class="d-flex flex-row me-auto gap-4 justify-content-between align-items-center">
-                    <span class="fw-semibold fs-6">{{ data_get($ts, 'work_date_label') }}</span>
-                    @if (data_get($ts, 'is_holiday', false))
-                    <span class="badge border rounded-pill text-warning-emphasis bg-warning-subtle px-2 py-2">
-                        <i class="bi bi-stars me-1"></i>Feriado
-                        <small>(x2)</small>
-                    </span>
-                    @endif
-                </div>
-                <div class="d-flex flex-row ms-auto gap-4 align-items-center">
-                    <div class="d-flex flex-row gap-4 justify-content-between align-items-end">
-                        <span class="text-muted">{{ data_get($ts, 'start_time_label', 'N/A') }} -> {{ data_get($ts, 'end_time_label', 'N/A') }}</span>
-                        <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2" style="width: 80px;">
-                            <i class="bi bi-stopwatch"></i>
-                            {{ data_get($ts, 'total_hours_label', '0h') }}
+            @foreach ($timesheets as $ts)   
+                @php
+                    $totalHours = (float) data_get($ts, 'total_hours', 0);
+                    $isHoliday = (bool) data_get($ts, 'is_holiday', false);
+                    $isIncomplete = $totalHours <= 0;
+                @endphp
+        
+                <div class="d-flex flex-row w-100 align-items-center rounded-3 border px-4 py-3" style="background-color: var(--employee-salary-card-bg);">
+                    
+                    <div class="d-flex flex-row me-auto gap-4 justify-content-between align-items-center">
+                        <span class="fw-semibold fs-6">{{ data_get($ts, 'work_date_label') }}</span>
+                        
+                        @if ($isHoliday)
+                            <span class="badge border rounded-pill text-warning-emphasis bg-warning-subtle px-2 py-2">
+                                <i class="bi bi-stars me-1"></i>Feriado <small>(x2)</small>
+                            </span>
+                        @endif
+                    </div>
+        
+                    <div class="d-flex flex-row ms-auto gap-4 align-items-center">
+                        <div class="d-flex flex-row gap-4 justify-content-between align-items-end">
+                            @if($isIncomplete)
+                                <span class="badge border rounded-pill text-warning-emphasis bg-warning-subtle px-2 py-2">
+                                    <i class="bi bi-exclamation-triangle me-1"></i> Hora de Salida No Registrada
+                                </span>
+                                <span class="badge border rounded-pill text-secondary-emphasis bg-secondary-subtle px-2 py-2">
+                                    <i class="bi bi-x-lg me-1"></i> {{ data_get($ts, 'total_hours_label', '0h') }}
+                                </span>
+                            @else
+                                <span class="text-muted">
+                                    {{ data_get($ts, 'start_time_label', 'N/A') }} 
+                                    &RightArrow; 
+                                    {{ data_get($ts, 'end_time_label', 'N/A') }}
+                                </span>
+                                <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2" style="min-width: 60px;">
+                                    <i class="bi bi-stopwatch"></i> {{ data_get($ts, 'total_hours_label', '0h') }}
+                                </span>
+                            @endif
+                        </div>
+        
+                        <span class="fw-bolder fs-6 {{ $isHoliday ? 'text-warning-emphasis' : '' }}" 
+                              style="min-width: 130px; text-align: right; {{ !$isHoliday ? 'color: var(--bambu-logo-bg);' : '' }}">
+                            {{ data_get($ts, 'salary_amount_label', 'CRC 0') }}
                         </span>
                     </div>
-                    <span class="fw-bolder fs-6 {{ data_get($ts, 'is_holiday', false) ? 'text-warning-emphasis' : '' }}" style="min-width: 130px; text-align: right; {{ data_get($ts, 'is_holiday', false) ? '' : 'color: var(--bambu-logo-bg);' }}">
-                        {{ data_get($ts, 'salary_amount_label', 'CRC 0') }}
-                    </span>
                 </div>
-            </div>
             @endforeach
         </div>
 

@@ -47,30 +47,29 @@ const FORM_SELECTORS = {
 	totalHoursValue: '#attendance-total-hours',
 };
 
-// Map of HTML element IDs to field validator keys
-const idToFieldName = {
-	'attendance-employee_id': 'employee_id',
-	'attendance-start_time': 'start_time',
-	'attendance-end_time': 'end_time',
-};
-
 const MODEL_ROUTES = {
 	store: route('attendance.store'),
 	update: route('attendance.update', { timesheet: ':id' }),
 };
 
+const FIELD_KEYS = {
+	employeeId: FORM_SELECTORS.employeeId.replace('#', ''),
+	startTime: FORM_SELECTORS.startTime.replace('#', ''),
+	endTime: FORM_SELECTORS.endTime.replace('#', ''),
+};
+
 const baseFieldValidators = {
-	employee_id: {
+	[FIELD_KEYS.employeeId]: {
 		validator: validateRole,
 		emptyMsg: 'Debe seleccionar un colaborador.',
 		invalidMsg: 'Seleccione un colaborador válido.',
 	},
-	start_time: {
+	[FIELD_KEYS.startTime]: {
 		validator: validateTime,
 		emptyMsg: 'La hora de entrada es obligatoria.',
 		invalidMsg: 'Ingrese una hora de entrada válida.',
 	},
-	end_time: {
+	[FIELD_KEYS.endTime]: {
 		validator: (value) => {
 			const startTime = $(FORM_SELECTORS.startTime).val();
 			return calcWorkedHours(startTime, value) > 0;
@@ -91,7 +90,7 @@ function getActiveFieldValidators() {
 
 	// end_time is optional – only validate if it has a value
 	if (!$(FORM_SELECTORS.endTime).val()) {
-		delete validators.end_time;
+		delete validators[FIELD_KEYS.endTime];
 	}
 
 	return validators;
@@ -125,9 +124,9 @@ function submitAttendanceForm() {
 	clearAllFieldErrors(fieldValidators);
 
 	const values = {
-		employee_id: $(FORM_SELECTORS.employeeId).val() ?? '',
-		start_time: $(FORM_SELECTORS.startTime).val() ?? '',
-		end_time: $(FORM_SELECTORS.endTime).val() ?? '',
+		[FIELD_KEYS.employeeId]: $(FORM_SELECTORS.employeeId).val() ?? '',
+		[FIELD_KEYS.startTime]: $(FORM_SELECTORS.startTime).val() ?? '',
+		[FIELD_KEYS.endTime]: $(FORM_SELECTORS.endTime).val() ?? '',
 	};
 
 	return validateAttendanceForm(values, fieldValidators);
@@ -142,11 +141,12 @@ function submitAttendanceForm() {
 $(document).on('input change', `#${FORM_ID}`, function (e) {
 	const $target = $(e.target);
 	const fieldId = $target.attr('id');
-	const fieldName = idToFieldName[fieldId] || fieldId;
+	const fieldName = FIELD_KEYS[fieldId] || fieldId;
 	const validators = getActiveFieldValidators();
 
 	// Skip if field is not in validators
 	if (!validators.hasOwnProperty(fieldName)) {
+		console.warn(`No validator defined for field: ${fieldName}`);
 		return;
 	}
 
@@ -280,7 +280,7 @@ export function initAttendanceForm() {
 	els.startTime?.addEventListener('change', updateTotalHours);
 	els.endTime?.addEventListener('change', updateTotalHours);
 
-	form.addEventListener('submit', (event) => {
+	const handleFormSubmit = (event) => {
 		event.preventDefault();
 		setLoadingState(SUBMIT_FORM_ID, true);
 
@@ -301,7 +301,8 @@ export function initAttendanceForm() {
 		} else {
 			setLoadingState(SUBMIT_FORM_ID, false);
 		}
-	});
+	};
+	form.addEventListener('submit', handleFormSubmit);
 
 	applyState(); // Initial state
 }
