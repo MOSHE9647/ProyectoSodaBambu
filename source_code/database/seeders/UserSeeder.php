@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
 			$user = User::factory()->withRole(UserRole::EMPLOYEE)->create([
 				'name' => $employee['name'],
 				'email' => $employee['email'],
-				'password' => bcrypt('password123'),
+				'password' => 'password123',
 			]);
 			Employee::factory()->create([
 				'id' => $user->id,
