@@ -14,7 +14,7 @@ test('CP-01_EIF-903 - generates valid password reset token via password broker',
     $user = User::factory()->create(['email' => 'user@example.com']);
 
     // When: requesting password reset token generation.
-    $token = Password::broker()->createToken($user);
+    $token = Password::createToken($user);
 
     // Then: a valid reset token is generated and is string.
     expect($token)->not->toBeNull()
@@ -27,7 +27,7 @@ test('CP-02_EIF-903 - password broker tracks request for email', function () {
     $email = 'testuser@example.com';
 
     // When: password broker processes the email.
-    $token = Password::broker()->createToken(
+    $token = Password::createToken(
         User::factory()->create(['email' => $email])
     );
 

@@ -73,7 +73,7 @@ test('CP-03_EIF-903 - resets password successfully using valid token', function 
         'email_verified_at' => now(),
     ]);
 
-    $token = Password::broker()->createToken($user);
+    $token = Password::createToken($user);
 
     // When: the reset-password endpoint receives matching token and new password.
     $response = $this->post(route('password.update'), [
