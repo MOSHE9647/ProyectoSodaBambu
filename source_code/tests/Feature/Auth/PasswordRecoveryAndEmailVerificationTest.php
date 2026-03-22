@@ -17,11 +17,11 @@ function createUnverifiedEmployeeUser(string $password = 'password123'): User
 }
 
 /**
- * User Story: EIF-903 - Password recovery and email verification flows (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA3 - Password recovery and email verification flows (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-903
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-01_EIF-903 - sends password reset link to existing user email', function () {
+test('CP-01_EIF-20_QA3 - sends password reset link to existing user email', function () {
     // Given: an existing user account with a valid email address.
     $user = User::factory()->create([
         'email_verified_at' => now(),
@@ -43,11 +43,11 @@ test('CP-01_EIF-903 - sends password reset link to existing user email', functio
 });
 
 /**
- * User Story: EIF-903 - Password recovery and email verification flows (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA3 - Password recovery and email verification flows (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-903
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-02_EIF-903 - rejects password reset request for unknown email', function () {
+test('CP-02_EIF-20_QA3 - rejects password reset request for unknown email', function () {
     // Given: an email that does not belong to any user.
 
     // When: the forgot-password endpoint receives that unknown email.
@@ -62,11 +62,11 @@ test('CP-02_EIF-903 - rejects password reset request for unknown email', functio
 });
 
 /**
- * User Story: EIF-903 - Password recovery and email verification flows (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA3 - Password recovery and email verification flows (Internal QA Story).
  * Priority: Highest
- * Jira Link: https://est-una.atlassian.net/browse/EIF-903
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-03_EIF-903 - resets password successfully using valid token', function () {
+test('CP-03_EIF-20_QA3 - resets password successfully using valid token', function () {
     // Given: an existing user and a valid password reset token.
     $user = User::factory()->create([
         'password' => 'old-password-123',
@@ -91,11 +91,11 @@ test('CP-03_EIF-903 - resets password successfully using valid token', function 
 });
 
 /**
- * User Story: EIF-903 - Password recovery and email verification flows (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA3 - Password recovery and email verification flows (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-903
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-04_EIF-903 - rejects password reset with invalid token', function () {
+test('CP-04_EIF-20_QA3 - rejects password reset with invalid token', function () {
     // Given: an existing user account and an invalid reset token.
     $user = User::factory()->create([
         'email_verified_at' => now(),
@@ -116,11 +116,11 @@ test('CP-04_EIF-903 - rejects password reset with invalid token', function () {
 });
 
 /**
- * User Story: EIF-903 - Password recovery and email verification flows (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA3 - Password recovery and email verification flows (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-903
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-05_EIF-903 - allows unverified user to request a verification email', function () {
+test('CP-05_EIF-20_QA3 - allows unverified user to request a verification email', function () {
     // Given: an authenticated user whose email is not verified.
     $user = createUnverifiedEmployeeUser();
 
@@ -138,11 +138,11 @@ test('CP-05_EIF-903 - allows unverified user to request a verification email', f
 });
 
 /**
- * User Story: EIF-903 - Password recovery and email verification flows (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA3 - Password recovery and email verification flows (Internal QA Story).
  * Priority: Highest
- * Jira Link: https://est-una.atlassian.net/browse/EIF-903
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-06_EIF-903 - verifies email when user opens a valid signed verification link', function () {
+test('CP-06_EIF-20_QA3 - verifies email when user opens a valid signed verification link', function () {
     // Given: an authenticated unverified user and a valid signed verification URL.
     $user = createUnverifiedEmployeeUser();
 

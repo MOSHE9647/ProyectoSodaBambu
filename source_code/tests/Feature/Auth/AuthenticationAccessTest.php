@@ -15,11 +15,11 @@ function createVerifiedUser(UserRole $role, string $password = 'password123'): U
 }
 
 /**
- * User Story: EIF-901 - Authentication and role-based entry access (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-901
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-01_EIF-901 - redirects guest users from home route to login page', function () {
+test('CP-01_EIF-20_QA1 - redirects guest users from home route to login page', function () {
     // Given: a guest user without an authenticated session.
 
     // When: the guest accesses the home route.
@@ -30,11 +30,11 @@ test('CP-01_EIF-901 - redirects guest users from home route to login page', func
 });
 
 /**
- * User Story: EIF-901 - Authentication and role-based entry access (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-901
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-02_EIF-901 - logs in an admin and redirects to dashboard through home route', function () {
+test('CP-02_EIF-20_QA1 - logs in an admin and redirects to dashboard through home route', function () {
     // Given: a verified admin account with valid credentials.
     $admin = createVerifiedUser(UserRole::ADMIN);
 
@@ -54,11 +54,11 @@ test('CP-02_EIF-901 - logs in an admin and redirects to dashboard through home r
 });
 
 /**
- * User Story: EIF-901 - Authentication and role-based entry access (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-901
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-03_EIF-901 - rejects login when email does not exist', function () {
+test('CP-03_EIF-20_QA1 - rejects login when email does not exist', function () {
     // Given: a login attempt using an email not present in the system.
 
     // When: credentials are submitted to the login endpoint.
@@ -76,11 +76,11 @@ test('CP-03_EIF-901 - rejects login when email does not exist', function () {
 });
 
 /**
- * User Story: EIF-901 - Authentication and role-based entry access (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-901
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-04_EIF-901 - rejects login when password is incorrect', function () {
+test('CP-04_EIF-20_QA1 - rejects login when password is incorrect', function () {
     // Given: a verified admin account with a wrong password input.
     $admin = createVerifiedUser(UserRole::ADMIN);
 
@@ -99,11 +99,11 @@ test('CP-04_EIF-901 - rejects login when password is incorrect', function () {
 });
 
 /**
- * User Story: EIF-901 - Authentication and role-based entry access (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-901
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-05_EIF-901 - prevents inactive employees from logging in', function () {
+test('CP-05_EIF-20_QA1 - prevents inactive employees from logging in', function () {
     // Given: a verified employee account marked as inactive in employee profile.
     $employeeUser = createVerifiedUser(UserRole::EMPLOYEE);
 
@@ -129,11 +129,11 @@ test('CP-05_EIF-901 - prevents inactive employees from logging in', function () 
 });
 
 /**
- * User Story: EIF-901 - Authentication and role-based entry access (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
  * Priority: Medium
- * Jira Link: https://est-una.atlassian.net/browse/EIF-901
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-06_EIF-901 - redirects employee users from home route to sales module', function () {
+test('CP-06_EIF-20_QA1 - redirects employee users from home route to sales module', function () {
     // Given: an authenticated and verified employee user.
     $employeeUser = createVerifiedUser(UserRole::EMPLOYEE);
 

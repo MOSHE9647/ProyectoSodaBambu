@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
 /**
- * Unit Story: EIF-901 - Authentication and role-based access control (Internal QA Story, pending Jira creation).
+ * Unit Story: EIF-20_QA1 - Authentication and role-based access control (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-901
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-01_EIF-901 - user model correctly reports authentication status', function () {
+test('CP-01_EIF-20_QA1 - user model correctly reports authentication status', function () {
     // Given: an unauthenticated user context.
     // When: checking if user is authenticated.
     $isAuthenticated = auth()->check();
@@ -21,7 +21,7 @@ test('CP-01_EIF-901 - user model correctly reports authentication status', funct
     expect($isAuthenticated)->toBeFalse();
 });
 
-test('CP-02_EIF-901 - user password verification using hash', function () {
+test('CP-02_EIF-20_QA1 - user password verification using hash', function () {
     // Given: a user created with plain password handled by the model mutator.
     $plainPassword = 'password123';
     $user = User::factory()->create([
@@ -35,7 +35,7 @@ test('CP-02_EIF-901 - user password verification using hash', function () {
     expect($isValid)->toBeTrue();
 });
 
-test('CP-03_EIF-901 - password hash rejects incorrect password', function () {
+test('CP-03_EIF-20_QA1 - password hash rejects incorrect password', function () {
     // Given: a user with bcrypt password stored.
     $user = User::factory()->create([
         'password' => bcrypt('correct-password'),
@@ -48,7 +48,7 @@ test('CP-03_EIF-901 - password hash rejects incorrect password', function () {
     expect($isValid)->toBeFalse();
 });
 
-test('CP-04_EIF-901 - inactive employee status is stored correctly', function () {
+test('CP-04_EIF-20_QA1 - inactive employee status is stored correctly', function () {
     // Given: an employee marked as INACTIVE.
     $employee = $user = User::factory()->create();
     $employee->employee()->create([
@@ -65,7 +65,7 @@ test('CP-04_EIF-901 - inactive employee status is stored correctly', function ()
     expect($status)->toBe(EmployeeStatus::INACTIVE);
 });
 
-test('CP-05_EIF-901 - active employee status allows login attempt', function () {
+test('CP-05_EIF-20_QA1 - active employee status allows login attempt', function () {
     // Given: an active employee with verified email.
     Role::findOrCreate(UserRole::EMPLOYEE->value, 'web');
 
@@ -88,7 +88,7 @@ test('CP-05_EIF-901 - active employee status allows login attempt', function () 
     expect($status)->toBe(EmployeeStatus::ACTIVE);
 });
 
-test('CP-06_EIF-901 - admin role assignment via spatie permission', function () {
+test('CP-06_EIF-20_QA1 - admin role assignment via spatie permission', function () {
     // Given: roles configured and a user instance.
     Role::findOrCreate(UserRole::ADMIN->value, 'web');
     Role::findOrCreate(UserRole::EMPLOYEE->value, 'web');

@@ -9,11 +9,11 @@ use App\Models\User;
 use Spatie\Permission\Models\Role;
 
 /**
- * Unit Story: EIF-902 - User and employee lifecycle management (Internal QA Story, pending Jira creation).
+ * Unit Story: EIF-20_QA2 - User and employee lifecycle management (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-902
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-01_EIF-902 - executes upsert action with correct parameters', function () {
+test('CP-01_EIF-20_QA2 - executes upsert action with correct parameters', function () {
     // Given: role configuration and user data with employee details.
     Role::findOrCreate(UserRole::EMPLOYEE->value, 'web');
     Role::findOrCreate(UserRole::ADMIN->value, 'web');
@@ -38,7 +38,7 @@ test('CP-01_EIF-902 - executes upsert action with correct parameters', function 
         ->and($user->hasRole(UserRole::EMPLOYEE->value))->toBeTrue();
 });
 
-test('CP-02_EIF-902 - creates admin user without requiring employee data', function () {
+test('CP-02_EIF-20_QA2 - creates admin user without requiring employee data', function () {
     // Given: roles configured and admin data.
     Role::findOrCreate(UserRole::ADMIN->value, 'web');
     Role::findOrCreate(UserRole::EMPLOYEE->value, 'web');
@@ -56,7 +56,7 @@ test('CP-02_EIF-902 - creates admin user without requiring employee data', funct
     expect($user->hasRole(UserRole::ADMIN->value))->toBeTrue();
 });
 
-test('CP-03_EIF-902 - validates hourly wage is numeric and positive', function () {
+test('CP-03_EIF-20_QA2 - validates hourly wage is numeric and positive', function () {
     // Given: employee data with invalid hourly wage.
     // When: attempting to create employee with negative wage.
     // Then: database constraints prevent invalid data.
@@ -71,7 +71,7 @@ test('CP-03_EIF-902 - validates hourly wage is numeric and positive', function (
     expect($employee->hourly_wage_raw)->toBe(-1000.0);
 });
 
-test('CP-04_EIF-902 - handles role transition from employee to admin', function () {
+test('CP-04_EIF-20_QA2 - handles role transition from employee to admin', function () {
     // Given: an employee user with employee record.
     Role::findOrCreate(UserRole::ADMIN->value, 'web');
     Role::findOrCreate(UserRole::EMPLOYEE->value, 'web');
@@ -100,7 +100,7 @@ test('CP-04_EIF-902 - handles role transition from employee to admin', function 
     expect($updated->hasRole(UserRole::ADMIN->value))->toBeTrue();
 });
 
-test('CP-05_EIF-902 - user model has cascading delete observer', function () {
+test('CP-05_EIF-20_QA2 - user model has cascading delete observer', function () {
     // Given: a user with employee relationship.
     $user = User::factory()->create();
     $employee = $user->employee()->create([
@@ -117,7 +117,7 @@ test('CP-05_EIF-902 - user model has cascading delete observer', function () {
     expect($employee->fresh()->trashed())->toBeTrue();
 });
 
-test('CP-06_EIF-902 - employee record contains required contact information', function () {
+test('CP-06_EIF-20_QA2 - employee record contains required contact information', function () {
     // Given: an employee with complete profile.
     $employee = Employee::factory()->create([
         'phone' => '506-8888-1111',
@@ -131,7 +131,7 @@ test('CP-06_EIF-902 - employee record contains required contact information', fu
         ->and($employee->hourly_wage_raw)->toBeFloat();
 });
 
-test('CP-07_EIF-902 - user role assignment via spatie permission', function () {
+test('CP-07_EIF-20_QA2 - user role assignment via spatie permission', function () {
     // Given: roles configured in database.
     Role::findOrCreate(UserRole::ADMIN->value, 'web');
     Role::findOrCreate(UserRole::EMPLOYEE->value, 'web');
