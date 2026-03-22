@@ -22,11 +22,11 @@ function createAdminActor(string $password = 'password123'): User
 }
 
 /**
- * User Story: EIF-902 - User and employee lifecycle management for administrators (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: Highest
- * Jira Link: https://est-una.atlassian.net/browse/EIF-902
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-01_EIF-902 - allows admin to create an employee user with employee profile', function () {
+test('CP-01_EIF-20_QA2 - allows admin to create an employee user with employee profile', function () {
     // Given: an authenticated admin with access to user management.
     $admin = createAdminActor();
 
@@ -61,11 +61,11 @@ test('CP-01_EIF-902 - allows admin to create an employee user with employee prof
 });
 
 /**
- * User Story: EIF-902 - User and employee lifecycle management for administrators (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-902
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-02_EIF-902 - creates an admin user without creating employee profile', function () {
+test('CP-02_EIF-20_QA2 - creates an admin user without creating employee profile', function () {
     // Given: an authenticated admin actor.
     $admin = createAdminActor();
 
@@ -91,11 +91,11 @@ test('CP-02_EIF-902 - creates an admin user without creating employee profile', 
 });
 
 /**
- * User Story: EIF-902 - User and employee lifecycle management for administrators (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-902
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-03_EIF-902 - validates required employee fields when role is employee', function () {
+test('CP-03_EIF-20_QA2 - validates required employee fields when role is employee', function () {
     // Given: an authenticated admin actor.
     $admin = createAdminActor();
 
@@ -119,11 +119,11 @@ test('CP-03_EIF-902 - validates required employee fields when role is employee',
 });
 
 /**
- * User Story: EIF-902 - User and employee lifecycle management for administrators (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-902
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-04_EIF-902 - updates user role from employee to admin and deletes employee profile', function () {
+test('CP-04_EIF-20_QA2 - updates user role from employee to admin and deletes employee profile', function () {
     // Given: an admin and an existing employee user with employee profile.
     $admin = createAdminActor();
 
@@ -161,11 +161,11 @@ test('CP-04_EIF-902 - updates user role from employee to admin and deletes emplo
 });
 
 /**
- * User Story: EIF-902 - User and employee lifecycle management for administrators (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-902
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-05_EIF-902 - blocks admin from deleting own account', function () {
+test('CP-05_EIF-20_QA2 - blocks admin from deleting own account', function () {
     // Given: an authenticated admin trying to delete their own user.
     $admin = createAdminActor();
 
@@ -184,11 +184,11 @@ test('CP-05_EIF-902 - blocks admin from deleting own account', function () {
 });
 
 /**
- * User Story: EIF-902 - User and employee lifecycle management for administrators (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-902
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-06_EIF-902 - admin can delete a non-admin user and soft-delete employee profile', function () {
+test('CP-06_EIF-20_QA2 - admin can delete a non-admin user and soft-delete employee profile', function () {
     // Given: an authenticated admin and a target employee user with employee profile.
     $admin = createAdminActor();
     $targetUser = User::factory()->withRole(UserRole::EMPLOYEE)->create(['email_verified_at' => now()]);
@@ -219,11 +219,11 @@ test('CP-06_EIF-902 - admin can delete a non-admin user and soft-delete employee
 });
 
 /**
- * User Story: EIF-902 - User and employee lifecycle management for administrators (Internal QA Story, pending Jira creation).
+ * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: Medium
- * Jira Link: https://est-una.atlassian.net/browse/EIF-902
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-07_EIF-902 - non-admin users cannot access user management routes', function () {
+test('CP-07_EIF-20_QA2 - non-admin users cannot access user management routes', function () {
     // Given: an authenticated employee user without admin role.
     $employeeUser = User::factory()->withRole(UserRole::EMPLOYEE)->create(['email_verified_at' => now()]);
 

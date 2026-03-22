@@ -5,11 +5,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 
 /**
- * Unit Story: EIF-903 - Password recovery and email verification (Internal QA Story, pending Jira creation).
+ * Unit Story: EIF-20_QA3 - Password recovery and email verification (Internal QA Story).
  * Priority: High
- * Jira Link: https://est-una.atlassian.net/browse/EIF-903
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-01_EIF-903 - generates valid password reset token via password broker', function () {
+test('CP-01_EIF-20_QA3 - generates valid password reset token via password broker', function () {
     // Given: a user with a valid email address.
     $user = User::factory()->create(['email' => 'user@example.com']);
 
@@ -22,7 +22,7 @@ test('CP-01_EIF-903 - generates valid password reset token via password broker',
         ->and(strlen($token))->toBeGreaterThan(0);
 });
 
-test('CP-02_EIF-903 - password broker tracks request for email', function () {
+test('CP-02_EIF-20_QA3 - password broker tracks request for email', function () {
     // Given: a user email.
     $email = 'testuser@example.com';
 
@@ -36,7 +36,7 @@ test('CP-02_EIF-903 - password broker tracks request for email', function () {
         ->and(is_string($token))->toBeTrue();
 });
 
-test('CP-03_EIF-903 - password hash verification works correctly', function () {
+test('CP-03_EIF-20_QA3 - password hash verification works correctly', function () {
     // Given: a password hashed with bcrypt.
     $originalPassword = 'new-password-123';
     $hashedPassword = bcrypt($originalPassword);
@@ -48,7 +48,7 @@ test('CP-03_EIF-903 - password hash verification works correctly', function () {
     expect($matches)->toBeTrue();
 });
 
-test('CP-04_EIF-903 - password hash rejects incorrect password verification', function () {
+test('CP-04_EIF-20_QA3 - password hash rejects incorrect password verification', function () {
     // Given: a stored bcrypt hash.
     $storedHash = bcrypt('correct-password');
 
@@ -59,7 +59,7 @@ test('CP-04_EIF-903 - password hash rejects incorrect password verification', fu
     expect($matches)->toBeFalse();
 });
 
-test('CP-05_EIF-903 - user model implements MustVerifyEmail interface', function () {
+test('CP-05_EIF-20_QA3 - user model implements MustVerifyEmail interface', function () {
     // Given: a user with unverified email.
     $user = User::factory()->create([
         'email_verified_at' => null,
@@ -72,7 +72,7 @@ test('CP-05_EIF-903 - user model implements MustVerifyEmail interface', function
     expect($isVerified)->toBeFalse();
 });
 
-test('CP-06_EIF-903 - user can mark email as verified', function () {
+test('CP-06_EIF-20_QA3 - user can mark email as verified', function () {
     // Given: a user with unverified email.
     $user = User::factory()->create([
         'email_verified_at' => null,
