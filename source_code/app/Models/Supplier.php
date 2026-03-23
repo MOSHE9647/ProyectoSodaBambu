@@ -6,6 +6,7 @@ use App\Casts\CostaRicaDatetime;
 use Database\Factories\SupplierFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Supplier extends Model
@@ -29,9 +30,19 @@ class Supplier extends Model
 	 *
 	 * @return array<string, string>
 	 */
-	protected $casts = [
-		'created_at' => CostaRicaDatetime::class,
-		'updated_at' => CostaRicaDatetime::class,
-		'deleted_at' => CostaRicaDatetime::class,
-	];
+	// protected $casts = [
+	// 	'created_at' => CostaRicaDatetime::class,
+	// 	'updated_at' => CostaRicaDatetime::class,
+	// 	'deleted_at' => CostaRicaDatetime::class,
+	// ];
+
+	/**
+	 * Get the purchases for the supplier.
+	 * 
+	 * @return HasMany<Purchase, Supplier>
+	 */
+	public function purchases()
+	{
+		return $this->hasMany(Purchase::class);
+	}
 }

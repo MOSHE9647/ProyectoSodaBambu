@@ -2,9 +2,18 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Observers\UserObserver;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+
+use App\Models\ProductStock;
+use App\Observers\ProductStockObserver;
+use App\Models\PurchaseDetail;
+use App\Observers\PurchaseDetailObserver;
+
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,13 +30,18 @@ class AppServiceProvider extends ServiceProvider
 	 */
 	public function boot(): void
 	{
+		// Register Observers
+		User::observe(UserObserver::class);
+		ProductStock::observe(ProductStockObserver::class);
+		PurchaseDetail::observe(PurchaseDetailObserver::class);
+
+		// Force HTTPS in production
 		if (config('app.env') !== 'local') {
 			URL::forceScheme('https');
 		}
 
-		Blade::directive('setDarkLightTheme', function () {
-			return
-			<<<'HTML'
+		// Register Blade directive for setting dark/light theme
+		Blade::directive('setDarkLightTheme', fn () => <<<'HTML'
 				<script>
 					(function () {
 						function getTheme() {
@@ -40,7 +54,6 @@ class AppServiceProvider extends ServiceProvider
 						document.documentElement.setAttribute('data-bs-theme', theme);
 					})();
 				</script>
-			HTML;
-		});
+			HTML);
 	}
 }

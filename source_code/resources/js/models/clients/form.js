@@ -10,12 +10,15 @@ import {
 } from '../../utils/validation.js';
 import { setLoadingState } from '../../utils/utils.js';
 
+// ==================== Environment Checks ====================
+
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
 	throw new Error('This script requires jQuery');
 }
 
-// Constants and Variables
+// ==================== Constants ====================
+
 const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
 const FORM_ID = IS_EDITING ? 'edit-client-form' : 'create-client-form';
 
@@ -42,7 +45,7 @@ const fieldValidators = {
 	}
 };
 
-// Validation Functions
+// ==================== Validation Functions ====================
 
 /**
  * Validates the client form fields.
@@ -58,7 +61,7 @@ function validateClientForm(values) {
 	);
 }
 
-// UI Manipulation Functions
+// ==================== UI Manipulation Functions ====================
 
 /**
  * Form Submission Handler.
@@ -90,7 +93,7 @@ function submitClientForm() {
 	return validateClientForm(values);
 }
 
-// Event Listeners
+// ==================== Event Listeners ====================
 
 /**
  * Real-time validation for input fields.
