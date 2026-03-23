@@ -1,7 +1,6 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
 import { capitalizeSentence, formatDate, toggleLoadingState } from "../../utils/utils.js";
-import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 // ==================== Constants ====================
 
@@ -12,7 +11,6 @@ const MODEL_DATA = window.UsersAppData || {};
 // String Constants
 const ROLE_ADMIN = 'admin';
 const BTN_CLASS_PRIMARY = 'btn-primary';
-const BTN_CLASS_OUTLINE_INFO = 'btn-outline-info';
 
 // Routes Configuration
 const MODEL_ROUTES = {
@@ -25,9 +23,6 @@ const MODEL_ROUTES = {
 
 // ==================== Global Functions ====================
 
-// Expose functions globally
-window.SwalToast = SwalToast;
-window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
 
 // ==================== Helper Functions ====================
@@ -90,18 +85,6 @@ function renderUserRole(data) {
     return role ? role.label : data;
 }
 
-/**
- * TODO: Remove this function when the feature is implemented
- * Displays a toast notification indicating that the functionality is under development.
- */
-function underDevelopment(_param1, _param2, _param3) {
-	SwalToast.fire({
-		icon: SwalNotificationTypes.INFO,
-		title: 'Funcionalidad en desarrollo',
-	});
-}
-window.underDevelopment = underDevelopment;
-
 // ==================== DataTable Initialization ====================
 
 // Ensure the DOM is fully loaded before initializing the DataTable
@@ -128,7 +111,7 @@ $(() => {
             data: 'created_at',
             name: 'created_at',
 			render: (data) => formatDate(data),
-            // Creation date formatted as 'DD de Month del YYYY'
+			// Creation date formatted as 'DD of Month of YYYY'
         }
     ];
 
@@ -170,15 +153,6 @@ $(() => {
 	 * ]}
 	 */
     const customButtons = [
-        {
-            text: 'Registrar Asistencia',
-            href: '#',
-            class: BTN_CLASS_OUTLINE_INFO,
-            icon: 'bi-card-checklist',
-			func: underDevelopment,
-            funcName: 'underDevelopment',
-			params: ['.attendance-button', 'attendance', true],
-        },
         {
             text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
             href: MODEL_ROUTES.create,

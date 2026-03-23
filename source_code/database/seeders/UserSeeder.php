@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
 		User::factory()->withRole(UserRole::ADMIN)->create([
 			'name' => 'Administrator',
 			'email' => 'admin@admin.com',
-			'password' => bcrypt('admin1234'),
+			'password' => 'admin1234', // Password is hashed automatically by the User model's mutator.
 		]);
 
 		// Create 9 additional employees with real data.
@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
 			$user = User::factory()->withRole(UserRole::EMPLOYEE)->create([
 				'name' => $employee['name'],
 				'email' => $employee['email'],
-				'password' => bcrypt('password123'),
+				'password' => 'password123',
 			]);
 			Employee::factory()->create([
 				'id' => $user->id,

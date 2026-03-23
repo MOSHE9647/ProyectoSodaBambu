@@ -40,14 +40,18 @@
 	@routes
 	@yield('scripts')
 
-	{{-- Success Toast Notification --}}
-	@if(session('success'))
+
+	{{-- warning toast --}}
+	@if(session('warning'))
 		<script type="module">
 			SwalToast.fire({
-				icon: SwalNotificationTypes.SUCCESS,
-				title: @json(session('success'))
+				icon: SwalNotificationTypes.WARNING, 
+				title: @json(session('warning'))
 			});
 		</script>
 	@endif
+
+	{{-- Flash Toast Notifications --}}
+	<x-flash-toast />
 </body>
 </html>

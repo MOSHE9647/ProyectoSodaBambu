@@ -17,16 +17,21 @@ import {
 } from '../../utils/validation.js';
 import { setLoadingState, togglePasswordVisibility } from '../../utils/utils.js';
 
+// ==================== Environment Checks ====================
+
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
 	throw new Error('This script requires jQuery');
 }
 
-// Constants and Variables
+// ==================== Constants ====================
+
 const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
 const FORM_ID = IS_EDITING ? 'edit-user-form' : 'create-user-form';
 const EMPLOYEE_ROLE = 'employee';
 const EMPLOYEE_FIELDS = ['phone', 'hourly_wage', 'payment_frequency', 'status'];
+
+// ==================== Global Functions ====================
 
 window.togglePasswordVisibility = togglePasswordVisibility;
 
@@ -81,6 +86,8 @@ const baseFieldValidators = {
 	}
 };
 
+// ==================== Helper Functions ====================
+
 /**
  * Creates a filtered copy of fieldValidators based on form type and state
  * @returns {Object}
@@ -103,8 +110,7 @@ function getActiveFieldValidators() {
 
 	return validators;
 }
-
-// Validation Functions
+// ==================== Validation Functions ====================
 
 /**
  * Validates the user form fields.
@@ -121,7 +127,7 @@ function validateUserForm(values, fieldValidators) {
 	);
 }
 
-// UI Manipulation Functions
+// ==================== UI Manipulation Functions ====================
 
 /**
  * Form Submission Handler.
@@ -161,7 +167,7 @@ function submitUserForm() {
 	return validateUserForm(values, fieldValidators);
 }
 
-// Event Listeners
+// ==================== Event Listeners ====================
 
 /**
  * Real-time validation for input fields.
