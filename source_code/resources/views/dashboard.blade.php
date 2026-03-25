@@ -14,7 +14,19 @@
 	<div class="container-fluid px-0">
 		{{-- Statistics Cards (Today's Sales, Stock, Contracts, etc.) --}}
 		<div class="row g-3">
-			@for ($i = 0; $i < 3; $i++)
+			<div class="col">
+				
+				<x-stat-card
+					title="Ventas de Hoy"
+					value=" ₡ {{ number_format(rand(1000, 15000000), 0, ',', '.') }} "
+					currency="false"
+					icon="cash"
+					color-theme="green"
+					{{-- :url="route('products.index', ['filter' => 'low_stock'])" --}}
+				/>
+			</div>
+			
+			@for ($i = 0; $i < 2; $i++)
 				<div class="col">
 					<x-stat-card
 						title="Stat Card {{ $i + 1 }}"
@@ -28,6 +40,8 @@
 				</div>
 			@endfor
 			
+			
+
 			{{-- 
 				Stat Card Component - Minimum Stock Products
 				Displays a statistical card showing the count of products that are at minimum stock levels.	

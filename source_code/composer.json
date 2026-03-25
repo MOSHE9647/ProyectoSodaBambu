@@ -100,6 +100,10 @@
 			"php-http/discovery": true
 		}
 	},
+	"process-timeout": 900,
 	"minimum-stability": "stable",
 	"prefer-stable": true
+
+	
+
 }
