@@ -9,7 +9,7 @@ use App\Models\User;
 use Spatie\Permission\Models\Role;
 
 /**
- * Unit Story: EIF-20_QA2 - User and employee lifecycle management (Internal QA Story).
+ * Epic: EIF-20_QA2 - User and employee lifecycle management (Internal QA Story).
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
@@ -38,6 +38,11 @@ test('CP-01_EIF-20_QA2 - executes upsert action with correct parameters', functi
         ->and($user->hasRole(UserRole::EMPLOYEE->value))->toBeTrue();
 });
 
+/**
+ * Epic: EIF-20_QA2 - User and employee lifecycle management (Internal QA Story).
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
+ */
 test('CP-02_EIF-20_QA2 - creates admin user without requiring employee data', function () {
     // Given: roles configured and admin data.
     Role::findOrCreate(UserRole::ADMIN->value, 'web');
@@ -56,6 +61,11 @@ test('CP-02_EIF-20_QA2 - creates admin user without requiring employee data', fu
     expect($user->hasRole(UserRole::ADMIN->value))->toBeTrue();
 });
 
+/**
+ * Epic: EIF-20_QA2 - User and employee lifecycle management (Internal QA Story).
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
+ */
 test('CP-03_EIF-20_QA2 - validates hourly wage is numeric and positive', function () {
     // Given: employee data with invalid hourly wage.
     // When: attempting to create employee with negative wage.
@@ -71,6 +81,11 @@ test('CP-03_EIF-20_QA2 - validates hourly wage is numeric and positive', functio
     expect($employee->hourly_wage_raw)->toBe(-1000.0);
 });
 
+/**
+ * Epic: EIF-20_QA2 - User and employee lifecycle management (Internal QA Story).
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
+ */
 test('CP-04_EIF-20_QA2 - handles role transition from employee to admin', function () {
     // Given: an employee user with employee record.
     Role::findOrCreate(UserRole::ADMIN->value, 'web');
@@ -100,6 +115,11 @@ test('CP-04_EIF-20_QA2 - handles role transition from employee to admin', functi
     expect($updated->hasRole(UserRole::ADMIN->value))->toBeTrue();
 });
 
+/**
+ * Epic: EIF-20_QA2 - User and employee lifecycle management (Internal QA Story).
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
+ */
 test('CP-05_EIF-20_QA2 - user model has cascading delete observer', function () {
     // Given: a user with employee relationship.
     $user = User::factory()->create();
@@ -117,6 +137,11 @@ test('CP-05_EIF-20_QA2 - user model has cascading delete observer', function () 
     expect($employee->fresh()->trashed())->toBeTrue();
 });
 
+/**
+ * Epic: EIF-20_QA2 - User and employee lifecycle management (Internal QA Story).
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
+ */
 test('CP-06_EIF-20_QA2 - employee record contains required contact information', function () {
     // Given: an employee with complete profile.
     $employee = Employee::factory()->create([
@@ -131,6 +156,11 @@ test('CP-06_EIF-20_QA2 - employee record contains required contact information',
         ->and($employee->hourly_wage_raw)->toBeFloat();
 });
 
+/**
+ * Epic: EIF-20_QA2 - User and employee lifecycle management (Internal QA Story).
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
+ */
 test('CP-07_EIF-20_QA2 - user role assignment via spatie permission', function () {
     // Given: roles configured in database.
     Role::findOrCreate(UserRole::ADMIN->value, 'web');

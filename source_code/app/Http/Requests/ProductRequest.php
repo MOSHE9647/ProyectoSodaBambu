@@ -134,7 +134,7 @@ class ProductRequest extends FormRequest
             $referenceCost = $this->input('reference_cost');
             $salePrice = $this->input('sale_price');
 
-            if (!$isDish || $referenceCost === null || $referenceCost === '' || $salePrice === null || $salePrice === '') {
+            if (! $isDish || $referenceCost === null || $referenceCost === '' || $salePrice === null || $salePrice === '') {
                 return;
             }
 
