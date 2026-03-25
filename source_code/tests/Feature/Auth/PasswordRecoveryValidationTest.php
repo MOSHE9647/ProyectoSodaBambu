@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 
 /**
@@ -186,4 +188,166 @@ test('CP-16_EIF-102 - ensures password hash changes after reset', function () {
     // Then: the hash in the database is completely different from the original.
     $user->refresh();
     expect($user->password)->not->toBe($originalHash);
+});
+
+/**
+ * Bug: EIF-102 - Validación de Flujo de Recuperación de Contraseña (QA).
+ * Priority: Highest
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-102
+ */
+test('CP-17_EIF-102 - validates exact throttled message when requesting reset link twice quickly', function () {
+    // Given: an existing user requesting two reset links in a short period.
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $this->from(route('password.request'))->post(route('password.email'), [
+        'email' => $user->email,
+    ]);
+
+    // When: requesting another link before throttle window ends.
+    $response = $this->from(route('password.request'))->post(route('password.email'), [
+        'email' => $user->email,
+    ]);
+
+    // Then: the exact localized throttled message is returned.
+    $response->assertSessionHasErrors(['email' => __('passwords.throttled')]);
+});
+
+/**
+ * Bug: EIF-102 - Validación de Flujo de Recuperación de Contraseña (QA).
+ * Priority: Highest
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-102
+ */
+test('CP-18_EIF-102 - validates exact token message when token is expired', function () {
+    // Given: an existing user and a reset token that is forced to expire.
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $token = Password::createToken($user);
+
+    DB::table('password_reset_tokens')
+        ->where('email', '=', $user->email)
+        ->update([
+            'created_at' => now()->subMinutes((int) config('auth.passwords.users.expire') + 1),
+        ]);
+
+    // When: trying to reset using an expired token.
+    $response = $this->from(route('password.reset', ['token' => $token]))->post(route('password.update'), [
+        'token' => $token,
+        'email' => $user->email,
+        'password' => 'new-password-123',
+        'password_confirmation' => 'new-password-123',
+    ]);
+
+    // Then: the exact localized token error is returned.
+    $response->assertSessionHasErrors(['email' => __('passwords.token')]);
+});
+
+/**
+ * Bug: EIF-102 - Validación de Flujo de Recuperación de Contraseña (QA).
+ * Priority: Highest
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-102
+ */
+test('CP-19_EIF-102 - logs successful password reset link request', function () {
+    // Given: an existing user and active log spy.
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    Log::spy();
+
+    // When: user requests a reset link successfully.
+    $this->from(route('password.request'))->post(route('password.email'), [
+        'email' => $user->email,
+    ]);
+
+    // Then: an audit log entry is written with safe context only.
+    Log::shouldHaveReceived('info')->withArgs(function (string $message, array $context): bool {
+        return $message === 'auth.password_reset_link.succeeded'
+            && isset($context['email'], $context['ip'], $context['status'])
+            && ! isset($context['password'], $context['token']);
+    });
+});
+
+/**
+ * Bug: EIF-102 - Validación de Flujo de Recuperación de Contraseña (QA).
+ * Priority: Highest
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-102
+ */
+test('CP-20_EIF-102 - logs failed password reset link request', function () {
+    // Given: an unknown email and active log spy.
+    Log::spy();
+
+    // When: requesting reset link for non-existing account.
+    $this->from(route('password.request'))->post(route('password.email'), [
+        'email' => 'unknown-account@example.com',
+    ]);
+
+    // Then: an audit warning is logged with failure status and safe context.
+    Log::shouldHaveReceived('warning')->withArgs(function (string $message, array $context): bool {
+        return $message === 'auth.password_reset_link.failed'
+            && isset($context['email'], $context['ip'], $context['status'])
+            && ! isset($context['password'], $context['token']);
+    });
+});
+
+/**
+ * Bug: EIF-102 - Validación de Flujo de Recuperación de Contraseña (QA).
+ * Priority: Highest
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-102
+ */
+test('CP-21_EIF-102 - logs successful password reset completion', function () {
+    // Given: a valid user token and active log spy.
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $token = Password::createToken($user);
+    Log::spy();
+
+    // When: password reset completes successfully.
+    $this->post(route('password.update'), [
+        'token' => $token,
+        'email' => $user->email,
+        'password' => 'new-password-998',
+        'password_confirmation' => 'new-password-998',
+    ]);
+
+    // Then: success audit log is recorded without sensitive secrets.
+    Log::shouldHaveReceived('info')->withArgs(function (string $message, array $context): bool {
+        return $message === 'auth.password_reset.succeeded'
+            && isset($context['email'], $context['ip'], $context['status'])
+            && ! isset($context['password'], $context['token']);
+    });
+});
+
+/**
+ * Bug: EIF-102 - Validación de Flujo de Recuperación de Contraseña (QA).
+ * Priority: Highest
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-102
+ */
+test('CP-22_EIF-102 - logs failed password reset completion', function () {
+    // Given: an invalid token and active log spy.
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    Log::spy();
+
+    // When: password reset fails due to invalid token.
+    $this->from(route('password.reset', ['token' => 'invalid-token']))->post(route('password.update'), [
+        'token' => 'invalid-token',
+        'email' => $user->email,
+        'password' => 'new-password-222',
+        'password_confirmation' => 'new-password-222',
+    ]);
+
+    // Then: failure audit log is recorded without sensitive secrets.
+    Log::shouldHaveReceived('warning')->withArgs(function (string $message, array $context): bool {
+        return $message === 'auth.password_reset.failed'
+            && isset($context['email'], $context['ip'], $context['status'])
+            && ! isset($context['password'], $context['token']);
+    });
 });
