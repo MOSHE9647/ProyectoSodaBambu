@@ -21,6 +21,20 @@ class Supply extends Model
     protected $fillable = [
         'name',
         'measure_unit',
+        'quantity',
+        'unit_price',
+        'expiration_date',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected $casts = [
+        'quantity' => 'integer',
+        'unit_price' => 'decimal:2',
+        'expiration_date' => 'date',
     ];
 
     /**
@@ -28,8 +42,8 @@ class Supply extends Model
      * 
      * @return MorphMany<PurchaseDetail, Supply>
      */
-public function purchaseDetails(): MorphMany
-{
-    return $this->morphMany(PurchaseDetail::class, 'purchasable');
-}
+    public function purchaseDetails(): MorphMany
+    {
+        return $this->morphMany(PurchaseDetail::class, 'purchasable');
+    }
 }
