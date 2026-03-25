@@ -16,10 +16,10 @@ return new class extends Migration
             $table->string('name')->unique(); //  name unique
             $table->text('description')->nullable(); // description
             $table->timestamps(); // created_at and updated_at
-            $table->softDeletes(); // deleted_at for soft deletes 
+            $table->softDeletes(); // deleted_at for soft deletes
         });
     }
- 
+
     /**
      * Reverse the migrations.
      */

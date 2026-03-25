@@ -22,7 +22,7 @@ function createAdminActor(string $password = 'password123'): User
 }
 
 /**
- * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: Highest
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
@@ -61,7 +61,7 @@ test('CP-01_EIF-20_QA2 - allows admin to create an employee user with employee p
 });
 
 /**
- * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
@@ -91,7 +91,7 @@ test('CP-02_EIF-20_QA2 - creates an admin user without creating employee profile
 });
 
 /**
- * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
@@ -119,7 +119,7 @@ test('CP-03_EIF-20_QA2 - validates required employee fields when role is employe
 });
 
 /**
- * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
@@ -161,7 +161,7 @@ test('CP-04_EIF-20_QA2 - updates user role from employee to admin and deletes em
 });
 
 /**
- * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
@@ -184,7 +184,7 @@ test('CP-05_EIF-20_QA2 - blocks admin from deleting own account', function () {
 });
 
 /**
- * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
@@ -219,7 +219,7 @@ test('CP-06_EIF-20_QA2 - admin can delete a non-admin user and soft-delete emplo
 });
 
 /**
- * User Story: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
  * Priority: Medium
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */

@@ -15,8 +15,8 @@ function createVerifiedUser(UserRole $role, string $password = 'password123'): U
 }
 
 /**
- * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
- * Priority: High
+ * Epic: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
+ * Priority: Highest
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
 test('CP-01_EIF-20_QA1 - redirects guest users from home route to login page', function () {
@@ -30,8 +30,8 @@ test('CP-01_EIF-20_QA1 - redirects guest users from home route to login page', f
 });
 
 /**
- * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
- * Priority: High
+ * Epic: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
+ * Priority: Highest
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
 test('CP-02_EIF-20_QA1 - logs in an admin and redirects to dashboard through home route', function () {
@@ -54,8 +54,8 @@ test('CP-02_EIF-20_QA1 - logs in an admin and redirects to dashboard through hom
 });
 
 /**
- * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
- * Priority: High
+ * Epic: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
+ * Priority: Highest
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
 test('CP-03_EIF-20_QA1 - rejects login when email does not exist', function () {
@@ -76,8 +76,8 @@ test('CP-03_EIF-20_QA1 - rejects login when email does not exist', function () {
 });
 
 /**
- * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
- * Priority: High
+ * Epic: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
+ * Priority: Highest
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
 test('CP-04_EIF-20_QA1 - rejects login when password is incorrect', function () {
@@ -99,8 +99,8 @@ test('CP-04_EIF-20_QA1 - rejects login when password is incorrect', function () 
 });
 
 /**
- * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
- * Priority: High
+ * Epic: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
+ * Priority: Highest
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
 test('CP-05_EIF-20_QA1 - prevents inactive employees from logging in', function () {
@@ -129,7 +129,7 @@ test('CP-05_EIF-20_QA1 - prevents inactive employees from logging in', function 
 });
 
 /**
- * User Story: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
+ * Epic: EIF-20_QA1 - Authentication and role-based entry access (Internal QA Story).
  * Priority: Medium
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */

@@ -14,13 +14,13 @@ class EnsureEmployeeIsActive
     {
         // Search the user related to the login request (using email or username)
         $user = User::where(
-            config('fortify.username'), 
+            config('fortify.username'),
             $request->input(config('fortify.username'))
         )->first();
 
         // Check if the user exists and is an employee
         if (
-            $user?->hasRole(UserRole::EMPLOYEE) && 
+            $user?->hasRole(UserRole::EMPLOYEE) &&
             $user->employee?->status !== EmployeeStatus::ACTIVE
         ) {
             throw ValidationException::withMessages([

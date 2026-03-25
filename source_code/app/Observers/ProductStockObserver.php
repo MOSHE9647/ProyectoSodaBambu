@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Session;
 
 class ProductStockObserver
 {
-    
     public function created(ProductStock $productStock): void
     {
         $this->countLowStockProducts();
@@ -19,10 +18,10 @@ class ProductStockObserver
      */
     public function updated(ProductStock $productStock): void
     {
-        if($productStock->wasChanged('current_stock')){
+        if ($productStock->wasChanged('current_stock')) {
             $hasLowStock = $productStock->current_stock < $productStock->minimum_stock;
-            if($hasLowStock){
-                 // Save a warning message in the session
+            if ($hasLowStock) {
+                // Save a warning message in the session
                 Session::flash('warning', "¡Stock bajo en {$productStock->product->name}!");
             }
 
@@ -35,7 +34,6 @@ class ProductStockObserver
         $this->countLowStockProducts();
     }
 
-
     /**
      * Count the number of products with low stock levels.
      *
@@ -47,6 +45,4 @@ class ProductStockObserver
         $lowStockCount = ProductStock::whereRaw('current_stock <= minimum_stock')->count();
         Cache::forever('low_stock_count', $lowStockCount);
     }
-
-    
 }

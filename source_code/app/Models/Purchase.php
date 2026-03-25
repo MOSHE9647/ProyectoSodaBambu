@@ -18,7 +18,7 @@ class Purchase extends Model
 
     /**
      * The attributes that are mass assignable.
-     * 
+     *
      * @var list<string>
      */
     protected $fillable = [
@@ -31,7 +31,7 @@ class Purchase extends Model
 
     /**
      * Get the attributes that should be cast.
-     * 
+     *
      * @return array<string, string>
      */
     protected $casts = [
@@ -45,7 +45,7 @@ class Purchase extends Model
 
     /**
      * Get the supplier that owns the purchase.
-     * 
+     *
      * @return BelongsTo<Supplier, Purchase>
      */
     public function supplier()
@@ -54,10 +54,10 @@ class Purchase extends Model
     }
 
     /**
-    * Get the purchase details for the purchase.
-    * 
-    * @return HasMany<PurchaseDetail, Purchase>
-    */
+     * Get the purchase details for the purchase.
+     *
+     * @return HasMany<PurchaseDetail, Purchase>
+     */
     public function details()
     {
         return $this->hasMany(PurchaseDetail::class);
