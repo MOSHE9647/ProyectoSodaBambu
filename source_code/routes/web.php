@@ -30,10 +30,27 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('config', [ConfigController::class, 'index'])->name('config');
 	Route::resource('users', UserController::class)->names('users');
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
-	Route::resource('products', ProductController::class)->names('products');
   	Route::resource('categories', CategoryController::class)->names('categories');
   	Route::resource('clients', ClientController::class)->names('clients');
-	Route::resource('supplies', SupplyController::class)->names('supplies');
+
+	//Actions of list and create for both admin and employees
+	Route::group(['middleware' => ['can:ver insumos']], function () {
+        Route::resource('supplies', SupplyController::class)->only(['index', 'show', 'create', 'store'])->names('supplies');
+    });
+
+    Route::group(['middleware' => ['can:ver productos']], function () {
+        Route::resource('products', ProductController::class)->only(['index', 'show', 'create', 'store'])->names('products');
+    });
+
+	//Actions of edit and delete just for admin
+	Route::group(['middleware' => ['can:editar insumos']], function () {
+        Route::resource('supplies', SupplyController::class)->only(['edit', 'update', 'destroy']);
+    });
+
+    Route::group(['middleware' => ['can:editar productos']], function () {
+        Route::resource('products', ProductController::class)->only(['edit', 'update', 'destroy']);
+    });
+
 	
 	// Attendance routes with role-based access control defined in the controller
 	Route::group(['prefix' => 'attendance'], function () {

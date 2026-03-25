@@ -18,9 +18,9 @@
 		{{-- Table Container --}}
 		<div class="table-container rounded-2 p-4">
 			<table
-				id="products-table"
-				class="table table-hover rounded-2"
-				data-can-manage-products="{{ auth()->user()?->hasRole(\App\Enums\UserRole::ADMIN->value) ? '1' : '0' }}"
+    			id="products-table"
+   			    class="table table-hover rounded-2"
+   			    data-can-manage-products="{{ auth()->user()?->can('editar productos') ? '1' : '0' }}"
 			>
 				<thead>
 					<tr>

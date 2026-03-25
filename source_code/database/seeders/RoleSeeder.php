@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\UserRole;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class RoleSeeder extends Seeder
 {
@@ -18,5 +19,29 @@ class RoleSeeder extends Seeder
 		foreach ($roles as $role) {
 			Role::firstOrCreate(['name' => $role->value]);
 		}
-	}
+		//crear permisos especificos para insumo y producto
+		$permissions = [
+            'ver insumos', 'crear insumos', 'editar insumos', 'borrar insumos',
+            'ver productos', 'crear productos', 'editar productos', 'borrar productos',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
+
+        //le asignamos al admin
+        $adminRole = Role::where('name', UserRole::ADMIN->value)->first();
+        if ($adminRole) {
+            $adminRole->syncPermissions(Permission::all());
+        }
+
+        // le asignamos al colaborador 
+        $colabRole = Role::where('name', UserRole::EMPLOYEE->value)->first();
+        if ($colabRole) {
+            $colabRole->syncPermissions([
+                'ver insumos', 'crear insumos', 
+                'ver productos', 'crear productos'
+            ]);
+        }
+    }
 }

@@ -5,7 +5,11 @@
         <x-header title="Gestión de Insumos" subtitle="Administre los insumos de su inventario" />
 
         <div class="table-container rounded-2 p-4">
-            <table id="supplies-table" class="table table-hover rounded-2">
+           <table 
+                id="supplies-table" 
+                class="table table-hover rounded-2"
+                data-can-manage-products="{{ auth()->user()?->can('editar insumos') ? '1' : '0' }}"
+            >
                 <thead>
                     <tr>
                         <th scope="col">Nombre</th>
