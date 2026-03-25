@@ -8,6 +8,10 @@ use App\Actions\Fortify\EnsureEmployeeIsActive;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Http\Responses\Auth\FailedPasswordResetLinkRequestResponse;
+use App\Http\Responses\Auth\FailedPasswordResetResponse;
+use App\Http\Responses\Auth\PasswordResetResponse;
+use App\Http\Responses\Auth\SuccessfulPasswordResetLinkRequestResponse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,7 +22,11 @@ use Laravel\Fortify\Actions\CanonicalizeUsername;
 use Laravel\Fortify\Actions\EnsureLoginIsNotThrottled;
 use Laravel\Fortify\Actions\PrepareAuthenticatedSession;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse as FailedPasswordResetLinkRequestResponseContract;
+use Laravel\Fortify\Contracts\FailedPasswordResetResponse as FailedPasswordResetResponseContract;
 use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\PasswordResetResponse as PasswordResetResponseContract;
+use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse as SuccessfulPasswordResetLinkRequestResponseContract;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -29,6 +37,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(FailedPasswordResetLinkRequestResponseContract::class, FailedPasswordResetLinkRequestResponse::class);
+        $this->app->singleton(FailedPasswordResetResponseContract::class, FailedPasswordResetResponse::class);
         $this->app->instance(LoginResponse::class, new class implements LoginResponse
         {
             public function toResponse($request): RedirectResponse
@@ -36,6 +46,8 @@ class FortifyServiceProvider extends ServiceProvider
                 return redirect()->route('home');
             }
         });
+        $this->app->singleton(PasswordResetResponseContract::class, PasswordResetResponse::class);
+        $this->app->singleton(SuccessfulPasswordResetLinkRequestResponseContract::class, SuccessfulPasswordResetLinkRequestResponse::class);
     }
 
     /**
