@@ -2,7 +2,7 @@
 
 @section('content')
 	{{-- Header --}}
-	<x-header title="Dashboard" subtitle="Resumen general del sistema" />
+	<x-header title="Inicio" subtitle="Resumen general del sistema" />
 
 	{{-- TODO: Remove this Alert when Dashboard is ready --}}
 	<x-alert type="warning" class="mb-4">
