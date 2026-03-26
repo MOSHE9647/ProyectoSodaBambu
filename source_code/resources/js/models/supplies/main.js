@@ -7,7 +7,6 @@ import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 const MODEL_NAME = 'insumo';
 const BTN_CLASS_PRIMARY = 'btn-primary';
-
 const MODEL_ROUTES = {
     index:  route('supplies.index'),
     create: route('supplies.create'),
@@ -21,7 +20,7 @@ let showOnlyExpiring = urlParams.get('filter') === 'expiring_soon';
 
 let suppliesDataTable = null;
 
-/** * NUEVA LÓGICA DE PERMISOS: 
+/** 
  * Lee el atributo 'data-can-manage-products' que agregamos a la tabla en Blade.
  */
 const canManageSupplies = ($('#supplies-table').data('can-manage-products') ?? '').toString() === '1';
@@ -57,6 +56,9 @@ window.toggleExpiringFilter = function () {
 // ==================== DataTable Initialization ====================
 
 $(() => {
+    const tableEl = $('#supplies-table'); // <--- Defínela aquí adentro
+    const canManageSupplies = (tableEl.data('can-manage-products') ?? '').toString() === '1';
+    const canCreateSupplies = (tableEl.data('can-create-products') ?? '').toString() === '1';
     const columns = [
         { data: 'name', name: 'name' },
         { data: 'measure_unit', name: 'measure_unit' },
@@ -100,7 +102,6 @@ $(() => {
         }
     };
 
-    // Si tiene permisos, inyectamos Editar y Eliminar al objeto de acciones
     if (canManageSupplies) {
         actions.edit = { 
             route: MODEL_ROUTES.edit, 
@@ -117,7 +118,7 @@ $(() => {
     }
 
     /**
-     * Definición de botones personalizados
+     * 
      */
     const customButtons = [
         {
@@ -130,8 +131,7 @@ $(() => {
         }
     ];
 
-    // Si tiene permisos, inyectamos el botón de "Crear Insumo"
-    if (canManageSupplies) {
+    if (canCreateSupplies) {
         customButtons.push({
             text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
             href: MODEL_ROUTES.create,
@@ -151,7 +151,6 @@ $(() => {
         }, 100);
     }
 
-    // Inicialización de la DataTable con las acciones y botones filtrados
     suppliesDataTable = CreateNewDataTable('supplies-table', MODEL_ROUTES.index, columns, actions, customButtons, {
         ajax: {
             url: MODEL_ROUTES.index,

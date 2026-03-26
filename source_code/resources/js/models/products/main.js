@@ -11,6 +11,7 @@ const MODEL_NAME = 'producto';
 // String Constants
 const BTN_CLASS_PRIMARY = 'btn-primary';
 
+
 // Routes Configuration
 const MODEL_ROUTES = {
 	index: route('products.index'),
@@ -39,7 +40,7 @@ const urlParams = new URLSearchParams(window.location.search);
 let showOnlyLowStock = urlParams.get('filter') === 'low_stock';
 
 let productsDataTable = null;
-const canManageProducts = ($('#products-table').data('can-manage-products') ?? '').toString() === '1';
+
 
 // ==================== Global Functions ====================
 
@@ -130,6 +131,9 @@ window.toggleLowStockFilter = function () {
 
 // Ensure the DOM is fully loaded before initializing the DataTable
 $(() => {
+	const tableEl = $('#products-table'); // <--- Define esto primero
+    const canManageProducts = (tableEl.data('can-manage-products') ?? '').toString() === '1';
+    const canCreateProducts = (tableEl.data('can-create-products') ?? '').toString() === '1';
 	// Define columns for products table (only for server-side processing)
 	const columns = [
 		{
@@ -218,17 +222,17 @@ $(() => {
         $('.low-stock-filter-button-text').text('Mostrar todos');
     }	
 
-	if (canManageProducts) {
-		customButtons.unshift({
-			text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
-			href: MODEL_ROUTES.create,
-			class: `create-button ${BTN_CLASS_PRIMARY}`,
-			icon: 'bi-box-seam',
-			func: toggleLoadingState,
-			funcName: 'toggleLoadingState',
-			params: ['.create-button', 'create', true],
-		});
-	}
+	if (canCreateProducts) { 
+    	customButtons.unshift({
+        text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
+        href: MODEL_ROUTES.create,
+        class: `create-button ${BTN_CLASS_PRIMARY}`,
+        icon: 'bi-box-seam',
+        func: toggleLoadingState,
+        funcName: 'toggleLoadingState',
+        params: ['.create-button', 'create', true],
+    });
+}
 
 	// Initialize the CRUD DataTable
 	productsDataTable = CreateNewDataTable('products-table', MODEL_ROUTES.index, columns, actions, customButtons, {

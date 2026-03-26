@@ -27,7 +27,7 @@ class SupplyController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('role:' . UserRole::ADMIN->value),
+            new Middleware('auth'),
         ];
     }
 
