@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Tests the PreventBack middleware functionality to ensure proper cache control
  * headers are set to prevent browser back button from displaying cached pages.
  */
-test('CP-01_EIF-21_QA1 - sets Cache-Control header to prevent caching', function () {
+test('CP-01_EIF-20_QA4 - sets Cache-Control header to prevent caching', function () {
     // Given: a request going through PreventBack middleware
     $middleware = new PreventBack;
     $request = Request::create('/test', 'GET');
@@ -24,7 +24,7 @@ test('CP-01_EIF-21_QA1 - sets Cache-Control header to prevent caching', function
         ->toContain('no-store');
 });
 
-test('CP-02_EIF-21_QA1 - includes no-cache directive in Cache-Control', function () {
+test('CP-02_EIF-20_QA4 - includes no-cache directive in Cache-Control', function () {
     // Given: a middleware processing a request
     $middleware = new PreventBack;
     $request = Request::create('/test', 'GET');
@@ -39,7 +39,7 @@ test('CP-02_EIF-21_QA1 - includes no-cache directive in Cache-Control', function
         ->toContain('no-cache');
 });
 
-test('CP-03_EIF-21_QA1 - includes must-validate in Cache-Control header', function () {
+test('CP-03_EIF-20_QA4 - includes must-validate in Cache-Control header', function () {
     // Given: a request processed by PreventBack
     $middleware = new PreventBack;
     $request = Request::create('/test', 'GET');
@@ -54,7 +54,7 @@ test('CP-03_EIF-21_QA1 - includes must-validate in Cache-Control header', functi
         ->toContain('must-validate');
 });
 
-test('CP-04_EIF-21_QA1 - sets max-age to zero in Cache-Control', function () {
+test('CP-04_EIF-20_QA4 - sets max-age to zero in Cache-Control', function () {
     // Given: a response passing through the middleware
     $middleware = new PreventBack;
     $request = Request::create('/test', 'GET');
@@ -69,7 +69,7 @@ test('CP-04_EIF-21_QA1 - sets max-age to zero in Cache-Control', function () {
         ->toContain('max-age=0');
 });
 
-test('CP-05_EIF-21_QA1 - sets Pragma header to no-cache', function () {
+test('CP-05_EIF-20_QA4 - sets Pragma header to no-cache', function () {
     // Given: a request through the middleware
     $middleware = new PreventBack;
     $request = Request::create('/test', 'GET');
@@ -83,7 +83,7 @@ test('CP-05_EIF-21_QA1 - sets Pragma header to no-cache', function () {
     expect($response->headers->get('Pragma'))->toBe('no-cache');
 });
 
-test('CP-06_EIF-21_QA1 - sets Expires header to past date', function () {
+test('CP-06_EIF-20_QA4 - sets Expires header to past date', function () {
     // Given: a response being processed
     $middleware = new PreventBack;
     $request = Request::create('/test', 'GET');
@@ -98,7 +98,7 @@ test('CP-06_EIF-21_QA1 - sets Expires header to past date', function () {
     expect($expiresHeader)->toBe('Sat, 01 Jan 2000 00:00:00 GMT');
 });
 
-test('CP-07_EIF-21_QA1 - runs next closure and returns response as-is', function () {
+test('CP-07_EIF-20_QA4 - runs next closure and returns response as-is', function () {
     // Given: middleware with a next closure
     $middleware = new PreventBack;
     $request = Request::create('/test', 'GET');
@@ -113,7 +113,7 @@ test('CP-07_EIF-21_QA1 - runs next closure and returns response as-is', function
     expect($response->getContent())->toBe($originalContent);
 });
 
-test('CP-08_EIF-21_QA1 - returns Response object from handle method', function () {
+test('CP-08_EIF-20_QA4 - returns Response object from handle method', function () {
     // Given: a request and closure returning Response
     $middleware = new PreventBack;
     $request = Request::create('/test', 'GET');
