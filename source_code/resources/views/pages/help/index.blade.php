@@ -65,6 +65,7 @@
     .help-card:hover {
         border-color: rgba(76, 175, 80, .45) !important;
         transform: translateY(-2px);
+        cursor: pointer;
     }
 
     /* Manual icon badge */
@@ -96,7 +97,7 @@
 
 @section('scripts')
     {{-- Additional Scripts for Configuration Page --}}
-    @vite(['resources/js/pages/config/main.js'])
+    @vite(['resources/js/pages/help/main.js'])
 
     {{-- Success Toast Notification --}}
     @if (session('success'))

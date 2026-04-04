@@ -52,9 +52,9 @@
 				<li class="list-item">
 					<a 
 						class="dropdown-item" 
-						href="{{ route('config') }}"
+						href="{{ route('help') }}"
 					>
-						<x-icons.config-icon/>
+						<i class="bi bi-question-circle me-2"></i>
 						Ayuda
 					</a>
 				</li>
