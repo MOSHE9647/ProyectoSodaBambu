@@ -54,7 +54,7 @@
 						class="dropdown-item" 
 						href="{{ route('help') }}"
 					>
-						<i class="bi bi-question-circle me-2"></i>
+						<i class="bi bi-question-circle me-1"></i>
 						Ayuda
 					</a>
 				</li>

@@ -96,8 +96,8 @@
 @endsection
 
 @section('scripts')
-    {{-- Additional Scripts for Configuration Page --}}
-    @vite(['resources/js/pages/help/main.js'])
+    {{-- Additional Scripts for Help Page IF NEEDED --}}
+    {{-- @vite(['resources/js/pages/help/main.js']) --}}
 
     {{-- Success Toast Notification --}}
     @if (session('success'))
