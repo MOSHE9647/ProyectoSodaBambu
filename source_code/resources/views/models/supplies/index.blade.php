@@ -10,8 +10,8 @@
            <table 
                 id="supplies-table" 
                 class="table table-hover rounded-2"
-                data-can-manage-products="{{ auth()->user()?->can('editar insumos') ? '1' : '0' }}"
-               data-can-create-products="{{ auth()->user()?->can('crear insumos') ? '1' : '0' }}"
+                data-can-manage-supplies="{{ auth()->user()?->can('editar insumos') ? '1' : '0' }}"
+               data-can-create-supplies="{{ auth()->user()?->can('crear insumos') ? '1' : '0' }}"
             >
                 <thead>
                     <tr>

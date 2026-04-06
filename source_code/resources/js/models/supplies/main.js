@@ -57,8 +57,8 @@ window.toggleExpiringFilter = function () {
 
 $(() => {
     const tableEl = $('#supplies-table'); // <--- Defínela aquí adentro
-    const canManageSupplies = (tableEl.data('can-manage-products') ?? '').toString() === '1';
-    const canCreateSupplies = (tableEl.data('can-create-products') ?? '').toString() === '1';
+    const canManageSupplies = (tableEl.data('can-manage-supplies') ?? '').toString() === '1';
+    const canCreateSupplies = (tableEl.data('can-create-supplies') ?? '').toString() === '1';
     const columns = [
         { data: 'name', name: 'name' },
         { data: 'measure_unit', name: 'measure_unit' },

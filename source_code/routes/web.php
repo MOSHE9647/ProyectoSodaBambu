@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
 
 // imports for testing routes
-use App\Http\Controllers\TestStockController;;
+use App\Http\Controllers\TestStockController;
 
 /**
  * Evaluate the user's role and redirect accordingly.
@@ -30,7 +30,6 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('config', [ConfigController::class, 'index'])->name('config');
 	Route::resource('users', UserController::class)->names('users');
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
-  	Route::resource('categories', CategoryController::class)->names('categories');
   	Route::resource('clients', ClientController::class)->names('clients');
 
 	//Actions of list and create for both admin and employees
@@ -49,6 +48,10 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     Route::group(['middleware' => ['can:editar productos']], function () {
         Route::resource('products', ProductController::class)->only(['edit', 'update', 'destroy']);
+    });
+
+	Route::middleware(['role:admin'])->group(function () {
+    Route::resource('categories', CategoryController::class)->names('categories');
     });
 
 	

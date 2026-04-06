@@ -21,22 +21,19 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 use Throwable;
 use Yajra\DataTables\Facades\DataTables;
 
+
 class ProductController extends Controller implements HasMiddleware
 {
-	/**
-	 * Define middleware for the controller.
-	 *
-	 * @return array<int, Middleware>
-	 */
-	public static function middleware(): array
-	{
-		$allowedViewerRoles = UserRole::ADMIN->value . '|' . UserRole::EMPLOYEE->value;
+    public static function middleware(): array
+{
+    return [
+        new Middleware('auth'),
+        new Middleware('role:admin', only: ['edit', 'update', 'destroy']),
+        new Middleware('role:admin|employee', only: ['index', 'show', 'create', 'store']),
+    ];
+}
 
-		return [
-			new Middleware(RoleMiddleware::using($allowedViewerRoles)),
-			new Middleware(RoleMiddleware::using(UserRole::ADMIN->value), only: ['create', 'store', 'edit', 'update', 'destroy']),
-		];
-	}
+	
 
 	/**
 	 * Display a listing of the resource.

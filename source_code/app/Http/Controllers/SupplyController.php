@@ -24,12 +24,14 @@ class SupplyController extends Controller implements HasMiddleware
      *
      * @return array<int, \Illuminate\Routing\Controllers\Middleware>
      */
-    public static function middleware(): array
-    {
-        return [
-            new Middleware('auth'),
-        ];
-    }
+   public static function middleware(): array
+{
+    return [
+        new Middleware('auth'),
+        new Middleware('role:admin', only: ['edit', 'update', 'destroy']),
+        new Middleware('role:admin|employee', only: ['index', 'show', 'create', 'store']),
+    ];
+}
 
     /**
      * Display a listing of the resource.
