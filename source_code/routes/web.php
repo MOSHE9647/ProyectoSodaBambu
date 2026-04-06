@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\ConfigController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
@@ -27,7 +27,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 	Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
 	Route::get('sales', [HomeController::class, 'sales'])->name('sales');
-	Route::get('config', [ConfigController::class, 'index'])->name('config');
+	Route::get('help', [HelpController::class, 'index'])->name('help');
 	Route::resource('users', UserController::class)->names('users');
 	Route::resource('suppliers', SupplierController::class)->names('suppliers');
 	Route::resource('products', ProductController::class)->names('products');
