@@ -3,11 +3,11 @@
 use App\Models\Timesheet;
 
 /**
- * Unit Story: EIF-25 - Attendance registration validation with holidays.
+ * Unit Story: EIF-25_QA2 - Attendance registration validation with holidays.
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-25
  */
-test('CP-01_EIF-25 - calculates hours worked correctly from start and end times', function () {
+test('CP-01_EIF-25_QA2 - calculates hours worked correctly from start and end times', function () {
     // Given: a timesheet entry with start time of 08:00 and end time of 17:00.
     $timesheet = Timesheet::make([
         'start_time' => '08:00',
@@ -19,7 +19,7 @@ test('CP-01_EIF-25 - calculates hours worked correctly from start and end times'
     expect($timesheet->hours_worked)->toBe(9.0);
 });
 
-test('CP-02_EIF-25 - calculates partial hours correctly', function () {
+test('CP-02_EIF-25_QA2 - calculates partial hours correctly', function () {
     // Given: a timesheet with fractional hour values (08:30 to 12:45).
     $timesheet = Timesheet::make([
         'start_time' => '08:30',
@@ -31,7 +31,7 @@ test('CP-02_EIF-25 - calculates partial hours correctly', function () {
     expect($timesheet->hours_worked)->toBe(4.25);
 });
 
-test('CP-03_EIF-25 - preserves is_holiday flag on timesheet instance', function () {
+test('CP-03_EIF-25_QA2 - preserves is_holiday flag on timesheet instance', function () {
     // Given: a timesheet entry flagged as holiday.
     $timesheet = Timesheet::make([
         'start_time' => '08:00',
@@ -44,7 +44,7 @@ test('CP-03_EIF-25 - preserves is_holiday flag on timesheet instance', function 
     expect($timesheet->is_holiday)->toBeTrue();
 });
 
-test('CP-04_EIF-25 - non-holiday timesheet defaults is_holiday to false or null', function () {
+test('CP-04_EIF-25_QA2 - non-holiday timesheet defaults is_holiday to false or null', function () {
     // Given: a timesheet without explicit is_holiday flag.
     $timesheet = Timesheet::make([
         'start_time' => '08:00',
@@ -56,7 +56,7 @@ test('CP-04_EIF-25 - non-holiday timesheet defaults is_holiday to false or null'
     expect(in_array($timesheet->is_holiday, [false, null]))->toBeTrue();
 });
 
-test('CP-05_EIF-25 - timesheet model accepts all required fields', function () {
+test('CP-05_EIF-25_QA2 - timesheet model accepts all required fields', function () {
     // Given: complete timesheet data with all required fields.
     $data = [
         'employee_id' => 1,
@@ -77,7 +77,7 @@ test('CP-05_EIF-25 - timesheet model accepts all required fields', function () {
         ->and($timesheet->is_holiday)->toBeFalse();
 });
 
-test('CP-06_EIF-25 - timesheet correctly identifies holiday from is_holiday field', function () {
+test('CP-06_EIF-25_QA2 - timesheet correctly identifies holiday from is_holiday field', function () {
     // Given: two timesheets, one holiday and one regular.
     $holiday = Timesheet::make(['is_holiday' => true]);
     $regular = Timesheet::make(['is_holiday' => false]);

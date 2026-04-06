@@ -237,3 +237,93 @@ test('CP-07_EIF-20_QA2 - non-admin users cannot access user management routes', 
         ->get(route('users.create'))
         ->assertForbidden();
 });
+
+/**
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
+ */
+test('CP-08_EIF-20_QA2 - displays user detail page', function () {
+    // Given: an authenticated admin and an existing user.
+    $admin = createAdminActor();
+    $user = User::factory()->withRole(UserRole::EMPLOYEE)->create(['email_verified_at' => now()]);
+
+    // When: the admin views the user detail page.
+    $response = $this->actingAs($admin)->get(route('users.show', $user));
+
+    // Then: the page displays user information.
+    $response
+        ->assertSuccessful()
+        ->assertViewHas('user');
+});
+
+/**
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
+ */
+test('CP-09_EIF-20_QA2 - displays user edit form with current values', function () {
+    // Given: an authenticated admin and an existing user.
+    $admin = createAdminActor();
+    $user = User::factory()->withRole(UserRole::ADMIN)->create(['email_verified_at' => now()]);
+
+    // When: the admin requests the user edit form.
+    $response = $this->actingAs($admin)->get(route('users.edit', $user));
+
+    // Then: the form displays current user data.
+    $response
+        ->assertSuccessful()
+        ->assertViewHas('user', $user);
+});
+
+/**
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
+ */
+test('CP-10_EIF-20_QA2 - validates email uniqueness when updating user', function () {
+    // Given: an authenticated admin and two existing users.
+    $admin = createAdminActor();
+    $user1 = User::factory()->create(['email' => 'user1@example.com']);
+    $user2 = User::factory()->create(['email' => 'user2@example.com']);
+
+    // When: attempting to update user2 with user1's email.
+    $response = $this->actingAs($admin)
+        ->from(route('users.edit', $user2))
+        ->put(route('users.update', $user2), [
+            'name' => 'Updated User',
+            'email' => 'user1@example.com',
+            'role' => UserRole::EMPLOYEE->value,
+        ]);
+
+    // Then: validation fails due to email uniqueness constraint.
+    $response
+        ->assertRedirect(route('users.edit', $user2))
+        ->assertSessionHasErrors(['email']);
+});
+
+/**
+ * Epic: EIF-20_QA2 - User and employee lifecycle management for administrators (Internal QA Story).
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-20
+ */
+test('CP-11_EIF-20_QA2 - lists all users in JSON format for DataTables', function () {
+    // Given: an authenticated admin and multiple users in database.
+    $admin = createAdminActor();
+    User::factory()->count(3)->create(['email_verified_at' => now()]);
+
+    // When: the admin requests users data via AJAX for DataTables.
+    $response = $this->actingAs($admin)->get(route('users.index'), [
+        'Accept' => 'application/json',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ]);
+
+    // Then: all users are returned in JSON format.
+    $response
+        ->assertSuccessful()
+        ->assertJsonStructure([
+            'data' => [
+                '*' => ['id', 'name', 'email', 'roles'],
+            ],
+        ]);
+});

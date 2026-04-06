@@ -6,11 +6,11 @@ use App\Models\Employee;
 use App\Models\Timesheet;
 
 /**
- * Unit Story: EIF-26 - Payroll calculation with holiday multipliers.
+ * Unit Story: EIF-26_QA2 - Payroll calculation with holiday multipliers.
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-26
  */
-test('CP-01_EIF-26 - calculates base salary without holiday multiplier', function () {
+test('CP-01_EIF-26_QA2 - calculates base salary without holiday multiplier', function () {
     // Given: an employee with hourly wage of ₡5,000 and 40 hours worked (no holidays).
     $employee = Employee::factory()->create(['hourly_wage' => 5000]);
     $timesheets = Timesheet::factory()
@@ -30,7 +30,7 @@ test('CP-01_EIF-26 - calculates base salary without holiday multiplier', functio
         ->and($result['total_salary_amount_label'])->toContain('225 000,00');
 });
 
-test('CP-02_EIF-26 - applies 2x salary multiplier for holiday hours', function () {
+test('CP-02_EIF-26_QA2 - applies 2x salary multiplier for holiday hours', function () {
     // Given: an employee with hourly wage of ₡5,000 with 9 holiday hours and 36 regular hours.
     $employee = Employee::factory()->create(['hourly_wage' => 5000]);
     $timesheets = collect([
@@ -65,7 +65,7 @@ test('CP-02_EIF-26 - applies 2x salary multiplier for holiday hours', function (
         ->and($result['includes_holiday_days'])->toBeTrue();
 });
 
-test('CP-04_EIF-26 - supports biweekly payment frequency enum', function () {
+test('CP-04_EIF-26_QA2 - supports biweekly payment frequency enum', function () {
     // Given: an employee with biweekly payment frequency.
     $employee = Employee::factory()->create([
         'hourly_wage' => 5000,
@@ -77,7 +77,7 @@ test('CP-04_EIF-26 - supports biweekly payment frequency enum', function () {
     expect($employee->payment_frequency)->toBe(PaymentFrequency::BIWEEKLY);
 });
 
-test('CP-06_EIF-26 - formats currency with Costa Rican convention', function () {
+test('CP-06_EIF-26_QA2 - formats currency with Costa Rican convention', function () {
     // Given: a calculated salary of ₡200,000.
     $employee = Employee::factory()->create(['hourly_wage' => 5000]);
     $timesheets = Timesheet::factory()
