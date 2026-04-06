@@ -14,6 +14,10 @@
 	<div class="container-fluid px-0">
 		{{-- Statistics Cards (Today's Sales, Stock, Contracts, etc.) --}}
 		<div class="row g-3">
+			{{--
+				Stat Card Component - Today's Sales
+				Displays a statistical card showing today's sales with a random value for demonstration.
+			--}}
 			<div class="col">
 				
 				<x-stat-card
