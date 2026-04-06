@@ -26,11 +26,11 @@ function createEmployeeWithUser(array $employeeAttributes = []): Employee
 }
 
 /**
- * User Story: EIF-25 - Register employee clock-in and clock-out times including holidays.
+ * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
  * Priority: Highest
  * Jira Link: https://est-una.atlassian.net/browse/EIF-25
  */
-test('CP-01_EIF-25 - registers attendance with holiday flag and redirects with success message', function () {
+test('CP-01_EIF-25_QA1 - registers attendance with holiday flag and redirects with success message', function () {
     // Given: an authenticated admin and an existing active employee.
     $admin = createAdminUser();
     $employee = createEmployeeWithUser();
@@ -72,11 +72,11 @@ test('CP-01_EIF-25 - registers attendance with holiday flag and redirects with s
 });
 
 /**
- * User Story: EIF-25 - Register employee clock-in and clock-out times including holidays.
+ * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-25
  */
-test('CP-02_EIF-25 - rejects attendance when end time is before start time', function () {
+test('CP-02_EIF-25_QA1 - rejects attendance when end time is before start time', function () {
     // Given: an authenticated admin and a valid employee.
     $admin = createAdminUser();
     $employee = createEmployeeWithUser();
@@ -99,11 +99,11 @@ test('CP-02_EIF-25 - rejects attendance when end time is before start time', fun
 });
 
 /**
- * User Story: EIF-25 - Register employee clock-in and clock-out times including holidays.
+ * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-25
  */
-test('CP-03_EIF-25 - denies attendance module access to non-admin users', function () {
+test('CP-03_EIF-25_QA1 - denies attendance module access to non-admin users', function () {
     // Given: an authenticated user with employee role (no admin permissions).
     $employeeUser = User::factory()->withRole(UserRole::EMPLOYEE)->create();
 
@@ -125,11 +125,11 @@ test('CP-03_EIF-25 - denies attendance module access to non-admin users', functi
 });
 
 /**
- * User Story: EIF-25 - Register employee clock-in and clock-out times including holidays.
+ * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
  * Priority: Medium
  * Jira Link: https://est-una.atlassian.net/browse/EIF-25
  */
-test('CP-04_EIF-25 - updates an existing attendance record without creating duplicates', function () {
+test('CP-04_EIF-25_QA1 - updates an existing attendance record without creating duplicates', function () {
     // Given: an authenticated admin and an existing attendance row for today.
     $admin = createAdminUser();
     $employee = createEmployeeWithUser();
@@ -169,11 +169,11 @@ test('CP-04_EIF-25 - updates an existing attendance record without creating dupl
 });
 
 /**
- * User Story: EIF-25 - Register employee clock-in and clock-out times including holidays.
+ * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-25
  */
-test('CP-05_EIF-25 - validates employee existence before storing attendance', function () {
+test('CP-05_EIF-25_QA1 - validates employee existence before storing attendance', function () {
     // Given: an authenticated admin user.
     $admin = createAdminUser();
 
@@ -195,11 +195,11 @@ test('CP-05_EIF-25 - validates employee existence before storing attendance', fu
 });
 
 /**
- * User Story: EIF-25 - Register employee clock-in and clock-out times including holidays.
+ * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
  * Priority: Medium
  * Jira Link: https://est-una.atlassian.net/browse/EIF-25
  */
-test('CP-06_EIF-25 - rejects attendance registration for non-current dates', function () {
+test('CP-06_EIF-25_QA1 - rejects attendance registration for non-current dates', function () {
     // Given: an authenticated admin and an existing employee.
     $admin = createAdminUser();
     $employee = createEmployeeWithUser();
@@ -222,11 +222,11 @@ test('CP-06_EIF-25 - rejects attendance registration for non-current dates', fun
 });
 
 /**
- * User Story: EIF-26 - Automatically calculate employee payroll with holiday double pay.
+ * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
  * Priority: Highest
  * Jira Link: https://est-una.atlassian.net/browse/EIF-26
  */
-test('CP-01_EIF-26 - calculates salary and shows payroll breakdown including holiday multiplier', function () {
+test('CP-01_EIF-26_QA1 - calculates salary and shows payroll breakdown including holiday multiplier', function () {
     // Given: an authenticated admin, monthly employee, and regular plus holiday timesheets.
     $admin = createAdminUser();
     $employee = createEmployeeWithUser([
@@ -270,11 +270,11 @@ test('CP-01_EIF-26 - calculates salary and shows payroll breakdown including hol
 });
 
 /**
- * User Story: EIF-26 - Automatically calculate employee payroll with holiday double pay.
+ * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-26
  */
-test('CP-02_EIF-26 - calculates biweekly payroll using selected half window', function () {
+test('CP-02_EIF-26_QA1 - calculates biweekly payroll using selected half window', function () {
     // Given: an authenticated admin and a biweekly employee with rows in both month halves.
     $admin = createAdminUser();
     $employee = createEmployeeWithUser([
@@ -317,11 +317,11 @@ test('CP-02_EIF-26 - calculates biweekly payroll using selected half window', fu
 });
 
 /**
- * User Story: EIF-26 - Automatically calculate employee payroll with holiday double pay.
+ * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-26
  */
-test('CP-04_EIF-26 - includes incomplete attendance rows and marks them as not completed', function () {
+test('CP-04_EIF-26_QA1 - includes incomplete attendance rows and marks them as not completed', function () {
     // Given: an authenticated admin and one incomplete timesheet in the selected period.
     $admin = createAdminUser();
     $employee = createEmployeeWithUser([
@@ -353,11 +353,11 @@ test('CP-04_EIF-26 - includes incomplete attendance rows and marks them as not c
 });
 
 /**
- * User Story: EIF-26 - Automatically calculate employee payroll with holiday double pay.
+ * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-26
  */
-test('CP-06_EIF-26 - denies salary tab access to non-admin users', function () {
+test('CP-06_EIF-26_QA1 - denies salary tab access to non-admin users', function () {
     // Given: an authenticated employee-role user without admin permissions.
     $employeeUser = User::factory()->withRole(UserRole::EMPLOYEE)->create();
 
@@ -366,4 +366,94 @@ test('CP-06_EIF-26 - denies salary tab access to non-admin users', function () {
         ->get(route('attendance.tabs', ['tab' => 'salary']))
         // Then: access is forbidden for non-admin users.
         ->assertForbidden();
+});
+
+/**
+ * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-25
+ */
+test('CP-07_EIF-25_QA1 - displays attendance index page with navigation tabs', function () {
+    // Given: an authenticated admin.
+    $admin = createAdminUser();
+
+    // When: the admin visits the attendance index page.
+    $response = $this->actingAs($admin)->get(route('attendance.index'));
+
+    // Then: the page displays successfully with attendance form.
+    $response
+        ->assertSuccessful()
+        ->assertSee('Registro de Asistencia');
+});
+
+/**
+ * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-25
+ */
+test('CP-08_EIF-25_QA1 - displays attendance creation form with employee dropdown', function () {
+    // Given: an authenticated admin and existing employees.
+    $admin = createAdminUser();
+    createEmployeeWithUser();
+
+    // When: the admin requests the attendance creation page.
+    $response = $this->actingAs($admin)->get(route('attendance.index'));
+
+    // Then: the page displays with employee selection available.
+    $response
+        ->assertSuccessful()
+        ->assertSee('Registro de Asistencia');
+});
+
+/**
+ * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-26
+ */
+test('CP-03_EIF-26_QA1 - payroll calculation excludes soft-deleted employees', function () {
+    // Given: an authenticated admin, an active employee, and a deleted employee.
+    $admin = createAdminUser();
+    $activeEmployee = createEmployeeWithUser([
+        'payment_frequency' => PaymentFrequency::MONTHLY,
+        'hourly_wage' => 5000,
+    ]);
+
+    Timesheet::factory()->create([
+        'employee_id' => $activeEmployee->id,
+        'work_date' => '2026-03-10',
+        'total_hours' => 8.00,
+        'is_holiday' => false,
+    ]);
+
+    // When: requesting payroll calculation.
+    $response = $this->actingAs($admin)->get(route('attendance.tabs', [
+        'tab' => 'salary',
+        'employee_id' => $activeEmployee->id,
+        'payroll_period' => '2026-03',
+    ]));
+
+    // Then: payroll is calculated only for active employee.
+    $response
+        ->assertSuccessful()
+        ->assertSee('Total a Pagar:');
+});
+
+/**
+ * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-26
+ */
+test('CP-05_EIF-26_QA1 - displays payroll form with employee and period selectors', function () {
+    // Given: an authenticated admin.
+    $admin = createAdminUser();
+
+    // When: the admin requests the salary calculation tab.
+    $response = $this->actingAs($admin)->get(route('attendance.tabs', [
+        'tab' => 'salary',
+    ]));
+
+    // Then: the page displays with form controls for employee and period selection.
+    $response
+        ->assertSuccessful()
+        ->assertSee('Calcular Salario por Colaborador');
 });

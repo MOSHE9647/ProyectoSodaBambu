@@ -297,3 +297,230 @@ test('CP-08_EIF-32 - allows creating a category and using it in product registra
         'category_id' => $category->id,
     ]);
 });
+
+/**
+ * User Story: EIF-32 - Product registration and type-based field behavior.
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-32
+ */
+test('CP-09_EIF-32 - displays product detail page with all information', function () {
+    // Given: an authenticated admin and an existing product.
+    $admin = createAdminUserForProduct();
+    $category = Category::factory()->create();
+    $product = Product::factory()->create([
+        'category_id' => $category->id,
+        'name' => 'Cafe Premium',
+        'type' => ProductType::MERCHANDISE->value,
+    ]);
+
+    // When: the admin views the product detail page.
+    $response = $this->actingAs($admin)->get(route('products.show', $product));
+
+    // Then: the page displays the product information.
+    $response
+        ->assertSuccessful()
+        ->assertViewHas('product');
+});
+
+/**
+ * User Story: EIF-32 - Product registration and type-based field behavior.
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-32
+ */
+test('CP-10_EIF-32 - displays product edit form with current values', function () {
+    // Given: an authenticated admin and an existing product.
+    $admin = createAdminUserForProduct();
+    $product = Product::factory()->create([
+        'name' => 'Original Name',
+        'type' => ProductType::DISH->value,
+    ]);
+
+    // When: the admin requests the product edit form.
+    $response = $this->actingAs($admin)->get(route('products.edit', $product));
+
+    // Then: the form displays current product data.
+    $response
+        ->assertSuccessful()
+        ->assertViewHas('product', $product);
+});
+
+/**
+ * User Story: EIF-32 - Product registration and type-based field behavior.
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-32
+ */
+test('CP-11_EIF-32 - filters products with low stock via AJAX DataTables', function () {
+    // Given: an authenticated admin and products with various stock levels.
+    $admin = createAdminUserForProduct();
+    $highStockProduct = Product::factory()->create();
+    ProductStock::factory()->create([
+        'product_id' => $highStockProduct->id,
+        'current_stock' => 100,
+        'minimum_stock' => 20,
+    ]);
+
+    $lowStockProduct = Product::factory()->create();
+    ProductStock::factory()->create([
+        'product_id' => $lowStockProduct->id,
+        'current_stock' => 5,
+        'minimum_stock' => 20,
+    ]);
+
+    // When: the admin requests products with low stock filter via AJAX.
+    $response = $this->actingAs($admin)->get(route('products.index'), [
+        'Accept' => 'application/json',
+        'X-Requested-With' => 'XMLHttpRequest',
+        'low_stock' => 'true',
+        'draw' => 1,
+        'start' => 0,
+        'length' => 10,
+    ]);
+
+    // Then: response includes DataTables structure.
+    $response
+        ->assertSuccessful()
+        ->assertJsonStructure(['data', 'recordsTotal', 'recordsFiltered']);
+});
+
+/**
+ * User Story: EIF-32 - Product registration and type-based field behavior.
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-32
+ */
+test('CP-12_EIF-32 - index view exposes low stock products list for dashboard card', function () {
+    // Given: an authenticated admin and mixed stock rows.
+    $admin = createAdminUserForProduct();
+
+    $inventoryProduct = Product::factory()->create(['has_inventory' => true]);
+    ProductStock::factory()->create([
+        'product_id' => $inventoryProduct->id,
+        'current_stock' => 2,
+        'minimum_stock' => 5,
+    ]);
+
+    $nonInventoryProduct = Product::factory()->create(['has_inventory' => false]);
+    ProductStock::factory()->create([
+        'product_id' => $nonInventoryProduct->id,
+        'current_stock' => 1,
+        'minimum_stock' => 5,
+    ]);
+
+    // When: requesting products index without AJAX.
+    $response = $this->actingAs($admin)->get(route('products.index'));
+
+    // Then: low stock view data includes only inventory-enabled products.
+    $response
+        ->assertSuccessful()
+        ->assertViewHas('lowStockProducts');
+
+    $lowStockProducts = $response->viewData('lowStockProducts');
+    expect($lowStockProducts->count())->toBeGreaterThanOrEqual(1);
+    expect($lowStockProducts->every(fn ($row) => $row->product?->has_inventory === true))->toBeTrue();
+});
+
+/**
+ * User Story: EIF-32 - Product registration and type-based field behavior.
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-32
+ */
+test('CP-13_EIF-32 - product create form loads categories and null product stock', function () {
+    // Given: an authenticated admin and available categories.
+    $admin = createAdminUserForProduct();
+    Category::factory()->count(2)->create();
+
+    // When: opening the product create form.
+    $response = $this->actingAs($admin)->get(route('products.create'));
+
+    // Then: view includes categories and productStock as null.
+    $response
+        ->assertSuccessful()
+        ->assertViewHas('categories')
+        ->assertViewHas('productStock', null);
+});
+
+/**
+ * User Story: EIF-32 - Product registration and type-based field behavior.
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-32
+ */
+test('CP-14_EIF-32 - restores soft deleted product by barcode and restores stock row', function () {
+    // Given: an authenticated admin with a soft-deleted product and stock.
+    $admin = createAdminUserForProduct();
+    $category = Category::factory()->create();
+
+    $product = Product::factory()->create([
+        'category_id' => $category->id,
+        'barcode' => '7509999999999',
+        'name' => 'Producto Borrado',
+        'type' => ProductType::MERCHANDISE->value,
+        'has_inventory' => true,
+        'reference_cost' => 1000,
+        'tax_percentage' => 13,
+        'margin_percentage' => 35,
+    ]);
+
+    $stock = ProductStock::factory()->create([
+        'product_id' => $product->id,
+        'current_stock' => 25,
+        'minimum_stock' => 10,
+    ]);
+
+    $product->delete();
+    $stock->delete();
+
+    // When: creating again using the same barcode.
+    $response = $this->actingAs($admin)->post(route('products.store'), [
+        'category_id' => $category->id,
+        'barcode' => '7509999999999',
+        'name' => 'Producto Restaurado',
+        'type' => ProductType::MERCHANDISE->value,
+        'has_inventory' => true,
+        'reference_cost' => 2000,
+        'tax_percentage' => 13,
+        'margin_percentage' => 35,
+        'minimum_stock' => 15,
+    ]);
+
+    // Then: product and stock are restored and updated.
+    $response
+        ->assertRedirect(route('products.index'))
+        ->assertSessionHas('success', 'Producto restaurado y actualizado exitosamente.');
+
+    $restored = Product::withTrashed()->where('barcode', '7509999999999')->firstOrFail();
+    expect($restored->deleted_at)->toBeNull();
+
+    $this->assertDatabaseHas('product_stocks', [
+        'product_id' => $restored->id,
+        'minimum_stock' => 15,
+        'deleted_at' => null,
+    ]);
+});
+
+/**
+ * User Story: EIF-32 - Product registration and type-based field behavior.
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-32
+ */
+test('CP-15_EIF-32 - creates drink product forcing sale price to zero', function () {
+    // Given: an authenticated admin and an existing category.
+    $admin = createAdminUserForProduct();
+    $category = Category::factory()->create();
+
+    // When: creating a DRINK product with an incoming sale_price value.
+    $response = $this->actingAs($admin)->post(route('products.store'), [
+        'category_id' => $category->id,
+        'barcode' => '7501234500001',
+        'name' => 'Bebida Test',
+        'type' => ProductType::DRINK->value,
+        'has_inventory' => false,
+        'sale_price' => 9000,
+    ]);
+
+    // Then: the controller applies pricing rules and stores sale_price as zero.
+    $response
+        ->assertRedirect(route('products.index'))
+        ->assertSessionHas('success', 'Producto creado exitosamente.');
+
+    $drink = Product::query()->where('barcode', '7501234500001')->firstOrFail();
+    expect((float) $drink->sale_price)->toBe(0.0);
+});

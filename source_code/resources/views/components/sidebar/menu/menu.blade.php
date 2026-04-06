@@ -171,10 +171,12 @@
 	$currentRoute = Route::currentRouteName();
 	$routePrefix = explode('.', $currentRoute)[0] ?? $currentRoute;
 
-	function getNavLinkClass($routePrefix, $item): string {
-		$itemPrefix = explode('.', $item['route'])[0] ?? $item['route'];
+	$getNavLinkClass = static function (string $routePrefix, array $item): string {
+		$itemRoute = $item['route'] ?? '';
+		$itemPrefix = is_string($itemRoute) ? (explode('.', $itemRoute)[0] ?? $itemRoute) : '';
+
 		return $routePrefix === $itemPrefix ? ' active' : ' link-body-emphasis';
-	}
+	};
 @endphp
 
 <div class="accordion vh-100" id="sidebar-accordion">
@@ -185,7 +187,7 @@
                 @php
                     $showCollapsible = false;
                     foreach ($item['collapsibleItems'] as $collapsibleItem) {
-                        if (getNavLinkClass($routePrefix, $collapsibleItem) === ' active') {
+						if ($getNavLinkClass($routePrefix, $collapsibleItem) === ' active') {
                             $showCollapsible = true;
                             break;
                         }
@@ -197,7 +199,7 @@
                     :svg="$item['svg']"
                     :name="$name"
                     :show="$showCollapsible"
-                    :class="getNavLinkClass($routePrefix, $item)"
+					:class="$getNavLinkClass($routePrefix, $item)"
                     parentId="sidebar-accordion"
                 >
                     @foreach($item['collapsibleItems'] as $collapsibleName => $collapsibleItem)
@@ -206,7 +208,7 @@
                             :href="Route::has($collapsibleItem['route']) ? route($collapsibleItem['route']) : '#'"
                             :svg="$collapsibleItem['svg']"
                             :name="$collapsibleName"
-                            :class="getNavLinkClass($routePrefix, $collapsibleItem)"
+							:class="$getNavLinkClass($routePrefix, $collapsibleItem)"
                         />
                         @endhasanyrole
                     @endforeach
@@ -216,7 +218,7 @@
                         :href="Route::has($item['route']) ? route($item['route']) : '#'"
                         :svg="$item['svg']"
                         :name="$name"
-                        :class="getNavLinkClass($routePrefix, $item)"
+						:class="$getNavLinkClass($routePrefix, $item)"
                     />
                 @endif
             @endhasanyrole
