@@ -3,8 +3,7 @@
 @section('content')
     <div class="container p-0">
         {{-- Page Header --}}
-        <x-header title="Gestión de Productos" subtitle="Administre los productos existentes">
-        </x-header>
+        <x-header title="Gestión de Productos" subtitle="Administre los productos existentes" />
 
         @if(($lowStockProducts ?? collect())->isNotEmpty())
             <div class="alert alert-warning d-flex flex-column gap-2" role="alert">
@@ -18,11 +17,11 @@
 
         {{-- Table Container --}}
         <div class="table-container rounded-2 p-4">
-            <table
+           <table
                 id="products-table"
                 class="table table-hover rounded-2"
-                data-can-manage-products="{{ auth()->user()?->can('editar productos') ? '1' : '0' }}"
-                data-can-create-products="{{ auth()->user()?->can('crear productos') ? '1' : '0' }}" 
+                data-can-manage-products="{{ auth()->user()?->hasRole(\App\Enums\UserRole::ADMIN->value) ? '1' : '0' }}"
+                data-can-create-products="{{ auth()->user()?->hasRole(\App\Enums\UserRole::ADMIN->value) || auth()->user()?->hasRole(\App\Enums\UserRole::EMPLOYEE->value) ? '1' : '0' }}"
             >
                 <thead>
                     <tr>
