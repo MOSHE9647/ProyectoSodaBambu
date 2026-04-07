@@ -20,9 +20,6 @@ class PurchaseDetailFactory extends Factory
      */
     public function definition(): array
     {
-        $quantity = $this->faker->numberBetween(1, 100);
-        $unitPrice = $this->faker->randomFloat(2, 10, 1000);
-
         return [
             'purchase_id' => Purchase::factory(),
             'purchasable_id' => $this->faker->randomElement([
@@ -33,10 +30,7 @@ class PurchaseDetailFactory extends Factory
                 Product::class,
                 Supply::class,
             ]),
-            'quantity' => $quantity,
-            'unit_price' => $unitPrice,
-            'subtotal' => round($quantity * $unitPrice, 2),
-            'expiration_date' => $this->faker->optional(0.8)->dateTimeBetween('today', '+9 months')?->format('Y-m-d'),
+            'subtotal' => $this->faker->randomFloat(2, 10, 25000),
         ];
     }
 }
