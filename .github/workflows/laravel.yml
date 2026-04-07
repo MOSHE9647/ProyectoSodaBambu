@@ -2,7 +2,7 @@ name: Laravel Test
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev", "feature/*" ]
   pull_request:
     branches: [ "main", "dev" ]
   workflow_dispatch:
