@@ -52,6 +52,13 @@
 			"npm install",
 			"npm run build"
 		],
+		"ci": [
+			"@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+			"@php artisan key:generate",
+			"@php -r \"is_dir('database') || mkdir('database', 0777, true); file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+			"npm ci",
+			"npm run build"
+		],
 		"workspace:setup": "@php scripts/setup-workspace.php --no-db",
 		"workspace:sqlite": "@php scripts/setup-workspace.php --db:sqlite --migrate",
 		"workspace:sqlite:seed": "@php scripts/setup-workspace.php --db:sqlite --migrate:seed",
