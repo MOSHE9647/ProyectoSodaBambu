@@ -77,9 +77,10 @@ class PurchaseController extends Controller
             $recordsTotal    = Purchase::count();
             $recordsFiltered = $query->count();
 
-            $purchases = $query->skip($request->start)
-                ->take($request->length)
-                ->get();
+            $purchases = $query->when($request->length != -1, function ($q) use ($request) {
+                return $q->skip($request->start)->take($request->length);
+            })
+            ->get();
 
             return response()->json([
                 'draw'            => $request->draw,

@@ -358,15 +358,9 @@ $('#quick-product-form').on('submit', async function (e) {
     // Validación extra de stock si maneja inventario
     if ($('#quick-product-has-inventory').is(':checked')) {
         const stockMinimo = $('#quick-product-stock-minimo').val();
-        const stockActual = $('#quick-product-stock-actual').val();
         if (!stockMinimo || stockMinimo < 0) {
             $('#quick-product-stock-minimo').addClass('is-invalid');
             $('#quick-product-stock-minimo-error').text('El stock mínimo es obligatorio y debe ser mayor o igual a 0.');
-            return;
-        }
-        if (!stockActual || stockActual < 0) {
-            $('#quick-product-stock-actual').addClass('is-invalid');
-            $('#quick-product-stock-actual-error').text('El stock actual es obligatorio y debe ser mayor o igual a 0.');
             return;
         }
     }

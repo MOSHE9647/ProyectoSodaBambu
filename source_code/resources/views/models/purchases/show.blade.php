@@ -19,14 +19,14 @@
                 placeholder="Proveedor" iconLeft="bi bi-truck">Proveedor</x-form.input.floating-label>
         </div>
         <div class="col-6">
-            <x-form.input.floating-label id="payment_status" type="text" readonly="true" :value="$purchase->payment_status->value ?? $purchase->payment_status"
+            <x-form.input.floating-label id="payment_status" type="text" readonly="true" :value="$purchase->payment_status->label() ?? $purchase->payment_status"
                 placeholder="Estado de Pago" iconLeft="bi bi-credit-card">Estado de Pago</x-form.input.floating-label>
         </div>
     </div>
 
     <div class="row g-3 mb-3">
         <div class="col-6">
-            <x-form.input.floating-label id="total" type="text" readonly="true" :value="number_format($purchase->total, 2)"
+            <x-form.input.floating-label id="total" type="text" readonly="true" :value="'₡' . number_format($purchase->total, 2)"
                 placeholder="Total" iconLeft="bi bi-cash">Total</x-form.input.floating-label>
         </div>
     </div>

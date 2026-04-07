@@ -7,16 +7,16 @@ const MODEL_NAME = 'compra';
 const BTN_CLASS_PRIMARY = 'btn-primary';
 
 const MODEL_ROUTES = {
-    index:  route('purchases.index'),
+    index: route('purchases.index'),
     create: route('purchases.create'),
-    show:   route('purchases.show',    { purchase: ':id' }),
-    edit:   route('purchases.edit',    { purchase: ':id' }),
+    show: route('purchases.show', { purchase: ':id' }),
+    edit: route('purchases.edit', { purchase: ':id' }),
     delete: route('purchases.destroy', { purchase: ':id' }),
 };
 
-window.SwalToast             = SwalToast;
+window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
-window.toggleLoadingState    = toggleLoadingState;
+window.toggleLoadingState = toggleLoadingState;
 
 window.showPurchaseInfo = function (url, anchor) {
     return showModelInfo(url, anchor, MODEL_NAME);
@@ -27,11 +27,11 @@ window.deletePurchase = function (e) {
 };
 
 window.showSupplierItems = function (supplierId, supplierName) {
-    const modal      = new bootstrap.Modal(document.getElementById('supplierItemsModal'));
-    const $loading   = $('#supplier-items-loading');
-    const $content   = $('#supplier-items-content');
-    const $empty     = $('#supplier-items-empty');
-    const $tbody     = $('#supplier-items-tbody');
+    const modal = new bootstrap.Modal(document.getElementById('supplierItemsModal'));
+    const $loading = $('#supplier-items-loading');
+    const $content = $('#supplier-items-content');
+    const $empty = $('#supplier-items-empty');
+    const $tbody = $('#supplier-items-tbody');
     const $modalName = $('#modal-supplier-name');
 
     $loading.removeClass('d-none');
@@ -43,9 +43,9 @@ window.showSupplierItems = function (supplierId, supplierName) {
     modal.show();
 
     $.ajax({
-        url:     MODEL_ROUTES.index,
-        method:  'GET',
-        data:    { supplier_id: supplierId, report: 1 },
+        url: MODEL_ROUTES.index,
+        method: 'GET',
+        data: { supplier_id: supplierId, report: 1 },
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         success: function (data) {
             $loading.addClass('d-none');
@@ -92,54 +92,71 @@ $(() => {
                         </a>`;
             }
         },
-        { data: 'date',  name: 'date',  title: 'Fecha',  render: (data) => data ? new Date(data).toLocaleDateString('es-ES') : '' },
-        { data: 'total', name: 'total', title: 'Total',  render: (data) => `$${parseFloat(data).toFixed(2)}` },
+        {
+            data: 'date', name: 'date', title: 'Fecha', render: (data) => {
+                if (!data) return '';
+                const d = new Date(data + 'T00:00:00');
+                return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+                    .replace(' de ', ' de ')
+                    .replace(/(\d+) de (\w+) de (\d+)/, '$1 de $2 del $3');
+            }
+        },
+        { data: 'total', name: 'total', title: 'Total', render: (data) => `₡${parseFloat(data).toFixed(2)}` },
         {
             data: 'payment_status',
             name: 'payment_status',
             title: 'Estado de Pago',
+
             render: (data) => {
                 const badgeClass = {
-                    'Completo':  'bg-success',
-                    'Parcial':   'bg-warning text-dark',
-                    'Pendiente': 'bg-secondary',
-                    'Anulado':   'bg-danger'
+                    'paid': 'bg-success',
+                    'partial': 'bg-info text-dark',
+                    'pending': 'bg-warning text-dark',
+                    'void': 'bg-danger'
                 }[data] || 'bg-light text-dark';
-                return `<span class="badge ${badgeClass}">${data}</span>`;
+
+                const labels = {
+                    'paid': 'Completo',
+                    'partial': 'Parcial',
+                    'pending': 'Pendiente',
+                    'void': 'Anulado'
+                };
+
+                return `<span class="badge ${badgeClass}">${labels[data] ?? data}</span>`;
             }
         }
     ];
 
     const actions = {
         show: {
-            route:    MODEL_ROUTES.show,
-            func:     window.showPurchaseInfo,
+            route: MODEL_ROUTES.show,
+            func: window.showPurchaseInfo,
             funcName: 'showPurchaseInfo',
-            tooltip:  'Ver detalles'
+            tooltip: 'Ver detalles'
         },
         edit: {
-            route:    MODEL_ROUTES.edit,
-            func:     toggleLoadingState,
+            route: MODEL_ROUTES.edit,
+            func: toggleLoadingState,
             funcName: 'toggleLoadingState',
-            tooltip:  `Editar ${MODEL_NAME}`
+            tooltip: `Editar ${MODEL_NAME}`
         },
         delete: {
-            route:    MODEL_ROUTES.delete,
-            tooltip:  `Eliminar ${MODEL_NAME}`,
-            func:     window.deletePurchase,
+            route: MODEL_ROUTES.delete,
+            tooltip: `Eliminar ${MODEL_NAME}`,
+            func: window.deletePurchase,
             funcName: 'deletePurchase',
         }
     };
 
     const customButtons = [
         {
-            text:     `Crear ${capitalizeSentence(MODEL_NAME)}`,
-            href:     MODEL_ROUTES.create,
-            class:    `create-button ${BTN_CLASS_PRIMARY}`,
-            icon:     'bi-plus-circle-fill',
-            func:     toggleLoadingState,
+            text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
+            href: MODEL_ROUTES.create,
+            class: `create-button ${BTN_CLASS_PRIMARY}`,
+            icon: 'bi-plus-circle-fill',
+            func: toggleLoadingState,
             funcName: 'toggleLoadingState',
-            params:   ['.create-button', 'create', true],
+            params: ['.create-button', 'create', true],
         }
     ];
 

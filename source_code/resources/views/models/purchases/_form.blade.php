@@ -60,7 +60,7 @@
                             @foreach (App\Enums\PaymentStatus::cases() as $status)
                                 <option value="{{ $status->value }}"
                                     {{ old('payment_status', isset($purchase) ? $purchase->payment_status->value : '') == $status->value ? 'selected' : '' }}>
-                                    {{ $status->name }}
+                                    {{ $status->label() }}
                                 </option>
                             @endforeach
                         </select>
@@ -220,7 +220,7 @@
                 <select class="form-select" id="quick-product-type" name="type" required>
                     <option value="">Seleccionar tipo</option>
                     @foreach(App\Enums\ProductType::cases() as $type)
-                        <option value="{{ $type->value }}">{{ $type->name }}</option>
+                       <option value="{{ $type->value }}">{{ $type->label() }}</option>
                     @endforeach
                 </select>
                 <div class="invalid-feedback" id="quick-product-type-error"></div>
@@ -236,11 +236,6 @@
                     <label for="quick-product-stock-minimo" class="form-label">Stock mínimo <span class="text-danger">*</span></label>
                     <input type="number" class="form-control" id="quick-product-stock-minimo" name="stock_minimo" min="0" step="1">
                     <div class="invalid-feedback" id="quick-product-stock-minimo-error"></div>
-                </div>
-                <div class="mb-3">
-                    <label for="quick-product-stock-actual" class="form-label">Stock actual <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="quick-product-stock-actual" name="stock_actual" min="0" step="1">
-                    <div class="invalid-feedback" id="quick-product-stock-actual-error"></div>
                 </div>
             </div>
 
