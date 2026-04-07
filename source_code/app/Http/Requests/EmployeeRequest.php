@@ -52,7 +52,7 @@ class EmployeeRequest extends FormRequest
                 'max:14',
             ],
             'status' => ['required', new Enum(EmployeeStatus::class)],
-            'hourly_wage' => ['required', 'numeric', 'min:100'],
+            'hourly_wage' => ['required', 'numeric', 'min:100', 'gt:0'],
             'payment_frequency' => ['required', new Enum(PaymentFrequency::class)],
         ];
     }

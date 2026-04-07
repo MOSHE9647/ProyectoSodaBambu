@@ -30,7 +30,7 @@ class UserPolicy
         }
 
         // If User is trying to delete the last admin, deny
-        if ($userToDelete->hasRole(UserRole::ADMIN)) {
+        if ($userToDelete->hasRole(UserRole::ADMIN->value)) {
             if (User::admins()->count() <= 1) {
                 return Response::deny('No puedes eliminar el último administrador.');
             }

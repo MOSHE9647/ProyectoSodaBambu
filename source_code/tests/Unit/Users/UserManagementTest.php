@@ -4,8 +4,11 @@ use App\Actions\Users\UpsertUserAction;
 use App\Enums\EmployeeStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\UserRole;
+use App\Http\Requests\EmployeeRequest;
 use App\Models\Employee;
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
 /**
@@ -68,17 +71,16 @@ test('CP-02_EIF-20_QA2 - creates admin user without requiring employee data', fu
  */
 test('CP-03_EIF-20_QA2 - validates hourly wage is numeric and positive', function () {
     // Given: employee data with invalid hourly wage.
-    // When: attempting to create employee with negative wage.
-    // Then: database constraints prevent invalid data.
-    $employee = Employee::factory()->create([
+    $payload = [
         'phone' => '506-8888-1111',
-        'status' => EmployeeStatus::ACTIVE,
-        'hourly_wage' => -1000, // Invalid negative wage
-        'payment_frequency' => PaymentFrequency::MONTHLY,
-    ]);
+        'status' => EmployeeStatus::ACTIVE->value,
+        'hourly_wage' => -1000,
+        'payment_frequency' => PaymentFrequency::MONTHLY->value,
+    ];
 
-    // Negative wages should not pass business logic validation.
-    expect($employee->hourly_wage_raw)->toBe(-1000.0);
+    // When / Then: validation rejects negative wages.
+    expect(fn () => Validator::make($payload, EmployeeRequest::rulesFor())->validate())
+        ->toThrow(ValidationException::class);
 });
 
 /**
