@@ -16,20 +16,27 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Throwable;
 use Yajra\DataTables\DataTables;
+use Spatie\Permission\Middleware\RoleMiddleware;
 
 class SupplyController extends Controller implements HasMiddleware
 {
-    /**
-     * Get the middleware that should be assigned to the controller.
-     *
-     * @return array<int, \Illuminate\Routing\Controllers\Middleware>
-     */
-   public static function middleware(): array
+     /**
+ * Define middleware for the controller.
+ *
+ * @return array<int, Middleware>
+ */
+public static function middleware(): array
 {
+   
+    $allowedViewerRoles = UserRole::ADMIN->value . '|' . UserRole::EMPLOYEE->value;
+
     return [
-        new Middleware('auth'),
-        new Middleware('role:admin', only: ['edit', 'update', 'destroy']),
-        new Middleware('role:admin|employee', only: ['index', 'show', 'create', 'store']),
+        new Middleware(RoleMiddleware::using($allowedViewerRoles)),
+        
+
+        new Middleware(RoleMiddleware::using(UserRole::ADMIN->value), 
+            only: ['edit', 'update', 'destroy']
+        ),
     ];
 }
 

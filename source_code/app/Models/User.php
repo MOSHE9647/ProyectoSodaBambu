@@ -75,14 +75,14 @@ class User extends Authenticatable implements MustVerifyEmail
 	/**
 	 * Mutator to interact with the user's password.
 	 * 
-	 * 
+	 * @return Attribute
 	 */
-	//protected function password(): Attribute
-	//{
-		//return Attribute::make(
-		//	set: fn ($value) => empty($value) ? $this->password : bcrypt($value),
-		//);
-	//}
+	protected function password(): Attribute
+	{
+		return Attribute::make(
+			set: fn ($value) => empty($value) ? $this->password : bcrypt($value),
+		);
+	}
 
 	/**
 	 * Get the employee record associated with the user.

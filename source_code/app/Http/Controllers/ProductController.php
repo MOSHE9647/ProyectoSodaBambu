@@ -24,15 +24,25 @@ use Yajra\DataTables\Facades\DataTables;
 
 class ProductController extends Controller implements HasMiddleware
 {
-    public static function middleware(): array
+ /**
+ * Define middleware for the controller.
+ *
+ * @return array<int, Middleware>
+ */
+public static function middleware(): array
 {
+   
+    $allowedViewerRoles = UserRole::ADMIN->value . '|' . UserRole::EMPLOYEE->value;
+
     return [
-        new Middleware('auth'),
-        new Middleware('role:admin', only: ['edit', 'update', 'destroy']),
-        new Middleware('role:admin|employee', only: ['index', 'show', 'create', 'store']),
+        new Middleware(RoleMiddleware::using($allowedViewerRoles)),
+        
+
+        new Middleware(RoleMiddleware::using(UserRole::ADMIN->value), 
+            only: ['edit', 'update', 'destroy']
+        ),
     ];
 }
-
 	
 
 	/**
