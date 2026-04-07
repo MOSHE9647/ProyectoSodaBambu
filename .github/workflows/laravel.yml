@@ -2,7 +2,9 @@ name: Laravel Test
 
 on:
   push:
-    branches: ["feature/EIF-135-setup-pest-php-testing"]
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
   workflow_dispatch:
 
 jobs:
@@ -19,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -31,7 +33,7 @@ jobs:
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: lts/*
           cache: "npm"
