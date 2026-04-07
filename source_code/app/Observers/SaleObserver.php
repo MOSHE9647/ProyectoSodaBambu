@@ -2,21 +2,23 @@
 
 namespace App\Observers;
 
-use App\Actions\Sale\GetTodaySalesTotal;
+use App\Actions\Sale\CalculateDailySalesTrendAction;
+use App\Enums\PaymentStatus;
 use App\Models\Sale;
+use Illuminate\Support\Facades\Cache;
 
 class SaleObserver
 {
-    public function __construct(protected GetTodaySalesTotal $getTodaySalesTotal)
-    {
-    }
+    public function __construct(protected CalculateDailySalesTrendAction $calculateDailySalesTrendAction) {}
 
     /**
      * Handle the Sale "created" event.
      */
     public function created(Sale $sale): void
     {
-        $this->getTodaySalesTotal->execute();
+        if ($sale->payment_status === PaymentStatus::PAID) {
+            $this->refreshSalesCache();
+        }
     }
 
     /**
@@ -24,9 +26,14 @@ class SaleObserver
      */
     public function updated(Sale $sale): void
     {
-        // Solo recalculamos si cambió el total, el estado de pago o la fecha
-        if ($sale->wasChanged(['total', 'payment_status', 'date'])) {
-            $this->getTodaySalesTotal->execute();
+        // Checks if the sale has changed its payment status to PAID or if it was already paid
+        // and related values were modified. In either case, updates the sales cache to reflect
+        // the most recent changes.
+        $becamePaid = $sale->wasChanged('payment_status') && $sale->payment_status === PaymentStatus::PAID;
+        $isStillPaidAndValuesChanged = $sale->payment_status === PaymentStatus::PAID;
+
+        if ($becamePaid || $isStillPaidAndValuesChanged) {
+            $this->refreshSalesCache();
         }
     }
 
@@ -35,14 +42,21 @@ class SaleObserver
      */
     public function deleted(Sale $sale): void
     {
-        $this->getTodaySalesTotal->execute();
+        if ($sale->payment_status === PaymentStatus::PAID) {
+            $this->refreshSalesCache();
+        }
     }
 
     /**
-     * Handle the Sale "restored" event.
+     * Helper para refrescar el caché usando la lógica solicitada
      */
-    public function restored(Sale $sale): void
+    private function refreshSalesCache(): void
     {
-        $this->getTodaySalesTotal->execute();
+        // Force cache refresh by forgetting the previous key before executing the remember
+        Cache::forget('today_sales_stats');
+
+        Cache::remember('today_sales_stats', now()->addMinutes(10), function () {
+            return $this->calculateDailySalesTrendAction->execute();
+        });
     }
 }

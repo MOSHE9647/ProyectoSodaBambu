@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 class GetLowStockProductsCount
 {
     /**
-     * Ejecuta el action para obtener y cachear el conteo de productos con stock bajo.
+     * 
      *
      * @return int
      */
