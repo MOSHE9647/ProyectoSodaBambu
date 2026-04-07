@@ -3,13 +3,13 @@
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\TestStockController;
 use App\Http\Controllers\UserController;
-// imports for testing routes
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -25,7 +25,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
     Route::get('sales', [HomeController::class, 'sales'])->name('sales');
-    Route::get('config', [HelpController::class, 'index'])->name('config');
+    Route::get('config', [HelpController::class, 'index'])->name('help');
     Route::resource('users', UserController::class)->names('users');
     Route::resource('suppliers', SupplierController::class)->names('suppliers');
     Route::resource('products', ProductController::class)->names('products');
@@ -45,5 +45,4 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // Route for testing low stock warning
     Route::get('/test-low-stock/{stock}', [TestStockController::class, 'triggerLowStock'])->name('test.low-stock');
-
 });
