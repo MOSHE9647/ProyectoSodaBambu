@@ -22,11 +22,14 @@
 				
 				<x-stat-card
 					title="Ventas de Hoy"
-					value=" ₡ {{ number_format(rand(1000, 15000000), 0, ',', '.') }} "
-					currency="false"
+					value=" ₡ {{ number_format($todaySalesTotal, 0, ',', '.') }} "
+					currency="true" {{-- Cambiado a true para usar el icono de colón del componente --}}
 					icon="cash"
 					color-theme="green"
-					{{-- :url="route('products.index', ['filter' => 'low_stock'])" --}}
+					trend="{{ $salesTrendText }}"
+					trend-context="vs ayer"
+					trend-direction="{{ $trendDirection }}"
+					{{-- :url="route('Sale.index', ['filter' => 'low_stock'])" --}}
 				/>
 			</div>
 			

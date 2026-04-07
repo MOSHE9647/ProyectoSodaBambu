@@ -12,6 +12,12 @@ use App\Models\ProductStock;
 use App\Observers\ProductStockObserver;
 use App\Models\PurchaseDetail;
 use App\Observers\PurchaseDetailObserver;
+use App\Models\Product;
+use App\Observers\ProductObserver;
+use App\Models\Supply;
+use App\Observers\SupplyObserver;
+use App\Models\Sale;
+use App\Observers\SaleObserver;
 
 
 
@@ -34,6 +40,10 @@ class AppServiceProvider extends ServiceProvider
 		User::observe(UserObserver::class);
 		ProductStock::observe(ProductStockObserver::class);
 		PurchaseDetail::observe(PurchaseDetailObserver::class);
+		Product::observe(ProductObserver::class);
+		Supply::observe(SupplyObserver::class);
+		Sale::observe(SaleObserver::class);
+
 
 		// Force HTTPS in production
 		if (config('app.env') !== 'local') {

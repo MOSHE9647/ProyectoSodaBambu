@@ -46,6 +46,7 @@ class PurchaseSeeder extends Seeder
                 'quantity' => $productQuantity,
                 'unit_price' => $product->reference_cost,
                 'subtotal' => $productQuantity * $product->reference_cost,
+                'expiration_date' => now()->addDays(rand(1, 15)),
             ]);
 
             // Add a Supply to the Detail
@@ -57,6 +58,7 @@ class PurchaseSeeder extends Seeder
                 'quantity' => $supplyQuantity,
                 'unit_price' => rand(2000, 8000),
                 'subtotal' => $supplyQuantity * rand(2000, 8000),
+                'expiration_date' => now()->addDays(rand(1, 15)),
             ]);
         }
     }

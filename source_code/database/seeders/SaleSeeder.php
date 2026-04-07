@@ -43,5 +43,16 @@ class SaleSeeder extends Seeder
                 'total' => rand(5000, 75000),
             ]);
         }
+
+        // Generate sales for YESTERDAY
+        for ($i = 1; $i <= 2; $i++) {
+            Sale::create([
+                'employee_id' => $employees->random()->id,
+                'invoice_number' => 'VNT-' . now()->subDay()->format('Ymd') . '-' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'payment_status' => PaymentStatus::PAID,
+                'date' => now()->subDay()->setHour(rand(8, 20))->setMinute(rand(0, 59)),
+                'total' => rand(3000, 50000),
+            ]);
+        }
     }
 }
