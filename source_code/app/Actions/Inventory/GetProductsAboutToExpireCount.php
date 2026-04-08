@@ -2,7 +2,6 @@
 
 namespace App\Actions\Inventory;
 
-use App\Models\PurchaseDetail;
 use App\Models\Supply;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
