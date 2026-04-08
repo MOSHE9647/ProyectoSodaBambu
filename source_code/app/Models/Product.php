@@ -27,6 +27,7 @@ class Product extends Model
         'barcode',
         'name',
         'type',
+        'expiration_date',
         'has_inventory',
         'reference_cost',
         'tax_percentage',
@@ -41,6 +42,7 @@ class Product extends Model
      */
     protected $casts = [
         'has_inventory' => 'boolean',
+        'expiration_date' => 'date',
         'reference_cost' => 'decimal:2',
         'tax_percentage' => 'decimal:2',
         'margin_percentage' => 'decimal:2',

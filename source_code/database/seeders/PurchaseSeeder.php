@@ -42,8 +42,6 @@ class PurchaseSeeder extends Seeder
             $purchase->details()->create([
                 'purchasable_id' => $product->id,
                 'purchasable_type' => Product::class,
-                'quantity' => $productQuantity,
-                'unit_price' => $product->reference_cost,
                 'subtotal' => $productQuantity * $product->reference_cost,
             ]);
 
@@ -53,8 +51,6 @@ class PurchaseSeeder extends Seeder
             $purchase->details()->create([
                 'purchasable_id' => $supply->id,
                 'purchasable_type' => Supply::class,
-                'quantity' => $supplyQuantity,
-                'unit_price' => rand(2000, 8000),
                 'subtotal' => $supplyQuantity * rand(2000, 8000),
             ]);
         }
