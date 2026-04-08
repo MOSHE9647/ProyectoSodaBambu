@@ -6,7 +6,6 @@ use App\Enums\ProductType;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductStock;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class ProductSeeder extends Seeder
@@ -46,7 +45,7 @@ class ProductSeeder extends Seeder
 
             $createdProduct = Product::create($productData);
 
-            if (!$createdProduct->has_inventory) {
+            if (! $createdProduct->has_inventory) {
                 continue;
             }
 

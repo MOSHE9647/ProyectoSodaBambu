@@ -15,13 +15,13 @@ class StoreAttendanceAction
      * and end times. Uses updateOrCreate when no specific timesheet is provided,
      * preventing duplicate entries for the same employee on the same date.
      *
-     * @param array<string, mixed> $data Input data containing:
-     *     - employee_id: (int|string) Employee identifier
-     *     - work_date: (string) Work date in format accepted by Carbon (e.g., '2026-03-18')
-     *     - start_time: (string) Clock-in time (e.g., '08:00', '08:00:00')
-     *     - end_time: (string|null) Clock-out time (null for incomplete shifts)
-     *     - is_holiday: (bool|int) Optional flag, defaults to false
-     * @param Timesheet|null $timesheet Existing timesheet to update. If null, creates new or updates via upsert
+     * @param  array<string, mixed>  $data  Input data containing:
+     *                                      - employee_id: (int|string) Employee identifier
+     *                                      - work_date: (string) Work date in format accepted by Carbon (e.g., '2026-03-18')
+     *                                      - start_time: (string) Clock-in time (e.g., '08:00', '08:00:00')
+     *                                      - end_time: (string|null) Clock-out time (null for incomplete shifts)
+     *                                      - is_holiday: (bool|int) Optional flag, defaults to false
+     * @param  Timesheet|null  $timesheet  Existing timesheet to update. If null, creates new or updates via upsert
      * @return Timesheet The stored or updated timesheet with all current data
      */
     public function execute(array $data, ?Timesheet $timesheet = null): Timesheet
@@ -64,12 +64,12 @@ class StoreAttendanceAction
      * is not after start time (e.g., same time or previous time). Results are rounded to
      * 2 decimal places (e.g., 8.5 hours, 7.75 hours).
      *
-     * @param string $workDate The work date (e.g., '2026-03-18')
-     * @param string $startTime Clock-in time in any Carbon-parseable format (e.g., '08:30', '08:30:00')
-     * @param string|null $endTime Clock-out time, or null if shift is incomplete
+     * @param  string  $workDate  The work date (e.g., '2026-03-18')
+     * @param  string  $startTime  Clock-in time in any Carbon-parseable format (e.g., '08:30', '08:30:00')
+     * @param  string|null  $endTime  Clock-out time, or null if shift is incomplete
      * @return float Total hours worked, rounded to 2 decimal places. Returns 0 if:
-     *     - endTime is null or empty
-     *     - endTime is not after startTime
+     *               - endTime is null or empty
+     *               - endTime is not after startTime
      */
     private function calculateTotalHours(string $workDate, string $startTime, ?string $endTime): float
     {

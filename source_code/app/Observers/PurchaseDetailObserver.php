@@ -3,8 +3,8 @@
 namespace App\Observers;
 
 use App\Models\PurchaseDetail;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class PurchaseDetailObserver
 {

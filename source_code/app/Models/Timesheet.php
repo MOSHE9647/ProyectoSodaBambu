@@ -35,7 +35,7 @@ class Timesheet extends Model
 
     /**
      * Get the attributes that should be cast.
-     * 
+     *
      * @return array<string, string>
      */
     protected $casts = [
@@ -123,7 +123,8 @@ class Timesheet extends Model
     public function getTotalHoursLabelAttribute(): string
     {
         $normalized = rtrim(rtrim(number_format($this->total_hours_raw, 2, '.', ''), '0'), '.');
-        return str_replace('.', ',', $normalized) . 'h';
+
+        return str_replace('.', ',', $normalized).'h';
     }
 
     /**
@@ -207,7 +208,7 @@ class Timesheet extends Model
 
     /**
      * Get the employee that owns the timesheet.
-     * 
+     *
      * @return BelongsTo<Employee, Timesheet>
      */
     public function employee(): BelongsTo

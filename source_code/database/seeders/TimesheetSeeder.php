@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Employee;
 use App\Models\Timesheet;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class TimesheetSeeder extends Seeder
@@ -26,7 +25,7 @@ class TimesheetSeeder extends Seeder
                     $workDate = now()->subDays(rand(1, 30));
                     $dateKey = $workDate->format('Y-m-d');
                 } while (in_array($dateKey, $usedDates));
-                
+
                 $usedDates[] = $dateKey;
 
                 // Generate random start time between 7 AM and 7 PM

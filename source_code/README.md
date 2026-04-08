@@ -76,6 +76,9 @@ Para probar el sistema con datos de ejemplo durante el desarrollo:
 - **CSS Framework**: Bootstrap 5
 - **JavaScript**: Vanilla JS + jQuery
 
+### Testing
+- **Framework de pruebas**: Pest (PestPHP)
+
 ### Deployment
 - **Hosting de la aplicación**: Vercel
 - **Servidor de base de datos**: TiDB Cloud
@@ -85,6 +88,7 @@ Para probar el sistema con datos de ejemplo durante el desarrollo:
 - **Gestión de dependencias**: Composer + npm
 - **Entorno de desarrollo**: XAMPP / Laragon
 - **IDE recomendado**: Visual Studio Code / PHPStorm
+- **Testing**: Pest
 
 ## 🏗️ Estructura de Directorios
 

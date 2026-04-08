@@ -11,7 +11,6 @@ enum ProductType: string
 
     /**
      * Label used for showing the Product Type name
-     * @return string
      */
     public function label(): string
     {
@@ -22,5 +21,4 @@ enum ProductType: string
             self::PACKAGED => 'Empaquetado',
         };
     }
-
 }

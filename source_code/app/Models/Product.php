@@ -19,7 +19,7 @@ class Product extends Model
 
     /**
      * The attributes that are mass assignable.
-     * 
+     *
      * @var list<string>
      */
     protected $fillable = [
@@ -37,7 +37,7 @@ class Product extends Model
 
     /**
      * Get the attributes that should be cast.
-     * 
+     *
      * @return array<string, string>
      */
     protected $casts = [
@@ -55,7 +55,7 @@ class Product extends Model
 
     /**
      * Get the category that owns the product.
-     * 
+     *
      * @return BelongsTo<Category, Product>
      */
     public function category()
@@ -65,7 +65,7 @@ class Product extends Model
 
     /**
      * Get the stock record associated with the product.
-     * 
+     *
      * @return HasOne<ProductStock, Product>
      */
     public function stock()
@@ -75,7 +75,7 @@ class Product extends Model
 
     /**
      * Get all of the purchase details for the product.
-     * 
+     *
      * @return MorphMany<PurchaseDetail, Product>
      */
     public function purchaseDetails()
