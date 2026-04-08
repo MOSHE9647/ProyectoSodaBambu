@@ -17,7 +17,7 @@ class PurchaseDetail extends Model
 
     /**
      * The attributes that are mass assignable.
-     * 
+     *
      * @var list<string>
      */
     protected $fillable = [
@@ -27,14 +27,14 @@ class PurchaseDetail extends Model
         'quantity',
         'unit_price',
         'subtotal',
-        'expiration_date'
+        'expiration_date',
     ];
 
     /**
-    * Get the attributes that should be cast.
-    * 
-    * @return array<string, string>
-    */
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
     protected $casts = [
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
@@ -46,7 +46,7 @@ class PurchaseDetail extends Model
 
     /**
      * Get the parent purchasable model (Product or Supply).
-     * 
+     *
      * @return MorphTo<PurchaseDetail>
      */
     public function purchasable()
@@ -56,7 +56,7 @@ class PurchaseDetail extends Model
 
     /**
      * Get the purchase that owns the detail.
-     * 
+     *
      * @return BelongsTo<Purchase, PurchaseDetail>
      */
     public function purchase()

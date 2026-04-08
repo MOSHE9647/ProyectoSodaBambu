@@ -7,7 +7,6 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Models\Supply;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class PurchaseSeeder extends Seeder
@@ -31,7 +30,7 @@ class PurchaseSeeder extends Seeder
 
             $purchase = Purchase::create([
                 'supplier_id' => $suppliers->random()->id,
-                'invoice_number' => 'FAC-' . str_pad($i, 5, '0', STR_PAD_LEFT),
+                'invoice_number' => 'FAC-'.str_pad($i, 5, '0', STR_PAD_LEFT),
                 'payment_status' => PaymentStatus::PAID,
                 'date' => now()->subDays(rand(1, 30)),
                 'total' => $totalPurchase,

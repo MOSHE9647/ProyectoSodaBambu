@@ -19,8 +19,8 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @param Request $request
      * @return Factory|View|JsonResponse|\Illuminate\View\View
+     *
      * @throws Exception
      */
     public function index(Request $request)
@@ -48,12 +48,12 @@ class CategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param CategoryRequest $request
      * @return RedirectResponse
+     *
      * @throws Throwable
      */
     public function store(CategoryRequest $request)
-    {   
+    {
         $categoryData = $request->validated();
 
         $category = Category::withTrashed()->where('name', $categoryData['name'])->first();
@@ -84,19 +84,18 @@ class CategoryController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param Category $category
      * @return Factory|View|\Illuminate\View\View
      */
     public function show(Category $category)
     {
         $resource = CategoryResource::make($category);
+
         return view('models.category.show', ['category' => $resource]);
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param Category $category
      * @return Factory|View|\Illuminate\View\View
      */
     public function edit(Category $category)
@@ -107,9 +106,8 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param CategoryRequest $request
-     * @param Category $category
      * @return RedirectResponse
+     *
      * @throws Throwable
      */
     public function update(CategoryRequest $request, Category $category)
@@ -125,8 +123,8 @@ class CategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param Category $category
      * @return RedirectResponse
+     *
      * @throws Throwable
      */
     public function destroy(Category $category)
