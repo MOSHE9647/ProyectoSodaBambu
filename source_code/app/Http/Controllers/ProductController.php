@@ -31,11 +31,12 @@ class ProductController extends Controller implements HasMiddleware
      */
     public static function middleware(): array
     {
-        $allowedViewerRoles = UserRole::ADMIN->value.'|'.UserRole::EMPLOYEE->value;
+        $allowedAdminAndEmployeeRoles = UserRole::ADMIN->value.'|'.UserRole::EMPLOYEE->value;
 
         return [
-            new Middleware(RoleMiddleware::using($allowedViewerRoles)),
-            new Middleware(RoleMiddleware::using(UserRole::ADMIN->value), only: ['create', 'store', 'edit', 'update', 'destroy']),
+            new Middleware(RoleMiddleware::using($allowedAdminAndEmployeeRoles)),
+            new Middleware(RoleMiddleware::using($allowedAdminAndEmployeeRoles), only: ['create', 'store']),
+            new Middleware(RoleMiddleware::using(UserRole::ADMIN->value), only: ['edit', 'update', 'destroy']),
         ];
     }
 
@@ -267,12 +268,8 @@ class ProductController extends Controller implements HasMiddleware
         $productData['reference_cost'] = 0;
         $productData['tax_percentage'] = 0;
         $productData['margin_percentage'] = 0;
-
-        if ($type === ProductType::DRINK->value || $type === ProductType::PACKAGED->value) {
-            $productData['sale_price'] = 0;
-
-            return $productData;
-        }
+        $productData['expiration_date'] = null;
+        $productData['expiration_alert_days'] = 7;
 
         $productData['sale_price'] = (float) ($productData['sale_price'] ?? 0);
 

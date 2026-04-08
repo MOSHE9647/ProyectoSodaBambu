@@ -40,6 +40,7 @@ let showOnlyLowStock = urlParams.get('filter') === 'low_stock';
 let showOnlyExpiringSoon = urlParams.get('filter') === 'expiring_soon';
 
 let productsDataTable = null;
+const canCreateProducts = ($('#products-table').data('can-create-products') ?? '').toString() === '1';
 const canManageProducts = ($('#products-table').data('can-manage-products') ?? '').toString() === '1';
 
 // ==================== Global Functions ====================
@@ -260,7 +261,7 @@ $(() => {
 		$('.expiring-soon-filter-button-text').text('Mostrar todos');
 	}
 
-	if (canManageProducts) {
+	if (canCreateProducts) {
 		customButtons.unshift({
 			text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
 			href: MODEL_ROUTES.create,

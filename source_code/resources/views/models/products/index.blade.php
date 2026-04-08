@@ -30,6 +30,7 @@
 			<table
 				id="products-table"
 				class="table table-hover rounded-2"
+				data-can-create-products="{{ auth()->user()?->hasAnyRole([\App\Enums\UserRole::ADMIN->value, \App\Enums\UserRole::EMPLOYEE->value]) ? '1' : '0' }}"
 				data-can-manage-products="{{ auth()->user()?->hasRole(\App\Enums\UserRole::ADMIN->value) ? '1' : '0' }}"
 			>
 				<thead>

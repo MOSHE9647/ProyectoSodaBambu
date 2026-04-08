@@ -9,6 +9,8 @@
 	$selectedCurrentStock = old('current_stock', $stockSource?->current_stock ?? 0);
 	$selectedMinimumStock = old('minimum_stock', $stockSource?->minimum_stock ?? '');
 	$showInventoryStock = $selectedHasInventory === '1';
+	$showMerchandiseExpiration = $selectedType === ProductType::MERCHANDISE->value;
+	$selectedExpirationDate = old('expiration_date', isset($product) ? ($product->expiration_date?->format('Y-m-d') ?? '') : '');
 	$selectedExpirationAlertDays = old('expiration_alert_days', isset($product) ? ($product->expiration_alert_days ?? 7) : 7);
 	$defaultMargin = $selectedType === ProductType::MERCHANDISE->value
 		? old('margin_percentage', isset($product) ? ($product->margin_percentage ?? '') : '0.35')
@@ -166,8 +168,24 @@
 					</div>
 				</div>
 
-				<div class="row g-3">
-					<div class="col-12 col-md-6">
+				<div id="expiration-fields-row" class="row g-3 {{ $showMerchandiseExpiration ? '' : 'd-none' }}">
+					<div id="expiration-date-group" class="col-12 col-md-6">
+						<x-form.input
+							:id="'expiration_date'"
+							:type="'date'"
+							:class="'border-secondary'"
+							:inputClass="$errors->has('expiration_date') ? 'is-invalid' : ''"
+							:placeholder="'Fecha de vencimiento'"
+							:value="$selectedExpirationDate"
+							:errorMessage="$errors->first('expiration_date') ?? ''"
+							:iconLeft="'bi bi-calendar-event'"
+							:required="$showMerchandiseExpiration"
+						>
+							Fecha de Vencimiento <span id="merchandise-expiration-date-required" class="text-danger">*</span>
+						</x-form.input>
+					</div>
+
+					<div id="expiration-alert-days-group" class="col-12 col-md-6">
 						<x-form.input
 							:id="'expiration_alert_days'"
 							:type="'number'"
@@ -180,9 +198,9 @@
 							:value="$selectedExpirationAlertDays"
 							:errorMessage="$errors->first('expiration_alert_days') ?? ''"
 							:iconLeft="'bi bi-bell'"
-							:required="true"
+							:required="$showMerchandiseExpiration"
 						>
-							Días de Alerta de Vencimiento <span class="text-danger">*</span>
+							Días de Alerta de Vencimiento <span id="merchandise-alert-days-required" class="text-danger">*</span>
 						</x-form.input>
 						<small class="text-muted">Define con cuántos días antes se alertará un producto próximo a vencer.</small>
 					</div>

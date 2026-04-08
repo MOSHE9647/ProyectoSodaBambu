@@ -51,8 +51,10 @@ class ProductRequest extends FormRequest
             'barcode' => $barcode === null || trim((string) $barcode) === '' ? null : trim((string) $barcode),
             'reference_cost' => $referenceCost === '' ? null : $referenceCost,
             'sale_price' => $salePrice === '' ? ($requiresManualSalePrice ? '' : null) : $salePrice,
-            'expiration_date' => $expirationDate === '' ? null : $expirationDate,
-            'expiration_alert_days' => $expirationAlertDays === '' || $expirationAlertDays === null ? 7 : $expirationAlertDays,
+            'expiration_date' => $isMerchandise ? ($expirationDate === '' ? null : $expirationDate) : null,
+            'expiration_alert_days' => $isMerchandise
+                ? ($expirationAlertDays === '' || $expirationAlertDays === null ? 7 : $expirationAlertDays)
+                : 7,
             'tax_percentage' => $isMerchandise ? $this->normalizePercentage($taxInput) : null,
             'margin_percentage' => $isMerchandise ? $this->normalizePercentage($marginInput) : null,
             'current_stock' => $this->input('current_stock') === '' ? null : $this->input('current_stock'),
@@ -103,8 +105,8 @@ class ProductRequest extends FormRequest
             ],
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', new Enum(ProductType::class)],
-            'expiration_date' => ['nullable', 'date', 'after_or_equal:today'],
-            'expiration_alert_days' => ['required', 'integer', 'min:0'],
+            'expiration_date' => [Rule::requiredIf($isMerchandise), 'nullable', 'date', 'after_or_equal:today'],
+            'expiration_alert_days' => [Rule::requiredIf($isMerchandise), 'nullable', 'integer', 'min:0'],
             'has_inventory' => ['required', 'boolean'],
             'reference_cost' => $pricingRules,
             'tax_percentage' => [
@@ -163,6 +165,7 @@ class ProductRequest extends FormRequest
             'name.required' => 'El nombre del producto es obligatorio.',
             'name.max' => 'El nombre del producto no puede exceder 255 caracteres.',
             'type.required' => 'El tipo de producto es obligatorio.',
+            'expiration_date.required' => 'La fecha de vencimiento es obligatoria para productos de mercadería.',
             'expiration_date.date' => 'La fecha de vencimiento debe tener un formato válido.',
             'expiration_date.after_or_equal' => 'La fecha de vencimiento debe ser hoy o una fecha futura.',
             'expiration_alert_days.required' => 'Los días de alerta de vencimiento son obligatorios.',
