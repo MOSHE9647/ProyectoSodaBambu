@@ -12,29 +12,29 @@ class ProductObserver
 
     public function created(Product $product): void
     {
-        $this-> refreshCache();
+        $this->refreshCache();
     }
 
     public function updated(Product $product): void
     {
-        $this-> refreshCache();
-        
+        $this->refreshCache();
+
     }
 
     public function deleted(Product $product): void
     {
-        $this-> refreshCache();
+        $this->refreshCache();
     }
 
     public function restored(Product $product): void
     {
-        $this-> refreshCache();
+        $this->refreshCache();
     }
 
     public function refreshCache(): void
     {
         Cache::forget('low_stock_count');
-        Cache::forget('about_to_expire_products_count');    
+        Cache::forget('about_to_expire_products_count');
 
         $this->getLowStockProductsCount->execute();
         $this->getProductsAboutToExpireCount->execute();

@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Cache;
 
 class GetProductsAboutToExpireCount
 {
-    
     public function execute(): int
     {
         $today = Carbon::now()->startOfDay();
