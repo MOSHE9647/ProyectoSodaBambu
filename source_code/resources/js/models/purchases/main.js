@@ -112,6 +112,7 @@ $(() => {
                     'paid': 'bg-success',
                     'partial': 'bg-info text-dark',
                     'pending': 'bg-warning text-dark',
+                    'cancelled': 'bg-danger',
                     'void': 'bg-danger'
                 }[data] || 'bg-light text-dark';
 
@@ -119,6 +120,7 @@ $(() => {
                     'paid': 'Completo',
                     'partial': 'Parcial',
                     'pending': 'Pendiente',
+                    'cancelled': 'Anulado',
                     'void': 'Anulado'
                 };
 
