@@ -15,9 +15,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
 use Throwable;
 use Yajra\DataTables\DataTables;
-use Spatie\Permission\Middleware\RoleMiddleware;
 
 class SupplyController extends Controller implements HasMiddleware
 {
@@ -28,7 +28,8 @@ class SupplyController extends Controller implements HasMiddleware
      */
     public static function middleware(): array
     {
-        $allowedViewerRoles = UserRole::ADMIN->value . '|' . UserRole::EMPLOYEE->value;
+        $allowedViewerRoles = UserRole::ADMIN->value.'|'.UserRole::EMPLOYEE->value;
+
         return [
             new Middleware(RoleMiddleware::using($allowedViewerRoles)),
             new Middleware(

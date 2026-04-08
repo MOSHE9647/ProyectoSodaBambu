@@ -21,7 +21,6 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 use Throwable;
 use Yajra\DataTables\Facades\DataTables;
 
-
 class ProductController extends Controller implements HasMiddleware
 {
     /**
