@@ -44,39 +44,28 @@ class SupplyController extends Controller implements HasMiddleware
         if ($request->ajax()) {
             $query = Supply::query();
 
-            // filter for supplies that are expiring soon (within the next 7 days)
-            if ($request->boolean('expiring_soon') || $request->filter === 'expiring_soon') {
-                $query->whereHas('purchaseDetails', function ($q) {
-                    $q->whereNotNull('expiration_date')
-                        ->whereBetween('expiration_date', [
-                            now()->startOfDay(),
-                            now()->addDays(7)->endOfDay(),
-                        ]);
-                });
-            }
+       
+        if ($request->boolean('expiring_soon') || $request->filter === 'expiring_soon') {
+            $query->whereNotNull('expiration_date')
+                ->whereBetween('expiration_date', [
+                    now()->startOfDay(),
+                    now()->addDays(7)->endOfDay(),
+                ]);
+        }
 
-            return DataTables::of($query)
-                // aqui se le pasa la cantidad
-                ->addColumn('quantity', function ($supply) {
-                    $last = $supply->purchaseDetails()->latest()->first();
-
-                    return $last ? $last->quantity : 0;
-                })
-                // aqui se le pasa el precio
-                ->addColumn('unit_price', function ($supply) {
-                    $last = $supply->purchaseDetails()->latest()->first();
-
-                    return $last ? '₡'.number_format($last->unit_price, 2) : '₡0.00';
-                })
-                // aquis e le pasa al fecha de vencimento
-                ->addColumn('expiration_date', function ($supply) {
-                    $last = $supply->purchaseDetails()->latest()->first();
-
-                    return ($last && $last->expiration_date)
-                        ? Carbon::parse($last->expiration_date)->format('d/m/Y')
-                        : 'N/A';
-                })
-                ->toJson();
+        return DataTables::of($query)
+            ->editColumn('quantity', function ($supply) {
+                return $supply->quantity ?? 0;
+            })
+            ->editColumn('unit_price', function ($supply) {
+                return $supply->unit_price ? '₡' . number_format($supply->unit_price, 2) : '₡0.00';
+            })
+            ->editColumn('expiration_date', function ($supply) {
+                return $supply->expiration_date 
+                    ? $supply->expiration_date->format('d/m/Y') 
+                    : 'N/A';
+            })
+            ->toJson();
         }
 
         return view('models.supplies.index');
