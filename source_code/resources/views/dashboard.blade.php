@@ -23,7 +23,7 @@
 				<x-stat-card
 					title="Ventas de Hoy"
 					value=" ₡ {{ number_format($todaySalesTotal, 0, ',', '.') }} "
-					currency="true" {{-- Cambiado a true para usar el icono de colón del componente --}}
+					currency="true" 
 					icon="cash"
 					color-theme="green"
 					trend="{{ $salesTrendText }}"
@@ -85,23 +85,44 @@
 			<div class="col-md-6">
 				<div class="card border-1 card-container shadow-sm rounded-4 mh-100 w-100">
 					<div class="card-body p-4">
-						<div class="d-flex justify-content-between align-items-center mb-2">
-							<h5 class="fw-bold m-0">Ingresos del Mes</h5>
-							<i class="bi bi-cash-coin fs-4"></i>
-						</div>
-				
-						<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
-							<x-icons.colon-icon width="24" height="24" />
-							{{ number_format(rand(1000, 15000000), 0, ',', '.') }}
-						</h2>
-				
-						<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('F Y')) }}</p>
-				
-						<div 
-							id="chart-monthly-income" 
-							class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" 
-							style="min-height: 200px;">
-						</div>
+						@hasrole(App\Enums\UserRole::ADMIN->value)
+							<div class="d-flex justify-content-between align-items-center mb-2">
+								<h5 class="fw-bold m-0">Ingresos del Mes</h5>
+								<i class="bi bi-cash-coin fs-4"></i>
+							</div>
+					
+							<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
+								<x-icons.colon-icon width="24" height="24" />
+								{{ number_format($monthlyTotal, 0, ',', '.') }}
+							</h2>
+					
+							<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('F Y')) }}</p>
+					
+							<div 
+								id="chart-monthly-income" 
+								class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" 
+								style="min-height: 200px;">
+							</div>
+						@endhasrole
+						@hasrole(App\Enums\UserRole::EMPLOYEE->value)
+							<div class="d-flex justify-content-between align-items-center mb-2">
+								<h5 class="fw-bold m-0">Ingresos del Día</h5>
+								<i class="bi bi-cash-coin fs-4"></i>
+							</div>
+					
+							<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
+								<x-icons.colon-icon width="24" height="24" />
+								{{ number_format($dailyTotal, 0, ',', '.') }}
+							</h2>
+					
+							<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('d Y')) }}</p>
+					
+							<div 
+								id="chart-daily-income" 
+								class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" 
+								style="min-height: 200px;">
+							</div>
+						@endhasrole
 					</div>
 				</div>
 			</div>
@@ -139,103 +160,162 @@
 			}
 
 			// Graph Options (Series and Categories should show data up to the current day of the month)
-			var options = {
-				series: [{
-					name: 'Ingresos',
-					data: [
-						@php
-							// TODO: Replace with real data from DB
-							$currentDay = now()->day;
-							$currentMonth = now()->month;
-							
-							for ($day = 1; $day <= $currentDay; $day++) {
-								echo rand(50000, 500000);
-								if ($day < $currentDay) echo ', ';
-							}
-						@endphp
-					]
-				}],
-				xaxis: {
-					categories: [
-						@php
-							$currentDay = now()->day;
-							$monthName = ucfirst(now()->translatedFormat('F'));
-							for ($day = 1; $day <= $currentDay; $day++) {
-								$date = now()->setDay($day);
-								$dayName = ucfirst($date->translatedFormat('l'));
-								echo "'" . $dayName . ", " . $day . " de " . $monthName . "'";
-								if ($day < $currentDay) echo ', ';
-							}
-						@endphp
-					],
-					title: {
-						text: 'Días del mes'
-					}
-				},
-				chart: {
-					type: 'area',      			// Graphic Type (Area)
-					height: 200,      			// Height matching your design
-					fontFamily: 'inherit', 		// Use your site's font
-					background: 'transparent', 	// Transparent to match card background
-					toolbar: {
-						show: true,
-						tools: {
-							download: true,
-							selection: true,
-							zoom: true,
-							zoomin: true,
-							zoomout: true,
-							pan: true,
-							reset: true 
-						},
-						autoSelected: 'pan' 
+			const isAdmin = @json(auth()->user()?->hasRole(App\Enums\UserRole::ADMIN->value) ?? false);
+			const isEmployee = @json(auth()->user()?->hasRole(App\Enums\UserRole::EMPLOYEE->value) ?? false);
+
+			if (isAdmin){
+				var options = {
+					series: [{
+						name: 'Ingresos',
+						data: @json($monthlySalesValues)
+					}],
+					xaxis: {
+						categories: @json($monthlySalesLabels), 
+						title: { text: 'Días del mes' }
+						
 					},
-					sparkline: { enabled: true }
-				},
-				theme: {
-					mode: getCurrentTheme()
-				},
-				stroke: {
-					curve: 'smooth',
-					width: 2
-				},
-				fill: {
-					type: 'gradient',
-					gradient: {
-						shadeIntensity: 1,
-						opacityFrom: 0.7,
-						opacityTo: 0.3,
-						stops: [0, 90, 100]
-					}
-				},
-				colors: ['#198754'],
-				tooltip: {
-					theme: getCurrentTheme(),
-					y: {
-						formatter: function (val) {
-							return "₡ " + val.toLocaleString();
+					chart: {
+						type: 'area',      			// Graphic Type (Area)
+						height: 200,      			// Height matching your design
+						fontFamily: 'inherit', 		// Use your site's font
+						background: 'transparent', 	// Transparent to match card background
+						toolbar: {
+							show: true,
+							tools: {
+								download: true,
+								selection: true,
+								zoom: true,
+								zoomin: true,
+								zoomout: true,
+								pan: true,
+								reset: true 
+							},
+							autoSelected: 'pan' 
+						},
+						sparkline: { enabled: true }
+					},
+					theme: {
+						mode: getCurrentTheme()
+					},
+					stroke: {
+						curve: 'smooth',
+						width: 2
+					},
+					fill: {
+						type: 'gradient',
+						gradient: {
+							shadeIntensity: 1,
+							opacityFrom: 0.7,
+							opacityTo: 0.3,
+							stops: [0, 90, 100]
+						}
+					},
+					colors: ['#198754'],
+					tooltip: {
+						theme: getCurrentTheme(),
+						y: {
+							formatter: function (val) {
+								return "₡ " + val.toLocaleString();
+							}
 						}
 					}
-				}
-			};
+				};
 
-			// Render the chart
-			var chart = new ApexCharts($('#chart-monthly-income')[0], options);
-			chart.render();
+				// Render the chart
+				var chart = new ApexCharts($('#chart-monthly-income')[0], options);
+				chart.render();
 
-			// Use MutationObserver with jQuery to watch for changes in data-bs-theme attribute
-			var observer = new MutationObserver(function(mutations) {
-				mutations.forEach(function(mutation) {
-					if (mutation.attributeName === "data-bs-theme") {
-						var newTheme = getCurrentTheme();
-						
-						chart.updateOptions({
-							theme: { mode: newTheme },
-							tooltip: { theme: newTheme }
-						});
-					}
+				// Use MutationObserver with jQuery to watch for changes in data-bs-theme attribute
+				var observer = new MutationObserver(function(mutations) {
+					mutations.forEach(function(mutation) {
+						if (mutation.attributeName === "data-bs-theme") {
+							var newTheme = getCurrentTheme();
+							
+							chart.updateOptions({
+								theme: { mode: newTheme },
+								tooltip: { theme: newTheme }
+							});
+						}
+					});
 				});
-			});
+			}
+
+			if (isEmployee){
+				var options = {
+					series: [{
+						name: 'Ingresos',
+						data: @json($dailySalesValues)
+					}],
+					xaxis: {
+						categories: @json($dailySalesLabels), 
+						title: { text: 'Horas del día' }
+						
+					},
+					chart: {
+						type: 'area',      			// Graphic Type (Area)
+						height: 200,      			// Height matching your design
+						fontFamily: 'inherit', 		// Use your site's font
+						background: 'transparent', 	// Transparent to match card background
+						toolbar: {
+							show: true,
+							tools: {
+								download: true,
+								selection: true,
+								zoom: true,
+								zoomin: true,
+								zoomout: true,
+								pan: true,
+								reset: true 
+							},
+							autoSelected: 'pan' 
+						},
+						sparkline: { enabled: true }
+					},
+					theme: {
+						mode: getCurrentTheme()
+					},
+					stroke: {
+						curve: 'smooth',
+						width: 2
+					},
+					fill: {
+						type: 'gradient',
+						gradient: {
+							shadeIntensity: 1,
+							opacityFrom: 0.7,
+							opacityTo: 0.3,
+							stops: [0, 90, 100]
+						}
+					},
+					colors: ['#198754'],
+					tooltip: {
+						theme: getCurrentTheme(),
+						y: {
+							formatter: function (val) {
+								return "₡ " + val.toLocaleString();
+							}
+						}
+					}
+				};
+
+				// Render the chart
+				var chart = new ApexCharts($('#chart-daily-income')[0], options);
+				chart.render();
+
+				// Use MutationObserver with jQuery to watch for changes in data-bs-theme attribute
+				var observer = new MutationObserver(function(mutations) {
+					mutations.forEach(function(mutation) {
+						if (mutation.attributeName === "data-bs-theme") {
+							var newTheme = getCurrentTheme();
+							
+							chart.updateOptions({
+								theme: { mode: newTheme },
+								tooltip: { theme: newTheme }
+							});
+						}
+					});
+				});
+			}
 
 			// Start observing the documentElement for attribute changes
 			observer.observe(document.documentElement, {
