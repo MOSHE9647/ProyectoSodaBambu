@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Casts\CostaRicaDatetime;
 use Database\Factories\SupplyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,20 +15,35 @@ class Supply extends Model
 
     /**
      * The attributes that are mass assignable.
+     *
      * @var list<string>
      */
     protected $fillable = [
         'name',
         'measure_unit',
+        'quantity',
+        'unit_price',
+        'expiration_date',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected $casts = [
+        'quantity' => 'integer',
+        'unit_price' => 'decimal:2',
+        'expiration_date' => 'date',
     ];
 
     /**
      * Get all of the purchase details for the supply.
-     * 
+     *
      * @return MorphMany<PurchaseDetail, Supply>
      */
-public function purchaseDetails(): MorphMany
-{
-    return $this->morphMany(PurchaseDetail::class, 'purchasable');
-}
+    public function purchaseDetails(): MorphMany
+    {
+        return $this->morphMany(PurchaseDetail::class, 'purchasable');
+    }
 }

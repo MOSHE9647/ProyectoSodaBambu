@@ -4,6 +4,7 @@ namespace App\Actions\Fortify;
 
 use App\Models\User;
 use Illuminate\Contracts\Auth\StatefulGuard;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Fortify;
 
@@ -12,14 +13,13 @@ class AttemptToAuthenticate
     /**
      * The guard implementation.
      *
-     * @var \Illuminate\Contracts\Auth\StatefulGuard
+     * @var StatefulGuard
      */
     protected $guard;
 
     /**
      * Create a new action instance.
      *
-     * @param  \Illuminate\Contracts\Auth\StatefulGuard  $guard
      * @return void
      */
     public function __construct(StatefulGuard $guard)
@@ -30,7 +30,7 @@ class AttemptToAuthenticate
     /**
      * Handle the incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @param  callable  $next
      * @return mixed
      */
@@ -42,7 +42,7 @@ class AttemptToAuthenticate
         // Verify if the user exists before attempting authentication
         $user = User::where($username, $request->input($username))->first();
 
-        if (!$user) {
+        if (! $user) {
             // If the user does not exist, throw a specific email error
             throw ValidationException::withMessages([
                 $username => ['El correo electrónico proporcionado no coincide con nuestros registros.'],

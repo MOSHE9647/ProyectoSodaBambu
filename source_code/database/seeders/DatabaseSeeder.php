@@ -8,19 +8,18 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-	/**
-	 * Seed the application's database.
-	 */
-	public function run(): void
-	{
-		// Seed the database using the respective seeders
-		$this->call(UserSeeder::class);
-		$this->call(TimesheetSeeder::class);
-		$this->call(ProductSeeder::class);
-		$this->call(ProductStockSeeder::class);
-		$this->call(PurchaseSeeder::class);
-		$this->call(ClientSeeder::class);
-		
+    /**
+     * Seed the application's database.
+     */
+    public function run(): void
+    {
+        // Seed the database using the respective seeders
+        $this->call(UserSeeder::class);
+        $this->call(TimesheetSeeder::class);
+        $this->call(ProductSeeder::class);
+        $this->call(ProductStockSeeder::class);
+        $this->call(PurchaseSeeder::class);
+        $this->call(ClientSeeder::class);
 		$this->call(SaleSeeder::class);
-	}
+    }
 }

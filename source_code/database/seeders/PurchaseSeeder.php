@@ -7,7 +7,6 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Models\Supply;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class PurchaseSeeder extends Seeder
@@ -31,7 +30,7 @@ class PurchaseSeeder extends Seeder
 
             $purchase = Purchase::create([
                 'supplier_id' => $suppliers->random()->id,
-                'invoice_number' => 'FAC-' . str_pad($i, 5, '0', STR_PAD_LEFT),
+                'invoice_number' => 'FAC-'.str_pad($i, 5, '0', STR_PAD_LEFT),
                 'payment_status' => PaymentStatus::PAID,
                 'date' => now()->subDays(rand(1, 30)),
                 'total' => $totalPurchase,
@@ -43,8 +42,6 @@ class PurchaseSeeder extends Seeder
             $purchase->details()->create([
                 'purchasable_id' => $product->id,
                 'purchasable_type' => Product::class,
-                'quantity' => $productQuantity,
-                'unit_price' => $product->reference_cost,
                 'subtotal' => $productQuantity * $product->reference_cost,
                 'expiration_date' => now()->addDays(rand(1, 15)),
             ]);
@@ -55,8 +52,6 @@ class PurchaseSeeder extends Seeder
             $purchase->details()->create([
                 'purchasable_id' => $supply->id,
                 'purchasable_type' => Supply::class,
-                'quantity' => $supplyQuantity,
-                'unit_price' => rand(2000, 8000),
                 'subtotal' => $supplyQuantity * rand(2000, 8000),
                 'expiration_date' => now()->addDays(rand(1, 15)),
             ]);

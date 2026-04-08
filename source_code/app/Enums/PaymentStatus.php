@@ -11,7 +11,6 @@ enum PaymentStatus: string
 
     /**
      * Label used for showing the Payment Status name
-     * @return string
      */
     public function label(): string
     {

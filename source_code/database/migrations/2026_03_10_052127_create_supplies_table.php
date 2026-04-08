@@ -15,6 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('measure_unit', 50); // Corrección solicitada por Melanie
+            $table->integer('quantity')->default(0);
+            $table->decimal('unit_price', 10, 2)->default(0);
+            $table->date('expiration_date')->nullable();
+            $table->unsignedInteger('expiration_alert_days')->default(7);
             $table->timestamps();
             $table->softDeletes();
         });

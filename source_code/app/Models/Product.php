@@ -19,7 +19,7 @@ class Product extends Model
 
     /**
      * The attributes that are mass assignable.
-     * 
+     *
      * @var list<string>
      */
     protected $fillable = [
@@ -27,6 +27,7 @@ class Product extends Model
         'barcode',
         'name',
         'type',
+        'expiration_date',
         'has_inventory',
         'reference_cost',
         'tax_percentage',
@@ -36,11 +37,12 @@ class Product extends Model
 
     /**
      * Get the attributes that should be cast.
-     * 
+     *
      * @return array<string, string>
      */
     protected $casts = [
         'has_inventory' => 'boolean',
+        'expiration_date' => 'date',
         'reference_cost' => 'decimal:2',
         'tax_percentage' => 'decimal:2',
         'margin_percentage' => 'decimal:2',
@@ -53,7 +55,7 @@ class Product extends Model
 
     /**
      * Get the category that owns the product.
-     * 
+     *
      * @return BelongsTo<Category, Product>
      */
     public function category()
@@ -63,7 +65,7 @@ class Product extends Model
 
     /**
      * Get the stock record associated with the product.
-     * 
+     *
      * @return HasOne<ProductStock, Product>
      */
     public function stock()
@@ -73,7 +75,7 @@ class Product extends Model
 
     /**
      * Get all of the purchase details for the product.
-     * 
+     *
      * @return MorphMany<PurchaseDetail, Product>
      */
     public function purchaseDetails()

@@ -6,6 +6,7 @@
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=flat&logo=bootstrap)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=flat&logo=javascript)
 ![jQuery](https://img.shields.io/badge/jQuery-3.x-0769AD?style=flat&logo=jquery)
+![Pest](https://img.shields.io/badge/Pest-4.x-7B68EE?style=flat)
 
 ![In Development](https://img.shields.io/badge/Estado-En%20Desarrollo-yellow?style=flat)
 ![Maintenance](https://img.shields.io/badge/Mantenimiento-Activo-success?style=flat)
@@ -165,6 +166,9 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
 - **CSS Framework**: Bootstrap 5
 - **JavaScript**: Vanilla JS + jQuery
 
+### Testing
+- **Framework de pruebas**: Pest (PestPHP)
+
 ### Deployment
 - **Hosting de la Aplicación**: Vercel
 - **Servidor de Base de Datos**: TiDB Cloud
@@ -174,6 +178,7 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
 - **Gestión de dependencias**: Composer + npm
 - **Entorno de desarrollo**: XAMPP / Laragon
 - **IDE recomendado**: Visual Studio Code / PHPStorm
+- **Testing**: Pest
 
 Para ver información técnica más detallada, revisa la documentación en la carpeta [docs/](docs/). El código fuente y su respectivo [README.md](source_code/README.md) con información adicional se encuentran dentro del directorio [source_code/](source_code/).
 
