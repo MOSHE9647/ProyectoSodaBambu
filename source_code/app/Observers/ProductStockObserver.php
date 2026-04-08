@@ -2,16 +2,17 @@
 
 namespace App\Observers;
 
+use App\Actions\Inventory\GetLowStockProductsCount;
 use App\Models\ProductStock;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 
 class ProductStockObserver
 {
-    
+    public function __construct(protected GetLowStockProductsCount $getLowStockProductsCount) {}
+
     public function created(ProductStock $productStock): void
     {
-        $this->countLowStockProducts();
+        $this->getLowStockProductsCount->execute();
     }
 
     /**
@@ -19,34 +20,19 @@ class ProductStockObserver
      */
     public function updated(ProductStock $productStock): void
     {
-        if($productStock->wasChanged('current_stock')){
+        if ($productStock->wasChanged('current_stock')) {
             $hasLowStock = $productStock->current_stock < $productStock->minimum_stock;
-            if($hasLowStock){
-                 // Save a warning message in the session
+            if ($hasLowStock) {
+                // Save a warning message in the session
                 Session::flash('warning', "¡Stock bajo en {$productStock->product->name}!");
             }
 
-            $this->countLowStockProducts();
+            $this->getLowStockProductsCount->execute();
         }
     }
 
     public function deleted(ProductStock $productStock): void
     {
-        $this->countLowStockProducts();
+        $this->getLowStockProductsCount->execute();
     }
-
-
-    /**
-     * Count the number of products with low stock levels.
-     *
-     * Queries all products where the current stock is less than or equal to the
-     * minimum stock threshold and stores the count in cache indefinitely.
-     */
-    private function countLowStockProducts()
-    {
-        $lowStockCount = ProductStock::whereRaw('current_stock <= minimum_stock')->count();
-        Cache::forever('low_stock_count', $lowStockCount);
-    }
-
-    
 }

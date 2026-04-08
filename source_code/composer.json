@@ -21,12 +21,15 @@
 		"fakerphp/faker": "^1.23",
 		"ladumor/laravel-pwa": "^0.0.5",
 		"laravel-lang/lang": "^15.26",
+		"laravel/boost": "^2.3",
 		"laravel/pail": "^1.2.2",
 		"laravel/pint": "^1.24",
 		"laravel/sail": "^1.41",
 		"mockery/mockery": "^1.6",
 		"nunomaduro/collision": "^8.6",
-		"phpunit/phpunit": "^11.5.3"
+		"pestphp/pest": "^4.4",
+		"pestphp/pest-plugin-browser": "^4.3",
+		"pestphp/pest-plugin-drift": "^4.1"
 	},
 	"autoload": {
 		"psr-4": {
@@ -49,6 +52,13 @@
 			"npm install",
 			"npm run build"
 		],
+		"ci": [
+			"@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+			"@php artisan key:generate",
+			"@php -r \"is_dir('database') || mkdir('database', 0777, true); file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+			"npm ci",
+			"npm run build"
+		],
 		"workspace:setup": "@php scripts/setup-workspace.php --no-db",
 		"workspace:sqlite": "@php scripts/setup-workspace.php --db:sqlite --migrate",
 		"workspace:sqlite:seed": "@php scripts/setup-workspace.php --db:sqlite --migrate:seed",
@@ -64,7 +74,7 @@
 		],
 		"test": [
 			"@php artisan config:clear --ansi",
-			"@php artisan test"
+			"@php artisan test --ansi"
 		],
 		"post-autoload-dump": [
 			"Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
@@ -72,7 +82,8 @@
 		],
 		"post-update-cmd": [
 			"@php artisan vendor:publish --tag=laravel-assets --ansi --force",
-			"@php artisan lang:update"
+			"@php artisan boost:update --ansi",
+			"@php artisan lang:update --ansi"
 		],
 		"post-root-package-install": [
 			"@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
@@ -98,8 +109,13 @@
 		"allow-plugins": {
 			"pestphp/pest-plugin": true,
 			"php-http/discovery": true
-		}
+		},
+		"process-timeout": 900
 	},
+	"process-timeout": 900,
 	"minimum-stability": "stable",
 	"prefer-stable": true
+
+	
+
 }

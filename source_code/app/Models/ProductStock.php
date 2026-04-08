@@ -17,7 +17,7 @@ class ProductStock extends Model
 
     /**
      * The attributes that are mass assignable.
-     * 
+     *
      * @var list<string>
      */
     protected $fillable = [
@@ -28,7 +28,7 @@ class ProductStock extends Model
 
     /**
      * Get the attributes that should be cast.
-     * 
+     *
      * @return array<string, string>
      */
     protected $casts = [
@@ -52,7 +52,7 @@ class ProductStock extends Model
     /**
      * Scope stock rows that are equal or below the configured minimum.
      *
-     * @param Builder<ProductStock> $query
+     * @param  Builder<ProductStock>  $query
      * @return Builder<ProductStock>
      */
     public function scopeLowStock(Builder $query): Builder
