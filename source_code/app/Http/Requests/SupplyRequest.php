@@ -48,6 +48,7 @@ class SupplyRequest extends FormRequest
             'quantity' => [$requiredOnCreate, 'integer', 'min:0'],
             'unit_price' => [$requiredOnCreate, 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
             'expiration_date' => ['nullable', 'date', 'after_or_equal:today'],
+            'expiration_alert_days' => ['nullable', 'integer', 'min:0'],
         ];
     }
 
@@ -71,6 +72,8 @@ class SupplyRequest extends FormRequest
             'unit_price.regex' => 'El precio unitario debe tener máximo 2 decimales.',
             'expiration_date.date' => 'La fecha de vencimiento debe tener un formato válido.',
             'expiration_date.after_or_equal' => 'La fecha de vencimiento debe ser hoy o una fecha futura.',
+            'expiration_alert_days.integer' => 'Los días de alerta de vencimiento deben ser un número entero.',
+            'expiration_alert_days.min' => 'Los días de alerta de vencimiento no pueden ser menores a 0.',
         ];
     }
 }
