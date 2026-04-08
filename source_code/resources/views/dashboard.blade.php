@@ -14,7 +14,26 @@
 	<div class="container-fluid px-0">
 		{{-- Statistics Cards (Today's Sales, Stock, Contracts, etc.) --}}
 		<div class="row g-3">
-			@for ($i = 0; $i < 3; $i++)
+			{{--
+				Stat Card Component - Today's Sales
+				Displays a statistical card showing today's sales with a random value for demonstration.
+			--}}
+			<div class="col">
+				
+				<x-stat-card
+					title="Ventas de Hoy"
+					value=" ₡ {{ number_format($todaySalesTotal, 0, ',', '.') }} "
+					currency="true" {{-- Cambiado a true para usar el icono de colón del componente --}}
+					icon="cash"
+					color-theme="green"
+					trend="{{ $salesTrendText }}"
+					trend-context="vs ayer"
+					trend-direction="{{ $trendDirection }}"
+					{{-- :url="route('Sale.index', ['filter' => 'low_stock'])" --}}
+				/>
+			</div>
+			
+			@for ($i = 0; $i < 2; $i++)
 				<div class="col">
 					<x-stat-card
 						title="Stat Card {{ $i + 1 }}"
@@ -28,6 +47,8 @@
 				</div>
 			@endfor
 			
+			
+
 			{{-- 
 				Stat Card Component - Minimum Stock Products
 				Displays a statistical card showing the count of products that are at minimum stock levels.	
