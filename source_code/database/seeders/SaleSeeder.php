@@ -19,6 +19,7 @@ class SaleSeeder extends Seeder
 
         if ($employees->isEmpty()) {
             $this->command->warn('No hay empleados en la base de datos. Por favor, corre EmployeeSeeder primero.');
+
             return;
         }
 
@@ -26,10 +27,10 @@ class SaleSeeder extends Seeder
         for ($i = 1; $i <= 5; $i++) {
             Sale::create([
                 'employee_id' => $employees->random()->id,
-                'invoice_number' => 'VNT-' . date('Ymd') . '-' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'invoice_number' => 'VNT-'.date('Ymd').'-'.str_pad($i, 4, '0', STR_PAD_LEFT),
                 'payment_status' => PaymentStatus::PAID,
-                'date' => now()->subMinutes(rand(1, 480)), 
-                'total' => rand(2500, 45000), 
+                'date' => now()->subMinutes(rand(1, 480)),
+                'total' => rand(2500, 45000),
             ]);
         }
 
@@ -37,7 +38,7 @@ class SaleSeeder extends Seeder
         for ($i = 1; $i <= 15; $i++) {
             Sale::create([
                 'employee_id' => $employees->random()->id,
-                'invoice_number' => 'VNT-' . str_pad($i, 5, '0', STR_PAD_LEFT),
+                'invoice_number' => 'VNT-'.str_pad($i, 5, '0', STR_PAD_LEFT),
                 'payment_status' => fake()->randomElement([PaymentStatus::PAID, PaymentStatus::PENDING]),
                 'date' => now()->subDays(rand(1, 30)),
                 'total' => rand(5000, 75000),
@@ -48,7 +49,7 @@ class SaleSeeder extends Seeder
         for ($i = 1; $i <= 2; $i++) {
             Sale::create([
                 'employee_id' => $employees->random()->id,
-                'invoice_number' => 'VNT-' . now()->subDay()->format('Ymd') . '-' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'invoice_number' => 'VNT-'.now()->subDay()->format('Ymd').'-'.str_pad($i, 4, '0', STR_PAD_LEFT),
                 'payment_status' => PaymentStatus::PAID,
                 'date' => now()->subDay()->setHour(rand(8, 20))->setMinute(rand(0, 59)),
                 'total' => rand(3000, 50000),

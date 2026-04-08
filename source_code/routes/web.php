@@ -49,7 +49,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // RUTA TEMPORAL PARA VALIDACIÓN DE TENDENCIA DE VENTAS
     Route::get('/debug-sales-trend', function (CalculateDailySalesTrendAction $action) {
-        
+
         Cache::forget('today_sales_stats');
 
         $employee = Employee::first();

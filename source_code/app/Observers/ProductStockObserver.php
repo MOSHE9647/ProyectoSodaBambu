@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\Session;
 
 class ProductStockObserver
 {
-    public function __construct(protected GetLowStockProductsCount $getLowStockProductsCount)
-    {}
+    public function __construct(protected GetLowStockProductsCount $getLowStockProductsCount) {}
 
     public function created(ProductStock $productStock): void
     {

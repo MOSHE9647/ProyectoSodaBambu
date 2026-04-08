@@ -2,23 +2,21 @@
 
 namespace App\Providers;
 
+use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\PurchaseDetail;
+use App\Models\Sale;
+use App\Models\Supply;
 use App\Models\User;
+use App\Observers\ProductObserver;
 use App\Observers\ProductStockObserver;
 use App\Observers\PurchaseDetailObserver;
+use App\Observers\SaleObserver;
+use App\Observers\SupplyObserver;
 use App\Observers\UserObserver;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-use App\Models\Product;
-use App\Observers\ProductObserver;
-use App\Models\Supply;
-use App\Observers\SupplyObserver;
-use App\Models\Sale;
-use App\Observers\SaleObserver;
-
-
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,10 +37,9 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         ProductStock::observe(ProductStockObserver::class);
         PurchaseDetail::observe(PurchaseDetailObserver::class);
-		Product::observe(ProductObserver::class);
-		Supply::observe(SupplyObserver::class);
-		Sale::observe(SaleObserver::class);
-
+        Product::observe(ProductObserver::class);
+        Supply::observe(SupplyObserver::class);
+        Sale::observe(SaleObserver::class);
 
         // Force HTTPS in production
         if (config('app.env') !== 'local') {

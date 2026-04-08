@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained();
-            
+
             $table->string('invoice_number');
             $table->string('payment_status');
             $table->dateTime('date');
             $table->decimal('total', 12, 2)->default(0);
-            
+
             $table->timestamps();
             $table->softDeletes();
         });

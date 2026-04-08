@@ -4,14 +4,11 @@ namespace App\Actions\Inventory;
 
 use App\Models\PurchaseDetail;
 use App\Models\Supply;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class GetProductsAboutToExpireCount
 {
-    /**
-     * 
-     */
     public function execute(): int
     {
         $today = Carbon::now()->startOfDay();
