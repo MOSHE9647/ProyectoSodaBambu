@@ -18,20 +18,21 @@
 				Stat Card Component - Today's Sales
 				Displays a statistical card showing today's sales with a random value for demonstration.
 			--}}
-			<div class="col">
-				
-				<x-stat-card
-					title="Ventas de Hoy"
-					value=" ₡ {{ number_format($todaySalesTotal, 0, ',', '.') }} "
-					currency="true" {{-- Cambiado a true para usar el icono de colón del componente --}}
-					icon="cash"
-					color-theme="green"
-					trend="{{ $salesTrendText }}"
-					trend-context="vs ayer"
-					trend-direction="{{ $trendDirection }}"
-					{{-- :url="route('Sale.index', ['filter' => 'low_stock'])" --}}
-				/>
-			</div>
+			{{-- Ventas de Hoy: SOLO PARA ADMIN --}}
+            @if(auth()->user()->hasRole(\App\Enums\UserRole::ADMIN->value))
+            <div class="col">
+                <x-stat-card
+                    title="Ventas de Hoy"
+                    value=" ₡ {{ number_format($todaySalesTotal, 0, ',', '.') }} "
+                    currency="true"
+                    icon="cash"
+                    color-theme="green"
+                    trend="{{ $salesTrendText }}"
+                    trend-context="vs ayer"
+                    trend-direction="{{ $trendDirection }}"
+                />
+            </div>
+            @endif
 			
 			@for ($i = 0; $i < 2; $i++)
 				<div class="col">
@@ -79,32 +80,34 @@
 			</div>
 		</div>
 
-		{{-- Monthly Income Chart and Other Cards --}}
-		<div class="row g-3 mt-2">
-			{{-- Monthly Income Chart --}}
-			<div class="col-md-6">
-				<div class="card border-1 card-container shadow-sm rounded-4 mh-100 w-100">
-					<div class="card-body p-4">
-						<div class="d-flex justify-content-between align-items-center mb-2">
-							<h5 class="fw-bold m-0">Ingresos del Mes</h5>
-							<i class="bi bi-cash-coin fs-4"></i>
-						</div>
-				
+	{{-- Monthly Income Chart --}}
+        <div class="col-md-6">
+            <div class="card border-1 card-container shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="fw-bold m-0">Ingresos del Mes</h5>
+                        <i class="bi bi-cash-coin fs-4"></i>
+                    </div>
+
+                    @if(auth()->user()->hasRole(\App\Enums\UserRole::ADMIN->value))
+						{{-- TODO EL CONTENIDO PARA EL ADMIN (Monto y Gráfico) --}}
 						<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
 							<x-icons.colon-icon width="24" height="24" />
 							{{ number_format(rand(1000, 15000000), 0, ',', '.') }}
 						</h2>
-				
 						<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('F Y')) }}</p>
-				
-						<div 
-							id="chart-monthly-income" 
-							class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" 
-							style="min-height: 200px;">
+						<div id="chart-monthly-income" class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" style="min-height: 200px;"></div>
+					@else
+						{{-- BLOQUE DE ACCESO RESTRINGIDO PARA COLABORADORES --}}
+						<div class="text-center py-4">
+							<i class="bi bi-shield-lock text-warning" style="font-size: 3rem;"></i>
+							<h4 class="mt-2">Acceso Restringido</h4>
+							<p class="text-muted">Solo el administrador puede ver los estados financieros.</p>
 						</div>
-					</div>
-				</div>
-			</div>
+					@endif
+                </div>
+            </div>
+        </div>
 			{{-- Active Contracts and Today's Deliveries --}}
 			<div class="col-md-6">
 				<div class="card border-1 card-container shadow-sm rounded-4 mh-100 w-100 h-100">
@@ -131,117 +134,88 @@
 @endsection
 
 @section('scripts')
-	<script type="module">
-		$(document).ready(function () {
-			// Get current theme (light or dark)
-			function getCurrentTheme() {
-				return $('html').attr('data-bs-theme') || 'light';
-			}
+    <script type="module">
+        $(document).ready(function () {
+            // 1. Definir función de tema
+            function getCurrentTheme() {
+                return $('html').attr('data-bs-theme') || 'light';
+            }
 
-			// Graph Options (Series and Categories should show data up to the current day of the month)
-			var options = {
-				series: [{
-					name: 'Ingresos',
-					data: [
-						@php
-							// TODO: Replace with real data from DB
-							$currentDay = now()->day;
-							$currentMonth = now()->month;
-							
-							for ($day = 1; $day <= $currentDay; $day++) {
-								echo rand(50000, 500000);
-								if ($day < $currentDay) echo ', ';
-							}
-						@endphp
-					]
-				}],
-				xaxis: {
-					categories: [
-						@php
-							$currentDay = now()->day;
-							$monthName = ucfirst(now()->translatedFormat('F'));
-							for ($day = 1; $day <= $currentDay; $day++) {
-								$date = now()->setDay($day);
-								$dayName = ucfirst($date->translatedFormat('l'));
-								echo "'" . $dayName . ", " . $day . " de " . $monthName . "'";
-								if ($day < $currentDay) echo ', ';
-							}
-						@endphp
-					],
-					title: {
-						text: 'Días del mes'
-					}
-				},
-				chart: {
-					type: 'area',      			// Graphic Type (Area)
-					height: 200,      			// Height matching your design
-					fontFamily: 'inherit', 		// Use your site's font
-					background: 'transparent', 	// Transparent to match card background
-					toolbar: {
-						show: true,
-						tools: {
-							download: true,
-							selection: true,
-							zoom: true,
-							zoomin: true,
-							zoomout: true,
-							pan: true,
-							reset: true 
-						},
-						autoSelected: 'pan' 
-					},
-					sparkline: { enabled: true }
-				},
-				theme: {
-					mode: getCurrentTheme()
-				},
-				stroke: {
-					curve: 'smooth',
-					width: 2
-				},
-				fill: {
-					type: 'gradient',
-					gradient: {
-						shadeIntensity: 1,
-						opacityFrom: 0.7,
-						opacityTo: 0.3,
-						stops: [0, 90, 100]
-					}
-				},
-				colors: ['#198754'],
-				tooltip: {
-					theme: getCurrentTheme(),
-					y: {
-						formatter: function (val) {
-							return "₡ " + val.toLocaleString();
-						}
-					}
-				}
-			};
+            // 2. Buscar el elemento del gráfico
+            var chartElement = $('#chart-monthly-income')[0];
 
-			// Render the chart
-			var chart = new ApexCharts($('#chart-monthly-income')[0], options);
-			chart.render();
+            // 3. SOLO si el gráfico existe (es decir, el usuario es ADMIN), ejecutamos todo lo demás
+            if (chartElement) {
+                var options = {
+                    series: [{
+                        name: 'Ingresos',
+                        data: [
+                            @php
+                                $currentDay = now()->day;
+                                for ($day = 1; $day <= $currentDay; $day++) {
+                                    echo rand(50000, 500000);
+                                    if ($day < $currentDay) echo ', ';
+                                }
+                            @endphp
+                        ]
+                    }],
+                    xaxis: {
+                        categories: [
+                            @php
+                                $currentDay = now()->day;
+                                $monthName = ucfirst(now()->translatedFormat('F'));
+                                for ($day = 1; $day <= $currentDay; $day++) {
+                                    $date = now()->setDay($day);
+                                    $dayName = ucfirst($date->translatedFormat('l'));
+                                    echo "'" . $dayName . ", " . $day . " de " . $monthName . "'";
+                                    if ($day < $currentDay) echo ', ';
+                                }
+                            @endphp
+                        ],
+                        title: { text: 'Días del mes' }
+                    },
+                    chart: {
+                        type: 'area',
+                        height: 200,
+                        fontFamily: 'inherit',
+                        background: 'transparent',
+                        sparkline: { enabled: true }
+                    },
+                    theme: { mode: getCurrentTheme() },
+                    stroke: { curve: 'smooth', width: 2 },
+                    fill: {
+                        type: 'gradient',
+                        gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3, stops: [0, 90, 100] }
+                    },
+                    colors: ['#198754'],
+                    tooltip: {
+                        theme: getCurrentTheme(),
+                        y: { formatter: (val) => "₡ " + val.toLocaleString() }
+                    }
+                };
 
-			// Use MutationObserver with jQuery to watch for changes in data-bs-theme attribute
-			var observer = new MutationObserver(function(mutations) {
-				mutations.forEach(function(mutation) {
-					if (mutation.attributeName === "data-bs-theme") {
-						var newTheme = getCurrentTheme();
-						
-						chart.updateOptions({
-							theme: { mode: newTheme },
-							tooltip: { theme: newTheme }
-						});
-					}
-				});
-			});
+                // Renderizar
+                var chart = new ApexCharts(chartElement, options);
+                chart.render();
 
-			// Start observing the documentElement for attribute changes
-			observer.observe(document.documentElement, {
-				attributes: true,
-				attributeFilter: ['data-bs-theme']
-			});
-		});
-	</script>
+                // Observador para cambios de tema (Dark/Light mode)
+                var observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.attributeName === "data-bs-theme") {
+                            var newTheme = getCurrentTheme();
+                            chart.updateOptions({
+                                theme: { mode: newTheme },
+                                tooltip: { theme: newTheme }
+                            });
+                        }
+                    });
+                });
+
+                observer.observe(document.documentElement, {
+                    attributes: true,
+                    attributeFilter: ['data-bs-theme']
+                });
+            }
+        });
+    </script>
 @endsection

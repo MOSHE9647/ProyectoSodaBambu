@@ -3,7 +3,7 @@
 
     $sidebarItems = [
         'Inicio' => [
-            'role' => [UserRole::ADMIN],
+            'role' => [UserRole::ADMIN, UserRole::EMPLOYEE],
             'route' => 'dashboard',
             'svg' => '
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
