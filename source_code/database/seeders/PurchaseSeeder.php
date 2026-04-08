@@ -43,7 +43,6 @@ class PurchaseSeeder extends Seeder
                 'purchasable_id' => $product->id,
                 'purchasable_type' => Product::class,
                 'subtotal' => $productQuantity * $product->reference_cost,
-                'expiration_date' => now()->addDays(rand(1, 15)),
             ]);
 
             // Add a Supply to the Detail
@@ -53,7 +52,6 @@ class PurchaseSeeder extends Seeder
                 'purchasable_id' => $supply->id,
                 'purchasable_type' => Supply::class,
                 'subtotal' => $supplyQuantity * rand(2000, 8000),
-                'expiration_date' => now()->addDays(rand(1, 15)),
             ]);
         }
     }
