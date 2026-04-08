@@ -37,6 +37,7 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('es-CR', {
 // retrieve initial filter state from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 let showOnlyLowStock = urlParams.get('filter') === 'low_stock';
+let showOnlyExpiringSoon = urlParams.get('filter') === 'expiring_soon';
 
 let productsDataTable = null;
 const canManageProducts = ($('#products-table').data('can-manage-products') ?? '').toString() === '1';
@@ -126,6 +127,25 @@ window.toggleLowStockFilter = function () {
 	}
 };
 
+window.toggleExpiringSoonFilter = function () {
+	showOnlyExpiringSoon = !showOnlyExpiringSoon;
+
+	const $button = $('.expiring-soon-filter-button');
+	$button.toggleClass('btn-outline-danger btn-danger');
+	$('.expiring-soon-filter-button-text').text(showOnlyExpiringSoon ? 'Mostrar todos' : 'Próximos a vencer');
+
+	if (productsDataTable) {
+		productsDataTable.ajax.reload(null, true);
+
+		setTimeout(() => {
+			productsDataTable.columns.adjust();
+			if (productsDataTable.responsive) {
+				productsDataTable.responsive.recalc();
+			}
+		}, 0);
+	}
+};
+
 // ==================== DataTable Initialization ====================
 
 // Ensure the DOM is fully loaded before initializing the DataTable
@@ -165,6 +185,13 @@ $(() => {
 			data: 'sale_price',
 			name: 'sale_price',
 			render: (data) => formatCurrency(data),
+		},
+		{
+			data: 'expiration_days',
+			name: 'expiration_date',
+			render: (data) => data,
+			orderable: false,
+			searchable: false,
 		},
 	];
 
@@ -209,6 +236,15 @@ $(() => {
 			funcName: 'toggleLowStockFilter',
 			params: ['.low-stock-filter-button', 'low-stock-filter'],
 		},
+		{
+			text: 'Próximos a vencer',
+			href: 'javascript:void(0)',
+			class: 'expiring-soon-filter-button btn-outline-danger',
+			icon: 'bi-hourglass-split',
+			func: window.toggleExpiringSoonFilter,
+			funcName: 'toggleExpiringSoonFilter',
+			params: ['.expiring-soon-filter-button', 'expiring-soon-filter'],
+		},
 	];
 
 	// Set initial state of low stock filter button based on URL parameter
@@ -217,6 +253,12 @@ $(() => {
         $button.removeClass('btn-outline-warning').addClass('btn-warning');
         $('.low-stock-filter-button-text').text('Mostrar todos');
     }	
+
+	if (showOnlyExpiringSoon) {
+		const $button = $('.expiring-soon-filter-button');
+		$button.removeClass('btn-outline-danger').addClass('btn-danger');
+		$('.expiring-soon-filter-button-text').text('Mostrar todos');
+	}
 
 	if (canManageProducts) {
 		customButtons.unshift({
@@ -236,6 +278,7 @@ $(() => {
 			url: MODEL_ROUTES.index,
 			data: (d) => {
 				d.low_stock = showOnlyLowStock ? 1 : 0;
+				d.expiring_soon = showOnlyExpiringSoon ? 1 : 0;
 			}
 		},
 		columnControl: [],

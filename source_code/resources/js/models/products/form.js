@@ -40,6 +40,11 @@ function validateNonNegativeAmount(value) {
     return !isNaN(amount) && amount >= 0;
 }
 
+function validateNonNegativeInteger(value) {
+    const amount = Number(value);
+    return Number.isInteger(amount) && amount >= 0;
+}
+
 function validateDecimalPercentage(value) {
     const amount = parseFloat(value);
     return !isNaN(amount) && amount >= 0 && amount <= 1;
@@ -369,6 +374,11 @@ const fieldValidators = {
         emptyMsg: 'Indique si maneja inventario.',
         invalidMsg: 'Seleccione una opción válida para inventario.'
     },
+    expiration_alert_days: {
+        validator: validateNonNegativeInteger,
+        emptyMsg: 'Los días de alerta de vencimiento son obligatorios.',
+        invalidMsg: 'Ingrese un número entero mayor o igual a 0.'
+    },
     sale_price: {
         validator: (value) => {
             if (!validateNonNegativeAmount(value)) return false;
@@ -465,6 +475,7 @@ function submitProductForm() {
         name: $('#name').val().trim(),
         type: $('#type').val().trim(),
         has_inventory: $('#has_inventory').val().trim(),
+        expiration_alert_days: $('#expiration_alert_days').val().trim(),
         sale_price: $('#sale_price').val().trim(),
         tax_percentage: $('#tax_percentage').val().trim(),
         reference_cost: $('#reference_cost').val().trim(),

@@ -9,6 +9,7 @@
 	$selectedCurrentStock = old('current_stock', $stockSource?->current_stock ?? 0);
 	$selectedMinimumStock = old('minimum_stock', $stockSource?->minimum_stock ?? '');
 	$showInventoryStock = $selectedHasInventory === '1';
+	$selectedExpirationAlertDays = old('expiration_alert_days', isset($product) ? ($product->expiration_alert_days ?? 7) : 7);
 	$defaultMargin = $selectedType === ProductType::MERCHANDISE->value
 		? old('margin_percentage', isset($product) ? ($product->margin_percentage ?? '') : '0.35')
 		: old('margin_percentage', isset($product) ? ($product->margin_percentage ?? '') : '');
@@ -166,25 +167,46 @@
 				</div>
 
 				<div class="row g-3">
-					{{-- Sale Price --}}
-					<div id="sale-price-group" class="col-12 col-md-4">
+					<div class="col-12 col-md-6">
 						<x-form.input
-							:id="'sale_price'"
+							:id="'expiration_alert_days'"
+							:type="'number'"
+							:step="'1'"
+							:min="'0'"
+							:maxLength="'3'"
+							:class="'border-secondary'"
+							:inputClass="$errors->has('expiration_alert_days') ? 'is-invalid' : ''"
+							:placeholder="'Ej: 7'"
+							:value="$selectedExpirationAlertDays"
+							:errorMessage="$errors->first('expiration_alert_days') ?? ''"
+							:iconLeft="'bi bi-bell'"
+							:required="true"
+						>
+							Días de Alerta de Vencimiento <span class="text-danger">*</span>
+						</x-form.input>
+						<small class="text-muted">Define con cuántos días antes se alertará un producto próximo a vencer.</small>
+					</div>
+				</div>
+
+				<div class="row g-3">
+					{{-- Reference Cost --}}
+					<div id="reference-cost-group" class="col-12 col-md-4">
+						<x-form.input
+							:id="'reference_cost'"
 							:type="'number'"
 							:step="'0.01'"
 							:min="'0'"
 							:maxLength="'10'"
 							:class="'border-secondary'"
-							:inputClass="$errors->has('sale_price') ? 'is-invalid' : ''"
-							:placeholder="'Ej: 4063.50'"
-							:value="old('sale_price', $product->sale_price ?? '')"
-							:errorMessage="$errors->first('sale_price') ?? ''"
-							:iconLeft="'bi bi-cash-stack'"
-							:required="in_array($selectedType, [ProductType::DISH->value, ProductType::DRINK->value, ProductType::PACKAGED->value], true)"
+							:inputClass="$errors->has('reference_cost') ? 'is-invalid' : ''"
+							:placeholder="'Ej: 1200.00'"
+							:value="old('reference_cost', $product->reference_cost ?? '')"
+							:errorMessage="$errors->first('reference_cost') ?? ''"
+							:iconLeft="'bi bi-cash-coin'"
+							:required="false"
 						>
-							Precio de Venta <span id="sale-price-required" class="text-danger d-none">*</span>
+							Costo de Referencia <span id="merchandise-reference-cost-required" class="text-danger">*</span>
 						</x-form.input>
-						<small id="sale-price-help" class="text-muted">Para Mercadería este precio se calcula automáticamente</small>
 					</div>
 
 					{{-- Tax Percentage --}}
@@ -208,30 +230,8 @@
 						</x-form.input>
 					</div>
 
-					{{-- Reference Cost --}}
-					<div id="reference-cost-group" class="col-12 col-md-4">
-						<x-form.input
-							:id="'reference_cost'"
-							:type="'number'"
-							:step="'0.01'"
-							:min="'0'"
-							:maxLength="'10'"
-							:class="'border-secondary'"
-							:inputClass="$errors->has('reference_cost') ? 'is-invalid' : ''"
-							:placeholder="'Ej: 1200.00'"
-							:value="old('reference_cost', $product->reference_cost ?? '')"
-							:errorMessage="$errors->first('reference_cost') ?? ''"
-							:iconLeft="'bi bi-cash-coin'"
-							:required="false"
-						>
-							Costo de Referencia <span id="merchandise-reference-cost-required" class="text-danger">*</span>
-						</x-form.input>
-					</div>
-				</div>
-
-				<div class="row g-3">
 					{{-- Margin Percentage --}}
-					<div id="margin-percentage-group" class="col-12 col-md-6">
+					<div id="margin-percentage-group" class="col-12 col-md-4">
 						<x-form.input
 							:id="'margin_percentage'"
 							:type="'number'"
@@ -251,7 +251,32 @@
 						</x-form.input>
 						<small class="text-muted">Obligatorio solo para Mercadería.</small>
 					</div>
+				</div>
 
+				<div class="row g-3">
+					{{-- Sale Price --}}
+					<div id="sale-price-group" class="col-12">
+						<x-form.input
+							:id="'sale_price'"
+							:type="'number'"
+							:step="'0.01'"
+							:min="'0'"
+							:maxLength="'10'"
+							:class="'border-secondary'"
+							:inputClass="$errors->has('sale_price') ? 'is-invalid' : ''"
+							:placeholder="'Ej: 4063.50'"
+							:value="old('sale_price', $product->sale_price ?? '')"
+							:errorMessage="$errors->first('sale_price') ?? ''"
+							:iconLeft="'bi bi-cash-stack'"
+							:required="in_array($selectedType, [ProductType::DISH->value, ProductType::DRINK->value, ProductType::PACKAGED->value], true)"
+						>
+							Precio de Venta <span id="sale-price-required" class="text-danger d-none">*</span>
+						</x-form.input>
+						<small id="sale-price-help" class="text-muted">Para Mercadería este precio se calcula automáticamente</small>
+					</div>
+				</div>
+
+				<div class="row g-3">
 					{{-- Category --}}
 					<div class="col-12 col-md-6">
 						<x-form.select

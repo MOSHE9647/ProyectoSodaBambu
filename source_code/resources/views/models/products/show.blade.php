@@ -85,16 +85,29 @@
             </x-form.input.floating-label>
         </div>
 
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6">
             <x-form.input.floating-label
-                :id="'sale_price'"
+                :id="'expiration_alert_days'"
                 :type="'text'"
                 :readonly="true"
-                :value="'₡ ' . number_format((float) $product->sale_price, 2, '.', ',')"
-                :iconLeft="'bi bi-cash-stack'"
-                :placeholder="'Precio de Venta'"
+                :value="(int) ($product->expiration_alert_days ?? 7)"
+                :iconLeft="'bi bi-bell'"
+                :placeholder="'Días de Alerta de Vencimiento'"
             >
-                Precio de Venta
+                Días de Alerta de Vencimiento
+            </x-form.input.floating-label>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <x-form.input.floating-label
+                :id="'reference_cost'"
+                :type="'text'"
+                :readonly="true"
+                :value="'₡ ' . number_format((float) $product->reference_cost, 2, '.', ',')"
+                :iconLeft="'bi bi-cash-coin'"
+                :placeholder="'Costo de Referencia'"
+            >
+                Costo de Referencia
             </x-form.input.floating-label>
         </div>
 
@@ -113,19 +126,6 @@
 
         <div class="col-12 col-md-4">
             <x-form.input.floating-label
-                :id="'reference_cost'"
-                :type="'text'"
-                :readonly="true"
-                :value="'₡ ' . number_format((float) $product->reference_cost, 2, '.', ',')"
-                :iconLeft="'bi bi-cash-coin'"
-                :placeholder="'Costo de Referencia'"
-            >
-                Costo de Referencia
-            </x-form.input.floating-label>
-        </div>
-
-        <div class="col-12 col-md-6">
-            <x-form.input.floating-label
                 :id="'margin_percentage'"
                 :type="'text'"
                 :readonly="true"
@@ -134,6 +134,19 @@
                 :placeholder="'Margen (%)'"
             >
                 Margen (%)
+            </x-form.input.floating-label>
+        </div>
+
+        <div class="col-12">
+            <x-form.input.floating-label
+                :id="'sale_price'"
+                :type="'text'"
+                :readonly="true"
+                :value="'₡ ' . number_format((float) $product->sale_price, 2, '.', ',')"
+                :iconLeft="'bi bi-cash-stack'"
+                :placeholder="'Precio de Venta'"
+            >
+                Precio de Venta
             </x-form.input.floating-label>
         </div>
 

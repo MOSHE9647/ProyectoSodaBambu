@@ -25,6 +25,7 @@ class PurchaseDetail extends Model
         'purchasable_id',
         'purchasable_type',
         'subtotal',
+        'expiration_date',
     ];
 
     /**
@@ -34,10 +35,27 @@ class PurchaseDetail extends Model
      */
     protected $casts = [
         'subtotal' => 'decimal:2',
+        'expiration_date' => 'date',
         // 'created_at' => CostaRicaDatetime::class,
         // 'updated_at' => CostaRicaDatetime::class,
         // 'deleted_at' => CostaRicaDatetime::class,
     ];
+
+    /**
+     * Count purchase details that are within each product's configured alert window.
+     */
+    public static function countAboutToExpireByProductAlert(): int
+    {
+        return self::query()
+            ->whereNotNull('expiration_date')
+            ->whereRaw('DATE(purchase_details.expiration_date) >= CURDATE()')
+            ->whereHasMorph('purchasable', [Product::class], function ($query): void {
+                $query->whereRaw(
+                    'DATEDIFF(purchase_details.expiration_date, CURDATE()) <= COALESCE(products.expiration_alert_days, 7)'
+                );
+            })
+            ->count();
+    }
 
     /**
      * Get the parent purchasable model (Product or Supply).

@@ -45,12 +45,14 @@ class ProductRequest extends FormRequest
         $referenceCost = $this->input('reference_cost');
         $salePrice = $this->input('sale_price');
         $expirationDate = $this->input('expiration_date');
+        $expirationAlertDays = $this->input('expiration_alert_days');
 
         $this->merge([
             'barcode' => $barcode === null || trim((string) $barcode) === '' ? null : trim((string) $barcode),
             'reference_cost' => $referenceCost === '' ? null : $referenceCost,
             'sale_price' => $salePrice === '' ? ($requiresManualSalePrice ? '' : null) : $salePrice,
             'expiration_date' => $expirationDate === '' ? null : $expirationDate,
+            'expiration_alert_days' => $expirationAlertDays === '' || $expirationAlertDays === null ? 7 : $expirationAlertDays,
             'tax_percentage' => $isMerchandise ? $this->normalizePercentage($taxInput) : null,
             'margin_percentage' => $isMerchandise ? $this->normalizePercentage($marginInput) : null,
             'current_stock' => $this->input('current_stock') === '' ? null : $this->input('current_stock'),
@@ -102,6 +104,7 @@ class ProductRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', new Enum(ProductType::class)],
             'expiration_date' => ['nullable', 'date', 'after_or_equal:today'],
+            'expiration_alert_days' => ['required', 'integer', 'min:0'],
             'has_inventory' => ['required', 'boolean'],
             'reference_cost' => $pricingRules,
             'tax_percentage' => [
@@ -162,6 +165,9 @@ class ProductRequest extends FormRequest
             'type.required' => 'El tipo de producto es obligatorio.',
             'expiration_date.date' => 'La fecha de vencimiento debe tener un formato válido.',
             'expiration_date.after_or_equal' => 'La fecha de vencimiento debe ser hoy o una fecha futura.',
+            'expiration_alert_days.required' => 'Los días de alerta de vencimiento son obligatorios.',
+            'expiration_alert_days.integer' => 'Los días de alerta de vencimiento deben ser un número entero.',
+            'expiration_alert_days.min' => 'Los días de alerta de vencimiento no pueden ser menores a 0.',
             'has_inventory.required' => 'Debe indicar si el producto maneja inventario.',
             'has_inventory.boolean' => 'El valor de inventario no es válido.',
             'reference_cost.required' => 'El costo de referencia es obligatorio para productos de mercadería.',

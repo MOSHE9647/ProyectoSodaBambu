@@ -44,9 +44,7 @@ class HomeController extends Controller
         });
 
         $aboutToExpire = Cache::remember('about_to_expire_count', now()->addDay(), function () {
-            return PurchaseDetail::whereNotNull('expiration_date')
-                ->whereBetween('expiration_date', [now()->startOfDay(), now()->addDays(7)->endOfDay()])
-                ->count();
+            return PurchaseDetail::countAboutToExpireByProductAlert();
         });
 
         return view('dashboard', compact('aboutToExpire', 'totalMinStockProducts'));

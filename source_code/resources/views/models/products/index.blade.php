@@ -15,6 +15,16 @@
 			</div>
 		@endif
 
+		@if(($expiringSoonProducts ?? collect())->isNotEmpty())
+			<div class="alert alert-danger d-flex flex-column gap-2" role="alert">
+				<div class="d-flex align-items-center gap-2">
+					<i class="bi bi-hourglass-split"></i>
+					<strong>Próximos a vencer:</strong>
+					<span>{{ $expiringSoonProducts->count() }} producto(s) dentro de su ventana de alerta configurada.</span>
+				</div>
+			</div>
+		@endif
+
 		{{-- Table Container --}}
 		<div class="table-container rounded-2 p-4">
 			<table
@@ -31,6 +41,7 @@
 						<th scope="col">Stock Actual</th>
 						<th scope="col">Stock Minimo</th>
 						<th scope="col">Precio Venta</th>
+						<th scope="col">Vencimiento Días</th>
 						<th scope="col">Acciones</th>
 					</tr>
 				</thead>

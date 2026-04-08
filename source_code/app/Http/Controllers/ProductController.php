@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductStock;
 use Exception;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -68,6 +69,12 @@ class ProductController extends Controller implements HasMiddleware
                     ->whereColumn('ps.current_stock', '<=', 'ps.minimum_stock');
             }
 
+            if ($request->boolean('expiring_soon') || $request->filter === 'expiring_soon') {
+                $query
+                    ->whereNotNull('expiration_date')
+                    ->whereRaw('DATEDIFF(expiration_date, CURDATE()) BETWEEN 0 AND expiration_alert_days');
+            }
+
             return DataTables::of($query)
                 ->filterColumn('current_stock', function ($query, $keyword): void {
                     $query->whereRaw('CAST(ps.current_stock AS TEXT) LIKE ?', ["%{$keyword}%"]);
@@ -85,6 +92,24 @@ class ProductController extends Controller implements HasMiddleware
                 ->orderColumn('ps.current_stock', 'ps.current_stock $1')
                 ->orderColumn('minimum_stock', 'ps.minimum_stock $1')
                 ->orderColumn('ps.minimum_stock', 'ps.minimum_stock $1')
+                ->addColumn('expiration_days', function ($product): string {
+                    if (! $product->expiration_date) {
+                        return 'N/A';
+                    }
+
+                    $expirationDate = Carbon::parse($product->expiration_date)->startOfDay();
+                    $daysRemaining = now()->startOfDay()->diffInDays($expirationDate, false);
+
+                    if ($daysRemaining < 0) {
+                        return 'Vencido';
+                    }
+
+                    if ($daysRemaining === 0) {
+                        return 'Hoy';
+                    }
+
+                    return $daysRemaining.' día(s)';
+                })
                 ->toJson();
         }
 
@@ -98,7 +123,14 @@ class ProductController extends Controller implements HasMiddleware
             ->limit(5)
             ->get();
 
-        return view('models.products.index', compact('lowStockProducts'));
+        $expiringSoonProducts = Product::query()
+            ->whereNotNull('expiration_date')
+            ->whereRaw('DATEDIFF(expiration_date, CURDATE()) BETWEEN 0 AND expiration_alert_days')
+            ->orderBy('expiration_date')
+            ->limit(5)
+            ->get();
+
+        return view('models.products.index', compact('lowStockProducts', 'expiringSoonProducts'));
     }
 
     /**

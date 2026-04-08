@@ -3,7 +3,6 @@
 namespace App\Observers;
 
 use App\Models\PurchaseDetail;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class PurchaseDetailObserver
@@ -34,12 +33,7 @@ class PurchaseDetailObserver
 
     private function countProductsAboutToExpire()
     {
-        $today = Carbon::now()->startOfDay();
-        $expirationDateIn7Days = Carbon::now()->addDays(7)->endOfDay();
-
-        $aboutToExpireCount = PurchaseDetail::whereNotNull('expiration_date')
-            ->whereBetween('expiration_date', [$today, $expirationDateIn7Days])
-            ->count();
+        $aboutToExpireCount = PurchaseDetail::countAboutToExpireByProductAlert();
         Cache::forever('about_to_expire_count', $aboutToExpireCount);
     }
 }
