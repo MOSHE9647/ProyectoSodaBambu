@@ -70,12 +70,28 @@
 			<div class="col">
 				<x-stat-card
 					title="Próximos a Vencer"
-					value="{{ $aboutToExpire }} Insumos"
 					currency="false"
 					icon="hourglass-split"
 					color-theme="red"
-					:url="route('supplies.index', ['filter' => 'expiring_soon'])"
-				/>
+					:url="null"
+					hideTrend="true"
+				>
+					
+					@slot('value')
+						<div class="d-flex flex-column gap-0 mt-1 pb-0">
+							<a href="{{ route('supplies.index', ['filter' => 'expiring_soon']) }}" 
+							class="text-decoration-none text-reset d-flex align-items-baseline gap-2">
+								<span class="h6 fw-bold mb-0">{{ $aboutToExpireSupplies }}</span>
+								<span class="h6 fw-bold ">Insumos</span>
+							</a>
+							<a href="{{ route('products.index', ['filter' => 'expiring_soon']) }}" 
+							class="text-decoration-none text-reset d-flex align-items-baseline gap-2 mb-0">
+								<span class="h6 fw-bold mb-0">{{ $aboutToExpireProducts }}</span> 
+								<span class="h6 fw-bold ">Productos</span>
+							</a>
+						</div>
+					@endslot
+				</x-stat-card>
 			</div>
 		</div>
 

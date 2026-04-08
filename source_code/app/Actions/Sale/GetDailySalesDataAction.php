@@ -2,56 +2,49 @@
 
 namespace App\Actions\Sale;
 
-use Carbon\Carbon;
 use App\Models\Sale;
-use Illuminate\Support\Collection;
+use Carbon\Carbon;
 
 class GetDailySalesDataAction
 {
     public function execute(): array
     {
-        
-            
-        $hoy = Carbon::today();
 
-        // 1. Consultar la BD: Agrupar por hora y sumar totales
-        // Nota: HOUR() es una función nativa de MySQL. Si usas PostgreSQL o SQLite, la sintaxis cambia ligeramente.
+        $today = Carbon::today();
+
         $isSqlite = \DB::connection()->getDriverName() === 'sqlite';
         $hourExpression = $isSqlite ? "strftime('%H', date)" : 'HOUR(date)';
 
-        $ventasDB = Sale::selectRaw("{$hourExpression} as hora, SUM(total) as total_por_hora")
-            ->whereDate('date', $hoy)
-            ->groupBy('hora')
-            ->pluck('total_por_hora', 'hora');
+        $sales = Sale::selectRaw("{$hourExpression} as hour, SUM(total) as output_per_hour")
+            ->whereDate('date', $today)
+            ->groupBy('hour')
+            ->pluck('output_per_hour', 'hour');
 
-        $totalDiario = 0;
-        $etiquetas = [];
-        $valores = [];
+        $dailyTotal = 0;
+        $labels = [];
+        $values = [];
 
-        // 2. Definir el horario de atención para la gráfica (Ejemplo: 8:00 AM a 10:00 PM)
-        $horaApertura = 8;  // 8 AM
-        $horaCierre = 22;   // 10 PM
+        $openingTime = 8;  // 8 AM
+        $closingTime = 22;   // 10 PM
 
-        // 3. Iterar sobre cada hora del horario definido
-        for ($i = $horaApertura; $i <= $horaCierre; $i++) {
-            
-            // Formatear la etiqueta de la hora para la UI (ej. "8:00 AM", "2:00 PM")
-            $horaFormateada = Carbon::createFromTime($i, 0, 0)->format('g:i A');
+        // Iterate over each hour of the defined schedule
+        for ($i = $openingTime; $i <= $closingTime; $i++) {
 
-            // Obtener la venta de esa hora exacta, si no hubo ventas, asignar 0
-            $ventaDeLaHora = $ventasDB->get($i, 0);
+            // Format the hour label for the UI (e.g., "8:00 AM", "2:00 PM")
+            $formattedTime = Carbon::createFromTime($i, 0, 0)->format('g:i A');
 
-            // Poblar los arreglos
-            $etiquetas[] = $horaFormateada;
-            $valores[] = $ventaDeLaHora;
-            $totalDiario += $ventaDeLaHora;
+            // Get the sale for that exact hour, if there were no sales, assign 0
+            $saleForHour = $sales->get($i, 0);
+
+            $labels[] = $formattedTime;
+            $values[] = $saleForHour;
+            $dailyTotal += $saleForHour;
         }
 
-        // 4. Retornar el arreglo asociativo
         return [
-            'dailyTotal'        => $totalDiario,
-            'dailySalesLabels' => $etiquetas,
-            'dailySalesValues' => $valores,
+            'dailyTotal' => $dailyTotal,
+            'dailySalesLabels' => $labels,
+            'dailySalesValues' => $values,
         ];
     }
 }

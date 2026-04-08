@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Actions\Inventory\GetLowStockProductsCount;
 use App\Actions\Inventory\GetProductsAboutToExpireCount;
+use App\Actions\Inventory\GetSuppliesAboutToExpireCount;
 use App\Actions\Sale\CalculateDailySalesTrendAction;
+use App\Actions\Sale\GetDailySalesDataAction;
+use App\Actions\Sale\GetMonthlySalesDataAction;
 use App\Enums\UserRole;
 use Illuminate\Support\Facades\Cache;
-use App\Actions\Sale\GetMonthlySalesDataAction;
-use App\Actions\Sale\GetDailySalesDataAction;
 
 class HomeController extends Controller
 {
@@ -38,7 +39,8 @@ class HomeController extends Controller
         GetProductsAboutToExpireCount $getProductsAboutToExpireCount,
         CalculateDailySalesTrendAction $calculateDailySalesTrendAction,
         GetMonthlySalesDataAction $getMonthlySalesDataAction,
-        GetDailySalesDataAction $getDailySalesDataAction
+        GetDailySalesDataAction $getDailySalesDataAction,
+        GetSuppliesAboutToExpireCount $getSuppliesAboutToExpireCount,
     ) {
 
         /**
@@ -51,7 +53,11 @@ class HomeController extends Controller
             return $getLowStockProductsCount->execute();
         });
 
-        $aboutToExpire = Cache::remember('about_to_expire_count', now()->addDay(), function () use ($getProductsAboutToExpireCount) {
+        $aboutToExpireSupplies = Cache::remember('about_to_expire_supplies_count', now()->addDay(), function () use ($getSuppliesAboutToExpireCount) {
+            return $getSuppliesAboutToExpireCount->execute();
+        });
+
+        $aboutToExpireProducts = Cache::remember('about_to_expire_products_count', now()->addDay(), function () use ($getProductsAboutToExpireCount) {
             return $getProductsAboutToExpireCount->execute();
         });
 
@@ -68,8 +74,9 @@ class HomeController extends Controller
         });
 
         return view('dashboard', array_merge([
-            'aboutToExpire' => $aboutToExpire,
+            'aboutToExpireSupplies' => $aboutToExpireSupplies,
             'totalMinStockProducts' => $totalMinStockProducts,
+            'aboutToExpireProducts' => $aboutToExpireProducts,
         ], $salesStats, $monthlyStats, $dailyStats));
     }
 

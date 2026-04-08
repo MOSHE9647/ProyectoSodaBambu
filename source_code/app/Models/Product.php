@@ -28,6 +28,7 @@ class Product extends Model
         'name',
         'type',
         'expiration_date',
+        'expiration_alert_days',
         'has_inventory',
         'reference_cost',
         'tax_percentage',
@@ -43,6 +44,7 @@ class Product extends Model
     protected $casts = [
         'has_inventory' => 'boolean',
         'expiration_date' => 'date',
+        'expiration_alert_days' => 'integer',
         'reference_cost' => 'decimal:2',
         'tax_percentage' => 'decimal:2',
         'margin_percentage' => 'decimal:2',
