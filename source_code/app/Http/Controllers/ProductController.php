@@ -155,8 +155,8 @@ class ProductController extends Controller implements HasMiddleware
                 'success' => true,
                 'message' => $message,
                 'product' => [
-                    'id'         => $product->id,
-                    'name'       => $product->name,
+                    'id' => $product->id,
+                    'name' => $product->name,
                     'sale_price' => $product->sale_price,
                 ],
             ]);
