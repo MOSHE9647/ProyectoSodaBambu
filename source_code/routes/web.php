@@ -8,6 +8,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\UserController;
@@ -35,7 +36,10 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::resource('products', ProductController::class)->names('products');
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
+    Route::resource('purchases', PurchaseController::class)->names('purchases');
     Route::resource('supplies', SupplyController::class)->names('supplies');
+
+    Route::post('/purchases/quick-product', [PurchaseController::class, 'quickStoreProduct'])->name('purchases.quick-product');
 
     // Attendance routes with role-based access control defined in the controller
     Route::group(['prefix' => 'attendance'], function () {

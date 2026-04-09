@@ -48,20 +48,21 @@
 				</div>
 			</a>
 			<ul class="dropdown-menu text-small shadow">
-				
+				{{-- TODO: Verificar si se necesita una página de perfil de usuario y si los ajustes deben estar limitados solo a administradores. --}}
+				@hasrole(UserRole::ADMIN)
 				<li class="list-item">
 					<a 
 						class="dropdown-item" 
 						href="{{ route('help') }}"
 					>
-						<i class="bi bi-question-circle me-1"></i>
-						Ayuda
+						<x-icons.config-icon/>
+						Configuración
 					</a>
 				</li>
 				<li>
 					<hr class="dropdown-divider">
 				</li>
-				
+				@endhasrole
 				<li class="list-item">
 					<a
 						id="logoutBtn"

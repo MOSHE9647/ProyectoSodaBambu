@@ -117,7 +117,7 @@ class ProductController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      *
-     * @return RedirectResponse
+     * @return RedirectResponse|JsonResponse
      *
      * @throws Throwable
      */
@@ -145,6 +145,22 @@ class ProductController extends Controller implements HasMiddleware
 
             $this->syncInventoryStock($product, $productData, $stockData);
         });
+
+        if ($request->wantsJson()) {
+            if (! $product) {
+                return response()->json(['success' => false, 'message' => 'Error al crear el producto.'], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'product' => [
+                    'id'         => $product->id,
+                    'name'       => $product->name,
+                    'sale_price' => $product->sale_price,
+                ],
+            ]);
+        }
 
         return redirect()->route('products.index')->with('success', $message);
     }

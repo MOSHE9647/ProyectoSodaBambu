@@ -112,7 +112,18 @@ class SupplyController extends Controller implements HasMiddleware
             $supply->update($supplyData);
             $message = 'Insumo restaurado y actualizado correctamente.';
         } else {
-            Supply::create($supplyData);
+            $supply = Supply::create($supplyData);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'supply' => [
+                    'id'   => $supply->id,
+                    'name' => $supply->name,
+                ]
+            ]);
         }
 
         return redirect()->route('supplies.index')->with('success', $message);

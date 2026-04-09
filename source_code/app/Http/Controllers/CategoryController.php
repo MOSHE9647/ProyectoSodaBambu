@@ -25,20 +25,23 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        // Handle AJAX request for DataTables
-        if ($request->ajax()) {
-            // Use query builder to keep DataTables server-side and memory efficient
+        // Lista simple para selects (no requiere ajax estricto)
+        if ($request->has('simple') && $request->wantsJson()) {
+            return response()->json(Category::select('id', 'name')->get());
+        }
+
+        // DataTables
+        if ($request->ajax() && $request->wantsJson()) {
             return DataTables::of(Category::query())->toJson();
         }
 
-        // For non-AJAX requests, return the view
         return view('models.category.index');
     }
 
     /**
      * Show the form for creating a new resource.
      *
-     * @return Factory|View|\Illuminate\View\View
+     * @return Factory|View
      */
     public function create()
     {
