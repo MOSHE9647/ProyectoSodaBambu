@@ -131,7 +131,7 @@
 								{{ number_format($dailyTotal, 0, ',', '.') }}
 							</h2>
 					
-							<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('d Y')) }}</p>
+							<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('l, j \d\e F \d\e\l Y')) }}</p>
 					
 							<div 
 								id="chart-daily-income" 

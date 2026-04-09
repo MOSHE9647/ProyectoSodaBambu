@@ -9,32 +9,39 @@ class GetDailySalesDataAction
 {
     public function execute(): array
     {
+        // Define timezone for Costa Rica (UTC-6)
+        $timezone = 'America/Costa_Rica';
 
-        $today = Carbon::today();
+        // Get the start and end of the current day in UTC-6 timezone
+        $startOfDay = Carbon::now()->startOfDay();
+        $endOfDay = Carbon::now()->endOfDay();
 
-        $isSqlite = \DB::connection()->getDriverName() === 'sqlite';
-        $hourExpression = $isSqlite ? "strftime('%H', date)" : 'HOUR(date)';
+        // Get all sales for the current day
+        $sales = Sale::whereBetween('date', [$startOfDay, $endOfDay])
+            ->get(['date', 'total']);
 
-        $sales = Sale::selectRaw("{$hourExpression} as hour, SUM(total) as output_per_hour")
-            ->whereDate('date', $today)
-            ->groupBy('hour')
-            ->pluck('output_per_hour', 'hour');
+        // Group sales by hour and sum totals
+        $salesByHour = $sales->groupBy(function ($sale) use ($timezone) {
+            // Converts the sale date to the specified timezone and formats it to get the hour (0-23)
+            return Carbon::parse($sale->date)->timezone($timezone)->format('G');
+        })->map(function ($group) {
+            // Sum the total for each hour group
+            return $group->sum('total');
+        });
 
         $dailyTotal = 0;
         $labels = [];
         $values = [];
 
-        $openingTime = 8;  // 8 AM
-        $closingTime = 22;   // 10 PM
+        $openingTime = 7;  // 7 AM
+        $closingTime = 22; // 10 PM
 
-        // Iterate over each hour of the defined schedule
+        // Iterate through each hour of the day from opening to closing time
         for ($i = $openingTime; $i <= $closingTime; $i++) {
+            $formattedTime = Carbon::createFromTime($i, 0, 0, $timezone)->format('g:i A');
 
-            // Format the hour label for the UI (e.g., "8:00 AM", "2:00 PM")
-            $formattedTime = Carbon::createFromTime($i, 0, 0)->format('g:i A');
-
-            // Get the sale for that exact hour, if there were no sales, assign 0
-            $saleForHour = $sales->get($i, 0);
+            // Get the total sales for the current hour, defaulting to 0 if there are no sales
+            $saleForHour = $salesByHour->get((string) $i, 0);
 
             $labels[] = $formattedTime;
             $values[] = $saleForHour;

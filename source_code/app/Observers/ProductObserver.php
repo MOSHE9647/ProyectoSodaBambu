@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Actions\Inventory\GetLowStockProductsCount;
 use App\Actions\Inventory\GetProductsAboutToExpireCount;
 use App\Models\Product;
+use Cache;
 
 class ProductObserver
 {
