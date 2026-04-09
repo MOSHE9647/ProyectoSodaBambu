@@ -339,7 +339,7 @@ $(document).on('submit', '#quick-supplier-form', async function (e) {
 // --------------------------------------------------------------
 
 // Mostrar/ocultar campos de stock según checkbox
-// EIF-170: Solo se muestra stock_minimo, se elimina stock_actual del flujo
+
 $('#quick-product-has-inventory').on('change', function () {
     if ($(this).is(':checked')) {
         $('#quick-product-stock-fields').slideDown();
@@ -399,7 +399,6 @@ $('#quick-product-form').on('submit', async function (e) {
     $form.find('.invalid-feedback').text('');
 
     // Validación extra de stock si maneja inventario
-    // EIF-170: Solo validar stock_minimo (no stock_actual)
     if ($('#quick-product-has-inventory').is(':checked')) {
         const stockMinimo = $('#quick-product-stock-minimo').val();
         if (stockMinimo === '' || stockMinimo < 0) {
@@ -425,7 +424,7 @@ $('#quick-product-form').on('submit', async function (e) {
         if (!formData.get('margin_percentage'))    formData.set('margin_percentage', '0');
         if (!formData.get('sale_price'))           formData.set('sale_price', '0');
 
-        // EIF-170: Asegurarse de NO enviar stock_actual en la creación
+        
         formData.delete('stock_actual');
 
         const response = await fetch(url, {
@@ -445,8 +444,6 @@ $('#quick-product-form').on('submit', async function (e) {
         const data = await response.json();
 
         if (data.success) {
-            // EIF-165: Al agregar el nuevo producto a la lista local,
-            // solo incluirlo si su tipo es permitido (no platillo)
             const productType = (data.product.type || '').toLowerCase();
             if (!productType || ALLOWED_PRODUCT_TYPES.includes(productType)) {
                 productsList.push({
