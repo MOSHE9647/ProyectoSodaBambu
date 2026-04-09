@@ -55,8 +55,8 @@
 						class="dropdown-item" 
 						href="{{ route('help') }}"
 					>
-						<x-icons.config-icon/>
-						Configuración
+						<i class="bi bi-question-circle me-1"></i>
+						Ayuda
 					</a>
 				</li>
 				<li>
