@@ -9,3 +9,7 @@
         'supplies' => $supplies
     ])
 @endsection
+
+@section('scripts')
+    @vite(['resources/js/models/purchases/form.js'])
+@endsection

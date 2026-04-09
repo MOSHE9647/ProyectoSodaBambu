@@ -16,10 +16,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('purchase_id')->constrained()->onDelete('cascade');
 
-            // Polymorphic relation to either Product or Supply
             $table->morphs('purchasable');
 
+            $table->unsignedInteger('quantity');
+            $table->decimal('unit_price', 12, 2);
             $table->decimal('subtotal', 12, 2);
+            $table->date('expiration_date')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

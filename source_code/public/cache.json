@@ -8,7 +8,6 @@
   "/build/assets/bootstrap-BitGuZCi.js",
   "/build/assets/bootstrap-icons-BeopsB42.woff",
   "/build/assets/bootstrap-icons-mSm7cUeB.woff2",
-<<<<<<< HEAD
   "/build/assets/chunk-BvBbk44r.js",
   "/build/assets/connection-status-Cy23PGdM.js",
   "/build/assets/datatables-D5zOmC7S.js",
@@ -42,8 +41,7 @@
   "/build/assets/themes-C0RgpH43.css",
   "/build/assets/utils-DEJ3MCWr.js",
   "/build/assets/validation-DKTNVlD4.js",
-  "/build/assets/verify-email-CbN4OXXI.js"
-=======
+  "/build/assets/verify-email-CbN4OXXI.js",
   "/build/assets/connection-status-BDG3rxnO.js",
   "/build/assets/datatables-BgUJtC5S.js",
   "/build/assets/datatables-DBQwkH0n.js",
@@ -77,5 +75,4 @@
   "/build/assets/utils-CWxDiHee.js",
   "/build/assets/validation-CeSCntf0.js",
   "/build/assets/verify-email-2xuvRKwt.js"
->>>>>>> feature/purchase-crud
 ]

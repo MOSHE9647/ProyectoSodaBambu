@@ -134,22 +134,24 @@
                     </button>
                     <div>
                         <span class="text-muted">Total compra: </span>
-                        <span class="fw-bold" id="total-display">0.00</span>
+                        <span class="fw-bold" id="total-display">
+                            {{ isset($purchase) ? number_format($purchase->total, 2) : '0.00' }}
+                        </span>
+                        <input type="hidden" name="total" id="total"
+                            value="{{ isset($purchase) ? $purchase->total : '0' }}">
                     </div>
                 </div>
-
-                <input type="hidden" name="total" id="total" value="0.00" />
             </section>
 
-            {{-- Botones --}}
-            <div class="d-flex justify-content-end gap-2">
-                <a href="{{ route('purchases.index') }}" class="btn btn-outline-danger px-4">Cancelar</a>
-                <x-form.submit :id="isset($purchase) ? 'edit-purchase-form-button' : 'create-purchase-form-button'" :spinnerId="isset($purchase) ? 'edit-purchase-form-spinner' : 'create-purchase-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="isset($purchase) ? 'Actualizando...' : 'Guardando...'">
-                    <div class="d-flex flex-row align-items-center justify-content-center">
-                        <i class="bi bi-save me-2"></i>
-                        {{ isset($purchase) ? 'Actualizar' : 'Guardar' }}
-                    </div>
-                </x-form.submit>
+            {{-- Acciones del formulario --}}
+            <div class="d-flex justify-content-end gap-2 mt-2">
+                <a href="{{ route('purchases.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" id="submit-purchase">
+                    <i class="bi bi-save me-1"></i>
+                    {{ isset($purchase) ? 'Actualizar compra' : 'Guardar compra' }}
+                </button>
             </div>
         </form>
     </div>
@@ -171,11 +173,8 @@
             </div>
             <div class="mb-3">
                 <label for="quick-phone" class="form-label">Teléfono <span class="text-danger">*</span></label>
-                <div class="input-group">
-                    <span class="input-group-text">+506</span>
-                    <input type="text" class="form-control" id="quick-phone" name="phone" 
-                           placeholder="XXXXXXXX" maxlength="8" inputmode="numeric" required>
-                </div>
+                <input type="text" class="form-control" id="quick-phone" name="phone"
+                       placeholder="XXXXXXXX" maxlength="8" inputmode="numeric" required>
                 <div class="invalid-feedback" id="quick-phone-error"></div>
             </div>
             <div class="mb-3">
@@ -215,22 +214,28 @@
                 <input type="text" class="form-control" id="quick-product-name" name="name" required>
                 <div class="invalid-feedback" id="quick-product-name-error"></div>
             </div>
+
+            {{-- EIF-172: Opciones en español con primera letra mayúscula (renderizadas por el enum con label()) --}}
             <div class="mb-3">
                 <label for="quick-product-type" class="form-label">Tipo <span class="text-danger">*</span></label>
                 <select class="form-select" id="quick-product-type" name="type" required>
                     <option value="">Seleccionar tipo</option>
                     @foreach(App\Enums\ProductType::cases() as $type)
-                       <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                        {{-- EIF-165: Excluir "Platillo" del select de tipo --}}
+                        @if(strtolower($type->value) !== 'dish' && strtolower($type->label()) !== 'platillo')
+                            <option value="{{ $type->value }}">{{ ucfirst(mb_strtolower($type->label())) }}</option>
+                        @endif
                     @endforeach
                 </select>
                 <div class="invalid-feedback" id="quick-product-type-error"></div>
             </div>
+
             <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" id="quick-product-has-inventory" name="has_inventory" value="1">
                 <label class="form-check-label" for="quick-product-has-inventory">¿Maneja inventario?</label>
             </div>
 
-            {{-- Campos de stock (ocultos inicialmente) --}}
+            {{-- EIF-170: Solo se muestra stock mínimo (se omite stock actual en creación) --}}
             <div id="quick-product-stock-fields" style="display: none;">
                 <div class="mb-3">
                     <label for="quick-product-stock-minimo" class="form-label">Stock mínimo <span class="text-danger">*</span></label>
@@ -239,26 +244,31 @@
                 </div>
             </div>
 
+            {{-- EIF-169: Campos para cálculo automático del precio de venta --}}
             <div class="mb-3">
                 <label for="quick-product-reference-cost" class="form-label">Costo de referencia</label>
-                <input type="number" step="0.01" class="form-control" id="quick-product-reference-cost" name="reference_cost">
+                <input type="number" step="0.01" min="0" class="form-control" id="quick-product-reference-cost" name="reference_cost">
                 <div class="invalid-feedback" id="quick-product-reference-cost-error"></div>
             </div>
             <div class="mb-3">
-                <label for="quick-product-tax-percentage" class="form-label">Porcentaje de impuesto</label>
-                <input type="number" step="0.01" class="form-control" id="quick-product-tax-percentage" name="tax_percentage">
+                <label for="quick-product-tax-percentage" class="form-label">Porcentaje de impuesto (%)</label>
+                <input type="number" step="0.01" min="0" class="form-control" id="quick-product-tax-percentage" name="tax_percentage">
                 <div class="invalid-feedback" id="quick-product-tax-percentage-error"></div>
             </div>
             <div class="mb-3">
-                <label for="quick-product-margin-percentage" class="form-label">Porcentaje de margen</label>
-                <input type="number" step="0.01" class="form-control" id="quick-product-margin-percentage" name="margin_percentage">
+                <label for="quick-product-margin-percentage" class="form-label">Porcentaje de margen (%)</label>
+                <input type="number" step="0.01" min="0" class="form-control" id="quick-product-margin-percentage" name="margin_percentage">
                 <div class="invalid-feedback" id="quick-product-margin-percentage-error"></div>
             </div>
             <div class="mb-3">
-                <label for="quick-product-sale-price" class="form-label">Precio de venta</label>
-                <input type="number" step="0.01" class="form-control" id="quick-product-sale-price" name="sale_price">
+                <label for="quick-product-sale-price" class="form-label">
+                    Precio de venta
+                    <small class="text-muted ms-1">(se calcula automáticamente)</small>
+                </label>
+                <input type="number" step="0.01" min="0" class="form-control" id="quick-product-sale-price" name="sale_price" readonly>
                 <div class="invalid-feedback" id="quick-product-sale-price-error"></div>
             </div>
+
             <div class="d-flex justify-content-end gap-2">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancelar</button>
                 <button type="submit" class="btn btn-success" id="quick-product-submit">
@@ -299,13 +309,23 @@
         </form>
     </div>
 </div>
-
+@php
+    $productsJson = $products->map(function ($p) {
+        $type = $p->type instanceof \App\Enums\ProductType ? $p->type->value : ($p->type ?? '');
+        return [
+            'id'    => $p->id,
+            'name'  => $p->name,
+            'price' => $p->sale_price ?? 0,
+            'type'  => $type,
+        ];
+    });
+    $suppliesJson = $supplies->map(function ($s) {
+        return ['id' => $s->id, 'name' => $s->name, 'price' => 0];
+    });
+@endphp
 <script>
     window.detailIndex = {{ isset($purchase) ? $purchase->details->count() : 0 }};
-    window.products = @json($products->map(fn($p) => ['id' => $p->id, 'name' => $p->name, 'price' => $p->sale_price ?? 0]));
-    window.supplies = @json($supplies->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'price' => 0]));
+    window.products = @json($productsJson);
+    window.supplies = @json($suppliesJson);
     window.categoriesIndexUrl = "{{ route('categories.index') }}";
 </script>
-@section('scripts')
-    @vite(['resources/js/models/purchases/form.js'])
-@endsection
