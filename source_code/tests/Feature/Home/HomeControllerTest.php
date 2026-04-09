@@ -3,8 +3,6 @@
 use App\Enums\UserRole;
 use App\Models\Product;
 use App\Models\ProductStock;
-use App\Models\Purchase;
-use App\Models\PurchaseDetail;
 use App\Models\Supply;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
@@ -38,13 +36,16 @@ test('CP-01_EIF-20_QA4 - renders dashboard with low stock and expiring counts', 
         'minimum_stock' => 5,
     ]);
 
-    $purchase = Purchase::factory()->create();
-    $supply = Supply::factory()->create();
-    PurchaseDetail::factory()->create([
-        'purchase_id' => $purchase->id,
-        'purchasable_id' => $supply->id,
-        'purchasable_type' => Supply::class,
+    $product->update([
         'expiration_date' => now()->addDays(3),
+        'expiration_alert_days' => 7,
+    ]);
+
+    Supply::factory()->create([
+        'quantity' => 5,
+        'unit_price' => 1200,
+        'expiration_date' => now()->addDays(3),
+        'expiration_alert_days' => 7,
     ]);
 
     // When: the admin opens the dashboard.
@@ -55,7 +56,8 @@ test('CP-01_EIF-20_QA4 - renders dashboard with low stock and expiring counts', 
         ->assertSuccessful()
         ->assertViewIs('dashboard')
         ->assertViewHas('totalMinStockProducts', 1)
-        ->assertViewHas('aboutToExpire', 1);
+        ->assertViewHas('aboutToExpireProducts', 1)
+        ->assertViewHas('aboutToExpireSupplies', 1);
 });
 
 /**
@@ -75,20 +77,24 @@ test('CP-02_EIF-20_QA4 - dashboard counts remain cached between requests', funct
         'minimum_stock' => 5,
     ]);
 
-    $purchase = Purchase::factory()->create();
-    $supply = Supply::factory()->create();
-    PurchaseDetail::factory()->create([
-        'purchase_id' => $purchase->id,
-        'purchasable_id' => $supply->id,
-        'purchasable_type' => Supply::class,
+    $product->update([
         'expiration_date' => now()->addDays(2),
+        'expiration_alert_days' => 7,
+    ]);
+
+    Supply::factory()->create([
+        'quantity' => 5,
+        'unit_price' => 1200,
+        'expiration_date' => now()->addDays(2),
+        'expiration_alert_days' => 7,
     ]);
 
     // First request warms the cache.
     $this->actingAs($admin)->get(route('dashboard'))
         ->assertSuccessful()
         ->assertViewHas('totalMinStockProducts', 1)
-        ->assertViewHas('aboutToExpire', 1);
+        ->assertViewHas('aboutToExpireProducts', 1)
+        ->assertViewHas('aboutToExpireSupplies', 1);
 
     // New records are added after the cache has already been populated.
     ProductStock::withoutEvents(function () {
@@ -101,15 +107,20 @@ test('CP-02_EIF-20_QA4 - dashboard counts remain cached between requests', funct
         ]);
     });
 
-    PurchaseDetail::withoutEvents(function () {
-        $secondPurchase = Purchase::factory()->create();
-        $secondSupply = Supply::factory()->create();
-
-        PurchaseDetail::factory()->create([
-            'purchase_id' => $secondPurchase->id,
-            'purchasable_id' => $secondSupply->id,
-            'purchasable_type' => Supply::class,
+    Product::withoutEvents(function () {
+        $secondProduct = Product::factory()->create();
+        $secondProduct->update([
             'expiration_date' => now()->addDays(4),
+            'expiration_alert_days' => 7,
+        ]);
+    });
+
+    Supply::withoutEvents(function () {
+        Supply::factory()->create([
+            'quantity' => 3,
+            'unit_price' => 950,
+            'expiration_date' => now()->addDays(4),
+            'expiration_alert_days' => 7,
         ]);
     });
 
@@ -120,5 +131,6 @@ test('CP-02_EIF-20_QA4 - dashboard counts remain cached between requests', funct
     $response
         ->assertSuccessful()
         ->assertViewHas('totalMinStockProducts', 1)
-        ->assertViewHas('aboutToExpire', 1);
+        ->assertViewHas('aboutToExpireProducts', 1)
+        ->assertViewHas('aboutToExpireSupplies', 1);
 });
