@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Actions\Inventory\GetLowStockProductsCount;
 use App\Actions\Inventory\GetProductsAboutToExpireCount;
+use App\Actions\Inventory\GetSuppliesAboutToExpireCount;
 use App\Actions\Sale\CalculateDailySalesTrendAction;
+use App\Actions\Sale\GetDailySalesDataAction;
+use App\Actions\Sale\GetMonthlySalesDataAction;
 use App\Enums\UserRole;
 use Illuminate\Support\Facades\Cache;
 
@@ -34,7 +37,10 @@ class HomeController extends Controller
     public function dashboard(
         GetLowStockProductsCount $getLowStockProductsCount,
         GetProductsAboutToExpireCount $getProductsAboutToExpireCount,
-        CalculateDailySalesTrendAction $calculateDailySalesTrendAction
+        CalculateDailySalesTrendAction $calculateDailySalesTrendAction,
+        GetMonthlySalesDataAction $getMonthlySalesDataAction,
+        GetDailySalesDataAction $getDailySalesDataAction,
+        GetSuppliesAboutToExpireCount $getSuppliesAboutToExpireCount,
     ) {
 
         /**
@@ -47,7 +53,11 @@ class HomeController extends Controller
             return $getLowStockProductsCount->execute();
         });
 
-        $aboutToExpire = Cache::remember('about_to_expire_count', now()->addDay(), function () use ($getProductsAboutToExpireCount) {
+        $aboutToExpireSupplies = Cache::remember('about_to_expire_supplies_count', now()->addDay(), function () use ($getSuppliesAboutToExpireCount) {
+            return $getSuppliesAboutToExpireCount->execute();
+        });
+
+        $aboutToExpireProducts = Cache::remember('about_to_expire_products_count', now()->addDay(), function () use ($getProductsAboutToExpireCount) {
             return $getProductsAboutToExpireCount->execute();
         });
 
@@ -55,10 +65,19 @@ class HomeController extends Controller
             return $calculateDailySalesTrendAction->execute();
         });
 
+        $monthlyStats = Cache::remember('monthly_sales_stats', now()->addMinutes(10), function () use ($getMonthlySalesDataAction) {
+            return $getMonthlySalesDataAction->execute();
+        });
+
+        $dailyStats = Cache::remember('daily_sales_stats', now()->addMinutes(10), function () use ($getDailySalesDataAction) {
+            return $getDailySalesDataAction->execute();
+        });
+
         return view('dashboard', array_merge([
-            'aboutToExpire' => $aboutToExpire,
+            'aboutToExpireSupplies' => $aboutToExpireSupplies,
             'totalMinStockProducts' => $totalMinStockProducts,
-        ], $salesStats));
+            'aboutToExpireProducts' => $aboutToExpireProducts,
+        ], $salesStats, $monthlyStats, $dailyStats));
     }
 
     public function sales()

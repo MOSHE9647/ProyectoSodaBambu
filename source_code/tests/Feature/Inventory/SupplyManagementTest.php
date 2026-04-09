@@ -1,8 +1,6 @@
 <?php
 
 use App\Enums\UserRole;
-use App\Models\Purchase;
-use App\Models\PurchaseDetail;
 use App\Models\Supply;
 use App\Models\User;
 
@@ -29,6 +27,8 @@ test('CP-01_EIF-49 - registers a supply with valid data and redirects with succe
     $response = $this->actingAs($admin)->post(route('supplies.store'), [
         'name' => 'Harina de trigo',
         'measure_unit' => 'kg',
+        'quantity' => 8,
+        'unit_price' => 1200.50,
     ]);
 
     // Then: the system stores the supply and redirects with a success flash message.
@@ -39,6 +39,8 @@ test('CP-01_EIF-49 - registers a supply with valid data and redirects with succe
     $this->assertDatabaseHas('supplies', [
         'name' => 'Harina de trigo',
         'measure_unit' => 'kg',
+        'quantity' => 8,
+        'unit_price' => 1200.50,
         'deleted_at' => null,
     ]);
 });
@@ -196,6 +198,8 @@ test('CP-07_EIF-49 - restores a soft-deleted supply when creating with the same 
     $response = $this->actingAs($admin)->post(route('supplies.store'), [
         'name' => 'Sal',
         'measure_unit' => 'unidades',
+        'quantity' => 20,
+        'unit_price' => 350,
     ]);
 
     // Then: the supply is restored and updated instead of creating a duplicate row.
@@ -209,6 +213,8 @@ test('CP-07_EIF-49 - restores a soft-deleted supply when creating with the same 
         'id' => $deletedSupply->id,
         'name' => 'Sal',
         'measure_unit' => 'unidades',
+        'quantity' => 20,
+        'unit_price' => 350,
         'deleted_at' => null,
     ]);
 });
@@ -288,22 +294,18 @@ test('CP-10_EIF-49 - displays supply edit form with current values', function ()
 test('CP-11_EIF-49 - filters supplies expiring within 7 days via AJAX DataTables', function () {
     // Given: an authenticated admin and supplies with various expiration dates.
     $admin = createAdminUserForSupply();
-    $supply = Supply::factory()->create([
+    Supply::factory()->create([
         'name' => 'Leche',
         'measure_unit' => 'litros',
+        'expiration_date' => now()->addDays(3)->toDateString(),
+        'expiration_alert_days' => 7,
     ]);
 
-    // Create purchase detail with expiration within 7 days.
-    $purchase = Purchase::factory()->create();
-
-    PurchaseDetail::factory()->create([
-        'purchase_id' => $purchase->id,
-        'purchasable_id' => $supply->id,
-        'purchasable_type' => Supply::class,
-        'quantity' => 10,
-        'unit_price' => 1500,
-        'subtotal' => 15000,
-        'expiration_date' => now()->addDays(3),
+    Supply::factory()->create([
+        'name' => 'Huevos',
+        'measure_unit' => 'unidades',
+        'expiration_date' => now()->addDays(20)->toDateString(),
+        'expiration_alert_days' => 7,
     ]);
 
     // When: the admin requests supplies with expiring_soon filter via AJAX.
@@ -351,6 +353,9 @@ test('CP-13_EIF-49 - returns default datatable column values when supply has no 
     $supply = Supply::factory()->create([
         'name' => 'Salsa Inglesa',
         'measure_unit' => 'botella',
+        'quantity' => 0,
+        'unit_price' => 0,
+        'expiration_date' => null,
     ]);
 
     // When: requesting supplies via AJAX DataTables.
@@ -378,37 +383,15 @@ test('CP-13_EIF-49 - returns default datatable column values when supply has no 
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-49
  */
-test('CP-14_EIF-49 - datatable computed columns use latest purchase detail values', function () {
-    // Given: an authenticated admin and a supply with multiple purchase details.
+test('CP-14_EIF-49 - datatable computed columns use supply current values', function () {
+    // Given: an authenticated admin and a supply with explicit current values.
     $admin = createAdminUserForSupply();
     $supply = Supply::factory()->create([
         'name' => 'Levadura',
         'measure_unit' => 'gramos',
-    ]);
-
-    $purchaseA = Purchase::factory()->create();
-    $purchaseB = Purchase::factory()->create();
-
-    PurchaseDetail::factory()->create([
-        'purchase_id' => $purchaseA->id,
-        'purchasable_id' => $supply->id,
-        'purchasable_type' => Supply::class,
         'quantity' => 4,
         'unit_price' => 1200,
-        'subtotal' => 4800,
         'expiration_date' => '2026-04-05',
-        'created_at' => now()->subMinute(),
-    ]);
-
-    $latestDetail = PurchaseDetail::factory()->create([
-        'purchase_id' => $purchaseB->id,
-        'purchasable_id' => $supply->id,
-        'purchasable_type' => Supply::class,
-        'quantity' => 9,
-        'unit_price' => 1500,
-        'subtotal' => 13500,
-        'expiration_date' => '2026-04-09',
-        'created_at' => now(),
     ]);
 
     // When: requesting supplies via AJAX DataTables.
@@ -425,8 +408,8 @@ test('CP-14_EIF-49 - datatable computed columns use latest purchase detail value
         ->assertSuccessful()
         ->assertJsonFragment([
             'id' => $supply->id,
-            'quantity' => $latestDetail->quantity,
-            'unit_price' => '₡1,500.00',
-            'expiration_date' => '09/04/2026',
+            'quantity' => 4,
+            'unit_price' => '₡1,200.00',
+            'expiration_date' => '05/04/2026',
         ]);
 });
