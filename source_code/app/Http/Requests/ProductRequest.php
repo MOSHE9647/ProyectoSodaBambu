@@ -53,8 +53,8 @@ class ProductRequest extends FormRequest
             'sale_price' => $salePrice === '' ? ($requiresManualSalePrice ? '' : null) : $salePrice,
             'expiration_date' => $isMerchandise ? ($expirationDate === '' ? null : $expirationDate) : null,
             'expiration_alert_days' => $isMerchandise
-                ? ($expirationAlertDays === '' || $expirationAlertDays === null ? 7 : $expirationAlertDays)
-                : 7,
+                ? $expirationAlertDays
+                : null,
             'tax_percentage' => $isMerchandise ? $this->normalizePercentage($taxInput) : null,
             'margin_percentage' => $isMerchandise ? $this->normalizePercentage($marginInput) : null,
             'current_stock' => $this->input('current_stock') === '' ? null : $this->input('current_stock'),
@@ -106,7 +106,7 @@ class ProductRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', new Enum(ProductType::class)],
             'expiration_date' => [Rule::requiredIf($isMerchandise), 'nullable', 'date', 'after_or_equal:today'],
-            'expiration_alert_days' => [Rule::requiredIf($isMerchandise), 'nullable', 'integer', 'min:0'],
+            'expiration_alert_days' => [Rule::requiredIf($isMerchandise), 'integer', 'min:0'],
             'has_inventory' => ['required', 'boolean'],
             'reference_cost' => $pricingRules,
             'tax_percentage' => [

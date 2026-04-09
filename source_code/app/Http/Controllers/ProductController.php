@@ -31,12 +31,13 @@ class ProductController extends Controller implements HasMiddleware
      */
     public static function middleware(): array
     {
-        $allowedAdminAndEmployeeRoles = UserRole::ADMIN->value.'|'.UserRole::EMPLOYEE->value;
+        $allowedViewerRoles = UserRole::ADMIN->value.'|'.UserRole::EMPLOYEE->value;
 
         return [
-            new Middleware(RoleMiddleware::using($allowedAdminAndEmployeeRoles)),
-            new Middleware(RoleMiddleware::using($allowedAdminAndEmployeeRoles), only: ['create', 'store']),
-            new Middleware(RoleMiddleware::using(UserRole::ADMIN->value), only: ['edit', 'update', 'destroy']),
+            new Middleware(RoleMiddleware::using($allowedViewerRoles)),
+            new Middleware(
+                RoleMiddleware::using(UserRole::ADMIN->value),
+                only: ['edit', 'update', 'destroy']),
         ];
     }
 

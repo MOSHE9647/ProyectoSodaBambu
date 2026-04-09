@@ -90,6 +90,22 @@ function formatCurrency(value) {
 	return CURRENCY_FORMATTER.format(amount);
 }
 
+function syncFilterQueryParam() {
+	const params = new URLSearchParams(window.location.search);
+
+	if (showOnlyExpiringSoon) {
+		params.set('filter', 'expiring_soon');
+	} else if (showOnlyLowStock) {
+		params.set('filter', 'low_stock');
+	} else {
+		params.delete('filter');
+	}
+
+	const nextQuery = params.toString();
+	const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}`;
+	window.history.replaceState({}, '', nextUrl);
+}
+
 /**
  * Shows information for a specific product.
  * @param {string} url - The URL to fetch product information from
@@ -111,6 +127,7 @@ window.deleteProduct = function (e) {
 
 window.toggleLowStockFilter = function () {
 	showOnlyLowStock = !showOnlyLowStock;
+	syncFilterQueryParam();
 
 	const $button = $('.low-stock-filter-button');
 	$button.toggleClass('btn-outline-warning btn-warning');
@@ -130,6 +147,7 @@ window.toggleLowStockFilter = function () {
 
 window.toggleExpiringSoonFilter = function () {
 	showOnlyExpiringSoon = !showOnlyExpiringSoon;
+	syncFilterQueryParam();
 
 	const $button = $('.expiring-soon-filter-button');
 	$button.toggleClass('btn-outline-danger btn-danger');

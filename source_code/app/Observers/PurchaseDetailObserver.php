@@ -31,9 +31,4 @@ class PurchaseDetailObserver
         $this->countProductsAboutToExpire();
     }
 
-    private function countProductsAboutToExpire()
-    {
-        $aboutToExpireCount = PurchaseDetail::countAboutToExpireByProductAlert();
-        Cache::forever('about_to_expire_count', $aboutToExpireCount);
-    }
 }

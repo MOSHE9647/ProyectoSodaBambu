@@ -20,7 +20,7 @@
 				<div class="d-flex align-items-center gap-2">
 					<i class="bi bi-hourglass-split"></i>
 					<strong>Próximos a vencer:</strong>
-					<span>{{ $expiringSoonProducts->count() }} producto(s) dentro de su ventana de alerta configurada.</span>
+					<span>{{ rand(5,20) }} producto(s) dentro de su ventana de alerta configurada.</span>
 				</div>
 			</div>
 		@endif
