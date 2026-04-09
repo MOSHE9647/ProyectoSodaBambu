@@ -12,15 +12,20 @@ class GetMonthlySalesDataAction
     public function execute(): array
     {
         Carbon::setLocale('es');
+        $timezone = 'America/Costa_Rica';
 
         $monthStart = Carbon::now()->startOfMonth();
         $today = Carbon::now();
 
-        $sales = Sale::selectRaw('DATE(date) as date_data, SUM(total) as daily_total')
-            ->whereBetween('date', [$monthStart, $today->copy()->endOfDay()])
+        $sales = Sale::whereBetween('date', [$monthStart, $today])
             ->where('payment_status', PaymentStatus::PAID)
-            ->groupBy('date_data')
-            ->pluck('daily_total', 'date_data');
+            ->get(['date', 'total']);
+
+        $salesByDate = $sales->groupBy(function ($sale) use ($timezone) {
+            return Carbon::parse($sale->date)->timezone($timezone)->format('Y-m-d');
+        })->map(function ($group) {
+            return $group->sum('total');
+        });
 
         $monthlyTotal = 0;
         $labels = [];
@@ -32,7 +37,7 @@ class GetMonthlySalesDataAction
             $dateString = $date->format('Y-m-d');
             $dayLabel = ucfirst($date->translatedFormat('l, j \d\e F'));
 
-            $todaySale = $sales->get($dateString, 0);
+            $todaySale = $salesByDate->get($dateString, 0);
 
             $labels[] = $dayLabel;
             $values[] = $todaySale;

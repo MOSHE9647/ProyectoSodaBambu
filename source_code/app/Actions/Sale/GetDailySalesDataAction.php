@@ -2,6 +2,7 @@
 
 namespace App\Actions\Sale;
 
+use App\Enums\PaymentStatus;
 use App\Models\Sale;
 use Carbon\Carbon;
 
@@ -18,6 +19,7 @@ class GetDailySalesDataAction
 
         // Get all sales for the current day
         $sales = Sale::whereBetween('date', [$startOfDay, $endOfDay])
+            ->where('payment_status', PaymentStatus::PAID)
             ->get(['date', 'total']);
 
         // Group sales by hour and sum totals
@@ -34,10 +36,10 @@ class GetDailySalesDataAction
         $values = [];
 
         $openingTime = 7;  // 7 AM
-        $closingTime = 22; // 10 PM
+        $now = Carbon::now($timezone)->hour; // Current hour
 
         // Iterate through each hour of the day from opening to closing time
-        for ($i = $openingTime; $i <= $closingTime; $i++) {
+        for ($i = $openingTime; $i <= $now; $i++) {
             $formattedTime = Carbon::createFromTime($i, 0, 0, $timezone)->format('g:i A');
 
             // Get the total sales for the current hour, defaulting to 0 if there are no sales
