@@ -490,7 +490,6 @@ $('#quick-product-form').on('submit', async function (e) {
 $('#offcanvasProduct').on('hidden.bs.offcanvas', function () {
     $('#quick-product-form')[0].reset();
     $('#quick-product-stock-fields').hide();
-    // EIF-170: Solo manejar stock_minimo
     $('#quick-product-stock-minimo').prop('required', false);
     $('#quick-product-form').find('.is-invalid').removeClass('is-invalid');
     $('#quick-product-form').find('.invalid-feedback').text('');
