@@ -215,14 +215,13 @@
                 <div class="invalid-feedback" id="quick-product-name-error"></div>
             </div>
 
-            {{-- EIF-172: Opciones en español con primera letra mayúscula (renderizadas por el enum con label()) --}}
             <div class="mb-3">
                 <label for="quick-product-type" class="form-label">Tipo <span class="text-danger">*</span></label>
                 <select class="form-select" id="quick-product-type" name="type" required>
                     <option value="">Seleccionar tipo</option>
                     @foreach(App\Enums\ProductType::cases() as $type)
-                        {{-- EIF-165: Excluir "Platillo" del select de tipo --}}
-                        @if(strtolower($type->value) !== 'dish' && strtolower($type->label()) !== 'platillo')
+                        {{-- EIF-165: Excluir dish y drink del select de tipo --}}
+                        @if(!in_array(strtolower($type->value), ['dish', 'drink']))
                             <option value="{{ $type->value }}">{{ ucfirst(mb_strtolower($type->label())) }}</option>
                         @endif
                     @endforeach
@@ -235,7 +234,6 @@
                 <label class="form-check-label" for="quick-product-has-inventory">¿Maneja inventario?</label>
             </div>
 
-            {{-- EIF-170: Solo se muestra stock mínimo (se omite stock actual en creación) --}}
             <div id="quick-product-stock-fields" style="display: none;">
                 <div class="mb-3">
                     <label for="quick-product-stock-minimo" class="form-label">Stock mínimo <span class="text-danger">*</span></label>
@@ -244,7 +242,6 @@
                 </div>
             </div>
 
-            {{-- EIF-169: Campos para cálculo automático del precio de venta --}}
             <div class="mb-3">
                 <label for="quick-product-reference-cost" class="form-label">Costo de referencia</label>
                 <input type="number" step="0.01" min="0" class="form-control" id="quick-product-reference-cost" name="reference_cost">
@@ -309,6 +306,7 @@
         </form>
     </div>
 </div>
+
 @php
     $productsJson = $products->map(function ($p) {
         $type = $p->type instanceof \App\Enums\ProductType ? $p->type->value : ($p->type ?? '');

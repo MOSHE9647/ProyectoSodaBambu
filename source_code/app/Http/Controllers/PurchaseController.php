@@ -43,20 +43,20 @@ class PurchaseController extends Controller
                 ]);
             }
 
-            // DataTable normal
+            // EIF-161: DataTable con paginación correcta usando offset/limit explícitos
             $columns = [
-                'id',
-                'invoice_number',
-                'supplier_id',
-                'date',
-                'total',
-                'payment_status'
+                0 => 'id',
+                1 => 'invoice_number',
+                2 => 'supplier_id',
+                3 => 'date',
+                4 => 'total',
+                5 => 'payment_status',
             ];
 
             $query = Purchase::with('supplier:id,name');
 
-            if ($request->has('search') && !empty($request->search['value'])) {
-                $search = $request->search['value'];
+            if ($request->filled('search.value')) {
+                $search = $request->input('search.value');
                 $query->where(function ($q) use ($search) {
                     $q->where('invoice_number', 'like', "%$search%")
                         ->orWhere('date', 'like', "%$search%")
@@ -68,22 +68,39 @@ class PurchaseController extends Controller
                 });
             }
 
-            if ($request->has('order')) {
-                $orderColumn = $columns[$request->order[0]['column']];
-                $orderDir    = $request->order[0]['dir'];
-                $query->orderBy($orderColumn, $orderDir);
+            // EIF-161: Ordenamiento seguro con validación de índice de columna
+            if ($request->has('order') && isset($request->order[0]['column'])) {
+                $colIndex  = (int) $request->order[0]['column'];
+                $orderDir  = $request->order[0]['dir'] === 'desc' ? 'desc' : 'asc';
+                $orderCol  = $columns[$colIndex] ?? 'id';
+
+                // supplier_id se ordena por el nombre del supplier, no por id
+                if ($orderCol === 'supplier_id') {
+                    $query->join('suppliers', 'purchases.supplier_id', '=', 'suppliers.id')
+                          ->orderBy('suppliers.name', $orderDir)
+                          ->select('purchases.*');
+                } else {
+                    $query->orderBy('purchases.' . $orderCol, $orderDir);
+                }
+            } else {
+                $query->orderBy('purchases.id', 'desc');
             }
 
             $recordsTotal    = Purchase::count();
             $recordsFiltered = $query->count();
 
-            $purchases = $query->when($request->length != -1, function ($q) use ($request) {
-                return $q->skip($request->start)->take($request->length);
-            })
-            ->get();
+            // EIF-161: Respetar length=-1 (mostrar todo) y aplicar offset/limit correctamente
+            $start  = (int) $request->input('start', 0);
+            $length = (int) $request->input('length', 10);
+
+            if ($length !== -1) {
+                $query->offset($start)->limit($length);
+            }
+
+            $purchases = $query->get();
 
             return response()->json([
-                'draw'            => $request->draw,
+                'draw'            => (int) $request->input('draw', 1),
                 'recordsTotal'    => $recordsTotal,
                 'recordsFiltered' => $recordsFiltered,
                 'data'            => $purchases->map(function ($purchase) {
@@ -106,7 +123,7 @@ class PurchaseController extends Controller
     public function create()
     {
         $suppliers = Supplier::all(['id', 'name']);
-        $products  = Product::all(['id', 'name', 'sale_price']);
+        $products  = Product::all(['id', 'name', 'sale_price', 'type']);
         $supplies  = Supply::all(['id', 'name', 'measure_unit']);
         return view('models.purchases.create', compact('suppliers', 'products', 'supplies'));
     }
@@ -169,7 +186,7 @@ class PurchaseController extends Controller
     {
         $purchase->load('details.purchasable');
         $suppliers = Supplier::all(['id', 'name']);
-        $products  = Product::all(['id', 'name', 'sale_price']);
+        $products  = Product::all(['id', 'name', 'sale_price', 'type']);
         $supplies  = Supply::all(['id', 'name', 'measure_unit']);
         return view('models.purchases.edit', compact('purchase', 'suppliers', 'products', 'supplies'));
     }
@@ -237,12 +254,15 @@ class PurchaseController extends Controller
         return redirect()->route('purchases.index')->with('success', 'Compra actualizada correctamente.');
     }
 
-
+    /**
+     * EIF-170: quickStoreProduct solo guarda minimum_stock.
+     * current_stock se omite intencionalmente en la creación.
+     */
     public function quickStoreProduct(Request $request): JsonResponse
     {
         $rules = [
             'category_id'       => 'required|integer|exists:categories,id',
-            'barcode'           => 'nullable|...',
+            'barcode'           => 'nullable|string',
             'name'              => 'required|string|max:255',
             'type'              => 'required|string|in:' . implode(',', array_column(\App\Enums\ProductType::cases(), 'value')),
             'has_inventory'     => 'required|boolean',
@@ -252,13 +272,11 @@ class PurchaseController extends Controller
             'sale_price'        => 'required|numeric|min:0',
         ];
 
-        // Si maneja inventario, se requieren stock_minimo y stock_actual
+        // EIF-170: Solo se valida stock_minimo; stock_actual no se procesa en creación
         if ($request->boolean('has_inventory')) {
             $rules['stock_minimo'] = 'required|integer|min:0';
-            $rules['stock_actual'] = 'required|integer|min:0';
         } else {
             $rules['stock_minimo'] = 'nullable|integer|min:0';
-            $rules['stock_actual'] = 'nullable|integer|min:0';
         }
 
         $validator = Validator::make($request->all(), $rules);
@@ -271,15 +289,14 @@ class PurchaseController extends Controller
         }
 
         $product = DB::transaction(function () use ($request, $validator) {
-            // Crear producto
             $product = Product::create($validator->validated());
 
-            // Si maneja inventario, crear registro en product_stocks
+            // EIF-170: Al crear, current_stock arranca en 0 (se actualiza vía inventario)
             if ($request->boolean('has_inventory')) {
                 ProductStock::create([
                     'product_id'    => $product->id,
-                    'current_stock' => $request->input('stock_actual'),
-                    'minimum_stock' => $request->input('stock_minimo'),
+                    'current_stock' => 0,
+                    'minimum_stock' => (int) $request->input('stock_minimo', 0),
                 ]);
             }
 
@@ -293,10 +310,12 @@ class PurchaseController extends Controller
                 'id'         => $product->id,
                 'name'       => $product->name,
                 'sale_price' => $product->sale_price,
+                'type'       => $product->type instanceof \App\Enums\ProductType
+                                    ? $product->type->value
+                                    : $product->type,
             ],
         ]);
     }
-
 
     public function destroy(Purchase $purchase)
     {
