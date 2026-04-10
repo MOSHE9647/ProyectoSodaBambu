@@ -11,6 +11,7 @@ const MODEL_NAME = 'producto';
 // String Constants
 const BTN_CLASS_PRIMARY = 'btn-primary';
 
+
 // Routes Configuration
 const MODEL_ROUTES = {
 	index: route('products.index'),
@@ -37,8 +38,10 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('es-CR', {
 // retrieve initial filter state from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 let showOnlyLowStock = urlParams.get('filter') === 'low_stock';
+let showOnlyExpiringSoon = urlParams.get('filter') === 'expiring_soon';
 
 let productsDataTable = null;
+const canCreateProducts = ($('#products-table').data('can-create-products') ?? '').toString() === '1';
 const canManageProducts = ($('#products-table').data('can-manage-products') ?? '').toString() === '1';
 
 // ==================== Global Functions ====================
@@ -88,6 +91,22 @@ function formatCurrency(value) {
 	return CURRENCY_FORMATTER.format(amount);
 }
 
+function syncFilterQueryParam() {
+	const params = new URLSearchParams(window.location.search);
+
+	if (showOnlyExpiringSoon) {
+		params.set('filter', 'expiring_soon');
+	} else if (showOnlyLowStock) {
+		params.set('filter', 'low_stock');
+	} else {
+		params.delete('filter');
+	}
+
+	const nextQuery = params.toString();
+	const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}`;
+	window.history.replaceState({}, '', nextUrl);
+}
+
 /**
  * Shows information for a specific product.
  * @param {string} url - The URL to fetch product information from
@@ -109,10 +128,31 @@ window.deleteProduct = function (e) {
 
 window.toggleLowStockFilter = function () {
 	showOnlyLowStock = !showOnlyLowStock;
+	syncFilterQueryParam();
 
 	const $button = $('.low-stock-filter-button');
 	$button.toggleClass('btn-outline-warning btn-warning');
 	$('.low-stock-filter-button-text').text(showOnlyLowStock ? 'Mostrar todos' : 'Solo stock bajo');
+
+	if (productsDataTable) {
+		productsDataTable.ajax.reload(null, true);
+
+		setTimeout(() => {
+			productsDataTable.columns.adjust();
+			if (productsDataTable.responsive) {
+				productsDataTable.responsive.recalc();
+			}
+		}, 0);
+	}
+};
+
+window.toggleExpiringSoonFilter = function () {
+	showOnlyExpiringSoon = !showOnlyExpiringSoon;
+	syncFilterQueryParam();
+
+	const $button = $('.expiring-soon-filter-button');
+	$button.toggleClass('btn-outline-danger btn-danger');
+	$('.expiring-soon-filter-button-text').text(showOnlyExpiringSoon ? 'Mostrar todos' : 'Próximos a vencer');
 
 	if (productsDataTable) {
 		productsDataTable.ajax.reload(null, true);
@@ -166,6 +206,13 @@ $(() => {
 			name: 'sale_price',
 			render: (data) => formatCurrency(data),
 		},
+		{
+			data: 'expiration_days',
+			name: 'expiration_date',
+			render: (data) => data,
+			orderable: false,
+			searchable: false,
+		},
 	];
 
 	/**
@@ -209,6 +256,15 @@ $(() => {
 			funcName: 'toggleLowStockFilter',
 			params: ['.low-stock-filter-button', 'low-stock-filter'],
 		},
+		{
+			text: 'Próximos a vencer',
+			href: 'javascript:void(0)',
+			class: 'expiring-soon-filter-button btn-outline-danger',
+			icon: 'bi-hourglass-split',
+			func: window.toggleExpiringSoonFilter,
+			funcName: 'toggleExpiringSoonFilter',
+			params: ['.expiring-soon-filter-button', 'expiring-soon-filter'],
+		},
 	];
 
 	// Set initial state of low stock filter button based on URL parameter
@@ -218,8 +274,14 @@ $(() => {
         $('.low-stock-filter-button-text').text('Mostrar todos');
     }	
 
-	if (canManageProducts) {
-		customButtons.unshift({
+	if (showOnlyExpiringSoon) {
+		const $button = $('.expiring-soon-filter-button');
+		$button.removeClass('btn-outline-danger').addClass('btn-danger');
+		$('.expiring-soon-filter-button-text').text('Mostrar todos');
+	}
+
+	if (canCreateProducts) {
+		customButtons.push({
 			text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
 			href: MODEL_ROUTES.create,
 			class: `create-button ${BTN_CLASS_PRIMARY}`,
@@ -236,6 +298,7 @@ $(() => {
 			url: MODEL_ROUTES.index,
 			data: (d) => {
 				d.low_stock = showOnlyLowStock ? 1 : 0;
+				d.expiring_soon = showOnlyExpiringSoon ? 1 : 0;
 			}
 		},
 		columnControl: [],

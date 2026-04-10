@@ -2,30 +2,30 @@
 
 namespace App\Observers;
 
-use App\Actions\Inventory\GetProductsAboutToExpireCount;
+use App\Actions\Inventory\GetSuppliesAboutToExpireCount;
 use App\Models\Supply;
 
 class SupplyObserver
 {
-    public function __construct(protected GetProductsAboutToExpireCount $getProductsAboutToExpireCount) {}
+    public function __construct(protected GetSuppliesAboutToExpireCount $getSuppliesAboutToExpireCount) {}
 
     public function created(Supply $supply): void
     {
-        $this->getProductsAboutToExpireCount->execute();
+        $this->getSuppliesAboutToExpireCount->execute();
     }
 
     public function updated(Supply $supply): void
     {
-        $this->getProductsAboutToExpireCount->execute();
+        $this->getSuppliesAboutToExpireCount->execute();
     }
 
     public function deleted(Supply $supply): void
     {
-        $this->getProductsAboutToExpireCount->execute();
+        $this->getSuppliesAboutToExpireCount->execute();
     }
 
     public function restored(Supply $supply): void
     {
-        $this->getProductsAboutToExpireCount->execute();
+        $this->getSuppliesAboutToExpireCount->execute();
     }
 }

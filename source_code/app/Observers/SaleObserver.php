@@ -3,6 +3,8 @@
 namespace App\Observers;
 
 use App\Actions\Sale\CalculateDailySalesTrendAction;
+use App\Actions\Sale\GetDailySalesDataAction;
+use App\Actions\Sale\GetMonthlySalesDataAction;
 use App\Enums\PaymentStatus;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Cache;
@@ -54,9 +56,19 @@ class SaleObserver
     {
         // Force cache refresh by forgetting the previous key before executing the remember
         Cache::forget('today_sales_stats');
+        Cache::forget('monthly_sales_stats');
+        Cache::forget('daily_sales_stats');
 
         Cache::remember('today_sales_stats', now()->addMinutes(10), function () {
             return $this->calculateDailySalesTrendAction->execute();
+        });
+
+        Cache::remember('monthly_sales_stats', now()->addMinutes(10), function () {
+            return app(GetMonthlySalesDataAction::class)->execute();
+        });
+
+        Cache::remember('daily_sales_stats', now()->addMinutes(10), function () {
+            return app(GetDailySalesDataAction::class)->execute();
         });
     }
 }

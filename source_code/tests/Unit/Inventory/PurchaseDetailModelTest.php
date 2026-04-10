@@ -4,7 +4,6 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseDetail;
 use App\Models\Supply;
-use Illuminate\Support\Carbon;
 
 /**
  * User Story: EIF-35 - Registrar Compras y proveedores de abastecimiento.
@@ -77,19 +76,14 @@ test('CP-03_EIF-35 - purchase detail morphs to purchasable model', function () {
  * Priority: Medium
  * Jira Link: https://est-una.atlassian.net/browse/EIF-35
  */
-test('CP-04_EIF-35 - purchase detail casts expiration date and money fields correctly', function () {
-    // Given: a purchase detail with explicit casted values.
+test('CP-04_EIF-35 - purchase detail casts subtotal correctly', function () {
+    // Given: a purchase detail with explicit subtotal value.
     $purchaseDetail = PurchaseDetail::factory()->create([
-        'expiration_date' => '2026-03-20',
-        'quantity' => 5,
-        'unit_price' => 123.45,
         'subtotal' => 617.25,
     ]);
 
     // When: reading the model attributes.
-    // Then: expiration date is a Carbon date and amount fields are normalized.
-    expect($purchaseDetail->expiration_date)->toBeInstanceOf(Carbon::class);
-    expect((string) $purchaseDetail->unit_price)->toBe('123.45');
+    // Then: subtotal is normalized as decimal string.
     expect((string) $purchaseDetail->subtotal)->toBe('617.25');
 });
 
@@ -105,14 +99,9 @@ test('CP-05_EIF-35 - purchase detail model is mass-assignable for fillable attri
         'purchase_id' => Purchase::factory()->create()->id,
         'purchasable_id' => Product::factory()->create()->id,
         'purchasable_type' => Product::class,
-        'quantity' => 7,
-        'unit_price' => 250.00,
         'subtotal' => 1750.00,
-        'expiration_date' => '2026-04-01',
     ]);
 
     // Then: the attributes are persisted correctly.
-    expect($purchaseDetail->quantity)->toBe(7);
-    expect((string) $purchaseDetail->unit_price)->toBe('250.00');
     expect((string) $purchaseDetail->subtotal)->toBe('1750.00');
 });

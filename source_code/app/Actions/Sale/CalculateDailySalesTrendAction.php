@@ -25,13 +25,13 @@ class CalculateDailySalesTrendAction
      */
     public function execute(): array
     {
-        // 1. Get today's total (full day)
+        // Get today's total (full day)
         $todayTotal = $this->getSalesTotal(Carbon::today());
 
-        // 2. Get yesterday's total up to the current time (for trend comparison)
+        // Get yesterday's total up to the current time (for trend comparison)
         $yesterdayUntilNow = $this->getSalesTotal(Carbon::yesterday(), true);
 
-        // 3. Calculate trend
+        // Calculate trend
         if ($yesterdayUntilNow > 0) {
             $percentage = (($todayTotal - $yesterdayUntilNow) / $yesterdayUntilNow) * 100;
         } else {

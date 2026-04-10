@@ -5,13 +5,8 @@ import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 // ==================== Constants ====================
 
-
 const MODEL_NAME = 'insumo';
-
-
 const BTN_CLASS_PRIMARY = 'btn-primary';
-
-
 const MODEL_ROUTES = {
     index:  route('supplies.index'),
     create: route('supplies.create'),
@@ -25,25 +20,23 @@ let showOnlyExpiring = urlParams.get('filter') === 'expiring_soon';
 
 let suppliesDataTable = null;
 
+/** 
+ * Lee el atributo 'data-can-manage-products' que agregamos a la tabla en Blade.
+ */
+const canManageSupplies = ($('#supplies-table').data('can-manage-products') ?? '').toString() === '1';
+
 // ==================== Global Functions ====================
 
-// Expose functions globally
 window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
 
 // ==================== Helper Functions ====================
 
-/**
- * Shows information for a specific supply.
- */
 window.showSupply = function (url, anchor) {
     return showModelInfo(url, anchor, MODEL_NAME);
 };
 
-/**
- * Deletes a specific supply.
- */
 window.deleteSupply = function (e) {
     return deleteModel(e, MODEL_NAME);
 };
@@ -63,15 +56,12 @@ window.toggleExpiringFilter = function () {
 // ==================== DataTable Initialization ====================
 
 $(() => {
+    const tableEl = $('#supplies-table'); // <--- Defínela aquí adentro
+    const canManageSupplies = (tableEl.data('can-manage-supplies') ?? '').toString() === '1';
+    const canCreateSupplies = (tableEl.data('can-create-supplies') ?? '').toString() === '1';
     const columns = [
-        { 
-            data: 'name', 
-            name: 'name' 
-        },
-        { 
-            data: 'measure_unit', 
-            name: 'measure_unit' 
-        },
+        { data: 'name', name: 'name' },
+        { data: 'measure_unit', name: 'measure_unit' },
         { 
             data: 'quantity', 
             name: 'quantity', 
@@ -79,7 +69,6 @@ $(() => {
             render: (data) => `<strong>${data}</strong>`,
             orderable: false,
             searchable: false,
-
         },
         { 
             data: 'unit_price', 
@@ -101,29 +90,37 @@ $(() => {
         }
     ];
 
+    /**
+     * Definición de acciones dinámicas
+     */
     const actions = {
         show: { 
             route: MODEL_ROUTES.show, 
             func: window.showSupply,
             funcName: 'showSupply',
             tooltip: 'Ver detalles' 
-        },
-        edit: { 
+        }
+    };
+
+    if (canManageSupplies) {
+        actions.edit = { 
             route: MODEL_ROUTES.edit, 
             func: toggleLoadingState, 
             funcName: 'toggleLoadingState',
             tooltip: `Editar ${MODEL_NAME}` 
-        },
-        delete: {
+        };
+        actions.delete = {
             route: MODEL_ROUTES.delete,
             tooltip: `Eliminar ${MODEL_NAME}`,
             func: window.deleteSupply,
             funcName: 'deleteSupply',
-        }
-    };
+        };
+    }
 
+    /**
+     * 
+     */
     const customButtons = [
-
         {
             text: 'Próximos a vencer',
             href: 'javascript:void(0)',
@@ -131,8 +128,11 @@ $(() => {
             icon: 'bi-hourglass-split',
             func: window.toggleExpiringFilter,
             funcName: 'toggleExpiringFilter',
-        },
-        {
+        }
+    ];
+
+    if (canCreateSupplies) {
+        customButtons.push({
             text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
             href: MODEL_ROUTES.create,
             class: `create-button ${BTN_CLASS_PRIMARY}`,
@@ -140,10 +140,10 @@ $(() => {
             func: toggleLoadingState,
             funcName: 'toggleLoadingState',
             params: ['.create-button', 'create', true],
-        }
-    ];
+        });
+    }
 
-     if (showOnlyExpiring) {
+    if (showOnlyExpiring) {
         setTimeout(() => {
             const $button = $('.expiring-filter-button');
             $button.removeClass('btn-outline-danger').addClass('btn-danger');

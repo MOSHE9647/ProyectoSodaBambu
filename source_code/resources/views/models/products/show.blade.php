@@ -2,6 +2,9 @@
 @php
     use App\Enums\ProductType;
     use Carbon\Carbon;
+
+    $isMerchandise = ($product->type instanceof ProductType ? $product->type->value : (string) $product->type) === ProductType::MERCHANDISE->value;
+    $showInventoryFields = (bool) $product->has_inventory;
 @endphp
 
 <div class="d-flex flex-column text-start">
@@ -59,33 +62,102 @@
             </x-form.input.floating-label>
         </div>
 
-        <div class="col-12 col-md-6">
-            <x-form.input.floating-label
-                :id="'current_stock'"
-                :type="'text'"
-                :readonly="true"
-                :value="$product->stock?->current_stock ?? 'N/A'"
-                :iconLeft="'bi bi-archive'"
-                :placeholder="'Stock Actual'"
-            >
-                Stock Actual
-            </x-form.input.floating-label>
-        </div>
+        @if($showInventoryFields)
+            <div class="col-12 col-md-6">
+                <x-form.input.floating-label
+                    :id="'current_stock'"
+                    :type="'text'"
+                    :readonly="true"
+                    :value="$product->stock?->current_stock ?? 'N/A'"
+                    :iconLeft="'bi bi-archive'"
+                    :placeholder="'Stock Actual'"
+                >
+                    Stock Actual
+                </x-form.input.floating-label>
+            </div>
 
-        <div class="col-12 col-md-6">
-            <x-form.input.floating-label
-                :id="'minimum_stock'"
-                :type="'text'"
-                :readonly="true"
-                :value="$product->stock?->minimum_stock ?? 'N/A'"
-                :iconLeft="'bi bi-exclamation-triangle'"
-                :placeholder="'Stock Mínimo'"
-            >
-                Stock Mínimo
-            </x-form.input.floating-label>
-        </div>
+            <div class="col-12 col-md-6">
+                <x-form.input.floating-label
+                    :id="'minimum_stock'"
+                    :type="'text'"
+                    :readonly="true"
+                    :value="$product->stock?->minimum_stock ?? 'N/A'"
+                    :iconLeft="'bi bi-exclamation-triangle'"
+                    :placeholder="'Stock Mínimo'"
+                >
+                    Stock Mínimo
+                </x-form.input.floating-label>
+            </div>
+        @endif
 
-        <div class="col-12 col-md-4">
+        @if($isMerchandise)
+            <div class="col-12 col-md-6">
+                <x-form.input.floating-label
+                    :id="'expiration_date'"
+                    :type="'text'"
+                    :readonly="true"
+                    :value="$product->expiration_date ? Carbon::parse($product->expiration_date)->format('d/m/Y') : 'N/A'"
+                    :iconLeft="'bi bi-calendar-event'"
+                    :placeholder="'Fecha de Vencimiento'"
+                >
+                    Fecha de Vencimiento
+                </x-form.input.floating-label>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <x-form.input.floating-label
+                    :id="'expiration_alert_days'"
+                    :type="'text'"
+                    :readonly="true"
+                    :value="(int) ($product->expiration_alert_days ?? 7)"
+                    :iconLeft="'bi bi-bell'"
+                    :placeholder="'Días de Alerta de Vencimiento'"
+                >
+                    Días de Alerta de Vencimiento
+                </x-form.input.floating-label>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <x-form.input.floating-label
+                    :id="'reference_cost'"
+                    :type="'text'"
+                    :readonly="true"
+                    :value="'₡ ' . number_format((float) $product->reference_cost, 2, '.', ',')"
+                    :iconLeft="'bi bi-cash-coin'"
+                    :placeholder="'Costo de Referencia'"
+                >
+                    Costo de Referencia
+                </x-form.input.floating-label>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <x-form.input.floating-label
+                    :id="'tax_percentage'"
+                    :type="'text'"
+                    :readonly="true"
+                    :value="number_format((float) $product->tax_percentage, 2, '.', ',') . ' %'"
+                    :iconLeft="'bi bi-percent'"
+                    :placeholder="'Impuesto (%)'"
+                >
+                    Impuesto (%)
+                </x-form.input.floating-label>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <x-form.input.floating-label
+                    :id="'margin_percentage'"
+                    :type="'text'"
+                    :readonly="true"
+                    :value="number_format((float) $product->margin_percentage, 2, '.', ',') . ' %'"
+                    :iconLeft="'bi bi-graph-up-arrow'"
+                    :placeholder="'Margen (%)'"
+                >
+                    Margen (%)
+                </x-form.input.floating-label>
+            </div>
+        @endif
+
+        <div class="col-12">
             <x-form.input.floating-label
                 :id="'sale_price'"
                 :type="'text'"
@@ -95,45 +167,6 @@
                 :placeholder="'Precio de Venta'"
             >
                 Precio de Venta
-            </x-form.input.floating-label>
-        </div>
-
-        <div class="col-12 col-md-4">
-            <x-form.input.floating-label
-                :id="'tax_percentage'"
-                :type="'text'"
-                :readonly="true"
-                :value="number_format((float) $product->tax_percentage, 2, '.', ',') . ' %'"
-                :iconLeft="'bi bi-percent'"
-                :placeholder="'Impuesto (%)'"
-            >
-                Impuesto (%)
-            </x-form.input.floating-label>
-        </div>
-
-        <div class="col-12 col-md-4">
-            <x-form.input.floating-label
-                :id="'reference_cost'"
-                :type="'text'"
-                :readonly="true"
-                :value="'₡ ' . number_format((float) $product->reference_cost, 2, '.', ',')"
-                :iconLeft="'bi bi-cash-coin'"
-                :placeholder="'Costo de Referencia'"
-            >
-                Costo de Referencia
-            </x-form.input.floating-label>
-        </div>
-
-        <div class="col-12 col-md-6">
-            <x-form.input.floating-label
-                :id="'margin_percentage'"
-                :type="'text'"
-                :readonly="true"
-                :value="number_format((float) $product->margin_percentage, 2, '.', ',') . ' %'"
-                :iconLeft="'bi bi-graph-up-arrow'"
-                :placeholder="'Margen (%)'"
-            >
-                Margen (%)
             </x-form.input.floating-label>
         </div>
 

@@ -59,6 +59,7 @@ test('CP-02_EIF-32 - creates merchandise product and auto-calculates sale price'
         'name' => 'Cafe en grano',
         'type' => ProductType::MERCHANDISE->value,
         'has_inventory' => true,
+        'current_stock' => 25,
         'reference_cost' => 10000,
         'tax_percentage' => 13,
         'margin_percentage' => 35,
@@ -81,8 +82,7 @@ test('CP-02_EIF-32 - creates merchandise product and auto-calculates sale price'
     ]);
 
     $stock = ProductStock::where('product_id', $product->id)->firstOrFail();
-    expect($stock->current_stock)->toBeGreaterThanOrEqual(20)
-        ->and($stock->current_stock)->toBeLessThanOrEqual(100);
+    expect($stock->current_stock)->toBe(25);
 });
 
 /**
@@ -237,14 +237,14 @@ test('CP-06_EIF-32 - soft deletes product', function () {
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-32
  */
-test('CP-07_EIF-32 - employee can view products list but cannot access product creation actions', function () {
+test('CP-07_EIF-32 - employee can view products list and access product creation actions', function () {
     // Given: an authenticated employee user.
     $employee = createEmployeeUserForProduct();
 
     // When/Then: employee is forbidden to access create or store product actions.
     $this->actingAs($employee)
         ->get(route('products.create'))
-        ->assertForbidden();
+        ->assertOk();
 
     $this->actingAs($employee)
         ->post(route('products.store'), [
@@ -254,7 +254,7 @@ test('CP-07_EIF-32 - employee can view products list but cannot access product c
             'has_inventory' => false,
             'sale_price' => 3000,
         ])
-        ->assertForbidden();
+        ->assertRedirect(route('products.index'));
 });
 
 /**
