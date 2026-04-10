@@ -8,6 +8,7 @@
     'icon' => 'cash-stack', // default icon (Bootstrap Icons name without 'bi-')
     'colorTheme' => 'gray', // 'green', 'red', 'blue', etc.
 	'url' => null, // Optional URL for the entire card
+	'hideTrend' => false, // Option to hide trend information
 
 ])
 
@@ -59,22 +60,25 @@
 				</h4>
 
 				{{-- Trend Information (reserved space to prevent layout shift) --}}
-				<div class="d-flex align-items-center fs-8" style="min-height: 1.25rem;">
-					@if($trend)
-						<div class="d-flex align-items-center {{ $trendTextClass }}">
-							{{-- Icono de flecha --}}
-							<i class="bi-{{ $trendIcon }} me-1"></i>
 
-							{{-- Valor de la tendencia --}}
-							<span class="fw-bolder">{{ $trend }}</span>
+				@if (!$hideTrend)
+					<div class="d-flex align-items-center fs-8" style="min-height: 1.25rem;"> 
+						@if($trend)
+							<div class="d-flex align-items-center {{ $trendTextClass }}">
+								{{-- Icono de flecha --}}
+								<i class="bi-{{ $trendIcon }} me-1"></i>
 
-							{{-- Contexto (vs ayer) --}}
-							@if($trendContext)
-								<span class="text-muted ms-1">{{ $trendContext }}</span>
-							@endif
-						</div>
-					@endif
-				</div>
+								{{-- Valor de la tendencia --}}
+								<span class="fw-bolder">{{ $trend }}</span>
+
+								{{-- Contexto (vs ayer) --}}
+								@if($trendContext)
+									<span class="text-muted ms-1">{{ $trendContext }}</span>
+								@endif
+							</div>
+						@endif
+					</div> 
+				@endif
 			</div>
 
 			<div class="{{ $iconBgClass }} text-white d-flex align-items-center justify-content-center rounded-3" 

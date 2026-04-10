@@ -18,21 +18,20 @@
 				Stat Card Component - Today's Sales
 				Displays a statistical card showing today's sales with a random value for demonstration.
 			--}}
-			{{-- Ventas de Hoy: SOLO PARA ADMIN --}}
-            @if(auth()->user()->hasRole(\App\Enums\UserRole::ADMIN->value))
-            <div class="col">
-                <x-stat-card
-                    title="Ventas de Hoy"
-                    value=" ₡ {{ number_format($todaySalesTotal, 0, ',', '.') }} "
-                    currency="true"
-                    icon="cash"
-                    color-theme="green"
-                    trend="{{ $salesTrendText }}"
-                    trend-context="vs ayer"
-                    trend-direction="{{ $trendDirection }}"
-                />
-            </div>
-            @endif
+			<div class="col">
+				
+				<x-stat-card
+					title="Ventas de Hoy"
+					value=" ₡ {{ number_format($todaySalesTotal, 0, ',', '.') }} "
+					currency="true" 
+					icon="cash"
+					color-theme="green"
+					trend="{{ $salesTrendText }}"
+					trend-context="vs ayer"
+					trend-direction="{{ $trendDirection }}"
+					{{-- :url="route('Sale.index', ['filter' => 'low_stock'])" --}}
+				/>
+			</div>
 			
 			@for ($i = 0; $i < 2; $i++)
 				<div class="col">
@@ -71,43 +70,78 @@
 			<div class="col">
 				<x-stat-card
 					title="Próximos a Vencer"
-					value="{{ $aboutToExpire }} Insumos"
 					currency="false"
 					icon="hourglass-split"
 					color-theme="red"
-					:url="route('supplies.index', ['filter' => 'expiring_soon'])"
-				/>
+					:url="null"
+					hideTrend="true"
+				>
+					
+					@slot('value')
+						<div class="d-flex flex-column gap-0 mt-1 pb-0">
+							<a href="{{ route('supplies.index', ['filter' => 'expiring_soon']) }}" 
+							class="text-decoration-none text-reset d-flex align-items-baseline gap-2">
+								<span class="h6 fw-bold mb-0">{{ $aboutToExpireSupplies }}</span>
+								<span class="h6 fw-bold ">Insumos</span>
+							</a>
+							<a href="{{ route('products.index', ['filter' => 'expiring_soon']) }}" 
+							class="text-decoration-none text-reset d-flex align-items-baseline gap-2 mb-0">
+								<span class="h6 fw-bold mb-0">{{ $aboutToExpireProducts }}</span> 
+								<span class="h6 fw-bold ">Productos</span>
+							</a>
+						</div>
+					@endslot
+				</x-stat-card>
 			</div>
 		</div>
 
-	{{-- Monthly Income Chart --}}
-        <div class="col-md-6">
-            <div class="card border-1 card-container shadow-sm rounded-4 h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="fw-bold m-0">Ingresos del Mes</h5>
-                        <i class="bi bi-cash-coin fs-4"></i>
-                    </div>
-
-                    @if(auth()->user()->hasRole(\App\Enums\UserRole::ADMIN->value))
-						{{-- TODO EL CONTENIDO PARA EL ADMIN (Monto y Gráfico) --}}
-						<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
-							<x-icons.colon-icon width="24" height="24" />
-							{{ number_format(rand(1000, 15000000), 0, ',', '.') }}
-						</h2>
-						<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('F Y')) }}</p>
-						<div id="chart-monthly-income" class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" style="min-height: 200px;"></div>
-					@else
-						{{-- BLOQUE DE ACCESO RESTRINGIDO PARA COLABORADORES --}}
-						<div class="text-center py-4">
-							<i class="bi bi-shield-lock text-warning" style="font-size: 3rem;"></i>
-							<h4 class="mt-2">Acceso Restringido</h4>
-							<p class="text-muted">Solo el administrador puede ver los estados financieros.</p>
-						</div>
-					@endif
-                </div>
-            </div>
-        </div>
+		{{-- Monthly Income Chart and Other Cards --}}
+		<div class="row g-3 mt-2">
+			{{-- Monthly Income Chart --}}
+			<div class="col-md-6">
+				<div class="card border-1 card-container shadow-sm rounded-4 mh-100 w-100">
+					<div class="card-body p-4">
+						@hasrole(App\Enums\UserRole::ADMIN->value)
+							<div class="d-flex justify-content-between align-items-center mb-2">
+								<h5 class="fw-bold m-0">Ingresos del Mes</h5>
+								<i class="bi bi-cash-coin fs-4"></i>
+							</div>
+					
+							<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
+								<x-icons.colon-icon width="24" height="24" />
+								{{ number_format($monthlyTotal, 0, ',', '.') }}
+							</h2>
+					
+							<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('F Y')) }}</p>
+					
+							<div 
+								id="chart-monthly-income" 
+								class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" 
+								style="min-height: 200px;">
+							</div>
+						@endhasrole
+						@hasrole(App\Enums\UserRole::EMPLOYEE->value)
+							<div class="d-flex justify-content-between align-items-center mb-2">
+								<h5 class="fw-bold m-0">Ingresos del Día</h5>
+								<i class="bi bi-cash-coin fs-4"></i>
+							</div>
+					
+							<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
+								<x-icons.colon-icon width="24" height="24" />
+								{{ number_format($dailyTotal, 0, ',', '.') }}
+							</h2>
+					
+							<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('l, j \d\e F \d\e\l Y')) }}</p>
+					
+							<div 
+								id="chart-daily-income" 
+								class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" 
+								style="min-height: 200px;">
+							</div>
+						@endhasrole
+					</div>
+				</div>
+			</div>
 			{{-- Active Contracts and Today's Deliveries --}}
 			<div class="col-md-6">
 				<div class="card border-1 card-container shadow-sm rounded-4 mh-100 w-100 h-100">
@@ -141,75 +175,163 @@
                 return $('html').attr('data-bs-theme') || 'light';
             }
 
-            // 2. Buscar el elemento del gráfico
-            var chartElement = $('#chart-monthly-income')[0];
+			// Graph Options (Series and Categories should show data up to the current day of the month)
+			const isAdmin = @json(auth()->user()?->hasRole(App\Enums\UserRole::ADMIN->value) ?? false);
+			const isEmployee = @json(auth()->user()?->hasRole(App\Enums\UserRole::EMPLOYEE->value) ?? false);
 
-            // 3. SOLO si el gráfico existe (es decir, el usuario es ADMIN), ejecutamos todo lo demás
-            if (chartElement) {
-                var options = {
-                    series: [{
-                        name: 'Ingresos',
-                        data: [
-                            @php
-                                $currentDay = now()->day;
-                                for ($day = 1; $day <= $currentDay; $day++) {
-                                    echo rand(50000, 500000);
-                                    if ($day < $currentDay) echo ', ';
-                                }
-                            @endphp
-                        ]
-                    }],
-                    xaxis: {
-                        categories: [
-                            @php
-                                $currentDay = now()->day;
-                                $monthName = ucfirst(now()->translatedFormat('F'));
-                                for ($day = 1; $day <= $currentDay; $day++) {
-                                    $date = now()->setDay($day);
-                                    $dayName = ucfirst($date->translatedFormat('l'));
-                                    echo "'" . $dayName . ", " . $day . " de " . $monthName . "'";
-                                    if ($day < $currentDay) echo ', ';
-                                }
-                            @endphp
-                        ],
-                        title: { text: 'Días del mes' }
-                    },
-                    chart: {
-                        type: 'area',
-                        height: 200,
-                        fontFamily: 'inherit',
-                        background: 'transparent',
-                        sparkline: { enabled: true }
-                    },
-                    theme: { mode: getCurrentTheme() },
-                    stroke: { curve: 'smooth', width: 2 },
-                    fill: {
-                        type: 'gradient',
-                        gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3, stops: [0, 90, 100] }
-                    },
-                    colors: ['#198754'],
-                    tooltip: {
-                        theme: getCurrentTheme(),
-                        y: { formatter: (val) => "₡ " + val.toLocaleString() }
-                    }
-                };
+			if (isAdmin){
+				var options = {
+					series: [{
+						name: 'Ingresos',
+						data: @json($monthlySalesValues)
+					}],
+					xaxis: {
+						categories: @json($monthlySalesLabels), 
+						title: { text: 'Días del mes' }
+						
+					},
+					chart: {
+						type: 'area',      			// Graphic Type (Area)
+						height: 200,      			// Height matching your design
+						fontFamily: 'inherit', 		// Use your site's font
+						background: 'transparent', 	// Transparent to match card background
+						toolbar: {
+							show: true,
+							tools: {
+								download: true,
+								selection: true,
+								zoom: true,
+								zoomin: true,
+								zoomout: true,
+								pan: true,
+								reset: true 
+							},
+							autoSelected: 'pan' 
+						},
+						sparkline: { enabled: true }
+					},
+					theme: {
+						mode: getCurrentTheme()
+					},
+					stroke: {
+						curve: 'smooth',
+						width: 2
+					},
+					fill: {
+						type: 'gradient',
+						gradient: {
+							shadeIntensity: 1,
+							opacityFrom: 0.7,
+							opacityTo: 0.3,
+							stops: [0, 90, 100]
+						}
+					},
+					colors: ['#198754'],
+					tooltip: {
+						theme: getCurrentTheme(),
+						y: {
+							formatter: function (val) {
+								return "₡ " + val.toLocaleString();
+							}
+						}
+					}
+				};
 
-                // Renderizar
-                var chart = new ApexCharts(chartElement, options);
-                chart.render();
+				// Render the chart
+				var chart = new ApexCharts($('#chart-monthly-income')[0], options);
+				chart.render();
 
-                // Observador para cambios de tema (Dark/Light mode)
-                var observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.attributeName === "data-bs-theme") {
-                            var newTheme = getCurrentTheme();
-                            chart.updateOptions({
-                                theme: { mode: newTheme },
-                                tooltip: { theme: newTheme }
-                            });
-                        }
-                    });
-                });
+				// Use MutationObserver with jQuery to watch for changes in data-bs-theme attribute
+				var observer = new MutationObserver(function(mutations) {
+					mutations.forEach(function(mutation) {
+						if (mutation.attributeName === "data-bs-theme") {
+							var newTheme = getCurrentTheme();
+							
+							chart.updateOptions({
+								theme: { mode: newTheme },
+								tooltip: { theme: newTheme }
+							});
+						}
+					});
+				});
+			}
+
+			if (isEmployee){
+				var options = {
+					series: [{
+						name: 'Ingresos',
+						data: @json($dailySalesValues)
+					}],
+					xaxis: {
+						categories: @json($dailySalesLabels), 
+						title: { text: 'Horas del día' }
+						
+					},
+					chart: {
+						type: 'area',      			// Graphic Type (Area)
+						height: 200,      			// Height matching your design
+						fontFamily: 'inherit', 		// Use your site's font
+						background: 'transparent', 	// Transparent to match card background
+						toolbar: {
+							show: true,
+							tools: {
+								download: true,
+								selection: true,
+								zoom: true,
+								zoomin: true,
+								zoomout: true,
+								pan: true,
+								reset: true 
+							},
+							autoSelected: 'pan' 
+						},
+						sparkline: { enabled: true }
+					},
+					theme: {
+						mode: getCurrentTheme()
+					},
+					stroke: {
+						curve: 'smooth',
+						width: 2
+					},
+					fill: {
+						type: 'gradient',
+						gradient: {
+							shadeIntensity: 1,
+							opacityFrom: 0.7,
+							opacityTo: 0.3,
+							stops: [0, 90, 100]
+						}
+					},
+					colors: ['#198754'],
+					tooltip: {
+						theme: getCurrentTheme(),
+						y: {
+							formatter: function (val) {
+								return "₡ " + val.toLocaleString();
+							}
+						}
+					}
+				};
+
+				// Render the chart
+				var chart = new ApexCharts($('#chart-daily-income')[0], options);
+				chart.render();
+
+				// Use MutationObserver with jQuery to watch for changes in data-bs-theme attribute
+				var observer = new MutationObserver(function(mutations) {
+					mutations.forEach(function(mutation) {
+						if (mutation.attributeName === "data-bs-theme") {
+							var newTheme = getCurrentTheme();
+							
+							chart.updateOptions({
+								theme: { mode: newTheme },
+								tooltip: { theme: newTheme }
+							});
+						}
+					});
+				});
+			}
 
                 observer.observe(document.documentElement, {
                     attributes: true,
