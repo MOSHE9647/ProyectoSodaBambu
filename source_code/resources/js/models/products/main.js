@@ -38,9 +38,11 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('es-CR', {
 // retrieve initial filter state from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 let showOnlyLowStock = urlParams.get('filter') === 'low_stock';
+let showOnlyExpiringSoon = urlParams.get('filter') === 'expiring_soon';
 
 let productsDataTable = null;
-
+const canCreateProducts = ($('#products-table').data('can-create-products') ?? '').toString() === '1';
+const canManageProducts = ($('#products-table').data('can-manage-products') ?? '').toString() === '1';
 
 // ==================== Global Functions ====================
 
@@ -89,6 +91,22 @@ function formatCurrency(value) {
 	return CURRENCY_FORMATTER.format(amount);
 }
 
+function syncFilterQueryParam() {
+	const params = new URLSearchParams(window.location.search);
+
+	if (showOnlyExpiringSoon) {
+		params.set('filter', 'expiring_soon');
+	} else if (showOnlyLowStock) {
+		params.set('filter', 'low_stock');
+	} else {
+		params.delete('filter');
+	}
+
+	const nextQuery = params.toString();
+	const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}`;
+	window.history.replaceState({}, '', nextUrl);
+}
+
 /**
  * Shows information for a specific product.
  * @param {string} url - The URL to fetch product information from
@@ -110,6 +128,7 @@ window.deleteProduct = function (e) {
 
 window.toggleLowStockFilter = function () {
 	showOnlyLowStock = !showOnlyLowStock;
+	syncFilterQueryParam();
 
 	const $button = $('.low-stock-filter-button');
 	$button.toggleClass('btn-outline-warning btn-warning');
@@ -127,13 +146,30 @@ window.toggleLowStockFilter = function () {
 	}
 };
 
+window.toggleExpiringSoonFilter = function () {
+	showOnlyExpiringSoon = !showOnlyExpiringSoon;
+	syncFilterQueryParam();
+
+	const $button = $('.expiring-soon-filter-button');
+	$button.toggleClass('btn-outline-danger btn-danger');
+	$('.expiring-soon-filter-button-text').text(showOnlyExpiringSoon ? 'Mostrar todos' : 'Próximos a vencer');
+
+	if (productsDataTable) {
+		productsDataTable.ajax.reload(null, true);
+
+		setTimeout(() => {
+			productsDataTable.columns.adjust();
+			if (productsDataTable.responsive) {
+				productsDataTable.responsive.recalc();
+			}
+		}, 0);
+	}
+};
+
 // ==================== DataTable Initialization ====================
 
 // Ensure the DOM is fully loaded before initializing the DataTable
 $(() => {
-	const tableEl = $('#products-table'); // <--- Define esto primero
-    const canManageProducts = (tableEl.data('can-manage-products') ?? '').toString() === '1';
-    const canCreateProducts = (tableEl.data('can-create-products') ?? '').toString() === '1';
 	// Define columns for products table (only for server-side processing)
 	const columns = [
 		{
@@ -169,6 +205,13 @@ $(() => {
 			data: 'sale_price',
 			name: 'sale_price',
 			render: (data) => formatCurrency(data),
+		},
+		{
+			data: 'expiration_days',
+			name: 'expiration_date',
+			render: (data) => data,
+			orderable: false,
+			searchable: false,
 		},
 	];
 
@@ -213,6 +256,15 @@ $(() => {
 			funcName: 'toggleLowStockFilter',
 			params: ['.low-stock-filter-button', 'low-stock-filter'],
 		},
+		{
+			text: 'Próximos a vencer',
+			href: 'javascript:void(0)',
+			class: 'expiring-soon-filter-button btn-outline-danger',
+			icon: 'bi-hourglass-split',
+			func: window.toggleExpiringSoonFilter,
+			funcName: 'toggleExpiringSoonFilter',
+			params: ['.expiring-soon-filter-button', 'expiring-soon-filter'],
+		},
 	];
 
 	// Set initial state of low stock filter button based on URL parameter
@@ -222,17 +274,23 @@ $(() => {
         $('.low-stock-filter-button-text').text('Mostrar todos');
     }	
 
-	if (canCreateProducts) { 
-    	customButtons.unshift({
-        text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
-        href: MODEL_ROUTES.create,
-        class: `create-button ${BTN_CLASS_PRIMARY}`,
-        icon: 'bi-box-seam',
-        func: toggleLoadingState,
-        funcName: 'toggleLoadingState',
-        params: ['.create-button', 'create', true],
-    });
-}
+	if (showOnlyExpiringSoon) {
+		const $button = $('.expiring-soon-filter-button');
+		$button.removeClass('btn-outline-danger').addClass('btn-danger');
+		$('.expiring-soon-filter-button-text').text('Mostrar todos');
+	}
+
+	if (canCreateProducts) {
+		customButtons.push({
+			text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
+			href: MODEL_ROUTES.create,
+			class: `create-button ${BTN_CLASS_PRIMARY}`,
+			icon: 'bi-box-seam',
+			func: toggleLoadingState,
+			funcName: 'toggleLoadingState',
+			params: ['.create-button', 'create', true],
+		});
+	}
 
 	// Initialize the CRUD DataTable
 	productsDataTable = CreateNewDataTable('products-table', MODEL_ROUTES.index, columns, actions, customButtons, {
@@ -240,6 +298,7 @@ $(() => {
 			url: MODEL_ROUTES.index,
 			data: (d) => {
 				d.low_stock = showOnlyLowStock ? 1 : 0;
+				d.expiring_soon = showOnlyExpiringSoon ? 1 : 0;
 			}
 		},
 		columnControl: [],

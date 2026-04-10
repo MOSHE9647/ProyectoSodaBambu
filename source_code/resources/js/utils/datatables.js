@@ -424,6 +424,7 @@ function buildTableOptions(tableId, ajaxUrl, columns, buttonsHtml, userOptions) 
 	} = userOptions;
 
 	const defaultOptions = {
+		pageLength:10,
 		serverSide: true,
 		ajax: {
 			url: ajaxUrl,
