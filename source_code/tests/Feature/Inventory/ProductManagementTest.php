@@ -59,6 +59,7 @@ test('CP-02_EIF-32 - creates merchandise product and auto-calculates sale price'
         'name' => 'Cafe en grano',
         'type' => ProductType::MERCHANDISE->value,
         'has_inventory' => true,
+        'current_stock' => 25,
         'reference_cost' => 10000,
         'tax_percentage' => 13,
         'margin_percentage' => 35,
@@ -81,8 +82,7 @@ test('CP-02_EIF-32 - creates merchandise product and auto-calculates sale price'
     ]);
 
     $stock = ProductStock::where('product_id', $product->id)->firstOrFail();
-    expect($stock->current_stock)->toBeGreaterThanOrEqual(20)
-        ->and($stock->current_stock)->toBeLessThanOrEqual(100);
+    expect($stock->current_stock)->toBe(25);
 });
 
 /**

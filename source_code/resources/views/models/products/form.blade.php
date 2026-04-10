@@ -1,7 +1,7 @@
 @php
 	use App\Enums\ProductType;
 
-	$categories = $categories ?? collect();
+	$categories ?? collect();
 	$selectedType = old('type', isset($product) ? ($product->type?->value ?? $product->type) : '');
 	$selectedHasInventory = (string) old('has_inventory', isset($product) ? (int) $product->has_inventory : 0);
 	$selectedCategory = (string) old('category_id', isset($product) ? $product->category_id : '-1');
@@ -49,7 +49,7 @@
 
 				<div class="row g-3">
 					{{-- Barcode --}}
-					<div class="col-12 col-md-6">
+					<div class="col-6">
 						<x-form.input
 							:id="'barcode'"
 							:type="'text'"
@@ -67,7 +67,7 @@
 					</div>
 
 					{{-- Name --}}
-					<div class="col-12 col-md-6">
+					<div class="col-6">
 						<x-form.input
 							:id="'name'"
 							:type="'text'"
@@ -127,29 +127,25 @@
 				</div>
 
 				<div id="inventory-stock-row" class="row g-3 {{ $showInventoryStock ? '' : 'd-none' }}">
-					@if(isset($product))
-						<div class="col-12 col-md-6">
-							<x-form.input
-								:id="'current_stock'"
-								:type="'number'"
-								:step="'1'"
-								:min="'0'"
-								:class="'border-secondary'"
-								:inputClass="$errors->has('current_stock') ? 'is-invalid' : ''"
-								:placeholder="'Ej: 25'"
-								:value="$selectedCurrentStock"
-								:errorMessage="$errors->first('current_stock') ?? ''"
-								:iconLeft="'bi bi-archive'"
-								:required="false"
-								:readonly="true"
-							>
-								Stock Actual
-							</x-form.input>
-							<small class="text-muted">Se asigna automáticamente al crear el inventario.</small>
-						</div>
-					@endif
+					<div class="col-12 col-md-6">
+						<x-form.input
+							:id="'current_stock'"
+							:type="'number'"
+							:step="'1'"
+							:min="'0'"
+							:class="'border-secondary'"
+							:inputClass="$errors->has('current_stock') ? 'is-invalid' : ''"
+							:placeholder="'Ej: 25'"
+							:value="$selectedCurrentStock"
+							:errorMessage="$errors->first('current_stock') ?? ''"
+							:iconLeft="'bi bi-archive'"
+							:required="false"
+						>
+							Stock Actual <span id="current-stock-required" class="text-danger">*</span>
+						</x-form.input>
+					</div>
 
-					<div class="col-12 col-md-{{ isset($product) ? '6' : '12' }}">
+					<div class="col-12 col-md-6">
 						<x-form.input
 							:id="'minimum_stock'"
 							:type="'number'"

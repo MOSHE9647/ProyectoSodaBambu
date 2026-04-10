@@ -281,7 +281,7 @@ $(() => {
 	}
 
 	if (canCreateProducts) {
-		customButtons.unshift({
+		customButtons.push({
 			text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
 			href: MODEL_ROUTES.create,
 			class: `create-button ${BTN_CLASS_PRIMARY}`,

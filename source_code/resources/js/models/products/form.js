@@ -199,7 +199,7 @@ function isFieldRequired(fieldId, values) {
     }
 
     if (fieldId === 'current_stock') {
-        return false;
+        return hasInventory;
     }
 
     if (fieldId === 'sale_price') {
@@ -253,14 +253,15 @@ function syncInventoryFieldBehavior() {
     toggleFieldGroup('inventory-stock-row', hasInventory);
 
     const $currentStock = $('#current_stock');
-    $currentStock.prop('required', false);
+    $currentStock.prop('required', hasInventory);
     $currentStock.prop('disabled', !hasInventory);
-    $currentStock.prop('readonly', true);
+    $currentStock.prop('readonly', false);
 
     const $minimumStock = $('#minimum_stock');
     $minimumStock.prop('required', hasInventory);
     $minimumStock.prop('disabled', !hasInventory);
 
+    toggleConditionalRequiredMarker('current-stock-required', hasInventory);
     toggleConditionalRequiredMarker('minimum-stock-required', hasInventory);
 }
 
