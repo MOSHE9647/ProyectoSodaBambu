@@ -224,22 +224,22 @@ test('CP-07_EIF-49 - restores a soft-deleted supply when creating with the same 
  * Priority: Highest
  * Jira Link: https://est-una.atlassian.net/browse/EIF-49
  */
-test('CP-08_EIF-49 - denies supply module access to non-admin users', function () {
+test('CP-08_EIF-49 - allows supply module access to non-admin users', function () {
     // Given: an authenticated employee user without admin role.
     $employee = createEmployeeUserForSupply();
 
     // When: the non-admin user tries to access supply endpoints.
     $this->actingAs($employee)
         ->get(route('supplies.index'))
-        ->assertForbidden();
+        ->assertOk();
 
     $this->actingAs($employee)
         ->post(route('supplies.store'), [
             'name' => 'Prueba',
             'measure_unit' => 'kg',
         ])
-        // Then: all write operations are forbidden as well.
-        ->assertForbidden();
+        // Then: all write actions are allowed for non-admin users as per updated requirements.
+        ->assertRedirect(route('supplies.index'));
 });
 
 /**

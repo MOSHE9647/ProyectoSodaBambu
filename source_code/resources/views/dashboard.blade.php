@@ -46,8 +46,6 @@
 					/>
 				</div>
 			@endfor
-			
-			
 
 			{{-- 
 				Stat Card Component - Minimum Stock Products
@@ -63,6 +61,7 @@
 					:url="route('products.index', ['filter' => 'low_stock'])"
 				/>
 			</div>
+
 			{{-- 
 				Stat Card Component - About to Expire supplies
 				Displays a statistical card showing the count of supplies that are nearing expiration.	
@@ -71,23 +70,23 @@
 				<x-stat-card
 					title="Próximos a Vencer"
 					currency="false"
+					slotContainerStyle="max-height: 83.98px;"
 					icon="hourglass-split"
 					color-theme="red"
-					:url="null"
 					hideTrend="true"
-				>
-					
+					:url="null"
+				>	
 					@slot('value')
-						<div class="d-flex flex-column gap-0 mt-1 pb-0">
+						<div class="d-flex flex-column gap-0 pb-0 stock-supply-status-container">
 							<a href="{{ route('supplies.index', ['filter' => 'expiring_soon']) }}" 
-							class="text-decoration-none text-reset d-flex align-items-baseline gap-2">
-								<span class="h6 fw-bold mb-0">{{ $aboutToExpireSupplies }}</span>
-								<span class="h6 fw-bold ">Insumos</span>
+							class="d-flex align-items-baseline gap-2">
+								<span class="h5 fw-bold mb-0">{{ $aboutToExpireSupplies }}</span>
+								<span class="h5 fw-bold ">Insumos</span>
 							</a>
 							<a href="{{ route('products.index', ['filter' => 'expiring_soon']) }}" 
-							class="text-decoration-none text-reset d-flex align-items-baseline gap-2 mb-0">
-								<span class="h6 fw-bold mb-0">{{ $aboutToExpireProducts }}</span> 
-								<span class="h6 fw-bold ">Productos</span>
+							class="d-flex align-items-baseline gap-2 mb-0">
+								<span class="h5 fw-bold mb-0">{{ $aboutToExpireProducts }}</span> 
+								<span class="h5 fw-bold ">Productos</span>
 							</a>
 						</div>
 					@endslot
@@ -168,176 +167,15 @@
 @endsection
 
 @section('scripts')
-	<script type="module">
-		$(document).ready(function () {
-			// Get current theme (light or dark)
-			function getCurrentTheme() {
-				return $('html').attr('data-bs-theme') || 'light';
-			}
-
-			// Graph Options (Series and Categories should show data up to the current day of the month)
-			const isAdmin = @json(auth()->user()?->hasRole(App\Enums\UserRole::ADMIN->value) ?? false);
-			const isEmployee = @json(auth()->user()?->hasRole(App\Enums\UserRole::EMPLOYEE->value) ?? false);
-
-			if (isAdmin){
-				var options = {
-					series: [{
-						name: 'Ingresos',
-						data: @json($monthlySalesValues)
-					}],
-					xaxis: {
-						categories: @json($monthlySalesLabels), 
-						title: { text: 'Días del mes' }
-						
-					},
-					chart: {
-						type: 'area',      			// Graphic Type (Area)
-						height: 200,      			// Height matching your design
-						fontFamily: 'inherit', 		// Use your site's font
-						background: 'transparent', 	// Transparent to match card background
-						toolbar: {
-							show: true,
-							tools: {
-								download: true,
-								selection: true,
-								zoom: true,
-								zoomin: true,
-								zoomout: true,
-								pan: true,
-								reset: true 
-							},
-							autoSelected: 'pan' 
-						},
-						sparkline: { enabled: true }
-					},
-					theme: {
-						mode: getCurrentTheme()
-					},
-					stroke: {
-						curve: 'smooth',
-						width: 2
-					},
-					fill: {
-						type: 'gradient',
-						gradient: {
-							shadeIntensity: 1,
-							opacityFrom: 0.7,
-							opacityTo: 0.3,
-							stops: [0, 90, 100]
-						}
-					},
-					colors: ['#198754'],
-					tooltip: {
-						theme: getCurrentTheme(),
-						y: {
-							formatter: function (val) {
-								return "₡ " + val.toLocaleString();
-							}
-						}
-					}
-				};
-
-				// Render the chart
-				var chart = new ApexCharts($('#chart-monthly-income')[0], options);
-				chart.render();
-
-				// Use MutationObserver with jQuery to watch for changes in data-bs-theme attribute
-				var observer = new MutationObserver(function(mutations) {
-					mutations.forEach(function(mutation) {
-						if (mutation.attributeName === "data-bs-theme") {
-							var newTheme = getCurrentTheme();
-							
-							chart.updateOptions({
-								theme: { mode: newTheme },
-								tooltip: { theme: newTheme }
-							});
-						}
-					});
-				});
-			}
-
-			if (isEmployee){
-				var options = {
-					series: [{
-						name: 'Ingresos',
-						data: @json($dailySalesValues)
-					}],
-					xaxis: {
-						categories: @json($dailySalesLabels), 
-						title: { text: 'Horas del día' }
-						
-					},
-					chart: {
-						type: 'area',      			// Graphic Type (Area)
-						height: 200,      			// Height matching your design
-						fontFamily: 'inherit', 		// Use your site's font
-						background: 'transparent', 	// Transparent to match card background
-						toolbar: {
-							show: true,
-							tools: {
-								download: true,
-								selection: true,
-								zoom: true,
-								zoomin: true,
-								zoomout: true,
-								pan: true,
-								reset: true 
-							},
-							autoSelected: 'pan' 
-						},
-						sparkline: { enabled: true }
-					},
-					theme: {
-						mode: getCurrentTheme()
-					},
-					stroke: {
-						curve: 'smooth',
-						width: 2
-					},
-					fill: {
-						type: 'gradient',
-						gradient: {
-							shadeIntensity: 1,
-							opacityFrom: 0.7,
-							opacityTo: 0.3,
-							stops: [0, 90, 100]
-						}
-					},
-					colors: ['#198754'],
-					tooltip: {
-						theme: getCurrentTheme(),
-						y: {
-							formatter: function (val) {
-								return "₡ " + val.toLocaleString();
-							}
-						}
-					}
-				};
-
-				// Render the chart
-				var chart = new ApexCharts($('#chart-daily-income')[0], options);
-				chart.render();
-
-				// Use MutationObserver with jQuery to watch for changes in data-bs-theme attribute
-				var observer = new MutationObserver(function(mutations) {
-					mutations.forEach(function(mutation) {
-						if (mutation.attributeName === "data-bs-theme") {
-							var newTheme = getCurrentTheme();
-							
-							chart.updateOptions({
-								theme: { mode: newTheme },
-								tooltip: { theme: newTheme }
-							});
-						}
-					});
-				});
-			}
-
-			// Start observing the documentElement for attribute changes
-			observer.observe(document.documentElement, {
-				attributes: true,
-				attributeFilter: ['data-bs-theme']
-			});
-		});
-	</script>
+    <script type="text/javascript">
+        window.DashboardData = {
+			isAdmin: @json(auth()->user()?->hasRole(App\Enums\UserRole::ADMIN->value) ?? false),
+			isEmployee: @json(auth()->user()?->hasRole(App\Enums\UserRole::EMPLOYEE->value) ?? false),
+			monthlySalesValues: @json($monthlySalesValues),
+			monthlySalesLabels: @json($monthlySalesLabels),
+			dailySalesValues: @json($dailySalesValues),
+			dailySalesLabels: @json($dailySalesLabels),
+		}
+    </script>
+	@vite(['resources/js/pages/dashboard.js'])
 @endsection

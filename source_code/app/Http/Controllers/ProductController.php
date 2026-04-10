@@ -34,7 +34,7 @@ class ProductController extends Controller implements HasMiddleware
 
         return [
             new Middleware(RoleMiddleware::using($allowedViewerRoles)),
-            new Middleware(RoleMiddleware::using(UserRole::ADMIN->value), only: ['create', 'store', 'edit', 'update', 'destroy']),
+            new Middleware(RoleMiddleware::using(UserRole::ADMIN->value), only: ['edit', 'update', 'destroy']),
         ];
     }
 

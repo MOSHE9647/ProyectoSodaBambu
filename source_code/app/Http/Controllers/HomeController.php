@@ -22,7 +22,7 @@ class HomeController extends Controller
         $userRoles = auth()->user()->getRoleNames();
         $roleRoutes = [
             UserRole::ADMIN->value => 'dashboard',
-            UserRole::EMPLOYEE->value => 'sales',
+            UserRole::EMPLOYEE->value => 'dashboard',
         ];
 
         foreach ($roleRoutes as $role => $route) {
