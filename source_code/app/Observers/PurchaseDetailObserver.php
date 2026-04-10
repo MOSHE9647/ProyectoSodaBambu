@@ -7,9 +7,7 @@ use App\Models\PurchaseDetail;
 
 class PurchaseDetailObserver
 {
-    public function __construct(protected GetProductsAboutToExpireCount $getProductsAboutToExpireCount)
-    {
-    }
+    public function __construct(protected GetProductsAboutToExpireCount $getProductsAboutToExpireCount) {}
 
     /**
      * Handle the PurchaseDetail "created" event.
