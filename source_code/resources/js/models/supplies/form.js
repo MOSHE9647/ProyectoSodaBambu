@@ -26,6 +26,21 @@ const fieldValidators = {
         validator: (val) => val.length > 0 && val.length <= 255,
         emptyMsg: 'La unidad de medida es obligatoria.',
         invalidMsg: 'La unidad de medida no puede exceder 255 caracteres.'
+    },
+    quantity: {
+        validator: (val) => val !== '' && !isNaN(val) && parseInt(val) >= 0,
+        emptyMsg: 'La cantidad es obligatoria.',
+        invalidMsg: 'La cantidad debe ser un número entero positivo.'
+    },
+    unit_price: {
+        validator: (val) => val !== '' && !isNaN(val) && parseFloat(val) >= 0,
+        emptyMsg: 'El precio unitario es obligatorio.',
+        invalidMsg: 'El precio debe ser un número válido.'
+    },
+    expiration_alert_days: {
+        validator: (val) => val === '' || (!isNaN(val) && parseInt(val) >= 0),
+        emptyMsg: null, // Es opcional
+        invalidMsg: 'Los días de alerta deben ser un número entero.'
     }
 };
 
@@ -53,6 +68,10 @@ function submitSupplyForm() {
     const values = {
         name: $name.val().trim(),
         measure_unit: $measureUnit.val().trim(),
+        quantity: $('#quantity').val().trim(),
+        unit_price: $('#unit_price').val().trim(),
+        expiration_date: $('#expiration_date').val().trim(),
+        expiration_alert_days: $('#expiration_alert_days').val().trim(),
     };
 
     return validateSupplyForm(values);

@@ -6,7 +6,6 @@ use App\Enums\UserRole;
 use App\Http\Requests\SupplyRequest;
 use App\Http\Resources\SupplyResource;
 use App\Models\Supply;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -51,7 +50,6 @@ class SupplyController extends Controller implements HasMiddleware
         if ($request->ajax()) {
             $query = Supply::query();
 
-            // filter for supplies that are expiring soon (within the next 7 days)
             if ($request->boolean('expiring_soon') || $request->filter === 'expiring_soon') {
                 $query->whereNotNull('expiration_date')
                     ->whereBetween('expiration_date', [
@@ -61,15 +59,15 @@ class SupplyController extends Controller implements HasMiddleware
             }
 
             return DataTables::of($query)
-                ->addColumn('quantity', function ($supply) {
-                    return $supply->quantity;
+                ->editColumn('quantity', function ($supply) {
+                    return $supply->quantity ?? 0;
                 })
-                ->addColumn('unit_price', function ($supply) {
-                    return '₡'.number_format((float) $supply->unit_price, 2);
+                ->editColumn('unit_price', function ($supply) {
+                    return $supply->unit_price ? '₡'.number_format($supply->unit_price, 2) : '₡0.00';
                 })
-                ->addColumn('expiration_date', function ($supply) {
+                ->editColumn('expiration_date', function ($supply) {
                     return $supply->expiration_date
-                        ? Carbon::parse($supply->expiration_date)->format('d/m/Y')
+                        ? $supply->expiration_date->format('d/m/Y')
                         : 'N/A';
                 })
                 ->toJson();
