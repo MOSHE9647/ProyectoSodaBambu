@@ -133,7 +133,7 @@ test('CP-05_EIF-20_QA1 - prevents inactive employees from logging in', function 
  * Priority: Medium
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-06_EIF-20_QA1 - redirects employee users from home route to sales module', function () {
+test('CP-06_EIF-20_QA1 - redirects employee users from home route to dashboard module', function () {
     // Given: an authenticated and verified employee user.
     $employeeUser = createVerifiedUser(UserRole::EMPLOYEE);
 
@@ -141,5 +141,5 @@ test('CP-06_EIF-20_QA1 - redirects employee users from home route to sales modul
     $response = $this->actingAs($employeeUser)->get(route('home'));
 
     // Then: the user is redirected to the sales screen.
-    $response->assertRedirect(route('sales'));
+    $response->assertRedirect(route('dashboard'));
 });

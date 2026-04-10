@@ -97,6 +97,10 @@
 	
 	/* Employee Salary Calculation Cards */
 	--employee-salary-card-bg: var(--bs-secondary-bg-subtle);
+
+	/* Anchor Product/Supply Status Links */
+	--anchor-status-link-color: var(--bambu-text);
+	--anchor-status-link-hover-color: var(--bambu-logo-bg);
 }
 
 /* Dark Theme */
@@ -159,6 +163,10 @@
 
 	/* Employee Salary Calculation Cards */
 	--employee-salary-card-bg: #212529;
+
+	/* Anchor Product/Supply Status Links */
+	--anchor-status-link-color: var(--bambu-text-light);
+	--anchor-status-link-hover-color: var(--bambu-logo-bg);
 }
 
 /* Smooth Transitions */

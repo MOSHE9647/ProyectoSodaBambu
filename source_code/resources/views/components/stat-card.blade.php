@@ -9,7 +9,7 @@
     'colorTheme' => 'gray', // 'green', 'red', 'blue', etc.
 	'url' => null, // Optional URL for the entire card
 	'hideTrend' => false, // Option to hide trend information
-
+	'slotContainerStyle' => '', // Additional classes for the slot container
 ])
 
 @php
@@ -38,16 +38,17 @@
 	};
 
 	$tag = $url ? 'a' : 'div'; // If URL is provided, use <a> tag, otherwise use <div>
+	$tagClasses = $url ? 'stat-card-link' : '';
 @endphp
 
 <{{ $tag }}
-	@if($url) href="{{ $url }}" @endif
-	class="text-decoration-none text-dark"
+	@if($url) href="{{ $url }}" class="stat-card-link" @endif
+	class="{{ $tagClasses }}"
 >
 	<div class="card border-1 card-container shadow-sm rounded-4 mh-100 w-100">
 		<div class="card-body d-flex align-items-center justify-content-between p-4">
 
-			<div>
+			<div style="{{ $slotContainerStyle }}">
 				{{-- Title --}}
 				<h6 class="text-muted fw-normal fs-6 mb-2">{{ $title }}</h6>
 
