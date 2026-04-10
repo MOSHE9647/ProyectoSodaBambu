@@ -2,17 +2,21 @@
 
 namespace App\Observers;
 
+use App\Actions\Inventory\GetProductsAboutToExpireCount;
 use App\Models\PurchaseDetail;
-use Illuminate\Support\Facades\Cache;
 
 class PurchaseDetailObserver
 {
+    public function __construct(protected GetProductsAboutToExpireCount $getProductsAboutToExpireCount)
+    {
+    }
+
     /**
      * Handle the PurchaseDetail "created" event.
      */
     public function created(PurchaseDetail $purchaseDetail): void
     {
-        $this->countProductsAboutToExpire();
+        $this->getProductsAboutToExpireCount->execute();
     }
 
     /**
@@ -20,7 +24,7 @@ class PurchaseDetailObserver
      */
     public function updated(PurchaseDetail $purchaseDetail): void
     {
-        $this->countProductsAboutToExpire();
+        $this->getProductsAboutToExpireCount->execute();
     }
 
     /**
@@ -28,7 +32,6 @@ class PurchaseDetailObserver
      */
     public function deleted(PurchaseDetail $purchaseDetail): void
     {
-        $this->countProductsAboutToExpire();
+        $this->getProductsAboutToExpireCount->execute();
     }
-
 }

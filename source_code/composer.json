@@ -112,6 +112,10 @@
 		},
 		"process-timeout": 900
 	},
+	"process-timeout": 900,
 	"minimum-stability": "stable",
 	"prefer-stable": true
+
+	
+
 }

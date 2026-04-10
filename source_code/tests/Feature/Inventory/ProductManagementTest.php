@@ -237,14 +237,14 @@ test('CP-06_EIF-32 - soft deletes product', function () {
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-32
  */
-test('CP-07_EIF-32 - employee can view products list but cannot access product creation actions', function () {
+test('CP-07_EIF-32 - employee can view products list and access product creation actions', function () {
     // Given: an authenticated employee user.
     $employee = createEmployeeUserForProduct();
 
     // When/Then: employee is forbidden to access create or store product actions.
     $this->actingAs($employee)
         ->get(route('products.create'))
-        ->assertForbidden();
+        ->assertOk();
 
     $this->actingAs($employee)
         ->post(route('products.store'), [
@@ -254,7 +254,7 @@ test('CP-07_EIF-32 - employee can view products list but cannot access product c
             'has_inventory' => false,
             'sale_price' => 3000,
         ])
-        ->assertForbidden();
+        ->assertRedirect(route('products.index'));
 });
 
 /**

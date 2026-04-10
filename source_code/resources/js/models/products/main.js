@@ -11,6 +11,7 @@ const MODEL_NAME = 'producto';
 // String Constants
 const BTN_CLASS_PRIMARY = 'btn-primary';
 
+
 // Routes Configuration
 const MODEL_ROUTES = {
 	index: route('products.index'),

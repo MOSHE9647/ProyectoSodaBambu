@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
 use Throwable;
 use Yajra\DataTables\DataTables;
 
@@ -27,8 +28,14 @@ class SupplyController extends Controller implements HasMiddleware
      */
     public static function middleware(): array
     {
+        $allowedViewerRoles = UserRole::ADMIN->value.'|'.UserRole::EMPLOYEE->value;
+
         return [
-            new Middleware('role:'.UserRole::ADMIN->value),
+            new Middleware(RoleMiddleware::using($allowedViewerRoles)),
+            new Middleware(
+                RoleMiddleware::using(UserRole::ADMIN->value),
+                only: ['edit', 'update', 'destroy']
+            ),
         ];
     }
 
@@ -46,34 +53,23 @@ class SupplyController extends Controller implements HasMiddleware
 
             // filter for supplies that are expiring soon (within the next 7 days)
             if ($request->boolean('expiring_soon') || $request->filter === 'expiring_soon') {
-                $query->whereHas('purchaseDetails', function ($q) {
-                    $q->whereNotNull('expiration_date')
-                        ->whereBetween('expiration_date', [
-                            now()->startOfDay(),
-                            now()->addDays(7)->endOfDay(),
-                        ]);
-                });
+                $query->whereNotNull('expiration_date')
+                    ->whereBetween('expiration_date', [
+                        now()->startOfDay(),
+                        now()->addDays(7)->endOfDay(),
+                    ]);
             }
 
             return DataTables::of($query)
-                // aqui se le pasa la cantidad
                 ->addColumn('quantity', function ($supply) {
-                    $last = $supply->purchaseDetails()->latest()->first();
-
-                    return $last ? $last->quantity : 0;
+                    return $supply->quantity;
                 })
-                // aqui se le pasa el precio
                 ->addColumn('unit_price', function ($supply) {
-                    $last = $supply->purchaseDetails()->latest()->first();
-
-                    return $last ? '₡'.number_format($last->unit_price, 2) : '₡0.00';
+                    return '₡'.number_format((float) $supply->unit_price, 2);
                 })
-                // aquis e le pasa al fecha de vencimento
                 ->addColumn('expiration_date', function ($supply) {
-                    $last = $supply->purchaseDetails()->latest()->first();
-
-                    return ($last && $last->expiration_date)
-                        ? Carbon::parse($last->expiration_date)->format('d/m/Y')
+                    return $supply->expiration_date
+                        ? Carbon::parse($supply->expiration_date)->format('d/m/Y')
                         : 'N/A';
                 })
                 ->toJson();

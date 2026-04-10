@@ -1,5 +1,7 @@
 <?php
 
+use App\Actions\Sale\CalculateDailySalesTrendAction;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClientController;
@@ -8,8 +10,10 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
-use App\Http\Controllers\TestStockController;
 use App\Http\Controllers\UserController;
+use App\Models\Employee;
+use App\Models\Sale;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -43,6 +47,39 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
         Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
     });
 
-    // Route for testing low stock warning
-    Route::get('/test-low-stock/{stock}', [TestStockController::class, 'triggerLowStock'])->name('test.low-stock');
+    // RUTA TEMPORAL PARA VALIDACIÓN DE TENDENCIA DE VENTAS
+    Route::get('/debug-sales-trend', function (CalculateDailySalesTrendAction $action) {
+
+        Cache::forget('today_sales_stats');
+
+        $employee = Employee::first();
+
+        if (! $employee) {
+            return response()->json(['error' => 'No hay empleados en la BD para crear la venta de prueba']);
+        }
+
+        $testSale = Sale::create([
+            'employee_id' => $employee->id,
+            'invoice_number' => 'TEST-'.now()->format('YmdHi'),
+            'date' => now(),
+            'total' => 5000.00,
+            'payment_status' => PaymentStatus::PAID,
+        ]);
+
+        $stats = $action->execute();
+
+        $cachedStats = Cache::get('today_sales_stats');
+
+        return response()->json([
+            'message' => 'Venta de prueba creada y tendencia calculada',
+            'test_sale' => [
+                'id' => $testSale->id,
+                'invoice' => $testSale->invoice_number,
+                'status' => $testSale->payment_status->value,
+            ],
+            'action_result' => $stats,
+            'cache_status' => $cachedStats ? 'Correctamente guardado en Caché' : 'Error: No se guardó en Caché',
+            'cache_data' => $cachedStats,
+        ]);
+    });
 });

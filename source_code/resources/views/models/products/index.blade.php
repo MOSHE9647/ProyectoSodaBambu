@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-	<div class="container p-0">
-		{{-- Page Header --}}
-		<x-header title="Gestión de Productos" subtitle="Administre los productos existentes" />
+    <div class="container p-0">
+        {{-- Page Header --}}
+        <x-header title="Gestión de Productos" subtitle="Administre los productos existentes" />
 
 		@if(($lowStockProducts ?? collect())->isNotEmpty())
 			<div class="alert alert-warning d-flex flex-column gap-2" role="alert">
@@ -56,5 +56,5 @@
 @endsection
 
 @section('scripts')
-	@vite(['resources/js/models/products/main.js'])
+    @vite(['resources/js/models/products/main.js'])
 @endsection
