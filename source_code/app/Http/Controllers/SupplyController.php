@@ -8,10 +8,6 @@ use App\Http\Resources\SupplyResource;
 use App\Models\Supply;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Contracts\View\Factory;
-use Illuminate\Contracts\View\View;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -23,7 +19,7 @@ class SupplyController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('role:' . UserRole::ADMIN->value),
+            new Middleware('role:'.UserRole::ADMIN->value),
         ];
     }
 
@@ -48,14 +44,17 @@ class SupplyController extends Controller implements HasMiddleware
             return DataTables::of($query)
                 ->addColumn('quantity', function ($supply) {
                     $last = $supply->purchaseDetails()->latest()->first();
+
                     return $last ? $last->quantity : 0;
                 })
                 ->addColumn('unit_price', function ($supply) {
                     $last = $supply->purchaseDetails()->latest()->first();
-                    return $last ? '₡' . number_format($last->unit_price, 2) : '₡0.00';
+
+                    return $last ? '₡'.number_format($last->unit_price, 2) : '₡0.00';
                 })
                 ->addColumn('expiration_date', function ($supply) {
                     $last = $supply->purchaseDetails()->latest()->first();
+
                     return ($last && $last->expiration_date)
                         ? Carbon::parse($last->expiration_date)->format('d/m/Y')
                         : 'N/A';
@@ -86,7 +85,7 @@ class SupplyController extends Controller implements HasMiddleware
             $supply->update($supplyData);
             $message = 'Insumo restaurado y actualizado correctamente.';
         } elseif ($supply) {
-            
+
             return redirect()->route('supplies.create')
                 ->withErrors(['name' => 'Ya existe un insumo activo con este nombre.'])
                 ->withInput();
@@ -99,7 +98,7 @@ class SupplyController extends Controller implements HasMiddleware
                 'success' => true,
                 'message' => $message,
                 'supply' => [
-                    'id'   => $supply->id,
+                    'id' => $supply->id,
                     'name' => $supply->name,
                     'measure_unit' => $supply->measure_unit,
                 ],
@@ -112,6 +111,7 @@ class SupplyController extends Controller implements HasMiddleware
     public function show(Supply $supply)
     {
         $resource = SupplyResource::make($supply);
+
         return view('models.supplies.show', ['supply' => $resource]);
     }
 
@@ -127,6 +127,7 @@ class SupplyController extends Controller implements HasMiddleware
     {
         $supplyData = $request->validated();
         $supply->update($supplyData);
+
         return redirect()->route('supplies.index')->with('success', 'Insumo actualizado correctamente.');
     }
 
@@ -136,6 +137,7 @@ class SupplyController extends Controller implements HasMiddleware
     public function destroy(Supply $supply)
     {
         $supply->delete();
+
         return redirect()->back()->with('success', 'Insumo eliminado correctamente.');
     }
 }

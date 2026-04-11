@@ -40,8 +40,7 @@ class SupplyRequest extends FormRequest
             $nameRule->ignore($supplyId);
         }
 
-
-        $isCreating = $this->isMethod('post') && !$supplyId;
+        $isCreating = $this->isMethod('post') && ! $supplyId;
 
         return [
             'name' => ['required', 'string', 'max:50', $nameRule],
