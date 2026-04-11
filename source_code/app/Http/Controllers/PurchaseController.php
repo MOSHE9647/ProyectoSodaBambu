@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Purchase;
-use App\Models\Supplier;
+use App\Enums\PaymentStatus;
+use App\Enums\ProductType;
 use App\Models\Product;
+use App\Models\ProductStock;
+use App\Models\Purchase;
+use App\Models\PurchaseDetail;
+use App\Models\Supplier;
 use App\Models\Supply;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Validator;
-use App\Models\ProductStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class PurchaseController extends Controller
 {
@@ -22,16 +25,17 @@ class PurchaseController extends Controller
             if ($request->has('report') && $request->has('supplier_id')) {
                 $supplier = Supplier::findOrFail($request->supplier_id);
 
-                $items = \App\Models\PurchaseDetail::query()
-                    ->whereHas('purchase', fn($q) => $q->where('supplier_id', $supplier->id))
+                $items = PurchaseDetail::query()
+                    ->whereHas('purchase', fn ($q) => $q->where('supplier_id', $supplier->id))
                     ->with('purchasable')
                     ->get()
-                    ->groupBy(fn($d) => $d->purchasable_type . '|' . $d->purchasable_id)
+                    ->groupBy(fn ($d) => $d->purchasable_type.'|'.$d->purchasable_id)
                     ->map(function ($group) {
                         $first = $group->first();
+
                         return [
-                            'type'  => class_basename($first->purchasable_type) === 'Product' ? 'Producto' : 'Insumo',
-                            'name'  => $first->purchasable->name ?? 'N/A',
+                            'type' => class_basename($first->purchasable_type) === 'Product' ? 'Producto' : 'Insumo',
+                            'name' => $first->purchasable->name ?? 'N/A',
                             'times' => $group->count(),
                         ];
                     })
@@ -39,7 +43,7 @@ class PurchaseController extends Controller
 
                 return response()->json([
                     'supplier' => $supplier->name,
-                    'items'    => $items,
+                    'items' => $items,
                 ]);
             }
 
@@ -70,27 +74,27 @@ class PurchaseController extends Controller
 
             // EIF-161: Ordenamiento seguro con validación de índice de columna
             if ($request->has('order') && isset($request->order[0]['column'])) {
-                $colIndex  = (int) $request->order[0]['column'];
-                $orderDir  = $request->order[0]['dir'] === 'desc' ? 'desc' : 'asc';
-                $orderCol  = $columns[$colIndex] ?? 'id';
+                $colIndex = (int) $request->order[0]['column'];
+                $orderDir = $request->order[0]['dir'] === 'desc' ? 'desc' : 'asc';
+                $orderCol = $columns[$colIndex] ?? 'id';
 
                 // supplier_id se ordena por el nombre del supplier, no por id
                 if ($orderCol === 'supplier_id') {
                     $query->join('suppliers', 'purchases.supplier_id', '=', 'suppliers.id')
-                          ->orderBy('suppliers.name', $orderDir)
-                          ->select('purchases.*');
+                        ->orderBy('suppliers.name', $orderDir)
+                        ->select('purchases.*');
                 } else {
-                    $query->orderBy('purchases.' . $orderCol, $orderDir);
+                    $query->orderBy('purchases.'.$orderCol, $orderDir);
                 }
             } else {
                 $query->orderBy('purchases.id', 'desc');
             }
 
-            $recordsTotal    = Purchase::count();
+            $recordsTotal = Purchase::count();
             $recordsFiltered = $query->count();
 
             // EIF-161: Respetar length=-1 (mostrar todo) y aplicar offset/limit correctamente
-            $start  = (int) $request->input('start', 0);
+            $start = (int) $request->input('start', 0);
             $length = (int) $request->input('length', 10);
 
             if ($length !== -1) {
@@ -100,17 +104,17 @@ class PurchaseController extends Controller
             $purchases = $query->get();
 
             return response()->json([
-                'draw'            => (int) $request->input('draw', 1),
-                'recordsTotal'    => $recordsTotal,
+                'draw' => (int) $request->input('draw', 1),
+                'recordsTotal' => $recordsTotal,
                 'recordsFiltered' => $recordsFiltered,
-                'data'            => $purchases->map(function ($purchase) {
+                'data' => $purchases->map(function ($purchase) {
                     return [
-                        'id'             => $purchase->id,
+                        'id' => $purchase->id,
                         'invoice_number' => $purchase->invoice_number,
-                        'supplier_id'    => $purchase->supplier_id,
-                        'supplier'       => ['name' => $purchase->supplier->name ?? 'N/A'],
-                        'date'           => $purchase->date->format('Y-m-d'),
-                        'total'          => $purchase->total,
+                        'supplier_id' => $purchase->supplier_id,
+                        'supplier' => ['name' => $purchase->supplier->name ?? 'N/A'],
+                        'date' => $purchase->date->format('Y-m-d'),
+                        'total' => $purchase->total,
                         'payment_status' => $purchase->payment_status->value,
                     ];
                 }),
@@ -123,52 +127,53 @@ class PurchaseController extends Controller
     public function create()
     {
         $suppliers = Supplier::all(['id', 'name']);
-        $products  = Product::all(['id', 'name', 'sale_price', 'type']);
-        $supplies  = Supply::all(['id', 'name', 'measure_unit']);
+        $products = Product::all(['id', 'name', 'sale_price', 'type']);
+        $supplies = Supply::all(['id', 'name', 'measure_unit']);
+
         return view('models.purchases.create', compact('suppliers', 'products', 'supplies'));
     }
 
     public function store(Request $request)
     {
-        $paymentValues = implode(',', array_column(\App\Enums\PaymentStatus::cases(), 'value'));
+        $paymentValues = implode(',', array_column(PaymentStatus::cases(), 'value'));
 
         $validated = $request->validate([
-            'supplier_id'                => 'required|exists:suppliers,id',
-            'invoice_number'             => 'required|string|max:255|unique:purchases,invoice_number',
-            'date'                       => 'required|date',
-            'payment_status'             => 'required|string|in:' . $paymentValues,
-            'details'                    => 'required|array|min:1',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'invoice_number' => 'required|string|max:255|unique:purchases,invoice_number',
+            'date' => 'required|date',
+            'payment_status' => 'required|string|in:'.$paymentValues,
+            'details' => 'required|array|min:1',
             'details.*.purchasable_type' => 'required|in:product,supply',
-            'details.*.purchasable_id'   => 'required|integer',
-            'details.*.quantity'         => 'required|integer|min:1',
-            'details.*.unit_price'       => 'required|numeric|min:0',
-            'details.*.expiration_date'  => 'nullable|date|after_or_equal:today',
+            'details.*.purchasable_id' => 'required|integer',
+            'details.*.quantity' => 'required|integer|min:1',
+            'details.*.unit_price' => 'required|numeric|min:0',
+            'details.*.expiration_date' => 'nullable|date|after_or_equal:today',
         ]);
 
         DB::transaction(function () use ($validated) {
             $total = collect($validated['details'])->sum(
-                fn($d) => $d['quantity'] * $d['unit_price']
+                fn ($d) => $d['quantity'] * $d['unit_price']
             );
 
             $purchase = Purchase::create([
-                'supplier_id'    => $validated['supplier_id'],
+                'supplier_id' => $validated['supplier_id'],
                 'invoice_number' => $validated['invoice_number'],
-                'date'           => $validated['date'],
+                'date' => $validated['date'],
                 'payment_status' => $validated['payment_status'],
-                'total'          => $total,
+                'total' => $total,
             ]);
 
             foreach ($validated['details'] as $detail) {
-                $modelClass  = $detail['purchasable_type'] === 'product' ? Product::class : Supply::class;
+                $modelClass = $detail['purchasable_type'] === 'product' ? Product::class : Supply::class;
                 $purchasable = $modelClass::findOrFail($detail['purchasable_id']);
 
                 $purchase->details()->create([
                     'purchasable_type' => $modelClass,
-                    'purchasable_id'   => $purchasable->id,
-                    'quantity'         => $detail['quantity'],
-                    'unit_price'       => $detail['unit_price'],
-                    'subtotal'         => $detail['quantity'] * $detail['unit_price'],
-                    'expiration_date'  => $detail['expiration_date'] ?? null,
+                    'purchasable_id' => $purchasable->id,
+                    'quantity' => $detail['quantity'],
+                    'unit_price' => $detail['unit_price'],
+                    'subtotal' => $detail['quantity'] * $detail['unit_price'],
+                    'expiration_date' => $detail['expiration_date'] ?? null,
                 ]);
             }
         });
@@ -179,6 +184,7 @@ class PurchaseController extends Controller
     public function show(Purchase $purchase)
     {
         $purchase->load('supplier', 'details.purchasable');
+
         return view('models.purchases.show', compact('purchase'));
     }
 
@@ -186,63 +192,64 @@ class PurchaseController extends Controller
     {
         $purchase->load('details.purchasable');
         $suppliers = Supplier::all(['id', 'name']);
-        $products  = Product::all(['id', 'name', 'sale_price', 'type']);
-        $supplies  = Supply::all(['id', 'name', 'measure_unit']);
+        $products = Product::all(['id', 'name', 'sale_price', 'type']);
+        $supplies = Supply::all(['id', 'name', 'measure_unit']);
+
         return view('models.purchases.edit', compact('purchase', 'suppliers', 'products', 'supplies'));
     }
 
     public function update(Request $request, Purchase $purchase)
     {
-        $paymentValues = implode(',', array_column(\App\Enums\PaymentStatus::cases(), 'value'));
+        $paymentValues = implode(',', array_column(PaymentStatus::cases(), 'value'));
 
         $validated = $request->validate([
-            'supplier_id'                => 'required|exists:suppliers,id',
-            'invoice_number'             => 'required|string|max:255|unique:purchases,invoice_number,' . $purchase->id,
-            'date'                       => 'required|date',
-            'payment_status'             => 'required|string|in:' . $paymentValues,
-            'details'                    => 'required|array|min:1',
-            'details.*.id'               => 'nullable|exists:purchase_details,id',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'invoice_number' => 'required|string|max:255|unique:purchases,invoice_number,'.$purchase->id,
+            'date' => 'required|date',
+            'payment_status' => 'required|string|in:'.$paymentValues,
+            'details' => 'required|array|min:1',
+            'details.*.id' => 'nullable|exists:purchase_details,id',
             'details.*.purchasable_type' => 'required|in:product,supply',
-            'details.*.purchasable_id'   => 'required|integer',
-            'details.*.quantity'         => 'required|integer|min:1',
-            'details.*.unit_price'       => 'required|numeric|min:0',
-            'details.*.expiration_date'  => 'nullable|date|after_or_equal:today',
+            'details.*.purchasable_id' => 'required|integer',
+            'details.*.quantity' => 'required|integer|min:1',
+            'details.*.unit_price' => 'required|numeric|min:0',
+            'details.*.expiration_date' => 'nullable|date|after_or_equal:today',
         ]);
 
         DB::transaction(function () use ($validated, $purchase) {
             $total = collect($validated['details'])->sum(
-                fn($d) => $d['quantity'] * $d['unit_price']
+                fn ($d) => $d['quantity'] * $d['unit_price']
             );
 
             $purchase->update([
-                'supplier_id'    => $validated['supplier_id'],
+                'supplier_id' => $validated['supplier_id'],
                 'invoice_number' => $validated['invoice_number'],
-                'date'           => $validated['date'],
+                'date' => $validated['date'],
                 'payment_status' => $validated['payment_status'],
-                'total'          => $total,
+                'total' => $total,
             ]);
 
             $existingIds = $purchase->details()->pluck('id')->toArray();
-            $updatedIds  = [];
+            $updatedIds = [];
 
             foreach ($validated['details'] as $detail) {
-                $modelClass  = $detail['purchasable_type'] === 'product' ? Product::class : Supply::class;
+                $modelClass = $detail['purchasable_type'] === 'product' ? Product::class : Supply::class;
                 $purchasable = $modelClass::findOrFail($detail['purchasable_id']);
 
                 $data = [
                     'purchasable_type' => $modelClass,
-                    'purchasable_id'   => $purchasable->id,
-                    'quantity'         => $detail['quantity'],
-                    'unit_price'       => $detail['unit_price'],
-                    'subtotal'         => $detail['quantity'] * $detail['unit_price'],
-                    'expiration_date'  => $detail['expiration_date'] ?? null,
+                    'purchasable_id' => $purchasable->id,
+                    'quantity' => $detail['quantity'],
+                    'unit_price' => $detail['unit_price'],
+                    'subtotal' => $detail['quantity'] * $detail['unit_price'],
+                    'expiration_date' => $detail['expiration_date'] ?? null,
                 ];
 
                 if (isset($detail['id']) && in_array($detail['id'], $existingIds)) {
                     $purchase->details()->where('id', $detail['id'])->update($data);
                     $updatedIds[] = $detail['id'];
                 } else {
-                    $newDetail    = $purchase->details()->create($data);
+                    $newDetail = $purchase->details()->create($data);
                     $updatedIds[] = $newDetail->id;
                 }
             }
@@ -261,15 +268,15 @@ class PurchaseController extends Controller
     public function quickStoreProduct(Request $request): JsonResponse
     {
         $rules = [
-            'category_id'       => 'required|integer|exists:categories,id',
-            'barcode'           => 'nullable|string',
-            'name'              => 'required|string|max:255',
-            'type'              => 'required|string|in:' . implode(',', array_column(\App\Enums\ProductType::cases(), 'value')),
-            'has_inventory'     => 'required|boolean',
-            'reference_cost'    => 'required|numeric|min:0',
-            'tax_percentage'    => 'required|numeric|min:0',
+            'category_id' => 'required|integer|exists:categories,id',
+            'barcode' => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'type' => 'required|string|in:'.implode(',', array_column(ProductType::cases(), 'value')),
+            'has_inventory' => 'required|boolean',
+            'reference_cost' => 'required|numeric|min:0',
+            'tax_percentage' => 'required|numeric|min:0',
             'margin_percentage' => 'required|numeric|min:0',
-            'sale_price'        => 'required|numeric|min:0',
+            'sale_price' => 'required|numeric|min:0',
         ];
 
         // EIF-170: Solo se valida stock_minimo; stock_actual no se procesa en creación
@@ -284,7 +291,7 @@ class PurchaseController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors'  => $validator->errors(),
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -294,7 +301,7 @@ class PurchaseController extends Controller
             // EIF-170: Al crear, current_stock arranca en 0 (se actualiza vía inventario)
             if ($request->boolean('has_inventory')) {
                 ProductStock::create([
-                    'product_id'    => $product->id,
+                    'product_id' => $product->id,
                     'current_stock' => 0,
                     'minimum_stock' => (int) $request->input('stock_minimo', 0),
                 ]);
@@ -307,10 +314,10 @@ class PurchaseController extends Controller
             'success' => true,
             'message' => 'Producto creado exitosamente.',
             'product' => [
-                'id'         => $product->id,
-                'name'       => $product->name,
+                'id' => $product->id,
+                'name' => $product->name,
                 'sale_price' => $product->sale_price,
-                'type'       => $product->type instanceof \App\Enums\ProductType
+                'type' => $product->type instanceof ProductType
                                     ? $product->type->value
                                     : $product->type,
             ],
@@ -320,6 +327,7 @@ class PurchaseController extends Controller
     public function destroy(Purchase $purchase)
     {
         $purchase->delete();
+
         return redirect()->route('purchases.index')->with('success', 'Compra eliminada correctamente.');
     }
 }
