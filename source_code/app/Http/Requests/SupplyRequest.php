@@ -40,13 +40,14 @@ class SupplyRequest extends FormRequest
             $nameRule->ignore($supplyId);
         }
 
-        $requiredOnCreate = $this->isMethod('post') ? 'required' : 'sometimes';
+
+        $isCreating = $this->isMethod('post') && !$supplyId;
 
         return [
-            'name' => [$requiredOnCreate, 'string', 'max:50', $nameRule],
-            'measure_unit' => [$requiredOnCreate, 'string', 'max:255'],
-            'quantity' => [$requiredOnCreate, 'integer', 'min:0'],
-            'unit_price' => [$requiredOnCreate, 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'name' => ['required', 'string', 'max:50', $nameRule],
+            'measure_unit' => ['required', 'string', 'max:255'],
+            'quantity' => [$isCreating ? 'nullable' : 'sometimes', 'integer', 'min:0'],
+            'unit_price' => [$isCreating ? 'nullable' : 'sometimes', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
             'expiration_date' => ['nullable', 'date', 'after_or_equal:today'],
             'expiration_alert_days' => ['nullable', 'integer', 'min:0'],
         ];
@@ -63,10 +64,8 @@ class SupplyRequest extends FormRequest
             'name.unique' => 'Ya existe un insumo activo con este nombre.',
             'measure_unit.required' => 'La unidad de medida es obligatoria.',
             'measure_unit.max' => 'La unidad de medida no puede exceder 255 caracteres.',
-            'quantity.required' => 'La cantidad es obligatoria.',
             'quantity.integer' => 'La cantidad debe ser un número entero.',
             'quantity.min' => 'La cantidad no puede ser menor a 0.',
-            'unit_price.required' => 'El precio unitario es obligatorio.',
             'unit_price.numeric' => 'El precio unitario debe ser un número válido.',
             'unit_price.min' => 'El precio unitario no puede ser menor a 0.',
             'unit_price.regex' => 'El precio unitario debe tener máximo 2 decimales.',
