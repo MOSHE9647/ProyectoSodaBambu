@@ -17,6 +17,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Throwable;
 use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Validator;
 
 class SupplyController extends Controller implements HasMiddleware
 {
@@ -101,12 +102,51 @@ class SupplyController extends Controller implements HasMiddleware
      *
      * @throws Throwable
      */
-    public function store(SupplyRequest $request)
+public function store(Request $request)
     {
-        $supplyData = $request->validated();
-        $supply = Supply::withTrashed()->where('name', $supplyData['name'])->first();
-        $message = 'Insumo creado correctamente.';
+        // Petición AJAX desde el offcanvas de Compras
+        if ($request->ajax()) {
+            $validator = Validator::make($request->all(), [
+                'name'         => 'required|string|max:255',
+                'measure_unit' => 'required|string|max:100',
+            ]);
+ 
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+ 
+            $data   = $validator->validated();
+            $supply = Supply::withTrashed()->where('name', $data['name'])->first();
+ 
+            if ($supply?->trashed()) {
+                $supply->restore();
+                $supply->update($data);
+                $message = 'Insumo restaurado y actualizado correctamente.';
+            } else {
+                $supply = Supply::create($data);
+                $message = 'Insumo creado correctamente.';
+            }
+ 
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'supply'  => [
+                    'id'           => $supply->id,
+                    'name'         => $supply->name,
+                    'measure_unit' => $supply->measure_unit,
+                ],
+            ]);
+        }
 
+        $supplyRequest = app(SupplyRequest::class);
+        $supplyData    = $supplyRequest->validated();
+ 
+        $supply  = Supply::withTrashed()->where('name', $supplyData['name'])->first();
+        $message = 'Insumo creado correctamente.';
+ 
         if ($supply?->trashed()) {
             $supply->restore();
             $supply->update($supplyData);
@@ -114,7 +154,7 @@ class SupplyController extends Controller implements HasMiddleware
         } else {
             Supply::create($supplyData);
         }
-
+ 
         return redirect()->route('supplies.index')->with('success', $message);
     }
 

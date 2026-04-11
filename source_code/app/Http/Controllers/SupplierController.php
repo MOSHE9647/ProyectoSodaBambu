@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Throwable;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Validator;
 
 class SupplierController extends Controller
 {
@@ -48,22 +49,42 @@ class SupplierController extends Controller
      *
      * @throws Throwable
      */
-    public function store(SupplierRequest $request)
+    public function store(Request $request)
     {
-        $supplierData = $request->validated();
+        // Si la petición es AJAX y espera JSON (creación rápida desde offcanvas)
+        if ($request->wantsJson()) {
+            $validator = Validator::make($request->all(), [
+                'name'  => 'required|string|max:255',
+                'phone' => 'required|string|max:20',
+                'email' => 'required|email|unique:suppliers,email',
+            ]);
 
-        $supplier = Supplier::withTrashed()->where('email', $supplierData['email'])->first();
-        $message = 'Proveedor creado exitosamente.';
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors'  => $validator->errors()
+                ], 422);
+            }
 
-        if ($supplier?->trashed()) {
-            $supplier->restore();
-            $supplier->update($supplierData);
-            $message = 'Proveedor restaurado y actualizado exitosamente.';
-        } else {
-            Supplier::create($supplierData);
+            $supplier = Supplier::create($request->all());
+
+            return response()->json([
+                'success'  => true,
+                'supplier' => $supplier,
+                'message'  => 'Proveedor creado correctamente.'
+            ]);
         }
 
-        return redirect()->route('suppliers.index')->with('success', $message);
+        // Código original para peticiones normales (no AJAX)
+        $validated = $request->validate([
+            'name'  => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'email' => 'required|email|unique:suppliers,email',
+        ]);
+
+        Supplier::create($validated);
+
+        return redirect()->route('suppliers.index')->with('success', 'Proveedor creado correctamente.');
     }
 
     /**

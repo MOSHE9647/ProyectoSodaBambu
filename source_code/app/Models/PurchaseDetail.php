@@ -24,7 +24,10 @@ class PurchaseDetail extends Model
         'purchase_id',
         'purchasable_id',
         'purchasable_type',
+        'quantity',
+        'unit_price',
         'subtotal',
+        'expiration_date',
     ];
 
     /**
@@ -33,7 +36,10 @@ class PurchaseDetail extends Model
      * @return array<string, string>
      */
     protected $casts = [
-        'subtotal' => 'decimal:2',
+        'quantity'        => 'integer',
+        'unit_price'      => 'decimal:2',
+        'subtotal'        => 'decimal:2',
+        'expiration_date' => 'date',
         // 'created_at' => CostaRicaDatetime::class,
         // 'updated_at' => CostaRicaDatetime::class,
         // 'deleted_at' => CostaRicaDatetime::class,
