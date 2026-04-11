@@ -10,9 +10,9 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Throwable;
 use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\Validator;
 
 class SupplierController extends Controller
 {
@@ -54,7 +54,7 @@ class SupplierController extends Controller
         // Si la petición es AJAX y espera JSON (creación rápida desde offcanvas)
         if ($request->wantsJson()) {
             $validator = Validator::make($request->all(), [
-                'name'  => 'required|string|max:255',
+                'name' => 'required|string|max:255',
                 'phone' => 'required|string|max:20',
                 'email' => 'required|email|unique:suppliers,email',
             ]);
@@ -62,22 +62,22 @@ class SupplierController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'errors'  => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
             $supplier = Supplier::create($request->all());
 
             return response()->json([
-                'success'  => true,
+                'success' => true,
                 'supplier' => $supplier,
-                'message'  => 'Proveedor creado correctamente.'
+                'message' => 'Proveedor creado correctamente.',
             ]);
         }
 
         // Código original para peticiones normales (no AJAX)
         $validated = $request->validate([
-            'name'  => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|unique:suppliers,email',
         ]);
