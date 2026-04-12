@@ -134,7 +134,7 @@
                     </table>
                 </div>
 
-                                <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="d-flex justify-content-between align-items-center mt-3">
                     <button type="button" class="btn btn-sm btn-outline-primary" id="add-detail">
                         <i class="bi bi-plus-circle"></i> Agregar producto/insumo
                     </button>
@@ -258,7 +258,7 @@
                     <label for="quick-product-stock-minimo" class="form-label">Stock mínimo <span
                             class="text-danger">*</span></label>
                     <input type="number" class="form-control" id="quick-product-stock-minimo" name="stock_minimo"
-                        min="0" step="1" placeholder="Ej: 10" required>
+                        min="0" step="1" placeholder="Ej: 10">
                     <div class="invalid-feedback" id="quick-product-stock-minimo-error"></div>
                 </div>
             </div>
