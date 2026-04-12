@@ -1,171 +1,152 @@
-<div class="container p-0">
-    <x-header title="{{ isset($purchase) ? 'Editar Compra' : 'Nueva Compra' }}"
-        subtitle="{{ isset($purchase) ? 'Modifica la información de la compra existente' : 'Registra una nueva compra a proveedor' }}" />
+<x-header title="{{ isset($purchase) ? 'Editar Compra' : 'Nueva Compra' }}" subtitle="{{ isset($purchase) ? 'Modifica la información de la compra existente' : 'Registra una nueva compra a proveedor' }}" />
 
-    <div class="table-container rounded-2 p-4 w-75 justify-content-start">
-        <form id="{{ isset($purchase) ? 'edit-purchase-form' : 'create-purchase-form' }}" action="{{ $action }}"
-            method="POST" class="d-flex flex-column gap-2">
-            @csrf
-            @if (isset($purchase))
-                @method('PUT')
-            @endif
+<div class="table-container rounded-2 p-4 w-75 justify-content-start">
+    <form id="{{ isset($purchase) ? 'edit-purchase-form' : 'create-purchase-form' }}" action="{{ $action }}" method="POST" class="d-flex flex-column gap-2">
+        @csrf
+        @if (isset($purchase))
+        @method('PUT')
+        @endif
 
-            {{-- Campo oculto: total calculado automáticamente por JS --}}
-            <input type="hidden" name="total" id="total"
-                value="{{ old('total', isset($purchase) ? $purchase->total : '0') }}">
+        {{-- Campo oculto: total calculado automáticamente por JS --}}
+        <input type="hidden" name="total" id="total" value="{{ old('total', isset($purchase) ? $purchase->total : '0') }}">
 
-            {{-- Encabezado --}}
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="d-flex align-items-center gap-2">
-                    <h5 class="text-muted mb-0">Factura de compra N°</h5>
-                    <input type="text" name="invoice_number" id="invoice_number"
-                        class="form-control form-control-sm w-auto"
-                        value="{{ old('invoice_number', $purchase->invoice_number ?? '') }}"
-                        placeholder="Número de factura" style="width: 150px;">
+        {{-- Encabezado --}}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-2">
+                <h5 class="text-muted mb-0">Factura de compra N°</h5>
+                <input type="text" name="invoice_number" id="invoice_number" class="form-control form-control-sm w-auto" value="{{ old('invoice_number', $purchase->invoice_number ?? '') }}" placeholder="Número de factura" style="width: 150px;">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted">Fecha de compra:</span>
+                <input type="date" name="date" id="date" max="{{ now()->format('Y-m-d') }}" value="{{ old('date', isset($purchase) ? $purchase->date->format('Y-m-d') : now()->format('Y-m-d')) }}" class="form-control form-control-sm w-auto" />
+            </div>
+        </div>
+
+        {{-- Información general --}}
+        <section class="d-flex flex-column mb-4 gap-3">
+            <h5 class="text-muted pb-3 border-bottom border-secondary">
+                <i class="bi bi-truck me-3"></i> Información general
+            </h5>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="supplier_id" class="form-label">Proveedor <span class="text-danger">*</span></label>
+                    <select name="supplier_id" id="supplier_id" class="form-select border-secondary @error('supplier_id') is-invalid @enderror">
+                        <option value="">Seleccionar</option>
+                        @foreach ($suppliers as $supplier)
+                        <option value="{{ $supplier->id }}" {{ old('supplier_id', isset($purchase) ? $purchase->supplier_id : '') == $supplier->id ? 'selected' : '' }}>
+                            {{ $supplier->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                    @error('supplier_id')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="text-muted">Fecha de compra:</span>
-                    <input type="date" name="date" id="date" max="{{ now()->format('Y-m-d') }}"
-                        value="{{ old('date', isset($purchase) ? $purchase->date->format('Y-m-d') : now()->format('Y-m-d')) }}"
-                        class="form-control form-control-sm w-auto" />
+
+                <div class="col-md-6">
+                    <label for="payment_status" class="form-label">Estado de pago <span class="text-danger">*</span></label>
+                    <select name="payment_status" id="payment_status" class="form-select border-secondary @error('payment_status') is-invalid @enderror">
+                        <option value="">Seleccionar</option>
+                        @foreach (App\Enums\PaymentStatus::cases() as $status)
+                        <option value="{{ $status->value }}" {{ old('payment_status', isset($purchase) ? $purchase->payment_status->value : '') == $status->value ? 'selected' : '' }}>
+                            {{ $status->label() }}
+                        </option>
+                        @endforeach
+                    </select>
+                    @error('payment_status')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 
-            {{-- Información general --}}
-            <section class="d-flex flex-column mb-4 gap-3">
-                <h5 class="text-muted pb-3 border-bottom border-secondary">
-                    <i class="bi bi-truck me-3"></i> Información general
-                </h5>
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="supplier_id" class="form-label">Proveedor <span class="text-danger">*</span></label>
-                        <select name="supplier_id" id="supplier_id"
-                            class="form-select border-secondary @error('supplier_id') is-invalid @enderror">
-                            <option value="">Seleccionar</option>
-                            @foreach ($suppliers as $supplier)
-                                <option value="{{ $supplier->id }}"
-                                    {{ old('supplier_id', isset($purchase) ? $purchase->supplier_id : '') == $supplier->id ? 'selected' : '' }}>
-                                    {{ $supplier->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('supplier_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-6">
-                        <label for="payment_status" class="form-label">Estado de pago <span
-                                class="text-danger">*</span></label>
-                        <select name="payment_status" id="payment_status"
-                            class="form-select border-secondary @error('payment_status') is-invalid @enderror">
-                            <option value="">Seleccionar</option>
-                            @foreach (App\Enums\PaymentStatus::cases() as $status)
-                                <option value="{{ $status->value }}"
-                                    {{ old('payment_status', isset($purchase) ? $purchase->payment_status->value : '') == $status->value ? 'selected' : '' }}>
-                                    {{ $status->label() }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('payment_status')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-12">
-                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="offcanvas"
-                            data-bs-target="#offcanvasSupplier">
-                            <i class="bi bi-plus-circle"></i> + Nuevo proveedor
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            {{-- Detalles de compra --}}
-            <section class="d-flex flex-column mb-4 gap-3">
-                <h5 class="text-muted pb-3 border-bottom border-secondary">
-                    <i class="bi bi-box-seam me-3"></i> Productos comprados
-                </h5>
-
-                <div class="d-flex gap-2 mb-2">
-                    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="offcanvas"
-                        data-bs-target="#offcanvasProduct">
-                        <i class="bi bi-plus-circle"></i> Nuevo Producto
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="offcanvas"
-                        data-bs-target="#offcanvasSupply">
-                        <i class="bi bi-plus-circle"></i> Nuevo Insumo
+            <div class="row">
+                <div class="col-12">
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSupplier">
+                        <i class="bi bi-plus-circle"></i> + Nuevo proveedor
                     </button>
                 </div>
+            </div>
+        </section>
 
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="details-table">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Tipo</th>
-                                <th>Producto/Insumo</th>
-                                <th>Cantidad</th>
-                                <th>Precio Unitario (₡)</th>
-                                <th>Subtotal</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="details-container">
-                            @if (isset($purchase) && $purchase->details->count())
-                                @foreach ($purchase->details as $index => $detail)
-                                    @include('models.purchases._detail_row', [
-                                        'index' => $index,
-                                        'detail' => $detail,
-                                        'products' => $products,
-                                        'supplies' => $supplies,
-                                    ])
-                                @endforeach
-                            @else
-                                <tr id="empty-details-row">
-                                    <td colspan="6" class="text-center text-muted fst-italic">No hay productos
-                                        agregados.</td>
-                                </tr>
-                            @endif
-                        </tbody>
-                        
-                    </table>
-                </div>
+        {{-- Detalles de compra --}}
+        <section class="d-flex flex-column mb-4 gap-3">
+            <h5 class="text-muted pb-3 border-bottom border-secondary">
+                <i class="bi bi-box-seam me-3"></i> Productos comprados
+            </h5>
 
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-detail">
-                        <i class="bi bi-plus-circle"></i> Agregar producto/insumo
-                    </button>
- 
-                    <div class="d-flex align-items-center gap-3 px-4 py-3 rounded-3 border border-success-subtle"
-                         style="background: linear-gradient(135deg, rgba(25,135,84,0.06) 0%, rgba(25,135,84,0.12) 100%);">
-                        <div class="d-flex flex-column align-items-end">
-                            <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing:.05em; font-size:.7rem;">
-                                Total de la compra
-                            </span>
-                            <span class="fs-4 fw-bold text-success" id="total-display">
-                                ₡{{ number_format(isset($purchase) ? $purchase->total : 0, 2) }}
-                            </span>
-                        </div>
-                        <i class="bi bi-receipt-cutoff fs-2 text-success opacity-50"></i>
-                    </div>
-                </div>
-            </section>
-
-            {{-- Acciones --}}
-            <div class="d-flex justify-content-end gap-2 mt-2">
-                <a href="{{ route('purchases.index') }}" class="btn btn-danger">
-                    <i class="bi bi-x-circle me-1"></i> Cancelar
-                </a>
-                <button type="submit" class="btn btn-primary" id="submit-purchase">
-                    <i class="bi bi-save me-1"></i>
-                    {{ isset($purchase) ? 'Actualizar compra' : 'Guardar compra' }}
+            <div class="d-flex gap-2 mb-2">
+                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="offcanvas" data-bs-target="#offcanvasProduct">
+                    <i class="bi bi-plus-circle"></i> Nuevo Producto
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSupply">
+                    <i class="bi bi-plus-circle"></i> Nuevo Insumo
                 </button>
             </div>
-        </form>
-    </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="details-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Producto/Insumo</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario (₡)</th>
+                            <th>Subtotal</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="details-container">
+                        @if (isset($purchase) && $purchase->details->count())
+                        @foreach ($purchase->details as $index => $detail)
+                        @include('models.purchases._detail_row', [
+                        'index' => $index,
+                        'detail' => $detail,
+                        'products' => $products,
+                        'supplies' => $supplies,
+                        ])
+                        @endforeach
+                        @else
+                        <tr id="empty-details-row">
+                            <td colspan="6" class="text-center text-muted fst-italic">No hay productos
+                                agregados.</td>
+                        </tr>
+                        @endif
+                    </tbody>
+
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="add-detail">
+                    <i class="bi bi-plus-circle"></i> Agregar producto/insumo
+                </button>
+
+                <div class="d-flex align-items-center gap-3 px-4 py-3 rounded-3 border border-success-subtle" style="background: linear-gradient(135deg, rgba(25,135,84,0.06) 0%, rgba(25,135,84,0.12) 100%);">
+                    <div class="d-flex flex-column align-items-end">
+                        <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing:.05em; font-size:.7rem;">
+                            Total de la compra
+                        </span>
+                        <span class="fs-4 fw-bold text-success" id="total-display">
+                            ₡{{ number_format(isset($purchase) ? $purchase->total : 0, 2) }}
+                        </span>
+                    </div>
+                    <i class="bi bi-receipt-cutoff fs-2 text-success opacity-50"></i>
+                </div>
+            </div>
+        </section>
+
+        {{-- Acciones --}}
+        <div class="d-flex justify-content-end gap-2 mt-2">
+            <a href="{{ route('purchases.index') }}" class="btn btn-danger">
+                <i class="bi bi-x-circle me-1"></i> Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary" id="submit-purchase">
+                <i class="bi bi-save me-1"></i>
+                {{ isset($purchase) ? 'Actualizar compra' : 'Guardar compra' }}
+            </button>
+        </div>
+    </form>
 </div>
 
 {{-- Offcanvas: nuevo proveedor --}}

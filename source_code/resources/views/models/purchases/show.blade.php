@@ -1,5 +1,13 @@
 @php use Carbon\Carbon; @endphp
 
+<style>
+    /* Aumentar el ancho del modal de SweetAlert solo cuando se carga esta vista */
+    .swal2-popup {
+        width: 900px !important;
+        max-width: 95vw !important;
+    }
+</style>
+
 <div class="d-flex flex-column text-start">
     {{-- Datos de la compra --}}
     <div class="row g-3 mb-3">
@@ -38,8 +46,8 @@
         <i class="bi bi-box-seam me-2"></i> Productos comprados
     </h5>
 
-    <div class="table-container rounded-2 p-3">
-        <table class="table table-hover rounded-2 w-100" id="purchase-details-table">
+    <div class="table-container rounded-2 p-2">
+        <table class="table table-hover rounded-2 w-100 init-datatable" id="purchase-details-table">
             <thead>
                 <tr>
                     <th>Tipo</th>
@@ -49,20 +57,20 @@
             </thead>
             <tbody>
                 @foreach ($purchase->details as $detail)
-                    @php
-                        $isProduct  = class_basename($detail->purchasable_type) === 'Product';
-                        $badgeClass = $isProduct ? 'bg-success' : 'bg-info text-dark';
-                        $typeLabel  = $isProduct ? 'Producto' : 'Insumo';
-                    @endphp
-                    <tr>
-                        <td>
-                            <span class="badge {{ $badgeClass }}">{{ $typeLabel }}</span>
-                        </td>
-                        <td>{{ $detail->purchasable->name ?? 'N/A' }}</td>
-                        <td class="text-end fw-semibold">
-                            ₡{{ number_format($detail->subtotal, 2) }}
-                        </td>
-                    </tr>
+                @php
+                $isProduct = class_basename($detail->purchasable_type) === 'Product';
+                $badgeClass = $isProduct ? 'bg-success' : 'bg-info text-dark';
+                $typeLabel = $isProduct ? 'Producto' : 'Insumo';
+                @endphp
+                <tr>
+                    <td>
+                        <span class="badge {{ $badgeClass }}">{{ $typeLabel }}</span>
+                    </td>
+                    <td>{{ $detail->purchasable->name ?? 'N/A' }}</td>
+                    <td class="text-end fw-semibold">
+                        ₡{{ number_format($detail->subtotal, 2) }}
+                    </td>
+                </tr>
                 @endforeach
             </tbody>
             <tfoot>
@@ -89,23 +97,5 @@
             <x-form.input.floating-label id="supplier_email" type="email" readonly="true" :value="$purchase->supplier->email ?? 'N/A'"
                 iconLeft="bi bi-envelope" placeholder="Correo">Correo Electrónico</x-form.input.floating-label>
         </div>
-    </div>
-
-    <hr class="my-3" />
-
-    {{-- Fechas --}}
-    <div class="row g-3 mb-0">
-        <div class="col-6">
-            <x-form.input.floating-label id="created_at" type="text" readonly="true"
-                :value="Carbon::parse($purchase->created_at)->locale('es')->translatedFormat('d \d\e F \d\e\l Y H:i')"
-                iconLeft="bi bi-calendar-plus" placeholder="Fecha de Creación">Fecha de Creación</x-form.input.floating-label>
-        </div>
-        @if ($purchase->updated_at && $purchase->updated_at != $purchase->created_at)
-            <div class="col-6">
-                <x-form.input.floating-label id="updated_at" type="text" readonly="true"
-                    :value="Carbon::parse($purchase->updated_at)->locale('es')->translatedFormat('d \d\e F \d\e\l Y H:i')"
-                    iconLeft="bi bi-calendar-check" placeholder="Fecha de Actualización">Última Actualización</x-form.input.floating-label>
-            </div>
-        @endif
     </div>
 </div>
