@@ -26,7 +26,7 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
 
-       if ($request->has('simple') && $request->wantsJson()) {
+        if ($request->has('simple') && $request->wantsJson()) {
             return response()->json(Category::select('id', 'name')->get());
         }
 
