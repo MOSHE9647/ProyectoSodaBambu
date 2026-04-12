@@ -50,12 +50,25 @@ class SupplyController extends Controller implements HasMiddleware
         if ($request->ajax()) {
             $query = Supply::query();
 
+            if ($request->boolean('expiring_soon') || $request->filter === 'expiring_soon') {
+                $query->whereNotNull('expiration_date')
+                    ->whereBetween('expiration_date', [
+                        now()->startOfDay(),
+                        now()->addDays(7)->endOfDay(),
+                    ]);
+            }
+
             return DataTables::of($query)
                 ->editColumn('quantity', function ($supply) {
                     return $supply->quantity ?? 0;
                 })
                 ->editColumn('unit_price', function ($supply) {
                     return $supply->unit_price ? '₡'.number_format($supply->unit_price, 2) : '₡0.00';
+                })
+                ->editColumn('expiration_date', function ($supply) {
+                    return $supply->expiration_date
+                        ? $supply->expiration_date->format('d/m/Y')
+                        : 'N/A';
                 })
                 ->toJson();
         }
