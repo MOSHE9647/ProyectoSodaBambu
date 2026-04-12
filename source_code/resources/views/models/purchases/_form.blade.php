@@ -10,6 +10,9 @@
                 @method('PUT')
             @endif
 
+            {{-- Campo oculto: total calculado automáticamente por JS --}}
+            <input type="hidden" name="total" id="total" value="{{ old('total', isset($purchase) ? $purchase->total : '0') }}">
+
             {{-- Encabezado --}}
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div class="d-flex align-items-center gap-2">
@@ -70,22 +73,6 @@
                     </div>
                 </div>
 
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="total" class="form-label">Total de la compra <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text">₡</span>
-                            <input type="number" name="total" id="total" step="0.01" min="0"
-                                class="form-control @error('total') is-invalid @enderror"
-                                value="{{ old('total', isset($purchase) ? $purchase->total : '') }}"
-                                placeholder="0.00" required>
-                        </div>
-                        @error('total')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
                 <div class="row">
                     <div class="col-12">
                         <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="offcanvas"
@@ -102,7 +89,6 @@
                     <i class="bi bi-box-seam me-3"></i> Productos comprados
                 </h5>
 
-                {{-- Botones para crear producto/insumo rápidamente --}}
                 <div class="d-flex gap-2 mb-2">
                     <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="offcanvas" data-bs-target="#offcanvasProduct">
                         <i class="bi bi-plus-circle"></i> Nuevo Producto
@@ -118,6 +104,8 @@
                             <tr>
                                 <th>Tipo</th>
                                 <th>Producto/Insumo</th>
+                                <th>Cantidad</th>
+                                <th>Precio Unitario (₡)</th>
                                 <th>Subtotal</th>
                                 <th>Acciones</th>
                             </tr>
@@ -126,18 +114,29 @@
                             @if (isset($purchase) && $purchase->details->count())
                                 @foreach ($purchase->details as $index => $detail)
                                     @include('models.purchases._detail_row', [
-                                        'index' => $index,
-                                        'detail' => $detail,
+                                        'index'    => $index,
+                                        'detail'   => $detail,
                                         'products' => $products,
                                         'supplies' => $supplies,
                                     ])
                                 @endforeach
                             @else
                                 <tr id="empty-details-row">
-                                    <td colspan="4" class="text-center text-muted fst-italic">No hay productos agregados.</td>
+                                    <td colspan="6" class="text-center text-muted fst-italic">No hay productos agregados.</td>
                                 </tr>
                             @endif
                         </tbody>
+                        <tfoot>
+                            <tr class="table-light fw-semibold">
+                                <td colspan="4" class="text-end">Total de la compra:</td>
+                                <td>
+                                    <span class="fs-6 text-success fw-bold" id="total-display">
+                                        ₡{{ number_format(isset($purchase) ? $purchase->total : 0, 2) }}
+                                    </span>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
 
@@ -148,7 +147,7 @@
                 </div>
             </section>
 
-            {{-- Acciones del formulario --}}
+            {{-- Acciones --}}
             <div class="d-flex justify-content-end gap-2 mt-2">
                 <a href="{{ route('purchases.index') }}" class="btn btn-outline-secondary">
                     <i class="bi bi-x-circle me-1"></i> Cancelar
@@ -162,7 +161,7 @@
     </div>
 </div>
 
-{{-- Offcanvas para crear proveedor rápidamente --}}
+{{-- Offcanvas: nuevo proveedor --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasSupplier" aria-labelledby="offcanvasSupplierLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="offcanvasSupplierLabel">Crear nuevo proveedor</h5>
@@ -178,19 +177,26 @@
             </div>
             <div class="mb-3">
                 <label for="quick-phone" class="form-label">Teléfono <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="quick-phone" name="phone"
-                       placeholder="XXXXXXXX" maxlength="8" inputmode="numeric" required>
+                <input type="tel" class="form-control" id="quick-phone" name="phone" placeholder="XXXXXXXX"
+                    minlength="8" maxlength="8" inputmode="numeric" pattern="\d{8}"
+                    title="Debe ingresar exactamente 8 dígitos numéricos" required>
                 <div class="invalid-feedback" id="quick-phone-error"></div>
             </div>
             <div class="mb-3">
-                <label for="quick-email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
-                <input type="email" class="form-control" id="quick-email" name="email" required>
+                <label for="quick-email" class="form-label">Correo electrónico <span
+                        class="text-danger">*</span></label>
+
+                <input type="text" class="form-control" id="quick-email" name="email"
+                    placeholder="correo@ejemplo.com" required
+                    pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}">
                 <div class="invalid-feedback" id="quick-email-error"></div>
             </div>
             <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancelar</button>
+                {{-- FIX #9: Cancelar en rojo --}}
+                <button type="button" class="btn btn-danger" data-bs-dismiss="offcanvas">Cancelar</button>
                 <button type="submit" class="btn btn-primary" id="quick-supplier-submit">
-                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="quick-supplier-spinner"></span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"
+                        id="quick-supplier-spinner"></span>
                     Guardar proveedor
                 </button>
             </div>
@@ -198,7 +204,7 @@
     </div>
 </div>
 
-{{-- Offcanvas para crear producto rápidamente --}}
+{{-- Offcanvas: nuevo producto --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasProduct" aria-labelledby="offcanvasProductLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="offcanvasProductLabel">Crear nuevo producto</h5>
@@ -208,7 +214,8 @@
         <form id="quick-product-form" action="{{ route('purchases.quick-product') }}" method="POST">
             @csrf
             <div class="mb-3">
-                <label for="quick-product-category" class="form-label">Categoría <span class="text-danger">*</span></label>
+                <label for="quick-product-category" class="form-label">Categoría <span
+                        class="text-danger">*</span></label>
                 <select class="form-select" id="quick-product-category" name="category_id" required>
                     <option value="">Seleccionar categoría</option>
                 </select>
@@ -224,9 +231,8 @@
                 <label for="quick-product-type" class="form-label">Tipo <span class="text-danger">*</span></label>
                 <select class="form-select" id="quick-product-type" name="type" required>
                     <option value="">Seleccionar tipo</option>
-                    @foreach(App\Enums\ProductType::cases() as $type)
-                        {{-- EIF-165: Excluir dish y drink del select de tipo --}}
-                        @if(!in_array(strtolower($type->value), ['dish', 'drink']))
+                    @foreach (App\Enums\ProductType::cases() as $type)
+                        @if (!in_array(strtolower($type->value), ['dish', 'drink']))
                             <option value="{{ $type->value }}">{{ ucfirst(mb_strtolower($type->label())) }}</option>
                         @endif
                     @endforeach
@@ -235,31 +241,46 @@
             </div>
 
             <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="quick-product-has-inventory" name="has_inventory" value="1">
+                <input type="checkbox" class="form-check-input" id="quick-product-has-inventory"
+                    name="has_inventory" value="1">
                 <label class="form-check-label" for="quick-product-has-inventory">¿Maneja inventario?</label>
             </div>
 
             <div id="quick-product-stock-fields" style="display: none;">
                 <div class="mb-3">
-                    <label for="quick-product-stock-minimo" class="form-label">Stock mínimo <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="quick-product-stock-minimo" name="stock_minimo" min="0" step="1">
+                    <label for="quick-product-stock-minimo" class="form-label">Stock mínimo <span
+                            class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="quick-product-stock-minimo" name="stock_minimo"
+                        min="0" step="1" placeholder="Ej: 10" required>
                     <div class="invalid-feedback" id="quick-product-stock-minimo-error"></div>
                 </div>
             </div>
 
             <div class="mb-3">
-                <label for="quick-product-reference-cost" class="form-label">Costo de referencia</label>
-                <input type="number" step="0.01" min="0" class="form-control" id="quick-product-reference-cost" name="reference_cost">
+                <label for="quick-product-reference-cost" class="form-label">Costo de referencia <span
+                        class="text-danger">*</span></label>
+                <input type="number" step="0.01" min="0" class="form-control"
+                    id="quick-product-reference-cost" name="reference_cost" placeholder="Ej: 1500.00" required>
                 <div class="invalid-feedback" id="quick-product-reference-cost-error"></div>
             </div>
+
+            {{-- FIX #6: Placeholders en decimal, coherente con el formulario de Productos de las compañeras --}}
             <div class="mb-3">
-                <label for="quick-product-tax-percentage" class="form-label">Porcentaje de impuesto (%)</label>
-                <input type="number" step="0.01" min="0" class="form-control" id="quick-product-tax-percentage" name="tax_percentage">
+                <label for="quick-product-tax-percentage" class="form-label">
+                    Impuesto
+                    <small class="text-muted">(decimal, Ej: 0.13 = 13%)</small>
+                </label>
+                <input type="number" step="0.01" min="0" max="1" class="form-control"
+                    id="quick-product-tax-percentage" name="tax_percentage" placeholder="Ej: 0.13" required>
                 <div class="invalid-feedback" id="quick-product-tax-percentage-error"></div>
             </div>
             <div class="mb-3">
-                <label for="quick-product-margin-percentage" class="form-label">Porcentaje de margen (%)</label>
-                <input type="number" step="0.01" min="0" class="form-control" id="quick-product-margin-percentage" name="margin_percentage">
+                <label for="quick-product-margin-percentage" class="form-label">
+                    Margen de ganancia
+                    <small class="text-muted">(decimal, Ej: 0.35 = 35%)</small>
+                </label>
+                <input type="number" step="0.01" min="0" max="1" class="form-control"
+                    id="quick-product-margin-percentage" name="margin_percentage" placeholder="Ej: 0.35" required>
                 <div class="invalid-feedback" id="quick-product-margin-percentage-error"></div>
             </div>
             <div class="mb-3">
@@ -267,14 +288,17 @@
                     Precio de venta
                     <small class="text-muted ms-1">(se calcula automáticamente)</small>
                 </label>
-                <input type="number" step="0.01" min="0" class="form-control" id="quick-product-sale-price" name="sale_price" readonly>
+                <input type="number" step="0.01" min="0" class="form-control"
+                    id="quick-product-sale-price" name="sale_price" readonly required>
                 <div class="invalid-feedback" id="quick-product-sale-price-error"></div>
             </div>
 
             <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancelar</button>
-                <button type="submit" class="btn btn-success" id="quick-product-submit">
-                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="quick-product-spinner"></span>
+                {{-- FIX #9: Cancelar en rojo --}}
+                <button type="button" class="btn btn-danger" data-bs-dismiss="offcanvas">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="quick-product-submit">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"
+                        id="quick-product-spinner"></span>
                     Guardar producto
                 </button>
             </div>
@@ -282,7 +306,7 @@
     </div>
 </div>
 
-{{-- Offcanvas para crear insumo rápidamente --}}
+{{-- Offcanvas: nuevo insumo (campos completos según migración supplies) --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasSupply" aria-labelledby="offcanvasSupplyLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="offcanvasSupplyLabel">Crear nuevo insumo</h5>
@@ -301,9 +325,32 @@
                 <input type="text" class="form-control" id="quick-supply-measure-unit" name="measure_unit" required placeholder="Ej: kg, litro, unidad">
                 <div class="invalid-feedback" id="quick-supply-measure-unit-error"></div>
             </div>
+            <div class="mb-3">
+                <label for="quick-supply-quantity" class="form-label">Cantidad inicial</label>
+                <input type="number" class="form-control" id="quick-supply-quantity" name="quantity" min="0" step="1" value="0">
+                <div class="invalid-feedback" id="quick-supply-quantity-error"></div>
+            </div>
+            <div class="mb-3">
+                <label for="quick-supply-unit-price" class="form-label">Precio unitario (₡)</label>
+                <div class="input-group">
+                    <span class="input-group-text">₡</span>
+                    <input type="number" step="0.01" min="0" class="form-control" id="quick-supply-unit-price" name="unit_price" value="0">
+                </div>
+                <div class="invalid-feedback" id="quick-supply-unit-price-error"></div>
+            </div>
+            <div class="mb-3">
+                <label for="quick-supply-expiration-date" class="form-label">Fecha de vencimiento</label>
+                <input type="date" class="form-control" id="quick-supply-expiration-date" name="expiration_date">
+                <div class="invalid-feedback" id="quick-supply-expiration-date-error"></div>
+            </div>
+            <div class="mb-3">
+                <label for="quick-supply-expiration-alert-days" class="form-label">Días de alerta antes del vencimiento</label>
+                <input type="number" class="form-control" id="quick-supply-expiration-alert-days" name="expiration_alert_days" min="0" step="1" value="7">
+                <div class="invalid-feedback" id="quick-supply-expiration-alert-days-error"></div>
+            </div>
             <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancelar</button>
-                <button type="submit" class="btn btn-info" id="quick-supply-submit">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="offcanvas">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="quick-supply-submit">
                     <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="quick-supply-spinner"></span>
                     Guardar insumo
                 </button>
@@ -314,20 +361,25 @@
 
 @php
     $productsJson = $products->map(function ($p) {
-        $type = $p->type instanceof \App\Enums\ProductType ? $p->type->value : ($p->type ?? '');
-        return [
-            'id'    => $p->id,
-            'name'  => $p->name,
-            'type'  => $type,
-        ];
-    });
-    $suppliesJson = $supplies->map(function ($s) {
-        return ['id' => $s->id, 'name' => $s->name];
-    });
+    $type = $p->type instanceof \App\Enums\ProductType ? $p->type->value : ($p->type ?? '');
+    return [
+        'id'         => $p->id,
+        'name'       => $p->name,
+        'type'       => $type,
+        'unit_price' => (float) ($p->reference_cost ?? 0), // o sale_price según prefieras
+    ];
+});
+$suppliesJson = $supplies->map(function ($s) {
+    return [
+        'id'         => $s->id,
+        'name'       => $s->name,
+        'unit_price' => (float) ($s->unit_price ?? 0),
+    ];
+});
 @endphp
 <script>
-    window.detailIndex = {{ isset($purchase) ? $purchase->details->count() : 0 }};
-    window.products = @json($productsJson);
-    window.supplies = @json($suppliesJson);
+    window.detailIndex        = {{ isset($purchase) ? $purchase->details->count() : 0 }};
+    window.products           = @json($productsJson);
+    window.supplies           = @json($suppliesJson);
     window.categoriesIndexUrl = "{{ route('categories.index') }}";
 </script>

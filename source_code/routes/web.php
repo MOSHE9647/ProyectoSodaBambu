@@ -15,7 +15,7 @@ use App\Models\Employee;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\PurchaseController;
 /**
  * Evaluate the user's role and redirect accordingly.
  * If the user is not authenticated, redirect to the login page.
@@ -36,7 +36,8 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
     Route::resource('supplies', SupplyController::class)->names('supplies');
-
+    Route::resource('purchases', PurchaseController::class)->names('purchases');
+    Route::post('/purchases/quick-product', [PurchaseController::class, 'quickStoreProduct'])->name('purchases.quick-product');
     // Attendance routes with role-based access control defined in the controller
     Route::group(['prefix' => 'attendance'], function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('attendance.index');

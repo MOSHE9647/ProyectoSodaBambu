@@ -33,25 +33,54 @@
 
     <hr class="my-3" />
 
-    <h5 class="text-muted mb-3">Productos comprados</h5>
-    <div class="table-responsive">
-        <table class="table table-sm table-bordered">
+    {{-- Tabla de productos comprados (mismos estilos que la tabla principal) --}}
+    <h5 class="text-muted mb-3">
+        <i class="bi bi-box-seam me-2"></i> Productos comprados
+    </h5>
+
+    <div class="table-container rounded-2 p-3">
+        <table class="table table-hover rounded-2 w-100" id="purchase-details-table">
             <thead>
                 <tr>
                     <th>Tipo</th>
                     <th>Producto/Insumo</th>
-                    <th>Subtotal</th>
+                    <th class="text-end">Cantidad</th>
+                    <th class="text-end">Precio Unit.</th>
+                    <th class="text-end">Subtotal</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($purchase->details as $detail)
+                    @php
+                        $isProduct  = class_basename($detail->purchasable_type) === 'Product';
+                        $badgeClass = $isProduct ? 'bg-success' : 'bg-info text-dark';
+                        $typeLabel  = $isProduct ? 'Producto' : 'Insumo';
+                    @endphp
                     <tr>
-                        <td>{{ class_basename($detail->purchasable_type) === 'Product' ? 'Producto' : 'Insumo' }}</td>
+                        <td>
+                            <span class="badge {{ $badgeClass }}">{{ $typeLabel }}</span>
+                        </td>
                         <td>{{ $detail->purchasable->name ?? 'N/A' }}</td>
-                        <td>₡{{ number_format($detail->subtotal, 2) }}</td>
+                        <td class="text-end">
+                            {{ number_format($detail->quantity ?? 1, 4, '.', '') }}
+                        </td>
+                        <td class="text-end">
+                            ₡{{ number_format($detail->unit_price ?? 0, 2) }}
+                        </td>
+                        <td class="text-end fw-semibold">
+                            ₡{{ number_format($detail->subtotal, 2) }}
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td colspan="4" class="text-end">Total de la compra:</td>
+                    <td class="text-end text-success fs-6">
+                        ₡{{ number_format($purchase->total, 2) }}
+                    </td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 
@@ -75,17 +104,15 @@
     {{-- Fechas --}}
     <div class="row g-3 mb-0">
         <div class="col-6">
-            <x-form.input.floating-label id="created_at" type="text" readonly="true" :value="Carbon::parse($purchase->created_at)->locale('es')->translatedFormat('d \d\e F \d\e\l Y H:i')"
-                iconLeft="bi bi-calendar-plus" placeholder="Fecha de Creación">Fecha de
-                Creación</x-form.input.floating-label>
+            <x-form.input.floating-label id="created_at" type="text" readonly="true"
+                :value="Carbon::parse($purchase->created_at)->locale('es')->translatedFormat('d \d\e F \d\e\l Y H:i')"
+                iconLeft="bi bi-calendar-plus" placeholder="Fecha de Creación">Fecha de Creación</x-form.input.floating-label>
         </div>
         @if ($purchase->updated_at && $purchase->updated_at != $purchase->created_at)
             <div class="col-6">
-                <x-form.input.floating-label id="updated_at" type="text" readonly="true" :value="Carbon::parse($purchase->updated_at)
-                    ->locale('es')
-                    ->translatedFormat('d \d\e F \d\e\l Y H:i')"
-                    iconLeft="bi bi-calendar-check" placeholder="Fecha de Actualización">Última
-                    Actualización</x-form.input.floating-label>
+                <x-form.input.floating-label id="updated_at" type="text" readonly="true"
+                    :value="Carbon::parse($purchase->updated_at)->locale('es')->translatedFormat('d \d\e F \d\e\l Y H:i')"
+                    iconLeft="bi bi-calendar-check" placeholder="Fecha de Actualización">Última Actualización</x-form.input.floating-label>
             </div>
         @endif
     </div>

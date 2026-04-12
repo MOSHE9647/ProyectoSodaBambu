@@ -20,7 +20,6 @@ return new class extends Migration
             $table->morphs('purchasable');
 
             $table->decimal('subtotal', 12, 2);
-            $table->date('expiration_date')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

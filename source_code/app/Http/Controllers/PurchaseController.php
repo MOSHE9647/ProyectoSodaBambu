@@ -76,8 +76,8 @@ class PurchaseController extends Controller
 
                 if ($orderCol === 'supplier_id') {
                     $query->join('suppliers', 'purchases.supplier_id', '=', 'suppliers.id')
-                          ->orderBy('suppliers.name', $orderDir)
-                          ->select('purchases.*');
+                        ->orderBy('suppliers.name', $orderDir)
+                        ->select('purchases.*');
                 } else {
                     $query->orderBy('purchases.' . $orderCol, $orderDir);
                 }
@@ -294,8 +294,8 @@ class PurchaseController extends Controller
                 'name'       => $product->name,
                 'sale_price' => $product->sale_price,
                 'type'       => $product->type instanceof \App\Enums\ProductType
-                                    ? $product->type->value
-                                    : $product->type,
+                    ? $product->type->value
+                    : $product->type,
             ],
         ]);
     }
