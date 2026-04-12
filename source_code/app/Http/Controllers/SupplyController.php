@@ -101,6 +101,7 @@ class SupplyController extends Controller implements HasMiddleware
                 'supply' => [
                     'id'   => $supply->id,
                     'name' => $supply->name,
+                    'unit_price' => (float) ($supply->unit_price ?? 0),
                 ]
             ]);
         }

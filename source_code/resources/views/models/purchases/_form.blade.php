@@ -11,7 +11,8 @@
             @endif
 
             {{-- Campo oculto: total calculado automáticamente por JS --}}
-            <input type="hidden" name="total" id="total" value="{{ old('total', isset($purchase) ? $purchase->total : '0') }}">
+            <input type="hidden" name="total" id="total"
+                value="{{ old('total', isset($purchase) ? $purchase->total : '0') }}">
 
             {{-- Encabezado --}}
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -24,7 +25,7 @@
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-muted">Fecha de compra:</span>
-                    <input type="date" name="date" id="date"
+                    <input type="date" name="date" id="date" max="{{ now()->format('Y-m-d') }}"
                         value="{{ old('date', isset($purchase) ? $purchase->date->format('Y-m-d') : now()->format('Y-m-d')) }}"
                         class="form-control form-control-sm w-auto" />
                 </div>
@@ -90,10 +91,12 @@
                 </h5>
 
                 <div class="d-flex gap-2 mb-2">
-                    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="offcanvas" data-bs-target="#offcanvasProduct">
+                    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="offcanvas"
+                        data-bs-target="#offcanvasProduct">
                         <i class="bi bi-plus-circle"></i> Nuevo Producto
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSupply">
+                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="offcanvas"
+                        data-bs-target="#offcanvasSupply">
                         <i class="bi bi-plus-circle"></i> Nuevo Insumo
                     </button>
                 </div>
@@ -114,42 +117,46 @@
                             @if (isset($purchase) && $purchase->details->count())
                                 @foreach ($purchase->details as $index => $detail)
                                     @include('models.purchases._detail_row', [
-                                        'index'    => $index,
-                                        'detail'   => $detail,
+                                        'index' => $index,
+                                        'detail' => $detail,
                                         'products' => $products,
                                         'supplies' => $supplies,
                                     ])
                                 @endforeach
                             @else
                                 <tr id="empty-details-row">
-                                    <td colspan="6" class="text-center text-muted fst-italic">No hay productos agregados.</td>
+                                    <td colspan="6" class="text-center text-muted fst-italic">No hay productos
+                                        agregados.</td>
                                 </tr>
                             @endif
                         </tbody>
-                        <tfoot>
-                            <tr class="table-light fw-semibold">
-                                <td colspan="4" class="text-end">Total de la compra:</td>
-                                <td>
-                                    <span class="fs-6 text-success fw-bold" id="total-display">
-                                        ₡{{ number_format(isset($purchase) ? $purchase->total : 0, 2) }}
-                                    </span>
-                                </td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
+                        
                     </table>
                 </div>
 
-                <div class="d-flex justify-content-start">
+                                <div class="d-flex justify-content-between align-items-center mt-3">
                     <button type="button" class="btn btn-sm btn-outline-primary" id="add-detail">
                         <i class="bi bi-plus-circle"></i> Agregar producto/insumo
                     </button>
+ 
+                    <div class="d-flex align-items-center gap-3 px-4 py-3 rounded-3 border border-success-subtle"
+                         style="background: linear-gradient(135deg, rgba(25,135,84,0.06) 0%, rgba(25,135,84,0.12) 100%);">
+                        <div class="d-flex flex-column align-items-end">
+                            <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing:.05em; font-size:.7rem;">
+                                Total de la compra
+                            </span>
+                            <span class="fs-4 fw-bold text-success" id="total-display">
+                                ₡{{ number_format(isset($purchase) ? $purchase->total : 0, 2) }}
+                            </span>
+                        </div>
+                        <i class="bi bi-receipt-cutoff fs-2 text-success opacity-50"></i>
+                    </div>
                 </div>
             </section>
 
             {{-- Acciones --}}
             <div class="d-flex justify-content-end gap-2 mt-2">
-                <a href="{{ route('purchases.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('purchases.index') }}" class="btn btn-danger">
                     <i class="bi bi-x-circle me-1"></i> Cancelar
                 </a>
                 <button type="submit" class="btn btn-primary" id="submit-purchase">
@@ -306,7 +313,7 @@
     </div>
 </div>
 
-{{-- Offcanvas: nuevo insumo (campos completos según migración supplies) --}}
+{{-- Offcanvas: nuevo insumo --}}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasSupply" aria-labelledby="offcanvasSupplyLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="offcanvasSupplyLabel">Crear nuevo insumo</h5>
@@ -321,37 +328,45 @@
                 <div class="invalid-feedback" id="quick-supply-name-error"></div>
             </div>
             <div class="mb-3">
-                <label for="quick-supply-measure-unit" class="form-label">Unidad de medida <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="quick-supply-measure-unit" name="measure_unit" required placeholder="Ej: kg, litro, unidad">
+                <label for="quick-supply-measure-unit" class="form-label">Unidad de medida <span
+                        class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="quick-supply-measure-unit" name="measure_unit"
+                    required placeholder="Ej: kg, litro, unidad">
                 <div class="invalid-feedback" id="quick-supply-measure-unit-error"></div>
             </div>
             <div class="mb-3">
                 <label for="quick-supply-quantity" class="form-label">Cantidad inicial</label>
-                <input type="number" class="form-control" id="quick-supply-quantity" name="quantity" min="0" step="1" value="0">
+                <input type="number" class="form-control" id="quick-supply-quantity" name="quantity"
+                    min="0" step="1" value="0">
                 <div class="invalid-feedback" id="quick-supply-quantity-error"></div>
             </div>
             <div class="mb-3">
                 <label for="quick-supply-unit-price" class="form-label">Precio unitario (₡)</label>
                 <div class="input-group">
                     <span class="input-group-text">₡</span>
-                    <input type="number" step="0.01" min="0" class="form-control" id="quick-supply-unit-price" name="unit_price" value="0">
+                    <input type="number" step="0.01" min="0" class="form-control"
+                        id="quick-supply-unit-price" name="unit_price" value="0">
                 </div>
                 <div class="invalid-feedback" id="quick-supply-unit-price-error"></div>
             </div>
             <div class="mb-3">
                 <label for="quick-supply-expiration-date" class="form-label">Fecha de vencimiento</label>
-                <input type="date" class="form-control" id="quick-supply-expiration-date" name="expiration_date">
+                <input type="date" class="form-control" id="quick-supply-expiration-date" name="expiration_date"
+                    min="">
                 <div class="invalid-feedback" id="quick-supply-expiration-date-error"></div>
             </div>
             <div class="mb-3">
-                <label for="quick-supply-expiration-alert-days" class="form-label">Días de alerta antes del vencimiento</label>
-                <input type="number" class="form-control" id="quick-supply-expiration-alert-days" name="expiration_alert_days" min="0" step="1" value="7">
+                <label for="quick-supply-expiration-alert-days" class="form-label">Días de alerta antes del
+                    vencimiento</label>
+                <input type="number" class="form-control" id="quick-supply-expiration-alert-days"
+                    name="expiration_alert_days" min="0" step="1" value="7">
                 <div class="invalid-feedback" id="quick-supply-expiration-alert-days-error"></div>
             </div>
             <div class="d-flex justify-content-end gap-2">
                 <button type="button" class="btn btn-danger" data-bs-dismiss="offcanvas">Cancelar</button>
                 <button type="submit" class="btn btn-primary" id="quick-supply-submit">
-                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="quick-supply-spinner"></span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"
+                        id="quick-supply-spinner"></span>
                     Guardar insumo
                 </button>
             </div>
@@ -361,25 +376,32 @@
 
 @php
     $productsJson = $products->map(function ($p) {
-    $type = $p->type instanceof \App\Enums\ProductType ? $p->type->value : ($p->type ?? '');
-    return [
-        'id'         => $p->id,
-        'name'       => $p->name,
-        'type'       => $type,
-        'unit_price' => (float) ($p->reference_cost ?? 0), // o sale_price según prefieras
-    ];
-});
-$suppliesJson = $supplies->map(function ($s) {
-    return [
-        'id'         => $s->id,
-        'name'       => $s->name,
-        'unit_price' => (float) ($s->unit_price ?? 0),
-    ];
-});
+        $type = $p->type instanceof \App\Enums\ProductType ? $p->type->value : $p->type ?? '';
+        return [
+            'id' => $p->id,
+            'name' => $p->name,
+            'type' => $type,
+            'unit_price' => (float) ($p->reference_cost ?? 0), // o sale_price según prefieras
+        ];
+    });
+    $suppliesJson = $supplies->map(function ($s) {
+        return [
+            'id' => $s->id,
+            'name' => $s->name,
+            'unit_price' => (float) ($s->unit_price ?? 0),
+        ];
+    });
 @endphp
 <script>
-    window.detailIndex        = {{ isset($purchase) ? $purchase->details->count() : 0 }};
-    window.products           = @json($productsJson);
-    window.supplies           = @json($suppliesJson);
+    window.detailIndex = {{ isset($purchase) ? $purchase->details->count() : 0 }};
+    window.products = @json($productsJson);
+    window.supplies = @json($suppliesJson);
     window.categoriesIndexUrl = "{{ route('categories.index') }}";
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputFecha = document.getElementById("quick-supply-expiration-date");
+
+        const hoy = new Date().toISOString().split("T")[0];
+        inputFecha.min = hoy;
+    });
 </script>

@@ -122,8 +122,8 @@ class PurchaseController extends Controller
     public function create()
     {
         $suppliers = Supplier::all(['id', 'name']);
-        $products  = Product::all(['id', 'name', 'sale_price', 'type']);
-        $supplies  = Supply::all(['id', 'name', 'measure_unit']);
+        $products  = Product::all(['id', 'name', 'sale_price', 'reference_cost', 'type']);
+        $supplies  = Supply::all(['id', 'name', 'measure_unit', 'unit_price']);
         return view('models.purchases.create', compact('suppliers', 'products', 'supplies'));
     }
 
@@ -177,8 +177,8 @@ class PurchaseController extends Controller
     {
         $purchase->load('details.purchasable');
         $suppliers = Supplier::all(['id', 'name']);
-        $products  = Product::all(['id', 'name', 'sale_price', 'type']);
-        $supplies  = Supply::all(['id', 'name', 'measure_unit']);
+        $products  = Product::all(['id', 'name', 'sale_price', 'reference_cost', 'type']);
+        $supplies  = Supply::all(['id', 'name', 'measure_unit', 'unit_price']);
         return view('models.purchases.edit', compact('purchase', 'suppliers', 'products', 'supplies'));
     }
 
@@ -290,10 +290,11 @@ class PurchaseController extends Controller
             'success' => true,
             'message' => 'Producto creado exitosamente.',
             'product' => [
-                'id'         => $product->id,
-                'name'       => $product->name,
-                'sale_price' => $product->sale_price,
-                'type'       => $product->type instanceof \App\Enums\ProductType
+                'id'              => $product->id,
+                'name'            => $product->name,
+                'sale_price'      => $product->sale_price,
+                'reference_cost'  => $product->reference_cost,
+                'type'            => $product->type instanceof \App\Enums\ProductType
                     ? $product->type->value
                     : $product->type,
             ],

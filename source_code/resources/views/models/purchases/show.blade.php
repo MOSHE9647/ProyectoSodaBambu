@@ -44,8 +44,6 @@
                 <tr>
                     <th>Tipo</th>
                     <th>Producto/Insumo</th>
-                    <th class="text-end">Cantidad</th>
-                    <th class="text-end">Precio Unit.</th>
                     <th class="text-end">Subtotal</th>
                 </tr>
             </thead>
@@ -61,12 +59,6 @@
                             <span class="badge {{ $badgeClass }}">{{ $typeLabel }}</span>
                         </td>
                         <td>{{ $detail->purchasable->name ?? 'N/A' }}</td>
-                        <td class="text-end">
-                            {{ number_format($detail->quantity ?? 1, 4, '.', '') }}
-                        </td>
-                        <td class="text-end">
-                            ₡{{ number_format($detail->unit_price ?? 0, 2) }}
-                        </td>
                         <td class="text-end fw-semibold">
                             ₡{{ number_format($detail->subtotal, 2) }}
                         </td>
@@ -75,7 +67,7 @@
             </tbody>
             <tfoot>
                 <tr class="fw-bold">
-                    <td colspan="4" class="text-end">Total de la compra:</td>
+                    <td colspan="2" class="text-end">Total de la compra:</td>
                     <td class="text-end text-success fs-6">
                         ₡{{ number_format($purchase->total, 2) }}
                     </td>

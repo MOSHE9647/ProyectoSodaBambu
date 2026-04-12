@@ -34,8 +34,8 @@ function formatCRC(value) {
  * actualiza su display y el hidden input de subtotal.
  */
 function recalcRowSubtotal($row) {
-    const qty       = parseFloat($row.find('.quantity-input').val())   || 0;
-    const unitPrice = parseFloat($row.find('.unit-price-input').val())  || 0;
+    const qty       = parseFloat($row.find('.quantity-input').val())  || 0;
+    const unitPrice = parseFloat($row.find('.unit-price-input').val()) || 0;
     const subtotal  = qty * unitPrice;
 
     $row.find('.subtotal-display').text(formatCRC(subtotal));
@@ -55,20 +55,52 @@ function recalcTotal() {
     $('#total-display').text(formatCRC(total));
 }
 
-/** Poblar el select de producto/insumo según el tipo seleccionado */
+/**
+ * Poblar el select de producto/insumo según el tipo seleccionado.
+ * Devuelve el jQuery del select para encadenamiento.
+ */
 function populateSelect(selectElement, type) {
     const list = type === 'product' ? productsList : suppliesList;
+    // Marcar para suprimir el listener change durante la repoblación
+    selectElement.data('populating', true);
     selectElement.empty().append('<option value="">Seleccionar</option>');
     list.forEach(item => {
         selectElement.append(`<option value="${item.id}">${item.name}</option>`);
     });
+    selectElement.data('populating', false);
+    return selectElement;
 }
 
+/**
+ * FIX #2: Aplica el unit_price del item seleccionado a la fila.
+ * Se llama tanto al cambiar el select de tipo como al cambiar el select de item.
+ */
+function applyUnitPrice($row) {
+    const type = $row.find('.purchasable-type').val();
+    const idVal = $row.find('.purchasable-id').val();
+
+    // Si no hay item seleccionado, no hacer nada
+    if (!idVal) return;
+
+    const id   = parseInt(idVal, 10);
+    const list = type === 'product' ? productsList : suppliesList;
+    const item = list.find(i => i.id === id);
+
+    const price = (item && item.unit_price != null) ? item.unit_price : 0;
+    $row.find('.unit-price-input').val(price.toFixed(2));
+    recalcRowSubtotal($row);
+    recalcTotal();
+}
+
+/**
+ * FIX #1: Refresca todos los selects del tipo dado y conserva la selección actual.
+ * Se usa cuando se crea un producto/insumo desde el offcanvas.
+ */
 function refreshAllSelectsOfType(type) {
     $('.detail-row').each(function () {
         if ($(this).find('.purchasable-type').val() === type) {
-            const select   = $(this).find('.purchasable-id');
-            const current  = select.val();
+            const select  = $(this).find('.purchasable-id');
+            const current = select.val();
             populateSelect(select, type);
             select.val(current);
         }
@@ -87,8 +119,62 @@ function buildTypeSelect(name, selectedValue = 'product') {
     return `<select name="${name}" class="form-select form-select-sm purchasable-type" required>${options}</select>`;
 }
 
+/**
+ * FIX #1: Agrega una nueva fila a la tabla preseleccionando el item recién creado.
+ * type = 'product' | 'supply'
+ * item = { id, name, unit_price }
+ */
+function addDetailRowForNewItem(type, item) {
+    const index = detailIndex++;
+
+    const template = `
+        <tr class="detail-row" data-index="${index}">
+            <td>${buildTypeSelect(`details[${index}][purchasable_type]`, type)}</td>
+            <td>
+                <select name="details[${index}][purchasable_id]" class="form-select form-select-sm purchasable-id" required>
+                    <option value="">Seleccionar</option>
+                </select>
+            </td>
+            <td>
+                <input type="number" name="details[${index}][quantity]"
+                       class="form-control form-control-sm quantity-input"
+                       value="1" min="0.0001" step="0.0001" required>
+            </td>
+            <td>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">₡</span>
+                    <input type="number" name="details[${index}][unit_price]"
+                           class="form-control form-control-sm unit-price-input"
+                           value="${item.unit_price ? item.unit_price.toFixed(2) : '0.00'}"
+                           min="0" step="0.01" required>
+                </div>
+            </td>
+            <td class="align-middle">
+                <span class="subtotal-display fw-semibold text-success">₡0.00</span>
+                <input type="hidden" name="details[${index}][subtotal]" class="subtotal-input" value="0">
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-danger remove-detail">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `;
+
+    $('#details-container').append(template);
+    const $newRow = $('#details-container tr').last();
+
+    // Poblar el select con todos los items del tipo y preseleccionar el recién creado
+    populateSelect($newRow.find('.purchasable-id'), type).val(item.id);
+
+    // Calcular subtotal inicial (qty=1 × unit_price)
+    recalcRowSubtotal($newRow);
+    toggleEmptyRow();
+    recalcTotal();
+}
+
 // ─────────────────────────────────────────────
-//  Tabla de detalles
+//  Tabla de detalles — botón "Agregar"
 // ─────────────────────────────────────────────
 
 $('#add-detail').on('click', function () {
@@ -112,7 +198,7 @@ $('#add-detail').on('click', function () {
                     <span class="input-group-text">₡</span>
                     <input type="number" name="details[${index}][unit_price]"
                            class="form-control form-control-sm unit-price-input"
-                           value="0" min="0" step="0.01" required>
+                           value="0.00" min="0" step="0.01" required>
                 </div>
             </td>
             <td class="align-middle">
@@ -140,9 +226,21 @@ $(document).on('click', '.remove-detail', function () {
     recalcTotal();
 });
 
+// FIX #2: Al cambiar el tipo (producto/insumo), repoblar el select y resetear precio
 $(document).on('change', '.purchasable-type', function () {
     const $row = $(this).closest('tr');
     populateSelect($row.find('.purchasable-id'), $(this).val());
+    // Resetear precio al cambiar tipo ya que no hay item seleccionado
+    $row.find('.unit-price-input').val('0.00');
+    recalcRowSubtotal($row);
+    recalcTotal();
+});
+
+// FIX #2: Al seleccionar un item del select, autocompletar el precio unitario
+// Usamos un flag para ignorar el change disparado por populateSelect(.empty())
+$(document).on('change', '.purchasable-id', function () {
+    if ($(this).data('populating')) return;
+    applyUnitPrice($(this).closest('tr'));
 });
 
 // Recalcular subtotal de fila y total global al editar cantidad o precio unitario
@@ -160,7 +258,8 @@ function calcSalePrice() {
     const tax    = parseFloat($('#quick-product-tax-percentage').val())  || 0;
     const margin = parseFloat($('#quick-product-margin-percentage').val()) || 0;
     if (cost > 0) {
-        $('#quick-product-sale-price').val((cost * (1 + tax / 100) * (1 + margin / 100)).toFixed(2));
+        // tax y margin vienen como decimales (ej: 0.13), no como porcentaje
+        $('#quick-product-sale-price').val((cost * (1 + tax) * (1 + margin)).toFixed(2));
     }
 }
 
@@ -239,9 +338,6 @@ $(document).on('submit', 'form[id$="-purchase-form"]', (e) => {
 
 // ─────────────────────────────────────────────
 //  Quick supplier
-//  Fix 422: el SupplierRequest valida name/phone/email.
-//  Se envía con Accept: application/json para recibir JSON (no redirect).
-//  Los errores se muestran bajo cada campo sin depender de .invalid-feedback.
 // ─────────────────────────────────────────────
 
 $('#quick-phone').on('input', function () {
@@ -280,19 +376,16 @@ $(document).on('submit', '#quick-supplier-form', async function (e) {
         const data = await response.json();
 
         if (response.ok && data.success) {
-            // Agregar el nuevo proveedor al select principal y seleccionarlo
             const $select = $('#supplier_id');
             $select.append(`<option value="${data.supplier.id}">${data.supplier.name}</option>`);
             $select.val(data.supplier.id);
 
-            // Cerrar offcanvas y limpiar
             const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasSupplier'));
             if (offcanvas) offcanvas.hide();
             $form[0].reset();
 
             SwalToast.fire({ icon: 'success', text: data.message || 'Proveedor creado correctamente.' });
         } else {
-            // Mostrar errores de validación campo a campo
             if (data.errors) {
                 Object.entries(data.errors).forEach(([field, messages]) => {
                     $(`#quick-${field}`).addClass('is-invalid');
@@ -376,12 +469,12 @@ $('#quick-product-form').on('submit', async function (e) {
 
     try {
         const formData = new FormData($form[0]);
-        if (!formData.has('has_inventory'))     formData.set('has_inventory', '0');
-        if (!formData.has('barcode'))            formData.set('barcode', '');
-        if (!formData.get('reference_cost'))     formData.set('reference_cost', '0');
-        if (!formData.get('tax_percentage'))     formData.set('tax_percentage', '0');
-        if (!formData.get('margin_percentage'))  formData.set('margin_percentage', '0');
-        if (!formData.get('sale_price'))         formData.set('sale_price', '0');
+        if (!formData.has('has_inventory'))    formData.set('has_inventory', '0');
+        if (!formData.has('barcode'))           formData.set('barcode', '');
+        if (!formData.get('reference_cost'))    formData.set('reference_cost', '0');
+        if (!formData.get('tax_percentage'))    formData.set('tax_percentage', '0');
+        if (!formData.get('margin_percentage')) formData.set('margin_percentage', '0');
+        if (!formData.get('sale_price'))        formData.set('sale_price', '0');
         formData.delete('stock_actual');
 
         const response = await fetch($form.attr('action'), {
@@ -393,8 +486,18 @@ $('#quick-product-form').on('submit', async function (e) {
         const data = await response.json();
 
         if (data.success) {
-            productsList.push({ id: data.product.id, name: data.product.name, type: data.product.type || '' });
+            // FIX #1 + #2: incluir unit_price (reference_cost) para el autocomplete
+            const newItem = {
+                id:         data.product.id,
+                name:       data.product.name,
+                type:       data.product.type || '',
+                unit_price: parseFloat(data.product.reference_cost ?? 0),
+            };
+            productsList.push(newItem);
             refreshAllSelectsOfType('product');
+
+            // FIX #1: agregar automáticamente a la tabla de detalles
+            addDetailRowForNewItem('product', newItem);
 
             const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasProduct'));
             if (offcanvas) offcanvas.hide();
@@ -432,7 +535,7 @@ $('#offcanvasProduct').on('hidden.bs.offcanvas', function () {
 });
 
 // ─────────────────────────────────────────────
-//  Quick supply (campos actualizados según migración)
+//  Quick supply
 // ─────────────────────────────────────────────
 
 $('#quick-supply-form').on('submit', async function (e) {
@@ -450,10 +553,9 @@ $('#quick-supply-form').on('submit', async function (e) {
 
     try {
         const formData = new FormData($form[0]);
-        // Valores por defecto para campos opcionales
-        if (!formData.get('quantity'))               formData.set('quantity', '0');
-        if (!formData.get('unit_price'))             formData.set('unit_price', '0');
-        if (!formData.get('expiration_alert_days'))  formData.set('expiration_alert_days', '7');
+        if (!formData.get('quantity'))              formData.set('quantity', '0');
+        if (!formData.get('unit_price'))            formData.set('unit_price', '0');
+        if (!formData.get('expiration_alert_days')) formData.set('expiration_alert_days', '7');
 
         const response = await fetch($form.attr('action'), {
             method:  'POST',
@@ -464,8 +566,17 @@ $('#quick-supply-form').on('submit', async function (e) {
         const data = await response.json();
 
         if (data.success) {
-            suppliesList.push({ id: data.supply.id, name: data.supply.name });
+            // FIX #1 + #2: incluir unit_price para el autocomplete
+            const newItem = {
+                id:         data.supply.id,
+                name:       data.supply.name,
+                unit_price: parseFloat(data.supply.unit_price ?? 0),
+            };
+            suppliesList.push(newItem);
             refreshAllSelectsOfType('supply');
+
+            // FIX #1: agregar automáticamente a la tabla de detalles
+            addDetailRowForNewItem('supply', newItem);
 
             const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasSupply'));
             if (offcanvas) offcanvas.hide();
@@ -492,24 +603,6 @@ $('#quick-supply-form').on('submit', async function (e) {
     }
 });
 
-$(document).on('change', '.purchasable-id', function () {
-    const $row  = $(this).closest('tr');
-    const type  = $row.find('.purchasable-type').val();
-    const id    = parseInt($(this).val());
-    const list  = type === 'product' ? productsList : suppliesList;
-    const item  = list.find(i => i.id === id);
-
-    if (item && item.unit_price) {
-        $row.find('.unit-price-input').val(item.unit_price.toFixed(2));
-        recalcRowSubtotal($row);
-        recalcTotal();
-    } else {
-        $row.find('.unit-price-input').val('0.00');
-        recalcRowSubtotal($row);
-        recalcTotal();
-    }
-});
-
 // Limpiar offcanvas al cerrar
 $('#offcanvasProduct, #offcanvasSupply, #offcanvasSupplier').on('hidden.bs.offcanvas', function () {
     let formId;
@@ -526,7 +619,6 @@ $('#offcanvasProduct, #offcanvasSupply, #offcanvasSupplier').on('hidden.bs.offca
 //  Init: calcular total en modo edición
 // ─────────────────────────────────────────────
 $(function () {
-    // En modo edición, recalcular subtotales de filas precargadas y total global
     $('#details-container .detail-row').each(function () {
         recalcRowSubtotal($(this));
     });
