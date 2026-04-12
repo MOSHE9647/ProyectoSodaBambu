@@ -1,4 +1,3 @@
-
 @php
     use App\Enums\ProductType;
     use Carbon\Carbon;
@@ -6,6 +5,14 @@
     $isMerchandise = ($product->type instanceof ProductType ? $product->type->value : (string) $product->type) === ProductType::MERCHANDISE->value;
     $showInventoryFields = (bool) $product->has_inventory;
 @endphp
+
+<style>
+    /* Aumentar el ancho del modal de SweetAlert solo cuando se carga esta vista */
+    .swal2-popup {
+        width: 900px !important;
+        max-width: 95vw !important;
+    }
+</style>
 
 <div class="d-flex flex-column text-start">
     {{-- Product Information --}}
@@ -157,7 +164,7 @@
             </div>
         @endif
 
-        <div class="col-12">
+        <div class="col-6">
             <x-form.input.floating-label
                 :id="'sale_price'"
                 :type="'text'"

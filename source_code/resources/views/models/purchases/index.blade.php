@@ -1,24 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container p-0">
-    <x-header title="Gestión de Compras" subtitle="Administre las compras realizadas a proveedores" />
+<x-header title="Gestión de Compras" subtitle="Administre las compras realizadas a proveedores" />
 
-    <div class="table-container rounded-2 p-4">
-        <table id="purchases-table" class="table table-hover rounded-2">
-            <thead>
-                <tr>
-                    <th>N° Factura</th>
-                    <th>Proveedor</th>
-                    <th>Fecha</th>
-                    <th>Total</th>
-                    <th>Estado de Pago</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+<div class="table-container rounded-2 p-4">
+    <table id="purchases-table" class="table table-hover rounded-2">
+        <thead>
+            <tr>
+                <th>N° Factura</th>
+                <th>Proveedor</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Estado de Pago</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 {{-- Modal: productos/insumos del proveedor --}}
@@ -41,19 +39,19 @@
                 <div id="supplier-items-content" class="d-none">
                     <p class="text-muted mb-3">Ítems que este proveedor ha suministrado en compras registradas:</p>
 
-                    {{-- Mismos estilos que la tabla principal --}}
-                    <div class="table-container rounded-2 p-3">
-                        <table id="supplier-items-table" class="table table-hover rounded-2 w-100">
-                            <thead>
-                                <tr>
-                                    <th>Tipo</th>
-                                    <th>Nombre</th>
-                                    <th>Veces suministrado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="supplier-items-tbody"></tbody>
-                        </table>
-                    </div>
+                    <hr>
+
+                    <table id="supplier-items-table" class="table table-hover rounded-2 w-100">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Nombre</th>
+                                <th>Veces suministrado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplier-items-tbody"></tbody>
+                    </table>
+
                 </div>
 
                 <div id="supplier-items-empty" class="d-none text-center py-4 text-muted">

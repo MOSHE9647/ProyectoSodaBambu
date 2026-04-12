@@ -34,95 +34,62 @@ window.showSupplierItems = function (supplierId, supplierName) {
     const $loading = $('#supplier-items-loading');
     const $content = $('#supplier-items-content');
     const $empty = $('#supplier-items-empty');
-    const $tbody = $('#supplier-items-tbody');
     const $modalName = $('#modal-supplier-name');
 
     // Limpiar estado anterior
     if (supplierItemsTable) {
         supplierItemsTable.destroy();
         supplierItemsTable = null;
+        $('#supplier-items-table').empty(); // Limpiar DOM del table si DataTables lo modificó
     }
-    $tbody.empty();
-    $loading.removeClass('d-none');
-    $content.addClass('d-none');
+    
+    // Ocultar spinners/vacio manuales que ya no se ocupan porque DataTable se encarga
+    $loading.addClass('d-none');
     $empty.addClass('d-none');
+    $content.removeClass('d-none');
+    
     $modalName.text(supplierName);
-
     modal.show();
 
-    $.ajax({
-        url: MODEL_ROUTES.index,
-        method: 'GET',
-        data: { supplier_id: supplierId, report: 1 },
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        success: function (data) {
-            $loading.addClass('d-none');
-
-            if (!data.items || data.items.length === 0) {
-                $empty.removeClass('d-none');
-                return;
+    const columns = [
+        {
+            data: 'type', name: 'type', title: 'Tipo', orderable: false,
+            render: (data) => {
+                const badgeClass = data === 'Producto' ? 'bg-success' : 'bg-info text-dark';
+                return `<span class="badge ${badgeClass}">${data}</span>`;
             }
-
-            data.items.forEach(item => {
-                // Mismos colores que la tabla de detalles en show.blade.php
-                const badgeClass = item.type === 'Producto'
-                    ? 'bg-success'
-                    : 'bg-info text-dark';
-
-                $tbody.append(`
-                    <tr>
-                        <td><span class="badge ${badgeClass}">${item.type}</span></td>
-                        <td>${item.name}</td>
-                        <td class="text-center fw-semibold">${item.times}</td>
-                    </tr>
-                `);
-            });
-
-            $content.removeClass('d-none');
-
-            // Misma configuración de DataTable que la tabla de detalles de compra
-            supplierItemsTable = $('#supplier-items-table').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json',
-                    search: 'Buscar:',
-                    lengthMenu: 'Mostrar _MENU_ registros',
-                    info: 'Mostrando _START_ a _END_ de _TOTAL_ ítems',
-                    infoEmpty: 'Sin resultados',
-                    zeroRecords: 'No se encontraron ítems para esta búsqueda',
-                    paginate: {
-                        first: '<i class="bi-skip-start-fill" style="font-size: .69rem"></i>',
-                        last: '<i class="bi-skip-end-fill" style="font-size: .69rem"></i>',
-                        next: '<i class="bi-caret-right-fill" style="font-size: .69rem"></i>',
-                        previous: '<i class="bi-caret-left-fill" style="font-size: .69rem"></i>'
-                    }
-                },
-                pageLength: 5,
-                lengthMenu: [5, 10, 25],
-                order: [[2, 'desc']], // Ordenar por "Veces suministrado" descendente
-                columnDefs: [
-                    { orderable: false, targets: 0 }, // Columna Tipo no ordenable
-                    { className: 'text-center', targets: 2 },
-                ],
-                dom: '<"row mb-2"<"col-sm-6"l><"col-sm-6"f>>rt<"row mt-2"<"col-sm-6"i><"col-sm-6"p>>',
-            });
         },
-        error: function () {
-            $loading.addClass('d-none');
-            SwalToast.fire({ icon: 'error', text: 'No se pudo cargar la información del proveedor.' });
+        { data: 'name', name: 'name', title: 'Nombre' },
+        { 
+            data: 'times', name: 'times', title: 'Veces Suministrado', 
+            className: 'text-center fw-semibold' 
         }
-    });
+    ];
+
+    supplierItemsTable = CreateNewDataTable(
+        'supplier-items-table',
+        MODEL_ROUTES.index,
+        columns,
+        {},
+        [],
+        {
+            serverSide: false, // Es una consulta que retorna {items: [...]}
+            ajax: {
+                data: { supplier_id: supplierId, report: 1 },
+                dataSrc: 'items'
+            },
+        }
+    );
 };
 
 // Limpiar DataTable al cerrar el modal
 $('#supplierItemsModal').on('hidden.bs.modal', function () {
     if (supplierItemsTable) {
         supplierItemsTable.destroy();
+        $('#supplier-items-table').empty();
         supplierItemsTable = null;
     }
-    $('#supplier-items-tbody').empty();
     $('#supplier-items-content').addClass('d-none');
-    $('#supplier-items-empty').addClass('d-none');
-    $('#supplier-items-loading').addClass('d-none');
 });
 
 $(() => {
