@@ -60,7 +60,18 @@ class SupplierController extends Controller
             $supplier->update($supplierData);
             $message = 'Proveedor restaurado y actualizado exitosamente.';
         } else {
-            Supplier::create($supplierData);
+            $supplier = Supplier::create($supplierData);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'supplier' => [
+                    'id' => $supplier->id,
+                    'name' => $supplier->name,
+                ],
+            ]);
         }
 
         return redirect()->route('suppliers.index')->with('success', $message);

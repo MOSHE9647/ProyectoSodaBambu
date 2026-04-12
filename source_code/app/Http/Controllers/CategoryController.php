@@ -25,8 +25,13 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
+
+        if ($request->has('simple') && $request->wantsJson()) {
+            return response()->json(Category::select('id', 'name')->get());
+        }
+
         // Handle AJAX request for DataTables
-        if ($request->ajax()) {
+        if ($request->ajax() && $request->wantsJson()) {
             // Use query builder to keep DataTables server-side and memory efficient
             return DataTables::of(Category::query())->toJson();
         }

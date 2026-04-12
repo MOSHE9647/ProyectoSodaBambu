@@ -89,8 +89,6 @@ class SupplyController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      *
-     *
-     *
      * @return RedirectResponse
      *
      * @throws Throwable
@@ -106,7 +104,19 @@ class SupplyController extends Controller implements HasMiddleware
             $supply->update($supplyData);
             $message = 'Insumo restaurado y actualizado correctamente.';
         } else {
-            Supply::create($supplyData);
+            $supply = Supply::create($supplyData);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'supply' => [
+                    'id' => $supply->id,
+                    'name' => $supply->name,
+                    'unit_price' => (float) ($supply->unit_price ?? 0),
+                ],
+            ]);
         }
 
         return redirect()->route('supplies.index')->with('success', $message);
