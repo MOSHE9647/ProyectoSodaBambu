@@ -8,6 +8,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\UserController;
@@ -15,7 +16,7 @@ use App\Models\Employee;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PurchaseController;
+
 /**
  * Evaluate the user's role and redirect accordingly.
  * If the user is not authenticated, redirect to the login page.

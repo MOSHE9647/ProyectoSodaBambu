@@ -65,10 +65,10 @@ class SupplierController extends Controller
 
         if ($request->wantsJson()) {
             return response()->json([
-                'success'  => true,
-                'message'  => $message,
+                'success' => true,
+                'message' => $message,
                 'supplier' => [
-                    'id'   => $supplier->id,
+                    'id' => $supplier->id,
                     'name' => $supplier->name,
                 ],
             ]);
