@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\EmployeeStatus;
 use App\Enums\UserRole;
 use App\Models\Employee;
 use App\Models\User;
@@ -23,15 +24,15 @@ class UserSeeder extends Seeder
 
         // Create 9 additional employees with real data.
         $employees = [
-            ['name' => 'Juan Pérez', 'email' => 'juan.perez@sodabambu.com', 'phone' => '+506 8765 4321'],
-            ['name' => 'María García', 'email' => 'maria.garcia@sodabambu.com', 'phone' => '+506 7654 3210'],
-            ['name' => 'Carlos López', 'email' => 'carlos.lopez@sodabambu.com', 'phone' => '+506 6543 2109'],
-            ['name' => 'Ana Martínez', 'email' => 'ana.martinez@sodabambu.com', 'phone' => '+506 5432 1098'],
-            ['name' => 'Roberto Sánchez', 'email' => 'roberto.sanchez@sodabambu.com', 'phone' => '+506 4321 0987'],
-            ['name' => 'Laura Rodríguez', 'email' => 'laura.rodriguez@sodabambu.com', 'phone' => '+506 4210 9876'],
-            ['name' => 'Diego Fernández', 'email' => 'diego.fernandez@sodabambu.com', 'phone' => '+506 8901 2345'],
-            ['name' => 'Sofía Jiménez', 'email' => 'sofia.jimenez@sodabambu.com', 'phone' => '+506 7890 1234'],
-            ['name' => 'Miguel Morales', 'email' => 'miguel.morales@sodabambu.com', 'phone' => '+506 6789 0123'],
+            ['name' => 'Juan Pérez', 'email' => 'juan.perez@sodabambu.com', 'phone' => '+506 8765 4321', 'status' => EmployeeStatus::ACTIVE],
+            ['name' => 'María García', 'email' => 'maria.garcia@sodabambu.com', 'phone' => '+506 7654 3210', 'status' => EmployeeStatus::INACTIVE],
+            ['name' => 'Carlos López', 'email' => 'carlos.lopez@sodabambu.com', 'phone' => '+506 6543 2109', 'status' => EmployeeStatus::INACTIVE],
+            ['name' => 'Ana Martínez', 'email' => 'ana.martinez@sodabambu.com', 'phone' => '+506 5432 1098', 'status' => EmployeeStatus::INACTIVE],
+            ['name' => 'Roberto Sánchez', 'email' => 'roberto.sanchez@sodabambu.com', 'phone' => '+506 4321 0987', 'status' => EmployeeStatus::INACTIVE],
+            ['name' => 'Laura Rodríguez', 'email' => 'laura.rodriguez@sodabambu.com', 'phone' => '+506 4210 9876', 'status' => EmployeeStatus::INACTIVE],
+            ['name' => 'Diego Fernández', 'email' => 'diego.fernandez@sodabambu.com', 'phone' => '+506 8901 2345', 'status' => EmployeeStatus::ACTIVE],
+            ['name' => 'Sofía Jiménez', 'email' => 'sofia.jimenez@sodabambu.com', 'phone' => '+506 7890 1234', 'status' => EmployeeStatus::ACTIVE],
+            ['name' => 'Miguel Morales', 'email' => 'miguel.morales@sodabambu.com', 'phone' => '+506 6789 0123', 'status' => EmployeeStatus::ACTIVE],
         ];
 
         foreach ($employees as $employee) {
@@ -43,6 +44,7 @@ class UserSeeder extends Seeder
             Employee::factory()->create([
                 'id' => $user->id,
                 'phone' => $employee['phone'],
+                'status' => $employee['status'] ?? EmployeeStatus::ACTIVE,
             ]);
         }
     }
