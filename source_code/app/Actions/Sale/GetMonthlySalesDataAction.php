@@ -14,10 +14,13 @@ class GetMonthlySalesDataAction
         Carbon::setLocale('es');
         $timezone = 'America/Costa_Rica';
 
-        $monthStart = Carbon::now()->startOfMonth();
-        $today = Carbon::now();
+        $monthStartLocal = Carbon::now($timezone)->startOfMonth();
+        $todayLocal = Carbon::now($timezone);
 
-        $sales = Sale::whereBetween('date', [$monthStart, $today])
+        $monthStartUtc = $monthStartLocal->copy()->timezone('UTC');
+        $todayUtc = $todayLocal->copy()->endOfDay()->timezone('UTC');
+
+        $sales = Sale::whereBetween('date', [$monthStartUtc, $todayUtc])
             ->where('payment_status', PaymentStatus::PAID)
             ->get(['date', 'total']);
 
@@ -31,7 +34,7 @@ class GetMonthlySalesDataAction
         $labels = [];
         $values = [];
 
-        $period = CarbonPeriod::create($monthStart, $today);
+        $period = CarbonPeriod::create($monthStartLocal->copy()->startOfDay(), $todayLocal->copy()->endOfDay());
 
         foreach ($period as $date) {
             $dateString = $date->format('Y-m-d');

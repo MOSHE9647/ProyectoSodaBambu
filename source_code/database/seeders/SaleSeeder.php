@@ -5,7 +5,9 @@ namespace Database\Seeders;
 use App\Enums\PaymentStatus;
 use App\Models\Employee;
 use App\Models\Sale;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Str;
 
 class SaleSeeder extends Seeder
 {
@@ -14,46 +16,70 @@ class SaleSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get existing employees to assign sales to them
-        $employees = Employee::all();
+        $timezone = 'America/Costa_Rica';
 
-        if ($employees->isEmpty()) {
-            $this->command->warn('No hay empleados en la base de datos. Por favor, corre EmployeeSeeder primero.');
+        // Ensure there is at least one employee
+        $employeeId = Employee::first()->id ?? Employee::factory()->create()->id;
 
-            return;
+        $nowLocal = Carbon::now($timezone);
+
+        // 1. Create simulated sales for TODAY (each hour from 7 AM up to now)
+        for ($hour = 7; $hour <= $nowLocal->hour; $hour++) {
+            // Generate 1 to 3 sales per hour today
+            $numSales = rand(1, 3);
+            for ($i = 0; $i < $numSales; $i++) {
+                $saleDateLocal = $nowLocal->copy()->setTime($hour, rand(0, 59), rand(0, 59));
+                $this->createSale($employeeId, $saleDateLocal, rand(1500, 15000));
+            }
         }
 
-        // Generate sales for TODAY
-        for ($i = 1; $i <= 5; $i++) {
-            Sale::create([
-                'employee_id' => $employees->random()->id,
-                'invoice_number' => 'VNT-'.date('Ymd').'-'.str_pad($i, 4, '0', STR_PAD_LEFT),
-                'payment_status' => PaymentStatus::PAID,
-                'date' => now()->subMinutes(rand(1, 480)),
-                'total' => rand(2500, 45000),
-            ]);
+        // 2. Create simulated sales for YESTERDAY (some before current hour, some after)
+        $yesterdayLocal = $nowLocal->copy()->subDay();
+        for ($hour = 7; $hour <= 20; $hour++) { // Assume 8 PM close
+            $numSales = rand(1, 3);
+            for ($i = 0; $i < $numSales; $i++) {
+                $saleDateLocal = $yesterdayLocal->copy()->setTime($hour, rand(0, 59), rand(0, 59));
+                $this->createSale($employeeId, $saleDateLocal, rand(1500, 12000));
+            }
         }
 
-        // Generate historical sales
-        for ($i = 1; $i <= 15; $i++) {
-            Sale::create([
-                'employee_id' => $employees->random()->id,
-                'invoice_number' => 'VNT-'.str_pad($i, 5, '0', STR_PAD_LEFT),
-                'payment_status' => fake()->randomElement([PaymentStatus::PAID, PaymentStatus::PENDING]),
-                'date' => now()->subDays(rand(1, 30)),
-                'total' => rand(5000, 75000),
-            ]);
-        }
+        // 3. Create simulated sales for OTHER DAYS THIS MONTH
+        $startOfMonthLocal = $nowLocal->copy()->startOfMonth();
+        $daysPassed = $startOfMonthLocal->diffInDays($yesterdayLocal);
 
-        // Generate sales for YESTERDAY
-        for ($i = 1; $i <= 2; $i++) {
-            Sale::create([
-                'employee_id' => $employees->random()->id,
-                'invoice_number' => 'VNT-'.now()->subDay()->format('Ymd').'-'.str_pad($i, 4, '0', STR_PAD_LEFT),
-                'payment_status' => PaymentStatus::PAID,
-                'date' => now()->subDay()->setHour(rand(8, 20))->setMinute(rand(0, 59)),
-                'total' => rand(3000, 50000),
-            ]);
+        if ($daysPassed > 0) {
+            for ($d = 0; $d <= $daysPassed; $d++) {
+                $currentDayLocal = $startOfMonthLocal->copy()->addDays($d);
+                if ($currentDayLocal->isSameDay($yesterdayLocal) || $currentDayLocal->isSameDay($nowLocal)) {
+                    continue; // Already seeded today and yesterday
+                }
+
+                // Random number of sales per day
+                $dailySales = rand(5, 15);
+                for ($i = 0; $i < $dailySales; $i++) {
+                    $saleDateLocal = $currentDayLocal->copy()->setTime(rand(7, 20), rand(0, 59), rand(0, 59));
+                    $this->createSale($employeeId, $saleDateLocal, rand(1500, 25000));
+                }
+            }
         }
+    }
+
+    /**
+     * Helper to create a sale correctly converting the datetime to UTC.
+     */
+    private function createSale(int $employeeId, Carbon $localDate, float $total)
+    {
+        // Store in DB as UTC timezone
+        $utcDate = $localDate->copy()->timezone('UTC');
+
+        Sale::create([
+            'employee_id' => $employeeId,
+            'invoice_number' => strtoupper(Str::random(10)),
+            'payment_status' => PaymentStatus::PAID,
+            'date' => $utcDate,
+            'total' => $total,
+            'created_at' => $utcDate,
+            'updated_at' => $utcDate,
+        ]);
     }
 }

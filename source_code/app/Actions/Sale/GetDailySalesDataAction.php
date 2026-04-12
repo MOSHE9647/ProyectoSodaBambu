@@ -13,11 +13,11 @@ class GetDailySalesDataAction
         // Define timezone for Costa Rica (UTC-6)
         $timezone = 'America/Costa_Rica';
 
-        // Get the start and end of the current day in UTC-6 timezone
-        $startOfDay = Carbon::now()->startOfDay();
-        $endOfDay = Carbon::now()->endOfDay();
+        // Get the start and end of the current day in UTC-6 timezone and convert to UTC for DB
+        $startOfDay = Carbon::now($timezone)->startOfDay()->timezone('UTC');
+        $endOfDay = Carbon::now($timezone)->endOfDay()->timezone('UTC');
 
-        // Get all sales for the current day
+        // Get all sales for the current local day using UTC bounds
         $sales = Sale::whereBetween('date', [$startOfDay, $endOfDay])
             ->where('payment_status', PaymentStatus::PAID)
             ->get(['date', 'total']);

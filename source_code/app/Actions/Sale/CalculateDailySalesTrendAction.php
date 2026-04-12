@@ -25,11 +25,13 @@ class CalculateDailySalesTrendAction
      */
     public function execute(): array
     {
+        $timezone = 'America/Costa_Rica';
+
         // Get today's total (full day)
-        $todayTotal = $this->getSalesTotal(Carbon::today());
+        $todayTotal = $this->getSalesTotal(Carbon::today($timezone));
 
         // Get yesterday's total up to the current time (for trend comparison)
-        $yesterdayUntilNow = $this->getSalesTotal(Carbon::yesterday(), true);
+        $yesterdayUntilNow = $this->getSalesTotal(Carbon::yesterday($timezone), true);
 
         // Calculate trend
         if ($yesterdayUntilNow > 0) {
@@ -58,12 +60,18 @@ class CalculateDailySalesTrendAction
      */
     private function getSalesTotal(Carbon $date, bool $untilCurrentTime = false): float
     {
-        $query = Sale::whereDate('date', $date)
-            ->where('payment_status', PaymentStatus::PAID);
+        $timezone = 'America/Costa_Rica';
+        $dbStart = $date->copy()->startOfDay()->timezone('UTC');
 
         if ($untilCurrentTime) {
-            $query->whereTime('date', '<=', Carbon::now()->toTimeString());
+            $currentTime = Carbon::now($timezone);
+            $dbEnd = $date->copy()->setTime($currentTime->hour, $currentTime->minute, $currentTime->second)->timezone('UTC');
+        } else {
+            $dbEnd = $date->copy()->endOfDay()->timezone('UTC');
         }
+
+        $query = Sale::whereBetween('date', [$dbStart, $dbEnd])
+            ->where('payment_status', PaymentStatus::PAID);
 
         return (float) $query->sum('total');
     }

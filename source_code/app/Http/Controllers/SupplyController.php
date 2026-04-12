@@ -89,7 +89,7 @@ class SupplyController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      *
-     * @return RedirectResponse
+     * @return RedirectResponse | JsonResponse
      *
      * @throws Throwable
      */
