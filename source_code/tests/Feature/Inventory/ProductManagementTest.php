@@ -64,6 +64,8 @@ test('CP-02_EIF-32 - creates merchandise product and auto-calculates sale price'
         'tax_percentage' => 13,
         'margin_percentage' => 35,
         'minimum_stock' => 8,
+        'expiration_date' => now()->addDays(30)->format('Y-m-d'),
+        'expiration_alert_days' => 5,
     ]);
 
     // Then: the system stores the product, computes sale_price, and creates stock row.
@@ -142,6 +144,8 @@ test('CP-04_EIF-32 - validates minimum stock when inventory is enabled', functio
             'reference_cost' => 1200,
             'tax_percentage' => 13,
             'margin_percentage' => 35,
+            'expiration_date' => now()->addDays(30)->format('Y-m-d'),
+            'expiration_alert_days' => 5,
         ]);
 
     // Then: validation rejects the request and no product is created.
@@ -191,6 +195,8 @@ test('CP-05_EIF-32 - updates existing product data successfully', function () {
         'tax_percentage' => 13,
         'margin_percentage' => 40,
         'minimum_stock' => 12,
+        'expiration_date' => now()->addDays(30)->format('Y-m-d'),
+        'expiration_alert_days' => 5,
     ]);
 
     // Then: product and stock minimum values are updated.
@@ -479,6 +485,8 @@ test('CP-14_EIF-32 - restores soft deleted product by barcode and restores stock
         'tax_percentage' => 13,
         'margin_percentage' => 35,
         'minimum_stock' => 15,
+        'expiration_date' => now()->addDays(30)->format('Y-m-d'),
+        'expiration_alert_days' => 5,
     ]);
 
     // Then: product and stock are restored and updated.
@@ -501,7 +509,7 @@ test('CP-14_EIF-32 - restores soft deleted product by barcode and restores stock
  * Priority: High
  * Jira Link: https://est-una.atlassian.net/browse/EIF-32
  */
-test('CP-15_EIF-32 - creates drink product forcing sale price to zero', function () {
+test('CP-15_EIF-32 - creates drink product with manual sale price', function () {
     // Given: an authenticated admin and an existing category.
     $admin = createAdminUserForProduct();
     $category = Category::factory()->create();
@@ -516,11 +524,11 @@ test('CP-15_EIF-32 - creates drink product forcing sale price to zero', function
         'sale_price' => 9000,
     ]);
 
-    // Then: the controller applies pricing rules and stores sale_price as zero.
+    // Then: the controller applies pricing rules and stores sale_price as 9000.
     $response
         ->assertRedirect(route('products.index'))
         ->assertSessionHas('success', 'Producto creado exitosamente.');
 
     $drink = Product::query()->where('barcode', '7501234500001')->firstOrFail();
-    expect((float) $drink->sale_price)->toBe(0.0);
+    expect((float) $drink->sale_price)->toBe(9000.0);
 });
