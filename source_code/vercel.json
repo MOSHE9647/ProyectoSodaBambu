@@ -12,9 +12,10 @@
 		{ "src": "/scripts/(.*)", "dest": "/scripts/$1" },
 		{ "src": "/favicon/(.*)", "dest": "/favicon/$1" },
 		{
-			"src": "/(sw\\.js|site\\.webmanifest|logo\\.webp|robots\\.txt|offline\\.html)",
+			"src": "/(sw\\.js|site\\.webmanifest|logo\\.webp|robots\\.txt|offline\\.html|cache\\.json)",
 			"dest": "/$1"
 		},
+		{ "src": "/build/(manifest\\.json)", "dest": "/build/$1" },
 		{ "src": "/(.*\\.php)", "dest": "/api/$1" },
 		{ "src": "/(.*)", "dest": "/api/index.php" }
 	]
