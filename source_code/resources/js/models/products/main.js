@@ -1,256 +1,255 @@
-import { showModelInfo, deleteModel } from '../actions.js';
-import { CreateNewDataTable } from '../../utils/datatables.js';
-import { capitalizeSentence, toggleLoadingState } from '../../utils/utils.js';
-import { SwalNotificationTypes, SwalToast } from '../../utils/sweetalert.js';
+import { showModelInfo, deleteModel } from "../actions.js";
+import { CreateNewDataTable } from "../../utils/datatables.js";
+import { capitalizeSentence, toggleLoadingState } from "../../utils/utils.js";
+import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 // ==================== Constants ====================
+const MODEL_NAME = "producto";
+const BTN_CLASS_PRIMARY = "btn-primary";
 
-// Model Configuration
-const MODEL_NAME = 'producto';
-
-// String Constants
-const BTN_CLASS_PRIMARY = 'btn-primary';
-
-// Routes Configuration
 const MODEL_ROUTES = {
-	index: route('products.index'),
-	create: route('products.create'),
-	show: route('products.show', { product: ':id' }),
-	edit: route('products.edit', { product: ':id' }),
-	delete: route('products.destroy', { product: ':id' }),
+	index: route("products.index"),
+	create: route("products.create"),
+	show: route("products.show", { product: ":id" }),
+	edit: route("products.edit", { product: ":id" }),
+	delete: route("products.destroy", { product: ":id" }),
 };
 
 const PRODUCT_TYPE_LABELS = {
-	merchandise: 'Mercaderia',
-	dish: 'Platillo',
-	drink: 'Bebida',
-	packaged: 'Empaquetado',
+	merchandise: "Mercadería",
+	dish: "Platillo",
+	drink: "Bebida",
+	packaged: "Empaquetado",
 };
 
-const CURRENCY_FORMATTER = new Intl.NumberFormat('es-CR', {
-	style: 'currency',
-	currency: 'CRC',
+const CURRENCY_FORMATTER = new Intl.NumberFormat("es-CR", {
+	style: "currency",
+	currency: "CRC",
 	minimumFractionDigits: 2,
 	maximumFractionDigits: 2,
 });
 
-// retrieve initial filter state from URL parameters
+// ==================== State Management ====================
+// Centralized state object to manage filters and DataTable instance.
 const urlParams = new URLSearchParams(window.location.search);
-let showOnlyLowStock = urlParams.get('filter') === 'low_stock';
+const State = {
+	filter: urlParams.get("filter") || null, // Can be 'low_stock', 'expiring_soon' or null
+	dataTable: null,
+	canCreate:
+		($("#products-table").data("can-create-products") ?? "").toString() ===
+		"1",
+	canManage:
+		($("#products-table").data("can-manage-products") ?? "").toString() ===
+		"1",
+};
 
-let productsDataTable = null;
-const canManageProducts = ($('#products-table').data('can-manage-products') ?? '').toString() === '1';
-
-// ==================== Global Functions ====================
-
-// Expose functions globally
+// ==================== Global Exports ====================
 window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
 
-// ==================== Helper Functions ====================
-
-function formatProductType(type) {
-	if (!type) return 'N/A';
-	return PRODUCT_TYPE_LABELS[type] || type;
-}
-
-function formatStockValue(value) {
-	if (value === null || typeof value === 'undefined' || value === '') {
-		return 'N/A';
-	}
-
-	return value;
-}
-
-function formatCurrentStock(currentStockValue, minimumStockValue) {
-	if (currentStockValue === null || minimumStockValue === null || typeof currentStockValue === 'undefined' || typeof minimumStockValue === 'undefined') {
-		return 'N/A';
-	}
-
-	const currentStock = Number.parseInt(currentStockValue, 10);
-	const minimumStock = Number.parseInt(minimumStockValue, 10);
-
-	if (Number.isNaN(currentStock) || Number.isNaN(minimumStock)) {
-		return 'N/A';
-	}
-
-	if (currentStock <= minimumStock) {
-		return `<span class="badge text-bg-danger">${currentStock}</span>`;
-	}
-
-	return currentStock;
-}
-
-function formatCurrency(value) {
+// ==================== Formatters ====================
+const formatProductType = (type) => PRODUCT_TYPE_LABELS[type] || type || "N/A";
+const formatStockValue = (value) => value ?? "N/A";
+const formatCurrency = (value) => {
 	const amount = Number.parseFloat(value);
-	if (Number.isNaN(amount)) return CURRENCY_FORMATTER.format(0);
-	return CURRENCY_FORMATTER.format(amount);
+	return CURRENCY_FORMATTER.format(Number.isNaN(amount) ? 0 : amount);
+};
+
+function formatCurrentStock(currentValue, minimumValue) {
+	if (currentValue == null || minimumValue == null) return "N/A";
+
+	const currentStock = Number.parseInt(currentValue, 10);
+	const minimumStock = Number.parseInt(minimumValue, 10);
+
+	if (Number.isNaN(currentStock) || Number.isNaN(minimumStock)) return "N/A";
+
+	return currentStock <= minimumStock
+		? `<span class="badge text-bg-danger">${currentStock}</span>`
+		: currentStock;
 }
 
-/**
- * Shows information for a specific product.
- * @param {string} url - The URL to fetch product information from
- * @param {HTMLElement} anchor - The anchor element for the modal
- * @returns {Promise<void>} A promise resolving when the modal is shown
- */
-window.showProduct = function (url, anchor) {
-	return showModelInfo(url, anchor, MODEL_NAME);
-};
+// ==================== Filter Logic ====================
+function setFilter(filterType) {
+	// If the same filter is clicked again, it toggles off (sets to null), otherwise it sets the new filter
+	State.filter = State.filter === filterType ? null : filterType;
 
-/**
- * Deletes a specific product.
- * @param {Event} e - The event object
- * @returns {Promise<void>} A promise resolving when the product is deleted
- */
-window.deleteProduct = function (e) {
-	return deleteModel(e, MODEL_NAME);
-};
+	// Update URL
+	const params = new URLSearchParams(window.location.search);
+	if (State.filter) {
+		params.set("filter", State.filter);
+	} else {
+		params.delete("filter");
+	}
 
-window.toggleLowStockFilter = function () {
-	showOnlyLowStock = !showOnlyLowStock;
+	const nextQuery = params.toString();
+	const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}`;
+	window.history.replaceState({}, "", nextUrl);
 
-	const $button = $('.low-stock-filter-button');
-	$button.toggleClass('btn-outline-warning btn-warning');
-	$('.low-stock-filter-button-text').text(showOnlyLowStock ? 'Mostrar todos' : 'Solo stock bajo');
+	// Update Buttons and Table
+	updateFilterUI();
+	reloadTable();
+}
 
-	if (productsDataTable) {
-		productsDataTable.ajax.reload(null, true);
+function updateFilterUI() {
+	const isLowStock = State.filter === "low_stock";
+	const isExpiring = State.filter === "expiring_soon";
 
+	// Using .html() to prevent losing the icons (<tr>) defined by datatables.js
+	$(".low-stock-filter-button")
+		.toggleClass("btn-warning", isLowStock)
+		.toggleClass("btn-outline-warning", !isLowStock);
+	$(".low-stock-filter-button-text").html(
+		`<i class="bi-exclamation-triangle me-2"></i> ${isLowStock ? "Mostrar todos" : "Solo stock bajo"}`,
+	);
+
+	$(".expiring-soon-filter-button")
+		.toggleClass("btn-danger", isExpiring)
+		.toggleClass("btn-outline-danger", !isExpiring);
+	$(".expiring-soon-filter-button-text").html(
+		`<i class="bi-hourglass-split me-2"></i> ${isExpiring ? "Mostrar todos" : "Próximos a vencer"}`,
+	);
+}
+
+function reloadTable() {
+	if (State.dataTable) {
+		State.dataTable.ajax.reload(null, true);
 		setTimeout(() => {
-			productsDataTable.columns.adjust();
-			if (productsDataTable.responsive) {
-				productsDataTable.responsive.recalc();
+			State.dataTable.columns.adjust();
+			if (State.dataTable.responsive) {
+				State.dataTable.responsive.recalc();
 			}
 		}, 0);
 	}
-};
+}
+
+// Global functions for actions (show, delete) and filters (low stock, expiring soon)
+window.toggleLowStockFilter = () => setFilter("low_stock");
+window.toggleExpiringSoonFilter = () => setFilter("expiring_soon");
+window.showProduct = (url, anchor) => showModelInfo(url, anchor, MODEL_NAME);
+window.deleteProduct = (e) => deleteModel(e, MODEL_NAME);
 
 // ==================== DataTable Initialization ====================
-
-// Ensure the DOM is fully loaded before initializing the DataTable
 $(() => {
-	// Define columns for products table (only for server-side processing)
 	const columns = [
 		{
-			data: 'barcode',
-			name: 'barcode',
-			render: (data) => data || 'N/A',
+			data: "barcode",
+			name: "barcode",
+			type: "string",
+			className: "dt-left",
+			render: (data) => data || "N/A",
+		},
+		{ data: "name", name: "name" },
+		{
+			data: "category",
+			name: "category_id",
+			render: (data) => data?.name || "Sin categoría",
+		},
+		{ data: "type", name: "type", render: formatProductType },
+		{
+			data: "current_stock",
+			name: "ps.current_stock",
+			type: "string",
+			className: "dt-left",
+			render: (data, _type, row) =>
+				formatCurrentStock(data, row.minimum_stock),
 		},
 		{
-			data: 'name',
-			name: 'name',
+			data: "minimum_stock",
+			name: "ps.minimum_stock",
+			type: "string",
+			className: "dt-left",
+			render: formatStockValue,
 		},
+		{ data: "sale_price", name: "sale_price", render: formatCurrency },
 		{
-			data: 'category',
-			name: 'category_id',
-			render: (data) => data?.name || 'Sin categoria',
-		},
-		{
-			data: 'type',
-			name: 'type',
-			render: (data) => formatProductType(data),
-		},
-		{
-			data: 'current_stock',
-			name: 'ps.current_stock',
-			render: (data, _type, row) => formatCurrentStock(data, row.minimum_stock),
-		},
-		{
-			data: 'minimum_stock',
-			name: 'ps.minimum_stock',
-			render: (data) => formatStockValue(data),
-		},
-		{
-			data: 'sale_price',
-			name: 'sale_price',
-			render: (data) => formatCurrency(data),
+			data: "expiration_days",
+			name: "expiration_date",
+			orderable: false,
+			searchable: false,
 		},
 	];
 
-	/**
-	 * Define actions for each product row in the DataTable.
-	 */
+	// Conditional actions construction using spread operator
 	const actions = {
 		show: {
 			route: MODEL_ROUTES.show,
 			func: window.showProduct,
-			funcName: 'showProduct',
-			tooltip: 'Ver detalles',
+			funcName: "showProduct",
+			tooltip: "Ver detalles",
 		},
+		...(State.canManage && {
+			edit: {
+				route: MODEL_ROUTES.edit,
+				func: toggleLoadingState,
+				funcName: "toggleLoadingState",
+				tooltip: `Editar ${MODEL_NAME}`,
+			},
+			delete: {
+				route: MODEL_ROUTES.delete,
+				func: window.deleteProduct,
+				funcName: "deleteProduct",
+				tooltip: `Eliminar ${MODEL_NAME}`,
+			},
+		}),
 	};
 
-	if (canManageProducts) {
-		actions.edit = {
-			route: MODEL_ROUTES.edit,
-			func: toggleLoadingState,
-			funcName: 'toggleLoadingState',
-			tooltip: `Editar ${MODEL_NAME}`,
-		};
-
-		actions.delete = {
-			route: MODEL_ROUTES.delete,
-			tooltip: `Eliminar ${MODEL_NAME}`,
-			func: window.deleteProduct,
-			funcName: 'deleteProduct',
-		};
-	}
-
-	/**
-	 * Define custom buttons for the DataTable interface.
-	 */
 	const customButtons = [
 		{
-			text: 'Solo stock bajo',
-			href: 'javascript:void(0)',
-			class: 'low-stock-filter-button btn-outline-warning',
-			icon: 'bi-exclamation-triangle',
+			text: "Solo stock bajo",
+			href: "javascript:void(0)",
+			class: "low-stock-filter-button btn-outline-warning",
+			icon: "bi-exclamation-triangle",
 			func: window.toggleLowStockFilter,
-			funcName: 'toggleLowStockFilter',
-			params: ['.low-stock-filter-button', 'low-stock-filter'],
+			funcName: "toggleLowStockFilter",
+			params: [".low-stock-filter-button", "low-stock-filter"],
+		},
+		{
+			text: "Próximos a vencer",
+			href: "javascript:void(0)",
+			class: "expiring-soon-filter-button btn-outline-danger",
+			icon: "bi-hourglass-split",
+			func: window.toggleExpiringSoonFilter,
+			funcName: "toggleExpiringSoonFilter",
+			params: [".expiring-soon-filter-button", "expiring-soon-filter"],
 		},
 	];
 
-	// Set initial state of low stock filter button based on URL parameter
-	if (showOnlyLowStock) {
-        const $button = $('.low-stock-filter-button');
-        $button.removeClass('btn-outline-warning').addClass('btn-warning');
-        $('.low-stock-filter-button-text').text('Mostrar todos');
-    }	
-
-	if (canManageProducts) {
-		customButtons.unshift({
+	if (State.canCreate) {
+		customButtons.push({
 			text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
 			href: MODEL_ROUTES.create,
 			class: `create-button ${BTN_CLASS_PRIMARY}`,
-			icon: 'bi-box-seam',
+			icon: "bi-box-seam",
 			func: toggleLoadingState,
-			funcName: 'toggleLoadingState',
-			params: ['.create-button', 'create', true],
+			funcName: "toggleLoadingState",
+			params: [".create-button", "create", true],
 		});
 	}
 
-	// Initialize the CRUD DataTable
-	productsDataTable = CreateNewDataTable('products-table', MODEL_ROUTES.index, columns, actions, customButtons, {
-		ajax: {
-			url: MODEL_ROUTES.index,
-			data: (d) => {
-				d.low_stock = showOnlyLowStock ? 1 : 0;
-			}
-		},
-		columnControl: [],
-		columnDefs: [{ target: -1, columnControl: [] }],
-		ordering: {
-			indicators: false,
-			handler: true,
-		},
-	});
+	// Initialize filter UI based on URL parameter on page load
+	updateFilterUI();
 
-	productsDataTable.on('draw.dt', () => {
-		productsDataTable.columns.adjust();
-		if (productsDataTable.responsive) {
-			productsDataTable.responsive.recalc();
-		}
-	});
+	State.dataTable = CreateNewDataTable(
+		"products-table",
+		MODEL_ROUTES.index,
+		columns,
+		actions,
+		customButtons,
+		{
+			ajax: {
+				url: MODEL_ROUTES.index,
+				data: (d) => {
+					d.low_stock = State.filter === "low_stock" ? 1 : 0;
+					d.expiring_soon = State.filter === "expiring_soon" ? 1 : 0;
+				},
+			},
+			columnDefs: [{ target: [-1, -2], columnControl: [] }],
+		},
+	);
 
+	State.dataTable.on("draw.dt", () => {
+		State.dataTable.columns.adjust();
+		if (State.dataTable.responsive) State.dataTable.responsive.recalc();
+	});
 });

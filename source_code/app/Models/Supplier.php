@@ -11,38 +11,38 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Supplier extends Model
 {
-	/** @use HasFactory<SupplierFactory> */
-	use HasFactory, SoftDeletes;
+    /** @use HasFactory<SupplierFactory> */
+    use HasFactory, SoftDeletes;
 
-	/**
-	 * The attributes that are mass assignable.
-	 *
-	 * @var list<string>
-	 */
-	protected $fillable = [
-		'name',
-		'phone',
-		'email',
-	];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'name',
+        'phone',
+        'email',
+    ];
 
-	/**
-	 * Get the attributes that should be cast.
-	 *
-	 * @return array<string, string>
-	 */
-	// protected $casts = [
-	// 	'created_at' => CostaRicaDatetime::class,
-	// 	'updated_at' => CostaRicaDatetime::class,
-	// 	'deleted_at' => CostaRicaDatetime::class,
-	// ];
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    // protected $casts = [
+    // 	'created_at' => CostaRicaDatetime::class,
+    // 	'updated_at' => CostaRicaDatetime::class,
+    // 	'deleted_at' => CostaRicaDatetime::class,
+    // ];
 
-	/**
-	 * Get the purchases for the supplier.
-	 * 
-	 * @return HasMany<Purchase, Supplier>
-	 */
-	public function purchases()
-	{
-		return $this->hasMany(Purchase::class);
-	}
+    /**
+     * Get the purchases for the supplier.
+     *
+     * @return HasMany<Purchase, Supplier>
+     */
+    public function purchases()
+    {
+        return $this->hasMany(Purchase::class);
+    }
 }

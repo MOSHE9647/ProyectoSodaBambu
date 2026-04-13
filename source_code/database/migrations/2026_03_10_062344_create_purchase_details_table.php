@@ -19,10 +19,7 @@ return new class extends Migration
             // Polymorphic relation to either Product or Supply
             $table->morphs('purchasable');
 
-            $table->integer('quantity');
-            $table->decimal('unit_price', 10, 2);
             $table->decimal('subtotal', 12, 2);
-            $table->date('expiration_date')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

@@ -2,57 +2,86 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Inventory\GetLowStockProductsCount;
+use App\Actions\Inventory\GetProductsAboutToExpireCount;
+use App\Actions\Inventory\GetSuppliesAboutToExpireCount;
+use App\Actions\Sale\CalculateDailySalesTrendAction;
+use App\Actions\Sale\GetDailySalesDataAction;
+use App\Actions\Sale\GetMonthlySalesDataAction;
 use App\Enums\UserRole;
 use Illuminate\Support\Facades\Cache;
-use App\Models\ProductStock;
 
 class HomeController extends Controller
 {
-	public function index()
-	{
-		if (!auth()->check()) {
-			return redirect()->route('login');
-		}
+    public function index()
+    {
+        if (! auth()->check()) {
+            return redirect()->route('login');
+        }
 
-		$userRoles = auth()->user()->getRoleNames();
-		$roleRoutes = [
-			UserRole::ADMIN->value => 'dashboard',
-			UserRole::EMPLOYEE->value => 'sales',
-		];
+        $userRoles = auth()->user()->getRoleNames();
+        $roleRoutes = [
+            UserRole::ADMIN->value => 'dashboard',
+            UserRole::EMPLOYEE->value => 'dashboard',
+        ];
 
-		foreach ($roleRoutes as $role => $route) {
-			if ($userRoles->contains($role)) {
-				return redirect()->route($route);
-			}
-		}
+        foreach ($roleRoutes as $role => $route) {
+            if ($userRoles->contains($role)) {
+                return redirect()->route($route);
+            }
+        }
 
-		abort(403, __('Unauthorized'));
-	}
+        abort(403, __('Unauthorized'));
+    }
 
-	public function dashboard()
-	{	
+    public function dashboard(
+        GetLowStockProductsCount $getLowStockProductsCount,
+        GetProductsAboutToExpireCount $getProductsAboutToExpireCount,
+        CalculateDailySalesTrendAction $calculateDailySalesTrendAction,
+        GetMonthlySalesDataAction $getMonthlySalesDataAction,
+        GetDailySalesDataAction $getDailySalesDataAction,
+        GetSuppliesAboutToExpireCount $getSuppliesAboutToExpireCount,
+    ) {
 
-		/**
-		 * Retrieves the count of products with stock levels at or below their minimum threshold.
-		 * 
-		 * The result is cached indefinitely to improve performance on subsequent requests.
-		 * The cache key is 'low_stock_count' and will persist until manually cleared.
-		 */
-		$totalMinStockProducts = Cache::rememberForever('low_stock_count', function () {
-        return \App\Models\ProductStock::whereRaw('current_stock <= minimum_stock')->count();
-    	});
+        /**
+         * Retrieves the count of products with stock levels at or below their minimum threshold.
+         *
+         * The result is cached indefinitely to improve performance on subsequent requests.
+         * The cache key is 'low_stock_count' and will persist until manually cleared.
+         */
+        $totalMinStockProducts = Cache::rememberForever('low_stock_count', function () use ($getLowStockProductsCount) {
+            return $getLowStockProductsCount->execute();
+        });
 
-		$aboutToExpire = Cache::remember('about_to_expire_count', now()->addDay(), function () {
-			return \App\Models\PurchaseDetail::whereNotNull('expiration_date')
-				->whereBetween('expiration_date', [now()->startOfDay(), now()->addDays(7)->endOfDay()])
-				->count();
-		});
+        $aboutToExpireSupplies = Cache::remember('about_to_expire_supplies_count', now()->addDay(), function () use ($getSuppliesAboutToExpireCount) {
+            return $getSuppliesAboutToExpireCount->execute();
+        });
 
-		return view('dashboard', compact('aboutToExpire', 'totalMinStockProducts'));
-	}
+        $aboutToExpireProducts = Cache::remember('about_to_expire_products_count', now()->addDay(), function () use ($getProductsAboutToExpireCount) {
+            return $getProductsAboutToExpireCount->execute();
+        });
 
-	public function sales()
-	{
-		return view('pages.sales');
-	}
+        $salesStats = Cache::remember('today_sales_stats', now()->addMinutes(10), function () use ($calculateDailySalesTrendAction) {
+            return $calculateDailySalesTrendAction->execute();
+        });
+
+        $monthlyStats = Cache::remember('monthly_sales_stats', now()->addMinutes(10), function () use ($getMonthlySalesDataAction) {
+            return $getMonthlySalesDataAction->execute();
+        });
+
+        $dailyStats = Cache::remember('daily_sales_stats', now()->addMinutes(10), function () use ($getDailySalesDataAction) {
+            return $getDailySalesDataAction->execute();
+        });
+
+        return view('dashboard', array_merge([
+            'aboutToExpireSupplies' => $aboutToExpireSupplies,
+            'totalMinStockProducts' => $totalMinStockProducts,
+            'aboutToExpireProducts' => $aboutToExpireProducts,
+        ], $salesStats, $monthlyStats, $dailyStats));
+    }
+
+    public function sales()
+    {
+        return view('pages.sales');
+    }
 }

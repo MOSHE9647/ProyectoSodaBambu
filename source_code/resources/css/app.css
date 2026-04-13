@@ -119,9 +119,24 @@ main {
 	font-size: 0.72rem;
 }
 
+.stat-card-link {
+	text-decoration: none;
+	color: var(--anchor-status-link-color);
+}
+
 .stat-card.total-salary,
 .total-salary-amount {
 	background-color: var(--radio-button-bg) !important;
 	border-color: var(--radio-button-hover-border-color) !important;
 	color: var(--bambu-logo-bg) !important;
+}
+
+.stock-supply-status-container a {
+	text-decoration: none;
+	color: var(--anchor-status-link-color);
+}
+
+.stock-supply-status-container a:hover,
+.stat-card-link:hover h4 {
+	color: var(--anchor-status-link-hover-color) !important;
 }

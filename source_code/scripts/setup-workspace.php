@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 $greenBg = "\033[42m";
-$blueBg = "\033[44m";
+$blueBg = "\033[46m";
 $redBg = "\033[41m";
 $reset = "\033[0m";
 
@@ -16,13 +16,13 @@ function info(string $message): void
 function success(string $message): void
 {
     global $greenBg, $reset;
-    echo "{$greenBg} {$message} {$reset}" . PHP_EOL;
+    echo "{$greenBg} {$message} {$reset}".PHP_EOL;
 }
 
 function errorOut(string $message, int $code = 1): void
 {
     global $redBg, $reset;
-    fwrite(STDERR, "{$redBg} {$message} {$reset}" . PHP_EOL);
+    fwrite(STDERR, "{$redBg} {$message} {$reset}".PHP_EOL);
     exit($code);
 }
 
@@ -39,6 +39,7 @@ function runCommand(string $command, string $label): void
 function argvContainOption(string $option): bool
 {
     global $argv;
+
     return in_array($option, $argv);
 }
 
@@ -46,12 +47,13 @@ function getArgument(string $option, string $default = ''): string
 {
     global $argv;
     $key = array_search($option, $argv);
+
     return ($key !== false && isset($argv[$key + 1])) ? $argv[$key + 1] : $default;
 }
 
 function cleanBootstrapCache(string $path): void
 {
-    if (!is_dir($path)) {
+    if (! is_dir($path)) {
         return;
     }
 
@@ -64,11 +66,11 @@ function cleanBootstrapCache(string $path): void
         if ($item === '.' || $item === '..' || $item === '.gitignore') {
             continue;
         }
-        $fullPath = $path . DIRECTORY_SEPARATOR . $item;
+        $fullPath = $path.DIRECTORY_SEPARATOR.$item;
         if (is_dir($fullPath)) {
             deleteDirectory($fullPath);
         } else {
-            if (!unlink($fullPath)) {
+            if (! unlink($fullPath)) {
                 errorOut("Error: No se pudo eliminar {$fullPath}");
             }
         }
@@ -97,43 +99,44 @@ function deleteDirectory(string $path): void
 
 function generateStorageLink(): void
 {
-    info("Generando enlace simbólico para almacenamiento...");
+    info('Generando enlace simbólico para almacenamiento...');
 
-    $linkPath = __DIR__ . '/../public/storage';
+    $linkPath = __DIR__.'/../public/storage';
     if (is_link($linkPath) || file_exists($linkPath)) {
-        info("El enlace simbólico [public/storage] ya existe. Omitiendo.");
+        info('El enlace simbólico [public/storage] ya existe. Omitiendo.');
+
         return;
     }
 
-    runCommand('php artisan storage:link', "Creando enlace simbólico (storage:link)");
+    runCommand('php artisan storage:link', 'Creando enlace simbólico (storage:link)');
 }
 
 function configureSQLite(): bool
 {
-    info("Configurando SQLite como base de datos...");
+    info('Configurando SQLite como base de datos...');
 
     $databaseDir = __DIR__.'/../database';
     $databaseFile = "{$databaseDir}/database.sqlite";
 
     // Crear el archivo SQLite si no existe
     if (! file_exists($databaseFile)) {
-        info("Creando archivo de base de datos SQLite (database/database.sqlite)");
+        info('Creando archivo de base de datos SQLite (database/database.sqlite)');
         if (touch($databaseFile) === false) {
-            errorOut("Error: No se pudo crear el archivo database.sqlite");
+            errorOut('Error: No se pudo crear el archivo database.sqlite');
         }
-        success("Archivo database.sqlite creado correctamente.");
+        success('Archivo database.sqlite creado correctamente.');
     } else {
-        info("El archivo database.sqlite ya existe. Omitiendo.");
+        info('El archivo database.sqlite ya existe. Omitiendo.');
     }
 
     $envPath = __DIR__.'/../.env';
     if (! file_exists($envPath)) {
-        errorOut("Error: No se encontró el archivo .env en la raíz del proyecto.");
+        errorOut('Error: No se encontró el archivo .env en la raíz del proyecto.');
     }
 
     $envContent = file_get_contents($envPath);
     if ($envContent === false) {
-        errorOut("Error: No se pudo leer el archivo .env.");
+        errorOut('Error: No se pudo leer el archivo .env.');
     }
 
     $newEnvContent = preg_replace('/^DB_CONNECTION=.*$/m', 'DB_CONNECTION=sqlite', $envContent);
@@ -144,25 +147,26 @@ function configureSQLite(): bool
     $newEnvContent = preg_replace('/^DB_PASSWORD=.*$/m', 'DB_PASSWORD=', $newEnvContent);
 
     if (file_put_contents($envPath, $newEnvContent) === false) {
-        errorOut("Error: No se pudo escribir en el archivo .env.");
+        errorOut('Error: No se pudo escribir en el archivo .env.');
     }
 
-    info("Archivo .env actualizado para usar SQLite.");
+    info('Archivo .env actualizado para usar SQLite.');
+
     return true;
 }
 
 function configureMySQL(): bool
 {
-    info("Configurando MySQL como base de datos...");
+    info('Configurando MySQL como base de datos...');
     $envPath = __DIR__.'/../.env';
-    
+
     if (! file_exists($envPath)) {
-        errorOut("Error: No se encontró el archivo .env en la raíz del proyecto.");
+        errorOut('Error: No se encontró el archivo .env en la raíz del proyecto.');
     }
 
     $envContent = file_get_contents($envPath);
     if ($envContent === false) {
-        errorOut("Error: No se pudo leer el archivo .env.");
+        errorOut('Error: No se pudo leer el archivo .env.');
     }
 
     $host = getArgument('--db-host', '127.0.0.1');
@@ -170,7 +174,6 @@ function configureMySQL(): bool
     $database = getArgument('--db-name', 'laravel_db');
     $username = getArgument('--db-user', 'root');
     $password = getArgument('--db-password', '');
-
 
     // Actualizamos el contenido del .env
     $newEnvContent = preg_replace('/^DB_CONNECTION=.*$/m', 'DB_CONNECTION=mysql', $envContent);
@@ -181,17 +184,19 @@ function configureMySQL(): bool
     $newEnvContent = preg_replace('/^DB_PASSWORD=.*$/m', "DB_PASSWORD={$password}", $newEnvContent);
 
     if (file_put_contents($envPath, $newEnvContent) === false) {
-        errorOut("Error: No se pudo escribir en el archivo .env.");
+        errorOut('Error: No se pudo escribir en el archivo .env.');
     }
 
-    info("Archivo .env actualizado para usar MySQL.");
+    info('Archivo .env actualizado para usar MySQL.');
+
     return true;
 }
 
 function setDatabase(): void
 {
     if (argvContainOption('--no-db')) {
-        info("No se configurará ninguna base de datos.");
+        info('No se configurará ninguna base de datos.');
+
         return;
     }
 
@@ -200,16 +205,16 @@ function setDatabase(): void
     } elseif (argvContainOption('--db:mysql')) {
         configureMySQL();
     } else {
-        errorOut("Error: No se especificó un tipo de base de datos válido. Use --db:sqlite o --db:mysql.");
+        errorOut('Error: No se especificó un tipo de base de datos válido. Use --db:sqlite o --db:mysql.');
     }
 }
 
 function askToRunMigrations(): void
 {
     if (
-        argvContainOption('--migrate') || 
-        argvContainOption('--migrate:seed') || 
-        argvContainOption('--migrate:fresh') || 
+        argvContainOption('--migrate') ||
+        argvContainOption('--migrate:seed') ||
+        argvContainOption('--migrate:fresh') ||
         argvContainOption('--migrate:fresh') && argvContainOption('--seed')
     ) {
         $migrateCommand = 'php artisan migrate';
@@ -219,45 +224,49 @@ function askToRunMigrations(): void
         if (argvContainOption('--migrate:seed') || (argvContainOption('--migrate:fresh') && argvContainOption('--seed'))) {
             $migrateCommand .= ' --seed';
         }
-        runCommand($migrateCommand, "Ejecutando migraciones");
+        runCommand($migrateCommand, 'Ejecutando migraciones');
     } else {
-        info("No se ejecutarán las migraciones.");
+        info('No se ejecutarán las migraciones.');
     }
 }
 
 // ---------------- Manejo de opciones de línea de comandos ----------------
 
 if (in_array('--help', $argv) || in_array('-h', $argv)) {
-    info("Ayuda del script de configuración de espacio de trabajo:");
-    info("Opciones disponibles:");
-    info("  --db:sqlite               Configura la base de datos para SQLite.");
-    info("  --db:mysql                Configura la base de datos para MySQL.");
-    info("  --migrate                    Ejecuta las migraciones.");
-    info("  --migrate:seed               Ejecuta las migraciones y luego los seeders.");
-    info("  --migrate:fresh              Ejecuta las migraciones en modo \"fresh\".");
-    info("  --migrate:fresh --seed       Ejecuta las migraciones en modo \"fresh\" y luego los seeders.");
-    info("  --help                              Muestra esta ayuda.");
+    info('Ayuda del script de configuración de espacio de trabajo:');
+    info('Opciones disponibles:');
+    info('  --db:sqlite               Configura la base de datos para SQLite.');
+    info('  --db:mysql                Configura la base de datos para MySQL.');
+    info('  --migrate                    Ejecuta las migraciones.');
+    info('  --migrate:seed               Ejecuta las migraciones y luego los seeders.');
+    info('  --migrate:fresh              Ejecuta las migraciones en modo "fresh".');
+    info('  --migrate:fresh --seed       Ejecuta las migraciones en modo "fresh" y luego los seeders.');
+    info('  --help                              Muestra esta ayuda.');
     exit(0);
 }
 
 // ---------------- Lógica principal del script ----------------
 
-info("Configurando espacio de trabajo.");
+info('Configurando espacio de trabajo.');
 
-cleanBootstrapCache(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'cache');
+cleanBootstrapCache(__DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'cache');
 success('Carpeta "bootstrap/cache" limpiadada correctamente.');
 
-deleteDirectory(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'node_modules');
+deleteDirectory(__DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'node_modules');
 success('Carpeta "node_modules" eliminada correctamente.');
 
-deleteDirectory(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor');
+deleteDirectory(__DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'vendor');
 success('Carpeta "vendor" eliminada correctamente.');
 
-runCommand('composer update', "Actualizando dependencias con \"composer update\"");
+runCommand('composer update', 'Actualizando dependencias con "composer update"');
 
 setDatabase();
-runCommand('composer setup', "Configurando el entorno con \"composer setup\"");
+runCommand('composer setup', 'Configurando el entorno con "composer setup"');
 
 askToRunMigrations();
 generateStorageLink();
-success("Espacio de Trabajo Configurado Correctamente.");
+
+runCommand('php artisan optimize:clear --ansi', 'Limpiando cachés de Laravel');
+runCommand('vendor'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.'pint --parallel --verbose --ansi', 'Formateando código con Laravel Pint');
+
+success('Espacio de Trabajo Configurado Correctamente.');

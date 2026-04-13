@@ -1,27 +1,26 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container p-0">
-        <x-header title="Gestión de Insumos" subtitle="Administre los insumos de su inventario" />
+{{-- Page Header --}}
+<x-header title="Gestión de Insumos" subtitle="Administre los insumos de su inventario" />
 
-        <div class="table-container rounded-2 p-4">
-            <table id="supplies-table" class="table table-hover rounded-2">
-                <thead>
-                    <tr>
-                        <th scope="col">Nombre</th>
-                        <th scope="col">Unidad</th>
-                        <th scope="col">Cant. Disponible</th> 
-                        <th scope="col">Precio Unitario</th>   
-                        <th scope="col">Fecha Vencimiento</th> 
-                        <th scope="col">Fecha Registro</th>
-                        <th scope="col">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody> 
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="table-container rounded-2 p-4">
+    <table id="supplies-table" class="table table-hover rounded-2" data-can-manage-supplies="{{ auth()->user()?->hasRole(\App\Enums\UserRole::ADMIN->value) ? '1' : '0' }}" data-can-create-supplies="{{ auth()->user()?->hasRole(\App\Enums\UserRole::ADMIN->value) || auth()->user()?->hasRole(\App\Enums\UserRole::EMPLOYEE->value) ? '1' : '0' }}">
+        <thead>
+            <tr>
+                <th scope="col">Nombre</th>
+                <th scope="col">Unidad</th>
+                <th scope="col">Cant. Disponible</th>
+                <th scope="col">Precio Unitario</th>
+                <th scope="col">Fecha Vencimiento</th>
+                <th scope="col">Fecha Registro</th>
+                <th scope="col">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
 @endsection
 
 @section('scripts')

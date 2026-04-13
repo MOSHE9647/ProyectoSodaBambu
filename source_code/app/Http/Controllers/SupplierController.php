@@ -18,8 +18,8 @@ class SupplierController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @param Request $request
      * @return Factory|View|JsonResponse|\Illuminate\View\View
+     *
      * @throws Exception
      */
     public function index(Request $request)
@@ -44,8 +44,8 @@ class SupplierController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param SupplierRequest $request
      * @return RedirectResponse
+     *
      * @throws Throwable
      */
     public function store(SupplierRequest $request)
@@ -60,7 +60,18 @@ class SupplierController extends Controller
             $supplier->update($supplierData);
             $message = 'Proveedor restaurado y actualizado exitosamente.';
         } else {
-            Supplier::create($supplierData);
+            $supplier = Supplier::create($supplierData);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'supplier' => [
+                    'id' => $supplier->id,
+                    'name' => $supplier->name,
+                ],
+            ]);
         }
 
         return redirect()->route('suppliers.index')->with('success', $message);
@@ -69,7 +80,6 @@ class SupplierController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param Supplier $supplier
      * @return Factory|View|\Illuminate\View\View
      */
     public function show(Supplier $supplier)
@@ -80,7 +90,6 @@ class SupplierController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param Supplier $supplier
      * @return Factory|View|\Illuminate\View\View
      */
     public function edit(Supplier $supplier)
@@ -91,9 +100,8 @@ class SupplierController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param SupplierRequest $request
-     * @param Supplier $supplier
      * @return RedirectResponse
+     *
      * @throws Throwable
      */
     public function update(SupplierRequest $request, Supplier $supplier)
@@ -108,8 +116,8 @@ class SupplierController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param Supplier $supplier
      * @return RedirectResponse
+     *
      * @throws Throwable
      */
     public function destroy(Supplier $supplier)

@@ -2,7 +2,7 @@
 
 @section('content')
 	{{-- Header --}}
-	<x-header title="Dashboard" subtitle="Resumen general del sistema" />
+	<x-header title="Inicio" subtitle="Resumen general del sistema" />
 
 	{{-- TODO: Remove this Alert when Dashboard is ready --}}
 	<x-alert type="warning" class="mb-4">
@@ -14,7 +14,26 @@
 	<div class="container-fluid px-0">
 		{{-- Statistics Cards (Today's Sales, Stock, Contracts, etc.) --}}
 		<div class="row g-3">
-			@for ($i = 0; $i < 3; $i++)
+			{{--
+				Stat Card Component - Today's Sales
+				Displays a statistical card showing today's sales with a random value for demonstration.
+			--}}
+			<div class="col">
+				
+				<x-stat-card
+					title="Ventas de Hoy"
+					value=" ₡ {{ number_format($todaySalesTotal, 0, ',', '.') }} "
+					currency="true" 
+					icon="cash"
+					color-theme="green"
+					trend="{{ $salesTrendText }}"
+					trend-context="vs ayer"
+					trend-direction="{{ $trendDirection }}"
+					{{-- :url="route('Sale.index', ['filter' => 'low_stock'])" --}}
+				/>
+			</div>
+			
+			@for ($i = 0; $i < 2; $i++)
 				<div class="col">
 					<x-stat-card
 						title="Stat Card {{ $i + 1 }}"
@@ -27,7 +46,7 @@
 					/>
 				</div>
 			@endfor
-			
+
 			{{-- 
 				Stat Card Component - Minimum Stock Products
 				Displays a statistical card showing the count of products that are at minimum stock levels.	
@@ -42,6 +61,7 @@
 					:url="route('products.index', ['filter' => 'low_stock'])"
 				/>
 			</div>
+
 			{{-- 
 				Stat Card Component - About to Expire supplies
 				Displays a statistical card showing the count of supplies that are nearing expiration.	
@@ -49,12 +69,28 @@
 			<div class="col">
 				<x-stat-card
 					title="Próximos a Vencer"
-					value="{{ $aboutToExpire }} Insumos"
 					currency="false"
+					slotContainerStyle="max-height: 83.98px;"
 					icon="hourglass-split"
 					color-theme="red"
-					:url="route('supplies.index', ['filter' => 'expiring_soon'])"
-				/>
+					hideTrend="true"
+					:url="null"
+				>	
+					@slot('value')
+						<div class="d-flex flex-column gap-0 pb-0 stock-supply-status-container">
+							<a href="{{ route('supplies.index', ['filter' => 'expiring_soon']) }}" 
+							class="d-flex align-items-baseline gap-2">
+								<span class="h5 fw-bold mb-0">{{ $aboutToExpireSupplies }}</span>
+								<span class="h5 fw-bold ">Insumos</span>
+							</a>
+							<a href="{{ route('products.index', ['filter' => 'expiring_soon']) }}" 
+							class="d-flex align-items-baseline gap-2 mb-0">
+								<span class="h5 fw-bold mb-0">{{ $aboutToExpireProducts }}</span> 
+								<span class="h5 fw-bold ">Productos</span>
+							</a>
+						</div>
+					@endslot
+				</x-stat-card>
 			</div>
 		</div>
 
@@ -64,23 +100,44 @@
 			<div class="col-md-6">
 				<div class="card border-1 card-container shadow-sm rounded-4 mh-100 w-100">
 					<div class="card-body p-4">
-						<div class="d-flex justify-content-between align-items-center mb-2">
-							<h5 class="fw-bold m-0">Ingresos del Mes</h5>
-							<i class="bi bi-cash-coin fs-4"></i>
-						</div>
-				
-						<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
-							<x-icons.colon-icon width="24" height="24" />
-							{{ number_format(rand(1000, 15000000), 0, ',', '.') }}
-						</h2>
-				
-						<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('F Y')) }}</p>
-				
-						<div 
-							id="chart-monthly-income" 
-							class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" 
-							style="min-height: 200px;">
-						</div>
+						@hasrole(App\Enums\UserRole::ADMIN->value)
+							<div class="d-flex justify-content-between align-items-center mb-2">
+								<h5 class="fw-bold m-0">Ingresos del Mes</h5>
+								<i class="bi bi-cash-coin fs-4"></i>
+							</div>
+					
+							<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
+								<x-icons.colon-icon width="24" height="24" />
+								{{ number_format($monthlyTotal, 0, ',', '.') }}
+							</h2>
+					
+							<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('F Y')) }}</p>
+					
+							<div 
+								id="chart-monthly-income" 
+								class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" 
+								style="min-height: 200px;">
+							</div>
+						@endhasrole
+						@hasrole(App\Enums\UserRole::EMPLOYEE->value)
+							<div class="d-flex justify-content-between align-items-center mb-2">
+								<h5 class="fw-bold m-0">Ingresos del Día</h5>
+								<i class="bi bi-cash-coin fs-4"></i>
+							</div>
+					
+							<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
+								<x-icons.colon-icon width="24" height="24" />
+								{{ number_format($dailyTotal, 0, ',', '.') }}
+							</h2>
+					
+							<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('l, j \d\e F \d\e\l Y')) }}</p>
+					
+							<div 
+								id="chart-daily-income" 
+								class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" 
+								style="min-height: 200px;">
+							</div>
+						@endhasrole
 					</div>
 				</div>
 			</div>
@@ -110,117 +167,15 @@
 @endsection
 
 @section('scripts')
-	<script type="module">
-		$(document).ready(function () {
-			// Get current theme (light or dark)
-			function getCurrentTheme() {
-				return $('html').attr('data-bs-theme') || 'light';
-			}
-
-			// Graph Options (Series and Categories should show data up to the current day of the month)
-			var options = {
-				series: [{
-					name: 'Ingresos',
-					data: [
-						@php
-							// TODO: Replace with real data from DB
-							$currentDay = now()->day;
-							$currentMonth = now()->month;
-							
-							for ($day = 1; $day <= $currentDay; $day++) {
-								echo rand(50000, 500000);
-								if ($day < $currentDay) echo ', ';
-							}
-						@endphp
-					]
-				}],
-				xaxis: {
-					categories: [
-						@php
-							$currentDay = now()->day;
-							$monthName = ucfirst(now()->translatedFormat('F'));
-							for ($day = 1; $day <= $currentDay; $day++) {
-								$date = now()->setDay($day);
-								$dayName = ucfirst($date->translatedFormat('l'));
-								echo "'" . $dayName . ", " . $day . " de " . $monthName . "'";
-								if ($day < $currentDay) echo ', ';
-							}
-						@endphp
-					],
-					title: {
-						text: 'Días del mes'
-					}
-				},
-				chart: {
-					type: 'area',      			// Graphic Type (Area)
-					height: 200,      			// Height matching your design
-					fontFamily: 'inherit', 		// Use your site's font
-					background: 'transparent', 	// Transparent to match card background
-					toolbar: {
-						show: true,
-						tools: {
-							download: true,
-							selection: true,
-							zoom: true,
-							zoomin: true,
-							zoomout: true,
-							pan: true,
-							reset: true 
-						},
-						autoSelected: 'pan' 
-					},
-					sparkline: { enabled: true }
-				},
-				theme: {
-					mode: getCurrentTheme()
-				},
-				stroke: {
-					curve: 'smooth',
-					width: 2
-				},
-				fill: {
-					type: 'gradient',
-					gradient: {
-						shadeIntensity: 1,
-						opacityFrom: 0.7,
-						opacityTo: 0.3,
-						stops: [0, 90, 100]
-					}
-				},
-				colors: ['#198754'],
-				tooltip: {
-					theme: getCurrentTheme(),
-					y: {
-						formatter: function (val) {
-							return "₡ " + val.toLocaleString();
-						}
-					}
-				}
-			};
-
-			// Render the chart
-			var chart = new ApexCharts($('#chart-monthly-income')[0], options);
-			chart.render();
-
-			// Use MutationObserver with jQuery to watch for changes in data-bs-theme attribute
-			var observer = new MutationObserver(function(mutations) {
-				mutations.forEach(function(mutation) {
-					if (mutation.attributeName === "data-bs-theme") {
-						var newTheme = getCurrentTheme();
-						
-						chart.updateOptions({
-							theme: { mode: newTheme },
-							tooltip: { theme: newTheme }
-						});
-					}
-				});
-			});
-
-			// Start observing the documentElement for attribute changes
-			observer.observe(document.documentElement, {
-				attributes: true,
-				attributeFilter: ['data-bs-theme']
-			});
-		});
-	</script>
+    <script type="text/javascript">
+        window.DashboardData = {
+			isAdmin: @json(auth()->user()?->hasRole(App\Enums\UserRole::ADMIN->value) ?? false),
+			isEmployee: @json(auth()->user()?->hasRole(App\Enums\UserRole::EMPLOYEE->value) ?? false),
+			monthlySalesValues: @json($monthlySalesValues),
+			monthlySalesLabels: @json($monthlySalesLabels),
+			dailySalesValues: @json($dailySalesValues),
+			dailySalesLabels: @json($dailySalesLabels),
+		}
+    </script>
+	@vite(['resources/js/pages/dashboard.js'])
 @endsection

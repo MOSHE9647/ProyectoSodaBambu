@@ -18,7 +18,7 @@ const PRODUCT_TYPE_MERCHANDISE = 'merchandise';
 const PRODUCT_TYPE_DISH = 'dish';
 const PRODUCT_TYPE_DRINK = 'drink';
 const PRODUCT_TYPE_PACKAGED = 'packaged';
-const MERCHANDISE_ONLY_FIELDS = ['reference_cost', 'tax_percentage', 'margin_percentage'];
+const MERCHANDISE_ONLY_FIELDS = ['reference_cost', 'tax_percentage', 'margin_percentage', 'expiration_date', 'expiration_alert_days'];
 const INVENTORY_FIELDS = ['current_stock', 'minimum_stock'];
 const QUICK_CATEGORY_MODAL_ID = 'quick-create-category-modal';
 const QUICK_CATEGORY_FORM_ID = 'quick-create-category-form';
@@ -38,6 +38,19 @@ function validateBooleanSelect(value) {
 function validateNonNegativeAmount(value) {
     const amount = parseFloat(value);
     return !isNaN(amount) && amount >= 0;
+}
+
+function validateNonNegativeInteger(value) {
+    const amount = Number(value);
+    return Number.isInteger(amount) && amount >= 0;
+}
+
+function validateDateValue(value) {
+    if (!value) {
+        return false;
+    }
+
+    return !Number.isNaN(Date.parse(value));
 }
 
 function validateDecimalPercentage(value) {
@@ -90,9 +103,12 @@ function syncPricingFieldBehavior() {
     const $tax = $('#tax_percentage');
     const $referenceCost = $('#reference_cost');
     const $margin = $('#margin_percentage');
+    const $expirationDate = $('#expiration_date');
+    const $expirationAlertDays = $('#expiration_alert_days');
     let helperMessage = 'Para Platillo, Bebida y Empaquetado el precio de venta es obligatorio.';
 
     toggleFieldGroup('sale-price-group', true);
+    toggleFieldGroup('expiration-fields-row', isMerchandise);
     toggleFieldGroup('tax-percentage-group', isMerchandise);
     toggleFieldGroup('reference-cost-group', isMerchandise);
     toggleFieldGroup('margin-percentage-group', isMerchandise);
@@ -104,14 +120,20 @@ function syncPricingFieldBehavior() {
     $tax.prop('required', isMerchandise);
     $referenceCost.prop('required', isMerchandise);
     $margin.prop('required', isMerchandise);
+    $expirationDate.prop('required', isMerchandise);
+    $expirationAlertDays.prop('required', isMerchandise);
 
     $tax.prop('disabled', !isMerchandise);
     $referenceCost.prop('disabled', !isMerchandise);
     $margin.prop('disabled', !isMerchandise);
+    $expirationDate.prop('disabled', !isMerchandise);
+    $expirationAlertDays.prop('disabled', !isMerchandise);
 
     toggleConditionalRequiredMarker('merchandise-tax-required', isMerchandise);
     toggleConditionalRequiredMarker('merchandise-reference-cost-required', isMerchandise);
     toggleConditionalRequiredMarker('merchandise-margin-required', isMerchandise);
+    toggleConditionalRequiredMarker('merchandise-expiration-date-required', isMerchandise);
+    toggleConditionalRequiredMarker('merchandise-alert-days-required', isMerchandise);
     toggleConditionalRequiredMarker('sale-price-required', manualSalePrice);
 
     if (isMerchandise) {
@@ -127,11 +149,15 @@ function syncPricingFieldBehavior() {
         $tax.val('');
         $referenceCost.val('');
         $margin.val('');
+        $expirationDate.val('');
+        $expirationAlertDays.val('7');
         $('#margin-warning').remove();
         return;
     }
 
     if (!isMerchandise) {
+        $expirationDate.val('');
+        $expirationAlertDays.val('7');
         $('#margin-warning').remove();
         return;
     }
@@ -173,7 +199,7 @@ function isFieldRequired(fieldId, values) {
     }
 
     if (fieldId === 'current_stock') {
-        return false;
+        return hasInventory;
     }
 
     if (fieldId === 'sale_price') {
@@ -227,14 +253,15 @@ function syncInventoryFieldBehavior() {
     toggleFieldGroup('inventory-stock-row', hasInventory);
 
     const $currentStock = $('#current_stock');
-    $currentStock.prop('required', false);
+    $currentStock.prop('required', hasInventory);
     $currentStock.prop('disabled', !hasInventory);
-    $currentStock.prop('readonly', true);
+    $currentStock.prop('readonly', false);
 
     const $minimumStock = $('#minimum_stock');
     $minimumStock.prop('required', hasInventory);
     $minimumStock.prop('disabled', !hasInventory);
 
+    toggleConditionalRequiredMarker('current-stock-required', hasInventory);
     toggleConditionalRequiredMarker('minimum-stock-required', hasInventory);
 }
 
@@ -369,6 +396,16 @@ const fieldValidators = {
         emptyMsg: 'Indique si maneja inventario.',
         invalidMsg: 'Seleccione una opción válida para inventario.'
     },
+    expiration_date: {
+        validator: validateDateValue,
+        emptyMsg: 'La fecha de vencimiento es obligatoria para productos de mercadería.',
+        invalidMsg: 'Ingrese una fecha de vencimiento válida.'
+    },
+    expiration_alert_days: {
+        validator: validateNonNegativeInteger,
+        emptyMsg: 'Los días de alerta de vencimiento son obligatorios.',
+        invalidMsg: 'Ingrese un número entero mayor o igual a 0.'
+    },
     sale_price: {
         validator: (value) => {
             if (!validateNonNegativeAmount(value)) return false;
@@ -465,6 +502,8 @@ function submitProductForm() {
         name: $('#name').val().trim(),
         type: $('#type').val().trim(),
         has_inventory: $('#has_inventory').val().trim(),
+        expiration_date: ($('#expiration_date').val() ?? '').toString().trim(),
+        expiration_alert_days: $('#expiration_alert_days').val().trim(),
         sale_price: $('#sale_price').val().trim(),
         tax_percentage: $('#tax_percentage').val().trim(),
         reference_cost: $('#reference_cost').val().trim(),

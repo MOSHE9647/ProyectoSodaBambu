@@ -12,36 +12,36 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Category extends Model
 {
     /** @use HasFactory<CategoryFactory> */
-	use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     /**
-	 * The attributes that are mass assignable.
-	 *
-	 * @var list<string>
-	 */
-	protected $fillable = [
-		'name',
-		'description',
-	];
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'name',
+        'description',
+    ];
 
     /**
-	 * Get the attributes that should be cast.
-	 *
-	 * @return array<string, string>
-	 */
-	// protected $casts = [
-	// 	'created_at' => CostaRicaDatetime::class,
-	// 	'updated_at' => CostaRicaDatetime::class,
-	// 	'deleted_at' => CostaRicaDatetime::class,
-	// ];
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    // protected $casts = [
+    // 	'created_at' => CostaRicaDatetime::class,
+    // 	'updated_at' => CostaRicaDatetime::class,
+    // 	'deleted_at' => CostaRicaDatetime::class,
+    // ];
 
-	/**
-	 * Get the products for the category.
-	 * @return HasMany<Product, Category>
-	 */
-	public function products()
-	{
-		return $this->hasMany(Product::class);
-	}
-
+    /**
+     * Get the products for the category.
+     *
+     * @return HasMany<Product, Category>
+     */
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
 }

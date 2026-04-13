@@ -6,7 +6,6 @@ use App\Models\User;
 
 class UserObserver
 {
-    
     /**
      * Handle the User "deleted" event.
      *
@@ -14,8 +13,7 @@ class UserObserver
      * deletes the associated employee record to maintain data consistency
      * and prevent orphaned employee records.
      *
-     * @param User $user The user instance that was deleted
-     * @return void
+     * @param  User  $user  The user instance that was deleted
      */
     public function deleted(User $user): void
     {

@@ -29,6 +29,18 @@ export async function showModelInfo(url, anchor, modelName) {
                 showCancelButton: true,
                 cancelButtonText: 'Cerrar',
                 html: `${html}`,
+                didOpen: () => {
+                    // Inicializar cualquier tabla dentro del modal que tenga la clase 'init-datatable'
+                    const $tables = $('.swal2-popup .init-datatable');
+                    if ($tables.length) {
+                        $tables.each(function() {
+                            $(this).DataTable({
+                                pageLength: 5,
+                                lengthMenu: [5, 10, 25, 50],
+                            });
+                        });
+                    }
+                }
             });
         } else {
             SwalToast.fire({

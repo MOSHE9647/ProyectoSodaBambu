@@ -5,8 +5,8 @@ namespace App\Http\Requests;
 use App\Enums\UserRole;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Enum;
 
 class UserRequest extends FormRequest
 {
@@ -26,7 +26,7 @@ class UserRequest extends FormRequest
     public function rules(): array
     {
         return [
-	        'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
                 'string',
@@ -35,8 +35,8 @@ class UserRequest extends FormRequest
                     ->ignore($this->route('user'))
                     ->whereNull('deleted_at'),
             ],
-	        'role' => ['required', new Enum(UserRole::class)],
-	        'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', new Enum(UserRole::class)],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ];
     }
 }

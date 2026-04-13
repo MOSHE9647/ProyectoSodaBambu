@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\SupplyRequest; 
+use App\Enums\UserRole;
+use App\Http\Requests\SupplyRequest;
 use App\Http\Resources\SupplyResource;
 use App\Models\Supply;
-use App\Enums\UserRole;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
 use Throwable;
 use Yajra\DataTables\DataTables;
 
@@ -22,61 +23,58 @@ class SupplyController extends Controller implements HasMiddleware
     /**
      * Get the middleware that should be assigned to the controller.
      *
-     * @return array<int, \Illuminate\Routing\Controllers\Middleware>
+     * @return array<int, Middleware>
      */
     public static function middleware(): array
     {
+        $allowedViewerRoles = UserRole::ADMIN->value.'|'.UserRole::EMPLOYEE->value;
+
         return [
-            new Middleware('role:' . UserRole::ADMIN->value),
+            new Middleware(RoleMiddleware::using($allowedViewerRoles)),
+            new Middleware(
+                RoleMiddleware::using(UserRole::ADMIN->value),
+                only: ['edit', 'update', 'destroy']
+            ),
         ];
     }
 
     /**
      * Display a listing of the resource.
      *
-     * @param Request $request
      * @return Factory|View|JsonResponse|\Illuminate\View\View
+     *
      * @throws Exception
      */
- public function index(Request $request)
-{
-    if ($request->ajax()) {
-        $query = Supply::query();
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = Supply::query();
 
-        // filter for supplies that are expiring soon (within the next 7 days)
-        if ($request->boolean('expiring_soon') || $request->filter === 'expiring_soon') {
-            $query->whereHas('purchaseDetails', function ($q) {
-                $q->whereNotNull('expiration_date')
-                  ->whereBetween('expiration_date', [
-                      now()->startOfDay(), 
-                      now()->addDays(7)->endOfDay()
-                  ]);
-            });
+            if ($request->boolean('expiring_soon') || $request->filter === 'expiring_soon') {
+                $query->whereNotNull('expiration_date')
+                    ->whereBetween('expiration_date', [
+                        now()->startOfDay(),
+                        now()->addDays(7)->endOfDay(),
+                    ]);
+            }
+
+            return DataTables::of($query)
+                ->editColumn('quantity', function ($supply) {
+                    return $supply->quantity ?? 0;
+                })
+                ->editColumn('unit_price', function ($supply) {
+                    return $supply->unit_price ? '₡'.number_format($supply->unit_price, 2) : '₡0.00';
+                })
+                ->editColumn('expiration_date', function ($supply) {
+                    return $supply->expiration_date
+                        ? $supply->expiration_date->format('d/m/Y')
+                        : 'N/A';
+                })
+                ->toJson();
         }
 
-        return DataTables::of($query)
-            // aqui se le pasa la cantidad
-            ->addColumn('quantity', function($supply) {
-                $last = $supply->purchaseDetails()->latest()->first();
-                return $last ? $last->quantity : 0;
-            })
-            // aqui se le pasa el precio
-            ->addColumn('unit_price', function($supply) {
-                $last = $supply->purchaseDetails()->latest()->first();
-                return $last ? '₡' . number_format($last->unit_price, 2) : '₡0.00';
-            })
-            // aquis e le pasa al fecha de vencimento 
-            ->addColumn('expiration_date', function($supply) {
-                $last = $supply->purchaseDetails()->latest()->first();
-                return ($last && $last->expiration_date) 
-                    ? \Carbon\Carbon::parse($last->expiration_date)->format('d/m/Y') 
-                    : 'N/A';
-            })
-            ->toJson();
+        return view('models.supplies.index');
     }
-
-    return view('models.supplies.index');
-}
 
     /**
      * Show the form for creating a new resource.
@@ -91,10 +89,8 @@ class SupplyController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      *
-     * 
+     * @return RedirectResponse | JsonResponse
      *
-     * @param SupplyRequest $request
-     * @return RedirectResponse
      * @throws Throwable
      */
     public function store(SupplyRequest $request)
@@ -108,7 +104,19 @@ class SupplyController extends Controller implements HasMiddleware
             $supply->update($supplyData);
             $message = 'Insumo restaurado y actualizado correctamente.';
         } else {
-            Supply::create($supplyData);
+            $supply = Supply::create($supplyData);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'supply' => [
+                    'id' => $supply->id,
+                    'name' => $supply->name,
+                    'unit_price' => (float) ($supply->unit_price ?? 0),
+                ],
+            ]);
         }
 
         return redirect()->route('supplies.index')->with('success', $message);
@@ -117,19 +125,18 @@ class SupplyController extends Controller implements HasMiddleware
     /**
      * Display the specified resource.
      *
-     * @param Supply $supply
      * @return Factory|View|\Illuminate\View\View
      */
     public function show(Supply $supply)
     {
         $resource = SupplyResource::make($supply);
+
         return view('models.supplies.show', ['supply' => $resource]);
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param Supply $supply
      * @return Factory|View|\Illuminate\View\View
      */
     public function edit(Supply $supply)
@@ -140,9 +147,8 @@ class SupplyController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      *
-     * @param SupplyRequest $request
-     * @param Supply $supply
      * @return RedirectResponse
+     *
      * @throws Throwable
      */
     public function update(SupplyRequest $request, Supply $supply)
@@ -156,8 +162,8 @@ class SupplyController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      *
-     * @param Supply $supply
      * @return RedirectResponse
+     *
      * @throws Throwable
      */
     public function destroy(Supply $supply)
