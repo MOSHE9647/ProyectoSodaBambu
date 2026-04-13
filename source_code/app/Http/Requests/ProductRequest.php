@@ -106,7 +106,7 @@ class ProductRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', new Enum(ProductType::class)],
             'expiration_date' => [Rule::requiredIf($isMerchandise), 'nullable', 'date', 'after_or_equal:today'],
-            'expiration_alert_days' => [Rule::requiredIf($isMerchandise), 'integer', 'min:0'],
+            'expiration_alert_days' => [Rule::requiredIf($isMerchandise), 'nullable', 'integer', 'min:0'],
             'has_inventory' => ['required', 'boolean'],
             'reference_cost' => $pricingRules,
             'tax_percentage' => [

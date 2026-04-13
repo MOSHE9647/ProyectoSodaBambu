@@ -30,6 +30,7 @@ class ProductFactory extends Factory
             'name' => $this->faker->word(),
             'type' => $this->faker->randomElement(ProductType::cases()),
             'expiration_date' => $this->faker->optional(0.65)->dateTimeBetween('today', '+8 months')?->format('Y-m-d'),
+            'expiration_alert_days' => $this->faker->numberBetween(3, 10),
             'has_inventory' => $this->faker->boolean(),
             'sale_price' => round($basePrice + ($basePrice * $marginPercentage), 2),
             'tax_percentage' => $taxPercentage,

@@ -1,7 +1,7 @@
-@import url('datatables.net-bs5');
-@import url('datatables.net-buttons-bs5');
-@import url('datatables.net-columncontrol-bs5');
-@import url('datatables.net-fixedheader-bs5');
-@import url('datatables.net-responsive-bs5');
-@import url('datatables.net-searchbuilder-bs5');
-@import url('datatables.net-searchpanes-bs5');
+@import "datatables.net-bs5";
+@import "datatables.net-buttons-bs5";
+@import "datatables.net-columncontrol-bs5";
+@import "datatables.net-fixedheader-bs5";
+@import "datatables.net-responsive-bs5";
+@import "datatables.net-searchbuilder-bs5";
+@import "datatables.net-searchpanes-bs5";

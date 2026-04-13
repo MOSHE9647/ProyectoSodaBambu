@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 $greenBg = "\033[42m";
-$blueBg = "\033[44m";
+$blueBg = "\033[46m";
 $redBg = "\033[41m";
 $reset = "\033[0m";
 
@@ -265,4 +265,8 @@ runCommand('composer setup', 'Configurando el entorno con "composer setup"');
 
 askToRunMigrations();
 generateStorageLink();
+
+runCommand('php artisan optimize:clear --ansi', 'Limpiando cachés de Laravel');
+runCommand('vendor'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.'pint --parallel --verbose --ansi', 'Formateando código con Laravel Pint');
+
 success('Espacio de Trabajo Configurado Correctamente.');
