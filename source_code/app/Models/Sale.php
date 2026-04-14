@@ -7,6 +7,7 @@ use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
@@ -36,9 +37,6 @@ class Sale extends Model
         'date' => 'datetime',
         'total' => 'decimal:2',
         'payment_status' => PaymentStatus::class,
-        // 'created_at' => CostaRicaDatetime::class,
-        // 'updated_at' => CostaRicaDatetime::class,
-        // 'deleted_at' => CostaRicaDatetime::class,
     ];
 
     /**
@@ -50,5 +48,16 @@ class Sale extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Relation: Sale Details.
+     * A sale has many sale details associated with it.
+     *
+     * @return HasMany<SaleDetail>
+     */
+    public function saleDetails()
+    {
+        return $this->hasMany(SaleDetail::class);
     }
 }
