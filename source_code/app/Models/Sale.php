@@ -78,4 +78,9 @@ class Sale extends Model
     //     // Nota: Asegúrate de que el modelo Payment exista
     //     return $this->hasMany(Payment::class);
     // }
+
+    public function payment(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(Payment::class, 'origin');
+    }
 }

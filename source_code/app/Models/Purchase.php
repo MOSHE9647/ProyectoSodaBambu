@@ -62,4 +62,9 @@ class Purchase extends Model
     {
         return $this->hasMany(PurchaseDetail::class);
     }
+
+    public function payment(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(Payment::class, 'origin');
+    }
 }
