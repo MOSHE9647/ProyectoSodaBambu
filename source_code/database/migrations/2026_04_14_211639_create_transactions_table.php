@@ -17,7 +17,7 @@ return new class extends Migration
             $table->decimal('amount', 12, 2);
             $table->string('type');    // Enum: income, expense
             $table->string('concept'); // moviment concept
-            
+
             $table->timestamps();
             $table->softDeletes();
         });

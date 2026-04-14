@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-             $table->decimal('amount', 12, 2);
+            $table->decimal('amount', 12, 2);
             $table->string('method'); // Enum: cash, sinpe, card
             $table->decimal('change_amount', 12, 2)->default(0);
             $table->string('reference')->nullable(); // Reference number
             $table->dateTime('date');
-            
+
             // polymorphic relationship (origin_id, origin_type)
-            $table->nullableMorphs('origin'); 
+            $table->nullableMorphs('origin');
 
             $table->timestamps();
             $table->softDeletes();

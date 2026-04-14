@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Purchase extends Model
@@ -63,7 +64,7 @@ class Purchase extends Model
         return $this->hasMany(PurchaseDetail::class);
     }
 
-    public function payment(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    public function payment(): MorphOne
     {
         return $this->morphOne(Payment::class, 'origin');
     }

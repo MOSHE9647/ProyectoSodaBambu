@@ -2,10 +2,10 @@
 
 namespace App\Observers;
 
-use App\Models\Purchase;
-use App\Enums\PaymentStatus;
-use App\Enums\PaymentMethod;
 use App\Actions\Finance\ProcessPaymentAction;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
+use App\Models\Purchase;
 
 class PurchaseObserver
 {
@@ -44,11 +44,10 @@ class PurchaseObserver
         $method = PaymentMethod::tryFrom($methodValue) ?? PaymentMethod::CASH;
 
         $this->processPayment->execute($purchase, [
-            'amount'    => $purchase->total,
-            'method'    => $method,
+            'amount' => $purchase->total,
+            'method' => $method,
             'reference' => request()->input('reference', $purchase->invoice_number),
-            'date'      => now(),
+            'date' => now(),
         ]);
     }
 }
-

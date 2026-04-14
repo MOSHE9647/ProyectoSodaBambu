@@ -2,15 +2,14 @@
 
 namespace App\Observers;
 
+use App\Actions\Finance\ProcessPaymentAction;
 use App\Actions\Sale\CalculateDailySalesTrendAction;
 use App\Actions\Sale\GetDailySalesDataAction;
 use App\Actions\Sale\GetMonthlySalesDataAction;
-use App\Actions\Finance\ProcessPaymentAction;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Sale;
-use App\Enums\PaymentMethod;
 use Illuminate\Support\Facades\Cache;
-
 
 class SaleObserver
 {
@@ -39,7 +38,7 @@ class SaleObserver
         // and related values were modified. In either case, updates the sales cache to reflect
         // the most recent changes.
         $becamePaid = $sale->wasChanged('payment_status') && $sale->payment_status === PaymentStatus::PAID;
-        
+
         $isStillPaidAndValuesChanged = $sale->payment_status === PaymentStatus::PAID;
 
         if ($becamePaid || $isStillPaidAndValuesChanged) {
@@ -62,21 +61,18 @@ class SaleObserver
     {
         // Intentamos obtener el método del request, si no existe usamos CASH (Efectivo)
         $methodValue = request()->input('payment_method', PaymentMethod::CASH->value);
-        
+
         // Intentamos transformar el valor a un Enum válido, si falla usamos CASH
         $method = PaymentMethod::tryFrom($methodValue) ?? PaymentMethod::CASH;
 
         $this->processPayment->execute($sale, [
-            'amount'        => $sale->total,
-            'method'        => $method,
+            'amount' => $sale->total,
+            'method' => $method,
             'change_amount' => request()->input('change_amount', 0),
-            'reference'     => request()->input('reference'),
-            'date'          => now(),
+            'reference' => request()->input('reference'),
+            'date' => now(),
         ]);
     }
-
-
-
 
     /**
      * Helper para refrescar el caché usando la lógica solicitada

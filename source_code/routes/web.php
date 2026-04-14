@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\Sale\CalculateDailySalesTrendAction;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CategoryController;
@@ -13,12 +12,11 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\UserController;
 use App\Models\Employee;
+use App\Models\Purchase;
 use App\Models\Sale;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Route;
 use App\Models\Supplier;
 use App\Models\Transaction;
-use App\Models\Purchase;
+use Illuminate\Support\Facades\Route;
 
 /**
  * Evaluate the user's role and redirect accordingly.
@@ -59,20 +57,20 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
         $purchase = Purchase::create([
             'supplier_id' => $supplier->id,
-            'invoice_number' => 'INV-' . rand(1000, 9999),
+            'invoice_number' => 'INV-'.rand(1000, 9999),
             'payment_status' => PaymentStatus::PAID,
             'date' => now(),
             'total' => 50000.00,
         ]);
 
         // CARGAR LA RELACIÓN RECIÉN CREADA POR EL OBSERVER
-        $purchase->load('payment.transaction'); 
+        $purchase->load('payment.transaction');
 
         return [
             'message' => 'Compra creada exitosamente',
             'purchase' => $purchase,
             'payment' => $purchase->payment,
-            'transaction' => $purchase->payment?->transaction
+            'transaction' => $purchase->payment?->transaction,
         ];
     });
 
@@ -83,7 +81,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
         $sale = Sale::create([
             'employee_id' => $employee->id,
-            'invoice_number' => 'V-TEST-' . rand(1000, 9999),
+            'invoice_number' => 'V-TEST-'.rand(1000, 9999),
             'payment_status' => PaymentStatus::PAID, // Esto dispara el Observer
             'date' => now(),
             'total' => 15500.50,
@@ -93,7 +91,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
             'message' => 'Venta creada exitosamente',
             'sale' => $sale,
             'payment' => $sale->payment,
-            'transaction' => $sale->payment?->transaction
+            'transaction' => $sale->payment?->transaction,
         ];
     });
 
@@ -102,5 +100,5 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
         // Retorna todos los movimientos con sus relaciones para ver los conceptos descriptivos
         return Transaction::with(['payment.origin'])->latest()->get();
     });
-    
+
 });
