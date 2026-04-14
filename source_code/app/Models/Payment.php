@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Enums\PaymentMethod;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Enums\PaymentMethod;
-
 
 
 class Payment extends Model
@@ -23,7 +22,7 @@ class Payment extends Model
         'date',
         'origin_id',    // Sales, purchase, contract, or payroll ID
         'origin_type',  // Sales, purchase, contract, or payroll class
-    
+
     ];
 
     protected $casts = [
@@ -36,15 +35,13 @@ class Payment extends Model
     /**
      * Obtains the related type (purchase, sale, contract or payroll payment)
      */
-    public function origin():MorphTo
+    public function origin(): MorphTo
     {
         return $this->morphTo();
     }
-    
 
     /**
      * Get the transaction associated with the payment.
-     *
      */
     public function transaction(): HasOne
     {
