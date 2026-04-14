@@ -84,4 +84,9 @@ class HomeController extends Controller
     {
         return view('pages.sales');
     }
+
+    public function reports()
+    {
+        return view('pages.reports');
+    }
 }
