@@ -34,7 +34,7 @@ class SaleSeeder extends Seeder
         }
 
         // Insert any remaining records that didn't reach the chunk size of 500
-        if (!empty($chunk)) {
+        if (! empty($chunk)) {
             Sale::insert($chunk);
         }
     }
@@ -49,9 +49,8 @@ class SaleSeeder extends Seeder
      * - Other days: Sales are distributed throughout the day (7 AM to 8 PM)
      *   with 5-15 sales per day and a fixed maximum total of 25,000.
      *
-     * @param int $userId The ID of the user for whom sales are generated.
-     * @param Carbon $nowLocal The current local date and time reference point.
-     *
+     * @param  int  $userId  The ID of the user for whom sales are generated.
+     * @param  Carbon  $nowLocal  The current local date and time reference point.
      * @return Generator Yields associative arrays containing sale data for each generated sale.
      */
     private function generateSales(int $userId, Carbon $nowLocal): Generator
@@ -93,11 +92,10 @@ class SaleSeeder extends Seeder
      * converting datetime to UTC format and converting any BackedEnum instances
      * to their scalar values for bulk insert operations.
      *
-     * @param int $userId The ID of the user associated with the sale
-     * @param Carbon $baseDate The base date for the sale (hour will be set separately)
-     * @param int $hour The hour of the day (0-23) for the sale timestamp
-     * @param int $maxTotal The maximum random value for the sale total (minimum is 1500)
-     *
+     * @param  int  $userId  The ID of the user associated with the sale
+     * @param  Carbon  $baseDate  The base date for the sale (hour will be set separately)
+     * @param  int  $hour  The hour of the day (0-23) for the sale timestamp
+     * @param  int  $maxTotal  The maximum random value for the sale total (minimum is 1500)
      * @return array An associative array containing sale data with keys:
      *               - user_id: The user identifier
      *               - date: UTC formatted datetime string
