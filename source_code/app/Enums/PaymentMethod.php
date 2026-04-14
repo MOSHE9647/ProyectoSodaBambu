@@ -10,10 +10,10 @@ enum PaymentMethod: string
 
     public function label(): string
     {
-        return match($this) {
-            self::CASH  => 'Efectivo',
+        return match ($this) {
+            self::CASH => 'Efectivo',
             self::SINPE => 'SINPE Móvil',
-            self::CARD  => 'Tarjeta',
+            self::CARD => 'Tarjeta',
         };
     }
 }
