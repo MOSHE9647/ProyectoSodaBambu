@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\DB;
 class GetFinanceSummaryAction
 {
     /**
-    * Retrieves a financial summary with totals of income, expenses, and balance.
-    *
-    * @param string|null $startDate Start date for filtering (optional)
-    * @param string|null $endDate End date for filtering (optional)
-    * @return array Financial summary with total_income, total_expense, and balance
+     * Retrieves a financial summary with totals of income, expenses, and balance.
+     *
+     * @param  string|null  $startDate  Start date for filtering (optional)
+     * @param  string|null  $endDate  End date for filtering (optional)
+     * @return array Financial summary with total_income, total_expense, and balance
      */
     public function execute(?string $startDate = null, ?string $endDate = null): array
     {

@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use App\Actions\Finance\GetFinanceSummaryAction;
 use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +19,7 @@ class TransactionController extends Controller
 
         return response()->json([
             'summary' => $getSummary->execute(),
-            'transactions' => $transactions
+            'transactions' => $transactions,
         ]);
     }
 }

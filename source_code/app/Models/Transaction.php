@@ -25,7 +25,7 @@ class Transaction extends Model
     ];
 
     /**
-    * Scope to filter only incomes.
+     * Scope to filter only incomes.
      */
     public function scopeIncomes($query)
     {
@@ -33,13 +33,12 @@ class Transaction extends Model
     }
 
     /**
-    * Scope to filter only expenses.
+     * Scope to filter only expenses.
      */
     public function scopeExpenses($query)
     {
         return $query->where('type', TransactionType::EXPENSE);
     }
-
 
     /**
      * Get the payment associated with the transaction.
