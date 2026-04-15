@@ -8,7 +8,6 @@ use App\Actions\Inventory\GetSuppliesAboutToExpireCount;
 use App\Actions\Sale\CalculateDailySalesTrendAction;
 use App\Actions\Sale\GetDailySalesDataAction;
 use App\Actions\Sale\GetMonthlySalesDataAction;
-use App\Enums\UserRole;
 use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
@@ -19,19 +18,7 @@ class HomeController extends Controller
             return redirect()->route('login');
         }
 
-        $userRoles = auth()->user()->getRoleNames();
-        $roleRoutes = [
-            UserRole::ADMIN->value => 'dashboard',
-            UserRole::EMPLOYEE->value => 'dashboard',
-        ];
-
-        foreach ($roleRoutes as $role => $route) {
-            if ($userRoles->contains($role)) {
-                return redirect()->route($route);
-            }
-        }
-
-        abort(403, __('Unauthorized'));
+        return redirect()->route('dashboard');
     }
 
     public function dashboard(
@@ -73,15 +60,11 @@ class HomeController extends Controller
             return $getDailySalesDataAction->execute();
         });
 
-        return view('dashboard', array_merge([
+        return view('dashboard', [
             'aboutToExpireSupplies' => $aboutToExpireSupplies,
             'totalMinStockProducts' => $totalMinStockProducts,
             'aboutToExpireProducts' => $aboutToExpireProducts,
-        ], $salesStats, $monthlyStats, $dailyStats));
-    }
-
-    public function sales()
-    {
-        return view('pages.sales');
+            ...$salesStats, ...$monthlyStats, ...$dailyStats,
+        ]);
     }
 }
