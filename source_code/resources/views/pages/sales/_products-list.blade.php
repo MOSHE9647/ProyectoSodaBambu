@@ -1,5 +1,13 @@
 @forelse($products as $product)
-<div class="card p-3 shadow-sm h-100 product-card">
+<div
+    class="card p-3 shadow-sm h-100 product-card"
+    data-product-id="{{ $product->id }}"
+    data-product-name="{{ e($product->name) }}"
+    data-product-price="{{ (int) ($product->sale_price ?? 0) }}"
+    data-product-has-inventory="{{ $product->has_inventory ? 1 : 0 }}"
+    data-product-stock="{{ (int) ($product->stock?->current_stock ?? 0) }}"
+    style="cursor: pointer;"
+>
     <div class="d-flex flex-column h-100">
         {{-- Header: Name & Price --}}
         <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
