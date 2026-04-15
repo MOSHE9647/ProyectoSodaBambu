@@ -43,8 +43,8 @@
 			    </div>
 			    <div class="col-md-4">
 			        <x-form.select
-			            id="categorySelect"
-			            name="categorySelect"
+			            id="category-select"
+			            name="category-select"
 			            class="border-secondary"
 						label-class="d-none"
 			        >
@@ -59,7 +59,26 @@
 			</div>
 
 			{{-- Products List --}}
-			@include('pages.sales._products-list', ['products' => $products])
+			<div id="products-list" class="overflow-y-auto pe-1">
+
+				{{-- Products Grid --}}
+			    <div id="products-grid" class="grid-container">
+					@include('pages.sales._products-list', ['products' => $products])
+			    </div>
+
+			    {{-- Scroll Sentinel --}}
+				<div id="products-scroll-sentinel" class="d-flex flex-column align-items-center p-4" style="height: 50px;">
+				    <div id="loading-text" class="spinner-border text-primary" role="status" style="display: none;">
+				        <span class="visually-hidden">Cargando...</span>
+				    </div>
+				</div>
+
+				{{-- Skeleton Template (hidden, used for cloning) --}}
+				<template id="skeleton-template">
+				    @include('pages.sales._skeleton')
+				</template>
+
+			</div>
 
 		</section>
 
@@ -101,7 +120,7 @@
 				        <button class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
 				            <i class="bi bi-dash fs-6"></i>
 				        </button>
-				        <span class="text-center fw-semibold d-inline-block text-body" style="min-width: 18px; font-size: 0.95rem;">{{ $product['quantity'] }}</span>
+				        <span class="text-center fw-semibold d-inline-block text-body" style="min-width: 18px; font-size: 0.95rem;" contenteditable="">{{ $product['quantity'] }}</span>
 				        <button class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
 				            <i class="bi bi-plus fs-6"></i>
 				        </button>
@@ -137,4 +156,8 @@
 			
 		</section>
 	</div>
+@endsection
+
+@section('scripts')
+	@vite(['resources/js/pages/sales/main.js'])
 @endsection
