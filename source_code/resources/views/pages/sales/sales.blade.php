@@ -25,6 +25,8 @@
 			    <i class="bi bi-box-seam"></i>
 			</div>
 			<hr>
+
+			{{-- Search and Filter --}}
 			<div class="row mb-4 g-3">
 			    <div class="col-md-8 mb-3 mb-md-0">
 			        <x-form.input 
@@ -56,9 +58,8 @@
 			    </div>
 			</div>
 
-			<div id="products-list" class="overflow-y-auto pe-1">
-				@include('pages.sales._products-list', ['products' => $products])
-			</div>
+			{{-- Products List --}}
+			@include('pages.sales._products-list', ['products' => $products])
 
 		</section>
 
