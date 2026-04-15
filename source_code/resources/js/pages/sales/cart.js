@@ -47,6 +47,14 @@ export const initializeSalesCart = () => {
 	const formatCurrency = (amount) =>
 		`₡ ${Math.round(amount).toLocaleString("es-CR")}`;
 
+	const escapeHtml = (value) =>
+		String(value ?? "")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#39;");
+
 	const parsePrice = (rawPrice) => {
 		// Mantiene el valor original de la BD. Solo cambia comas por puntos por seguridad
 		// asumiendo que el backend envía formatos crudos como "1500" o "1500.50"
@@ -137,10 +145,13 @@ export const initializeSalesCart = () => {
         </div>
     `;
 
-	const createCartItemHTML = (item) => `
+	const createCartItemHTML = (item) => {
+		const safeName = escapeHtml(item.name);
+
+		return `
         <div class="d-flex flex-row justify-content-between align-items-center gap-2 w-100" data-cart-item-id="${item.id}">
             <div class="d-flex flex-column text-start overflow-hidden flex-grow-1">
-                <span class="fw-bold text-truncate text-body" style="font-size: 0.95rem;">${item.name}</span>
+				<span class="fw-bold text-truncate text-body" style="font-size: 0.95rem;" title="${safeName}">${safeName}</span>
                 <span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">${formatCurrency(item.price)} c/u</span>
             </div>
             <div class="d-flex flex-row align-items-center justify-content-end gap-2 flex-shrink-0">
@@ -156,7 +167,8 @@ export const initializeSalesCart = () => {
                 </button>
             </div>
         </div>
-    `;
+	    `;
+	};
 
 	const renderCartItems = () => {
 		saleDetailsContainer.innerHTML =
