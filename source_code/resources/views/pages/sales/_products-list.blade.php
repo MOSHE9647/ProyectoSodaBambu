@@ -1,7 +1,7 @@
 @foreach($products as $product)
 <div class="card p-3 shadow-sm h-100 product-card">
     <div class="d-flex flex-column h-100">
-        {{-- Header: Nombre y Precio --}}
+        {{-- Header: Name & Price --}}
         <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
             <h6 class="fw-bold mb-0 text-truncate product-name" title="{{ $product->name }}">
                 {{ $product->name }}
@@ -11,7 +11,7 @@
             </span>
         </div>
         
-        {{-- Descripción / Info relevante (Código o Tipo) --}}
+        {{-- Description / Relevant Info (Barcode or Type) --}}
         <p class="text-body-secondary mb-3 product-description text-truncate">
             @if($product->barcode)
                 <i class="bi bi-upc-scan me-1" title="Código de Barras"></i>{{ $product->barcode }}
@@ -20,7 +20,7 @@
             @endif
         </p>
 
-        {{-- Footer: Categoría y Stock --}}
+        {{-- Footer: Category & Stock --}}
         <div class="mt-auto d-flex justify-content-between align-items-center">
             <span class="badge border text-body-secondary fw-normal px-2 py-1 product-category">
                 {{ $product->category?->name ?? 'General' }}
