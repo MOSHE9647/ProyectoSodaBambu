@@ -8,7 +8,9 @@ use App\Actions\Inventory\GetSuppliesAboutToExpireCount;
 use App\Actions\Sale\CalculateDailySalesTrendAction;
 use App\Actions\Sale\GetDailySalesDataAction;
 use App\Actions\Sale\GetMonthlySalesDataAction;
+use App\Actions\Sale\GetSalesReportDataAction;
 use App\Enums\UserRole;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
@@ -85,8 +87,20 @@ class HomeController extends Controller
         return view('pages.sales');
     }
 
-    public function reports()
+    public function reports(Request $request, GetSalesReportDataAction $getSalesReportDataAction)
     {
-        return view('pages.reports');
+        $activeSection = $request->input('section', 'sales');
+
+        $viewName = $activeSection === 'products'
+            ? 'models.reports.bestsellingproducts'
+            : 'models.reports.salesreports';
+
+        return view($viewName, array_merge(
+            $getSalesReportDataAction->execute($request->all()),
+            [
+                'activeSection' => $activeSection,
+                'topProducts' => collect(),
+            ]
+        ));
     }
 }
