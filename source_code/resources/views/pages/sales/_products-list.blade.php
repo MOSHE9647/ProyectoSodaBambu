@@ -1,11 +1,28 @@
 @forelse($products as $product)
+
+@php
+    $referenceCost = $product->reference_cost ?? 0;
+    $marginPercentage = $product->margin_percentage ?? 0;
+    $priceWithMargin = $referenceCost + ($referenceCost * $marginPercentage);
+
+    $productData = [
+        'id' => $product->id,
+        'name' => $product->name,
+        'price' => number_format($priceWithMargin, 2, ',', '.'),
+        'tax_percentage' => number_format($product->tax_percentage ?? 0, 2, ',', '.'),
+        'has_inventory' => $product->has_inventory ? 1 : 0,
+        'stock' => $product->stock?->current_stock ?? 0,
+    ];
+@endphp
+
 <div
     class="card p-3 shadow-sm h-100 product-card"
-    data-product-id="{{ $product->id }}"
-    data-product-name="{{ e($product->name) }}"
-    data-product-price="{{ (int) ($product->sale_price ?? 0) }}"
-    data-product-has-inventory="{{ $product->has_inventory ? 1 : 0 }}"
-    data-product-stock="{{ (int) ($product->stock?->current_stock ?? 0) }}"
+    data-product-id="{{ $productData['id'] }}"
+    data-product-name="{{ e($productData['name']) }}"
+    data-product-price="{{ $productData['price'] }}"
+    data-product-tax-percentage="{{ $productData['tax_percentage'] }}"
+    data-product-has-inventory="{{ $productData['has_inventory'] }}"
+    data-product-stock="{{ (int) $productData['stock'] }}"
     style="cursor: pointer;"
 >
     <div class="d-flex flex-column h-100">
@@ -15,7 +32,7 @@
                 {{ $product->name }}
             </h6>
             <span class="fw-bold text-success flex-shrink-0 product-price">
-                ₡ {{ number_format($product->sale_price ?? 0, 0, ',', '.') }}
+                ₡ {{ number_format($product->sale_price ?? 0, 2, ',', '.') }}
             </span>
         </div>
 
@@ -36,8 +53,6 @@
             <span class="text-body-secondary product-stock">
                 @if($product->has_inventory)
                 Cant. Disp.: {{ $product->stock?->current_stock ?? 0 }}
-                {{-- @else
-                <span class="fst-italic text-opacity-75">N/A</span> --}}
                 @endif
             </span>
         </div>

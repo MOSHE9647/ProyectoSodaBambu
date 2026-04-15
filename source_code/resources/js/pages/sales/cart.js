@@ -1,287 +1,257 @@
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert";
 
-function showError(errorMessage, consoleErrorMessage) {
-    console.error(consoleErrorMessage);
-    SwalToast.fire({
-        icon: SwalNotificationTypes.ERROR,
-        title: errorMessage,
-    });
-}
+// Función de error aislada
+const showError = (errorMessage, consoleErrorMessage) => {
+	console.error(consoleErrorMessage);
+	SwalToast.fire({
+		icon: SwalNotificationTypes.ERROR,
+		title: errorMessage,
+	});
+};
 
 export const initializeSalesCart = () => {
-    // 1. Caché de elementos críticos del DOM
-    const productsGrid = document.getElementById("products-grid");
-    const saleDetailsContainer = document.getElementById("sale-details");
-    const saleTax = document.getElementById("sale-tax");
-    const saleSubtotal = document.getElementById("sale-subtotal");
-    const saleTotal = document.getElementById("sale-total");
-    const finalizeSaleButton = document.getElementById("finalize-sale-btn");
-    const clearSaleButton = document.getElementById("clear-sale-btn");
+	// 1. Caché de elementos críticos del DOM
+	const productsGrid = document.getElementById("products-grid");
+	const saleDetailsContainer = document.getElementById("sale-details");
+	const saleTax = document.getElementById("sale-tax");
+	const saleSubtotal = document.getElementById("sale-subtotal");
+	const saleTotal = document.getElementById("sale-total");
+	const finalizeSaleButton = document.getElementById("finalize-sale-btn");
+	const clearSaleButton = document.getElementById("clear-sale-btn");
 
-    // Cláusula de guarda para abortar inicialización si falta algo esencial
-    if (
-        !productsGrid ||
-        !saleDetailsContainer ||
-        !saleTax ||
-        !saleSubtotal ||
-        !saleTotal ||
-        !finalizeSaleButton ||
-        !clearSaleButton
-    ) {
-        showError(
-            "No se encontraron los elementos necesarios para inicializar el carrito.",
-            "Error al inicializar carrito. Faltan elementos críticos del DOM."
-        );
-        return;
-    }
+	// Cláusula de guarda
+	if (
+		!productsGrid ||
+		!saleDetailsContainer ||
+		!saleTax ||
+		!saleSubtotal ||
+		!saleTotal ||
+		!finalizeSaleButton ||
+		!clearSaleButton
+	) {
+		showError(
+			"No se encontraron los elementos necesarios para inicializar el carrito.",
+			"Error al inicializar carrito. Faltan elementos críticos del DOM.",
+		);
+		return;
+	}
 
-    // 2. Estado local del carrito
-    const state = {
-        taxRate: 0.13,
-        items: [],
-    };
+	// 2. Estado local
+	const state = {
+		items: [],
+	};
 
-    // 3. Utilidades
-    const formatCurrency = (amount) => {
-        return `₡ ${Math.round(amount).toLocaleString("es-CR")}`;
-    };
+	// 3. Utilidades y Validaciones
 
-    const parsePrice = (rawPrice) => {
-        const digits = String(rawPrice || "").replace(/[^\d]/g, "");
-        return Number(digits || 0);
-    };
+	// formatCurrency solo redondea para la VISTA (UI), no altera el estado interno
+	const formatCurrency = (amount) =>
+		`₡ ${Math.round(amount).toLocaleString("es-CR")}`;
 
-    const getProductFromCard = (card) => {
-        const id = card.dataset.productId;
-        const name = card.dataset.productName || card.querySelector(".product-name")?.textContent?.trim() || "Producto";
-        const price = parsePrice(
-            card.dataset.productPrice || card.querySelector(".product-price")?.textContent
-        );
-        const hasInventory = card.dataset.productHasInventory === "1";
-        const availableStock = Number(card.dataset.productStock || 0);
+	const parsePrice = (rawPrice) => {
+		// Mantiene el valor original de la BD. Solo cambia comas por puntos por seguridad
+		// asumiendo que el backend envía formatos crudos como "1500" o "1500.50"
+		const cleanedPrice = String(rawPrice || "")
+			.replace(/[^\d,-]/g, "")
+			.replace(",", ".");
 
-        if (!id || !price) {
-            return null;
-        }
+		const value = Number(cleanedPrice);
+		return Number.isFinite(value) ? value : 0;
+	};
 
-        return {
-            id,
-            name,
-            price,
-            hasInventory,
-            availableStock,
-        };
-    };
+	const normalizeTaxPercentage = (rawTaxPercentage) => {
+		const cleanString = String(rawTaxPercentage || "0")
+			.replace(/[^\d,.]/g, "")
+			.replace(",", ".");
 
-    const getItemSubtotal = (item) => item.price * item.quantity;
+		const value = Number(cleanString);
 
-    const getOrderSubtotal = () => {
-        return state.items.reduce((sum, item) => sum + getItemSubtotal(item), 0);
-    };
+		// Confiamos ciegamente en el decimal que viene de la BD (ej. 0.13)
+		return Number.isFinite(value) && value > 0 ? value : 0;
+	};
 
-    const getTaxAmount = (subtotal) => {
-        return subtotal * state.taxRate;
-    };
+	const getProductFromCard = (card) => {
+		const id = card.dataset.productId;
+		const name =
+			card.dataset.productName ||
+			card.querySelector(".product-name")?.textContent?.trim() ||
+			"Producto";
 
-    const updateTotals = () => {
-        const subtotal = getOrderSubtotal();
-        const tax = getTaxAmount(subtotal);
-        const total = subtotal + tax;
+		const price = parsePrice(
+			card.dataset.productPrice ||
+				card.querySelector(".product-price")?.textContent,
+		);
+		
+		if (!id || price === 0) return null;
 
-        saleTax.textContent = formatCurrency(tax);
-        saleSubtotal.textContent = formatCurrency(subtotal);
-        saleTotal.textContent = formatCurrency(total);
+		return {
+			id,
+			name,
+			price,
+			taxPercentage: normalizeTaxPercentage(
+				card.dataset.productTaxPercentage,
+			),
+			hasInventory: card.dataset.productHasInventory === "1",
+			availableStock: Number(card.dataset.productStock || 0),
+		};
+	};
 
-        const isCartEmpty = state.items.length === 0;
-        finalizeSaleButton.disabled = isCartEmpty;
-        clearSaleButton.disabled = isCartEmpty;
-    };
+	// Alerta unificada de inventario
+	const hasEnoughStock = (item, currentQuantity) => {
+		if (item.hasInventory && currentQuantity >= item.availableStock) {
+			SwalToast.fire({
+				icon: SwalNotificationTypes.WARNING,
+				title: "No hay más unidades disponibles para este producto.",
+			});
+			return false;
+		}
+		return true;
+	};
 
-    const renderEmptyCart = () => {
-        saleDetailsContainer.innerHTML = `
-            <div class="d-flex flex-column flex-grow-1 justify-content-center align-items-center text-center text-muted">
-                <i class="bi bi-bag fs-1 mb-2"></i>
-                <p>Selecciona un producto para agregarlo a la orden</p>
+	// 4. Lógica de Renderizado y Componentes HTML
+	const updateTotals = () => {
+		// Las operaciones se hacen con los decimales crudos del estado para máxima precisión
+		const subtotal = state.items.reduce(
+			(sum, item) => sum + item.price * item.quantity,
+			0,
+		);
+		const tax = state.items.reduce(
+			(sum, item) =>
+				sum + item.price * item.quantity * item.taxPercentage,
+			0,
+		);
+		const total = subtotal + tax;
+
+		saleTax.textContent = formatCurrency(tax);
+		saleSubtotal.textContent = formatCurrency(subtotal);
+		saleTotal.textContent = formatCurrency(total);
+
+		const isCartEmpty = state.items.length === 0;
+		finalizeSaleButton.disabled = isCartEmpty;
+		clearSaleButton.disabled = isCartEmpty;
+	};
+
+	const emptyCartHTML = `
+        <div class="d-flex flex-column flex-grow-1 justify-content-center align-items-center text-center text-muted">
+            <i class="bi bi-bag fs-1 mb-2"></i>
+            <p>Selecciona un producto para agregarlo a la orden</p>
+        </div>
+    `;
+
+	const createCartItemHTML = (item) => `
+        <div class="d-flex flex-row justify-content-between align-items-center gap-2 w-100" data-cart-item-id="${item.id}">
+            <div class="d-flex flex-column text-start overflow-hidden flex-grow-1">
+                <span class="fw-bold text-truncate text-body" style="font-size: 0.95rem;">${item.name}</span>
+                <span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">${formatCurrency(item.price)} c/u</span>
             </div>
-        `;
-    };
+            <div class="d-flex flex-row align-items-center justify-content-end gap-2 flex-shrink-0">
+                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" data-product-id="${item.id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
+                    <i class="bi bi-dash fs-6"></i>
+                </button>
+                <span class="text-center fw-semibold d-inline-block text-body" style="min-width: 18px; font-size: 0.95rem;">${item.quantity}</span>
+                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" data-product-id="${item.id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
+                    <i class="bi bi-plus fs-6"></i>
+                </button>
+                <button type="button" class="btn btn-danger border-0 p-0 d-flex align-items-center justify-content-center rounded-2 ms-1" data-action="remove" data-product-id="${item.id}" style="width: 28px; height: 28px;">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
 
-    const renderCartItems = () => {
-        if (state.items.length === 0) {
-            renderEmptyCart();
-            updateTotals();
-            return;
-        }
+	const renderCartItems = () => {
+		saleDetailsContainer.innerHTML =
+			state.items.length === 0
+				? emptyCartHTML
+				: state.items.map(createCartItemHTML).join("");
 
-        saleDetailsContainer.innerHTML = state.items
-            .map((item) => {
-                return `
-                    <div class="d-flex flex-row justify-content-between align-items-center gap-2 w-100" data-cart-item-id="${item.id}">
-                        <div class="d-flex flex-column text-start overflow-hidden flex-grow-1">
-                            <span class="fw-bold text-truncate text-body" style="font-size: 0.95rem;">${item.name}</span>
-                            <span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">${formatCurrency(item.price)} c/u</span>
-                        </div>
-                        <div class="d-flex flex-row align-items-center justify-content-end gap-2 flex-shrink-0">
-                            <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" data-product-id="${item.id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
-                                <i class="bi bi-dash fs-6"></i>
-                            </button>
-                            <span class="text-center fw-semibold d-inline-block text-body" style="min-width: 18px; font-size: 0.95rem;">${item.quantity}</span>
-                            <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" data-product-id="${item.id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
-                                <i class="bi bi-plus fs-6"></i>
-                            </button>
-                            <button type="button" class="btn btn-danger border-0 p-0 d-flex align-items-center justify-content-center rounded-2 ms-1" data-action="remove" data-product-id="${item.id}" style="width: 28px; height: 28px;">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            })
-            .join("");
+		updateTotals();
+	};
 
-        updateTotals();
-    };
+	// 5. Acciones del Carrito (Mutadores de Estado)
+	const addToCart = (productId, productCard) => {
+		const product = getProductFromCard(productCard);
+		if (!product) {
+			return showError(
+				"No se pudo leer la información del producto.",
+				`Datos inválidos para productId: ${productId}`,
+			);
+		}
 
-    const addToCart = (productId) => {
-        const productCard = productsGrid.querySelector(`.product-card[data-product-id="${productId}"]`);
-        if (!productCard) {
-            showError(
-                "No se pudo agregar el producto al carrito.",
-                `Error al agregar al carrito. No se encontró la tarjeta para productId: ${productId}`
-            );
-            return;
-        }
+		const existingItem = state.items.find((item) => item.id === productId);
+		const currentQuantity = existingItem ? existingItem.quantity : 0;
 
-        const product = getProductFromCard(productCard);
-        if (!product) {
-            showError(
-                "No se pudo leer la información del producto para agregarlo al carrito.",
-                `Error al agregar al carrito. Datos inválidos para productId: ${productId}`
-            );
-            return;
-        }
+		if (!hasEnoughStock(product, currentQuantity)) return;
 
-        const existingItem = state.items.find((item) => item.id === productId);
+		if (existingItem) {
+			existingItem.quantity += 1;
+		} else {
+			state.items.push({ ...product, quantity: 1 });
+		}
 
-        if (product.hasInventory) {
-            const currentQuantity = existingItem ? existingItem.quantity : 0;
-            if (currentQuantity >= product.availableStock) {
-                SwalToast.fire({
-                    icon: SwalNotificationTypes.WARNING,
-                    title: "No hay más unidades disponibles para este producto.",
-                });
-                return;
-            }
-        }
+		renderCartItems();
+	};
 
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            state.items.push({
-                id: product.id,
-                name: product.name,
-                price: product.price,
-                quantity: 1,
-                hasInventory: product.hasInventory,
-                availableStock: product.availableStock,
-            });
-        }
+	const cartActions = {
+		decrease: (productId) => {
+			const item = state.items.find((i) => i.id === productId);
+			if (!item) return;
 
-        renderCartItems();
-    };
+			item.quantity -= 1;
+			if (item.quantity <= 0) {
+				state.items = state.items.filter((i) => i.id !== productId);
+			}
+			renderCartItems();
+		},
+		increase: (productId) => {
+			const item = state.items.find((i) => i.id === productId);
+			if (item && hasEnoughStock(item, item.quantity)) {
+				item.quantity += 1;
+				renderCartItems();
+			}
+		},
+		remove: (productId) => {
+			state.items = state.items.filter((i) => i.id !== productId);
+			renderCartItems();
+		},
+	};
 
-    const decreaseQuantity = (productId) => {
-        const item = state.items.find((cartItem) => cartItem.id === productId);
-        if (!item) {
-            return;
-        }
+	const clearCart = () => {
+		state.items = [];
+		renderCartItems();
+	};
 
-        item.quantity -= 1;
-        if (item.quantity <= 0) {
-            state.items = state.items.filter((cartItem) => cartItem.id !== productId);
-        }
+	// 6. Manejadores de Eventos (Delegation)
+	const handleProductClick = (event) => {
+		const productCard = event.target.closest(".product-card");
+		if (!productCard || !productsGrid.contains(productCard)) return;
 
-        renderCartItems();
-    };
+		const productId = productCard.dataset.productId;
+		if (!productId) {
+			return showError(
+				"No se pudo agregar el producto al carrito.",
+				"No se encontró el ID del producto en la tarjeta.",
+			);
+		}
 
-    const increaseQuantity = (productId) => {
-        const item = state.items.find((cartItem) => cartItem.id === productId);
-        if (!item) {
-            return;
-        }
+		addToCart(productId, productCard);
+	};
 
-        if (item.hasInventory && item.quantity >= item.availableStock) {
-            SwalToast.fire({
-                icon: SwalNotificationTypes.WARNING,
-                title: "No hay más unidades disponibles para este producto.",
-            });
-            return;
-        }
+	const handleCartActionClick = (event) => {
+		const actionButton = event.target.closest("button[data-action]");
+		if (!actionButton) return;
 
-        item.quantity += 1;
-        renderCartItems();
-    };
+		const { action, productId } = actionButton.dataset;
 
-    const removeFromCart = (productId) => {
-        state.items = state.items.filter((item) => item.id !== productId);
-        renderCartItems();
-    };
+		// Ejecuta la acción correspondiente del diccionario si existe
+		if (productId && cartActions[action]) {
+			cartActions[action](productId);
+		}
+	};
 
-    const clearCart = () => {
-        state.items = [];
-        renderCartItems();
-    };
+	// 7. Inicialización
+	productsGrid.addEventListener("click", handleProductClick);
+	saleDetailsContainer.addEventListener("click", handleCartActionClick);
+	clearSaleButton.addEventListener("click", clearCart);
 
-    // 4. Handlers
-    const handleProductClick = (event) => {
-        const productCard = event.target.closest(".product-card");
-        if (!productCard || !productsGrid.contains(productCard)) {
-            return;
-        }
-
-        const productId = productCard.dataset.productId;
-        if (!productId) {
-            showError(
-                "No se pudo agregar el producto al carrito. No se encontró la información del producto.",
-                "Error al agregar al carrito. No se encontró el ID del producto en la tarjeta."
-            );
-            return;
-        }
-
-        addToCart(productId);
-    };
-
-    const handleCartAction = (event) => {
-        const actionButton = event.target.closest("button[data-action]");
-        if (!actionButton) {
-            return;
-        }
-
-        const productId = actionButton.dataset.productId;
-        if (!productId) {
-            return;
-        }
-
-        const action = actionButton.dataset.action;
-
-        if (action === "decrease") {
-            decreaseQuantity(productId);
-            return;
-        }
-
-        if (action === "increase") {
-            increaseQuantity(productId);
-            return;
-        }
-
-        if (action === "remove") {
-            removeFromCart(productId);
-        }
-    };
-
-    // 5. Inicialización
-    productsGrid.addEventListener("click", handleProductClick);
-    saleDetailsContainer.addEventListener("click", handleCartAction);
-    clearSaleButton.addEventListener("click", clearCart);
-
-    renderCartItems();
+	renderCartItems(); // Render inicial
 };
