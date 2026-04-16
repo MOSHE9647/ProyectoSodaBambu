@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
@@ -59,5 +60,16 @@ class Sale extends Model
     public function saleDetails()
     {
         return $this->hasMany(SaleDetail::class);
+    }
+
+    /**
+    * Relation: Payment.
+    * A sale has one payment associated with it through a polymorphic relationship.
+    *
+    * @return MorphOne<Payment>
+    */
+    public function payment(): MorphOne
+    {
+        return $this->morphOne(Payment::class, 'origin');
     }
 }

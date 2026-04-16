@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClientController;
@@ -10,7 +11,12 @@ use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
+use App\Models\Employee;
+use App\Models\Purchase;
+use App\Models\Sale;
+use App\Models\Supplier;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -49,4 +55,53 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
         Route::get('/tabs/{tab}', [AttendanceController::class, 'tab'])->name('attendance.tabs');
         Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
     });
+
+    // RUTA TEMPORAL PARA validar el proceso de pago automático al marcar una venta o compra como pagada
+    // 1. Crear una COMPRA completada
+    Route::get('/test-purchase-flow', function () {
+        $supplier = Supplier::first() ?? Supplier::factory()->create();
+
+        $purchase = Purchase::create([
+            'supplier_id' => $supplier->id,
+            'invoice_number' => 'INV-'.rand(1000, 9999),
+            'payment_status' => PaymentStatus::PAID,
+            'date' => now(),
+            'total' => 50000.00,
+        ]);
+
+        // CARGAR LA RELACIÓN RECIÉN CREADA POR EL OBSERVER
+        $purchase->load('payment.transaction');
+
+        return [
+            'message' => 'Compra creada exitosamente',
+            'purchase' => $purchase,
+            'payment' => $purchase->payment,
+            'transaction' => $purchase->payment?->transaction,
+        ];
+    });
+
+    // 2. Crear una VENTA completada
+    Route::get('/test-sale-flow', function () {
+        // Aseguramos que exista un empleado
+        $employee = Employee::first() ?? Employee::factory()->create();
+
+        $sale = Sale::create([
+            'employee_id' => $employee->id,
+            'invoice_number' => 'V-TEST-'.rand(1000, 9999),
+            'payment_status' => PaymentStatus::PAID, // Esto dispara el Observer
+            'date' => now(),
+            'total' => 15500.50,
+        ]);
+
+        return [
+            'message' => 'Venta creada exitosamente',
+            'sale' => $sale,
+            'payment' => $sale->payment,
+            'transaction' => $sale->payment?->transaction,
+        ];
+    });
+
+    // 3. Ver todos los MOVIMIENTOS financieros
+    Route::get('/test-transactions', [TransactionController::class, 'index']);
+
 });
