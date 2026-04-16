@@ -3,9 +3,11 @@
 namespace App\Actions\Sale;
 
 use App\Enums\PaymentStatus;
+use App\Models\Category;
 use App\Models\Sale;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Arr;
 
 class GetSalesReportDataAction
 {
@@ -20,6 +22,10 @@ class GetSalesReportDataAction
     {
         $timezone = 'America/Costa_Rica';
         [$startLocal, $endLocal, $periodLabel] = $this->resolvePeriod($filters, $timezone);
+        $sort = $this->resolveSortColumn($filters['sort'] ?? 'date');
+        $direction = strtolower((string) ($filters['direction'] ?? 'desc')) === 'asc' ? 'asc' : 'desc';
+        $activeProductType = $this->resolveProductTypeScope((string) ($filters['product_type'] ?? 'all'));
+        $activeCategoryId = $this->resolveCategoryId($filters['category_id'] ?? null);
 
         $paymentStatus = $filters['payment_status'] ?? PaymentStatus::PAID->value;
 
@@ -61,6 +67,7 @@ class GetSalesReportDataAction
             $orders = $salesForDay->count();
 
             $dailyReports[] = [
+                'date_raw' => $date->format('Y-m-d'),
                 'date' => $date->format('d/m/Y'),
                 'orders' => $orders,
                 'income' => $income,
@@ -68,18 +75,54 @@ class GetSalesReportDataAction
             ];
         }
 
+        $dailyReports = collect($dailyReports)
+            ->sortBy(function (array $report) use ($sort) {
+                return match ($sort) {
+                    'orders' => $report['orders'],
+                    'income' => $report['income'],
+                    'avg_ticket' => $report['avg_ticket'],
+                    default => $report['date_raw'],
+                };
+            }, SORT_REGULAR, $direction === 'desc')
+            ->values()
+            ->map(fn (array $report) => Arr::except($report, ['date_raw']))
+            ->all();
+
         $totalIncome = (float) $sales->sum('total');
         $totalOrders = $sales->count();
         $daysInPeriod = max($startLocal->copy()->startOfDay()->diffInDays($endLocal->copy()->startOfDay()) + 1, 1);
+        $categories = Category::query()->orderBy('name')->get(['id', 'name']);
+        $activeCategoryName = $activeCategoryId
+            ? $categories->firstWhere('id', $activeCategoryId)?->name
+            : null;
+
+        $topProducts = collect();
+
+        $totalSoldQuantity = max((int) $topProducts->sum('sold_quantity'), 1);
+        $topProducts = $topProducts->map(function (array $product) use ($totalSoldQuantity) {
+            $percentage = ((int) $product['sold_quantity'] / $totalSoldQuantity) * 100;
+
+            return array_merge($product, [
+                'total_percent' => round($percentage, 1),
+            ]);
+        })->all();
 
         return [
             'activePeriod' => $filters['period'] ?? 'month',
             'activePaymentStatus' => $paymentStatus,
+            'activeProductType' => $activeProductType,
+            'activeProductTypeLabel' => $this->getProductTypeScopeLabel($activeProductType),
+            'activeCategoryId' => $activeCategoryId,
+            'activeCategoryName' => $activeCategoryName,
             'periodLabel' => $periodLabel,
+            'sort' => $sort,
+            'direction' => $direction,
             'totalIncome' => $totalIncome,
             'totalOrders' => $totalOrders,
             'dailyAverage' => $daysInPeriod > 0 ? $totalIncome / $daysInPeriod : 0,
             'dailyReports' => $dailyReports,
+            'categories' => $categories,
+            'topProducts' => $topProducts,
             'sales' => $sales,
         ];
     }
@@ -141,4 +184,45 @@ class GetSalesReportDataAction
             $startLocal->translatedFormat('d/m/Y').' - '.$endLocal->translatedFormat('d/m/Y'),
         ];
     }
+
+    /**
+     * Resolve the sortable column used by the report table.
+     */
+    private function resolveSortColumn(string $sort): string
+    {
+        return in_array($sort, ['date', 'orders', 'income', 'avg_ticket'], true) ? $sort : 'date';
+    }
+
+    /**
+     * Resolve the selectable product type scope for reports.
+     */
+    private function resolveProductTypeScope(string $scope): string
+    {
+        return in_array($scope, ['all', 'merchandise', 'dishes'], true) ? $scope : 'all';
+    }
+
+    /**
+     * Resolve category id from filters.
+     */
+    private function resolveCategoryId(mixed $categoryId): ?int
+    {
+        if ($categoryId === null || $categoryId === '') {
+            return null;
+        }
+
+        return (int) $categoryId;
+    }
+
+    /**
+     * Human label for the selected product type scope.
+     */
+    private function getProductTypeScopeLabel(string $scope): string
+    {
+        return match ($scope) {
+            'merchandise' => 'Mercancía',
+            'dishes' => 'Platillos',
+            default => 'Todos',
+        };
+    }
+
 }

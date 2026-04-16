@@ -9,6 +9,7 @@ use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\UserController;
@@ -30,7 +31,8 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
     Route::get('sales', [HomeController::class, 'sales'])->name('sales');
-    Route::get('reports', [HomeController::class, 'reports'])->name('reports');
+    Route::get('reports', [ReportsController::class, 'reports'])->name('reports');
+    Route::get('reports/export', [ReportsController::class, 'exportReports'])->name('reports.export');
     Route::get('help', [HelpController::class, 'index'])->name('help');
     Route::resource('users', UserController::class)->names('users');
     Route::resource('suppliers', SupplierController::class)->names('suppliers');

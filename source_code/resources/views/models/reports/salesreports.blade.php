@@ -29,7 +29,7 @@
         <div class="card-container rounded-2 p-2 mb-3">
             <div class="row g-2">
                 <div class="col-md-6">
-                    <a href="{{ route('reports', array_merge(request()->except('section'), ['section' => 'sales'])) }}" class="btn report-switch-btn w-100 fw-semibold {{ ($activeSection ?? 'sales') === 'sales' ? 'btn-primary' : 'report-top-btn-secondary' }}">
+                    <a href="{{ route('reports', array_merge(request()->except(['section', 'product_type', 'category_id']), ['section' => 'sales'])) }}" class="btn report-switch-btn w-100 fw-semibold {{ ($activeSection ?? 'sales') === 'sales' ? 'btn-primary' : 'report-top-btn-secondary' }}">
                         <i class="bi bi-currency-dollar me-1"></i>
                         Reporte de Ventas
                     </a>
@@ -112,9 +112,15 @@
         </div>
 
         <div class="table-container rounded-2 p-4 mb-3">
-            <h5 class="fw-bold mb-3">Reportes de Ventas Diarias</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">Reportes de Ventas Diarias</h5>
+                <a href="{{ route('reports.export', request()->except(['product_type', 'category_id'])) }}" class="btn btn-success btn-sm fw-semibold">
+                    <i class="bi bi-download me-1"></i>
+                    EXPORTAR A EXCEL
+                </a>
+            </div>
 
-            <table class="table table-hover rounded-2 mb-0">
+            <table id="sales-report-table" class="table table-hover rounded-2">
                 <thead>
                     <tr>
                         <th scope="col">FECHA</th>
@@ -140,11 +146,16 @@
             </table>
         </div>
 
-        <div class="card-container rounded-2 p-4">
-            <h5 class="fw-bold mb-3">Gráfico de tendencia de Ventas</h5>
-            <div class="border rounded-3 d-flex align-items-center justify-content-center flex-column text-muted" style="min-height: 220px; background: rgba(var(--bs-body-bg-rgb), 0.35);">
-                <i class="bi bi-graph-up-arrow fs-2 mb-2"></i>
-                <span>Gráfico interactivo disponible próximamente</span>
+        <div class="card border-1 card-container shadow-sm rounded-4 mh-100 w-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="fw-bold m-0">Gráfico de tendencia de Ventas</h5>
+                    <i class="bi bi-graph-up-arrow fs-4"></i>
+                </div>
+
+                <p class="text-muted mb-3">Evolución de los ingresos del periodo filtrado.</p>
+
+                <div id="chart-sales-income" class="card-container bg-body-tertiary rounded-top-4 pt-1 shadow-sm" style="min-height: 200px;"></div>
             </div>
         </div>
     </div>
@@ -199,5 +210,15 @@
         }
 
         toggleCustomDates(document.querySelector('.report-period:checked')?.value ?? 'month');
+
+        window.ReportsData = {
+            sales: {
+                container: '#chart-sales-income',
+                labels: @json(collect($dailyReports ?? [])->pluck('date')),
+                values: @json(collect($dailyReports ?? [])->pluck('income')),
+                axisTitle: 'Días del periodo',
+            },
+        };
     </script>
+    @vite(['resources/js/models/reports/index.js'])
 @endsection
