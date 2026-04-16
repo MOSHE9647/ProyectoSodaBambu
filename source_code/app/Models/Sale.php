@@ -63,11 +63,11 @@ class Sale extends Model
     }
 
     /**
-    * Relation: Payment.
-    * A sale has one payment associated with it through a polymorphic relationship.
-    *
-    * @return MorphOne<Payment>
-    */
+     * Relation: Payment.
+     * A sale has one payment associated with it through a polymorphic relationship.
+     *
+     * @return MorphOne<Payment>
+     */
     public function payment(): MorphOne
     {
         return $this->morphOne(Payment::class, 'origin');
