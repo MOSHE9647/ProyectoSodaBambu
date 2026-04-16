@@ -19,7 +19,7 @@ class BuildSalesReportSpreadsheetAction
         $currentDate = Carbon::now('America/Costa_Rica');
         $activeSection = $reportData['activeSection'] ?? 'sales';
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle($activeSection === 'products' ? 'Productos Vendidos' : 'Reporte de Ventas');
 
