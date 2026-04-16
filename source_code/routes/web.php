@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\Sale\CalculateDailySalesTrendAction;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CategoryController;
@@ -11,10 +10,12 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Models\Employee;
+use App\Models\Purchase;
 use App\Models\Sale;
-use Illuminate\Support\Facades\Cache;
+use App\Models\Supplier;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -49,39 +50,52 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
         Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
     });
 
-    // RUTA TEMPORAL PARA VALIDACIÓN DE TENDENCIA DE VENTAS
-    Route::get('/debug-sales-trend', function (CalculateDailySalesTrendAction $action) {
+    // RUTA TEMPORAL PARA validar el proceso de pago automático al marcar una venta o compra como pagada
+    // 1. Crear una COMPRA completada
+    Route::get('/test-purchase-flow', function () {
+        $supplier = Supplier::first() ?? Supplier::factory()->create();
 
-        Cache::forget('today_sales_stats');
-
-        $employee = Employee::first();
-
-        if (! $employee) {
-            return response()->json(['error' => 'No hay empleados en la BD para crear la venta de prueba']);
-        }
-
-        $testSale = Sale::create([
-            'employee_id' => $employee->id,
-            'invoice_number' => 'TEST-'.now()->format('YmdHi'),
-            'date' => now(),
-            'total' => 5000.00,
+        $purchase = Purchase::create([
+            'supplier_id' => $supplier->id,
+            'invoice_number' => 'INV-'.rand(1000, 9999),
             'payment_status' => PaymentStatus::PAID,
+            'date' => now(),
+            'total' => 50000.00,
         ]);
 
-        $stats = $action->execute();
+        // CARGAR LA RELACIÓN RECIÉN CREADA POR EL OBSERVER
+        $purchase->load('payment.transaction');
 
-        $cachedStats = Cache::get('today_sales_stats');
-
-        return response()->json([
-            'message' => 'Venta de prueba creada y tendencia calculada',
-            'test_sale' => [
-                'id' => $testSale->id,
-                'invoice' => $testSale->invoice_number,
-                'status' => $testSale->payment_status->value,
-            ],
-            'action_result' => $stats,
-            'cache_status' => $cachedStats ? 'Correctamente guardado en Caché' : 'Error: No se guardó en Caché',
-            'cache_data' => $cachedStats,
-        ]);
+        return [
+            'message' => 'Compra creada exitosamente',
+            'purchase' => $purchase,
+            'payment' => $purchase->payment,
+            'transaction' => $purchase->payment?->transaction,
+        ];
     });
+
+    // 2. Crear una VENTA completada
+    Route::get('/test-sale-flow', function () {
+        // Aseguramos que exista un empleado
+        $employee = Employee::first() ?? Employee::factory()->create();
+
+        $sale = Sale::create([
+            'employee_id' => $employee->id,
+            'invoice_number' => 'V-TEST-'.rand(1000, 9999),
+            'payment_status' => PaymentStatus::PAID, // Esto dispara el Observer
+            'date' => now(),
+            'total' => 15500.50,
+        ]);
+
+        return [
+            'message' => 'Venta creada exitosamente',
+            'sale' => $sale,
+            'payment' => $sale->payment,
+            'transaction' => $sale->payment?->transaction,
+        ];
+    });
+
+    // 3. Ver todos los MOVIMIENTOS financieros
+    Route::get('/test-transactions', [TransactionController::class, 'index']);
+
 });
