@@ -87,6 +87,6 @@ class UpsertSaleAction
 
     private function formatInvoiceNumber(int $saleId): string
     {
-        return 'INV-'.str_pad((string) $saleId, 6, '0', STR_PAD_LEFT);
+        return 'INV-'.str_pad((string) $saleId, 10, '0', STR_PAD_LEFT);
     }
 }

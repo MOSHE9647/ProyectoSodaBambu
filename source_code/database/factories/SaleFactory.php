@@ -25,7 +25,7 @@ class SaleFactory extends Factory
 
         return [
             'user_id' => User::factory()->withRole($userRole),
-            'invoice_number' => $this->faker->unique()->numerify('INV-######'),
+            'invoice_number' => $this->faker->unique()->numerify('INV-##########'),
             'payment_status' => $this->faker->randomElement($paymentStatuses),
             'date' => $this->faker->dateTimeThisMonth(),
             'total' => $this->faker->randomFloat(2, 20000, 600000),
