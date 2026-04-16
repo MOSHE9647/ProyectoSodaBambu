@@ -22,6 +22,7 @@ return new class extends Migration
             $table->decimal('sub_total', 10, 2);
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

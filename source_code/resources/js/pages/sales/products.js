@@ -75,7 +75,7 @@ export const initializeSalesProducts = () => {
 		});
 
 		try {
-			const response = await fetch(`/sales?${params.toString()}`, {
+			const response = await fetch(`/sales/sell?${params.toString()}`, {
 				headers: { "X-Requested-With": "XMLHttpRequest" },
 			});
 

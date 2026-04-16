@@ -25,7 +25,6 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
  */
 Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
-    Route::get('sales', [SaleController::class, 'sales'])->name('sales');
     Route::get('help', [HelpController::class, 'index'])->name('help');
     Route::resource('users', UserController::class)->names('users');
     Route::resource('suppliers', SupplierController::class)->names('suppliers');
@@ -33,6 +32,10 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
     Route::resource('supplies', SupplyController::class)->names('supplies');
+
+    // Sales routes with role-based access control defined in the controller
+    Route::get('sales/sell', [SaleController::class, 'sales'])->name('sales.sell');
+    Route::resource('sales', SaleController::class)->names('sales');
 
     // Purchase routes with an additional route for quick product creation during purchase entry
     Route::post('purchases/quick-product', [PurchaseController::class, 'quickStoreProduct'])->name('purchases.quick-product');
