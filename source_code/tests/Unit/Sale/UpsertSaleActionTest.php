@@ -27,7 +27,7 @@ test('CP-01_EIF-30 - creates sale with deterministic invoice number based on sal
             'applied_tax' => 0.00,
             'sub_total' => 120.00,
         ],
-    ]);
+    ], null);
 
     $sale->refresh();
 
@@ -65,7 +65,7 @@ test('CP-02_EIF-183 - creates pending sale with two details', function () {
             'applied_tax' => 0.00,
             'sub_total' => 50.00,
         ],
-    ]);
+    ], null);
 
     $sale = $sale->fresh();
 
@@ -104,7 +104,7 @@ test('CP-03_EIF-183 - updates pending sale with hard delete for removed details'
             'applied_tax' => 0.00,
             'sub_total' => 50.00,
         ],
-    ]);
+    ], null);
 
     $sale = $sale->fresh();
 
@@ -136,7 +136,7 @@ test('CP-03_EIF-183 - updates pending sale with hard delete for removed details'
             'applied_tax' => 0.00,
             'sub_total' => 80.00,
         ],
-    ]);
+    ], null);
 
     $sale = $sale->fresh();
 
@@ -175,7 +175,7 @@ test('CP-04_EIF-183 - changes sale status from pending to paid', function () {
             'applied_tax' => 0.00,
             'sub_total' => 50.00,
         ],
-    ]);
+    ], null);
 
     $sale = $sale->fresh();
 
@@ -208,7 +208,7 @@ test('CP-04_EIF-183 - changes sale status from pending to paid', function () {
             'applied_tax' => 0.00,
             'sub_total' => 50.00,
         ],
-    ]);
+    ], null);
 
     expect($sale->fresh()->payment_status)->toBe(PaymentStatus::PAID);
     expect($sale->fresh()->saleDetails()->count('*'))->toBe(2);
@@ -245,7 +245,7 @@ test('CP-05_EIF-183 - updates paid sale with soft delete for removed details', f
             'applied_tax' => 0.00,
             'sub_total' => 80.00,
         ],
-    ]);
+    ], null);
 
     $sale = $sale->fresh();
 
@@ -270,7 +270,7 @@ test('CP-05_EIF-183 - updates paid sale with soft delete for removed details', f
             'applied_tax' => 0.00,
             'sub_total' => 200.00,
         ],
-    ]);
+    ], null);
 
     $this->assertSoftDeleted('sale_details', ['id' => $empanadaDetail->id]);
 });
@@ -306,7 +306,7 @@ test('CP-06_EIF-183 - restores soft deleted detail when sent again in paid sale'
             'applied_tax' => 0.00,
             'sub_total' => 80.00,
         ],
-    ]);
+    ], null);
 
     $sale = $sale->fresh();
 
@@ -332,7 +332,7 @@ test('CP-06_EIF-183 - restores soft deleted detail when sent again in paid sale'
             'applied_tax' => 0.00,
             'sub_total' => 200.00,
         ],
-    ]);
+    ], null);
 
     $this->assertSoftDeleted('sale_details', ['id' => $empanadaDetail->id]);
 
@@ -358,7 +358,7 @@ test('CP-06_EIF-183 - restores soft deleted detail when sent again in paid sale'
             'applied_tax' => 0.00,
             'sub_total' => 80.00,
         ],
-    ]);
+    ], null);
 
     $this->assertNotSoftDeleted('sale_details', ['id' => $empanadaDetail->id]);
     expect($sale->fresh()->saleDetails()->count('*'))->toBe(2);

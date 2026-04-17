@@ -10,7 +10,8 @@ uses(RefreshDatabase::class);
 
 function saleStorePayload(float $total): array
 {
-    $product = Product::factory()->create();
+    $firstProduct = Product::factory()->create(['has_inventory' => false]);
+    $secondProduct = Product::factory()->create(['has_inventory' => false]);
 
     return [
         'payment_status' => PaymentStatus::PENDING->value,
@@ -18,14 +19,14 @@ function saleStorePayload(float $total): array
         'total' => $total,
         'sale_details' => [
             [
-                'product_id' => $product->id,
+                'product_id' => $firstProduct->id,
                 'quantity' => 2,
                 'unit_price' => 50.00,
                 'applied_tax' => 0.00,
                 'sub_total' => 100.00,
             ],
             [
-                'product_id' => $product->id,
+                'product_id' => $secondProduct->id,
                 'quantity' => 1,
                 'unit_price' => 25.00,
                 'applied_tax' => 0.00,
@@ -59,5 +60,5 @@ test('sale store request rejects totals that do not match the sum of detail subt
     $validator = validateSaleStoreRequest(saleStorePayload(124.99));
 
     expect($validator->errors()->has('total'))->toBeTrue();
-    expect($validator->errors()->first('total'))->toBe('El total debe ser igual a la suma de los subtotales de los detalles de la venta.');
+    expect($validator->errors()->first('total'))->toBe('El total (124.99) no coincide con la suma de los productos (125).');
 });

@@ -11,6 +11,7 @@ use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Arr;
 use Spatie\Permission\Middleware\RoleMiddleware;
 
 class SaleController extends Controller implements HasMiddleware
@@ -49,9 +50,20 @@ class SaleController extends Controller implements HasMiddleware
      */
     public function store(SaleStoreRequest $saleStoreRequest, UpsertSaleAction $upsertSaleAction)
     {
+        // Validates the request and retrieves the validated data
         $saleValidatedData = $saleStoreRequest->validated();
+
+        // Separate the main sale data from the details and payment data
+        $saleData = Arr::except($saleValidatedData, ['sale_details', 'payment_details']);
         $saleDetailsData = $saleValidatedData['sale_details'] ?? [];
-        $sale = $upsertSaleAction->execute($saleValidatedData, $saleDetailsData);
+        $salePaymentData = $saleValidatedData['payment_details'] ?? null;
+
+        // Use the UpsertSaleAction to handle the creation/updating of the sale, its details, and payment
+        $sale = $upsertSaleAction->execute(
+            $saleData,
+            $saleDetailsData,
+            $salePaymentData
+        );
 
         return response()->json([
             'message' => 'Venta registrada exitosamente.',
@@ -78,9 +90,27 @@ class SaleController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Sale $sale)
+    public function update(SaleStoreRequest $saleStoreRequest, UpsertSaleAction $upsertSaleAction)
     {
-        //
+        // Validates the request and retrieves the validated data
+        $saleValidatedData = $saleStoreRequest->validated();
+
+        // Separate the main sale data from the details and payment data
+        $saleData = Arr::except($saleValidatedData, ['sale_details', 'payment_details']);
+        $saleDetailsData = $saleValidatedData['sale_details'] ?? [];
+        $salePaymentData = $saleValidatedData['payment_details'] ?? null;
+
+        // Use the UpsertSaleAction to handle the creation/updating of the sale, its details, and payment
+        $sale = $upsertSaleAction->execute(
+            $saleData,
+            $saleDetailsData,
+            $salePaymentData
+        );
+
+        return response()->json([
+            'message' => 'Venta actualizada exitosamente.',
+            'data' => $sale->load('saleDetails'),
+        ], 200);
     }
 
     /**

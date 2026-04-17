@@ -2,12 +2,9 @@
 
 namespace App\Observers;
 
-use App\Actions\Finance\ProcessPaymentAction;
 use App\Actions\Sale\CalculateDailySalesTrendAction;
 use App\Actions\Sale\GetDailySalesDataAction;
 use App\Actions\Sale\GetMonthlySalesDataAction;
-use App\Enums\PaymentMethod;
-use App\Enums\PaymentStatus;
 use App\Models\Sale;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 use Illuminate\Support\Facades\Cache;
@@ -15,8 +12,7 @@ use Illuminate\Support\Facades\Cache;
 class SaleObserver implements ShouldHandleEventsAfterCommit
 {
     public function __construct(
-        protected CalculateDailySalesTrendAction $calculateDailySalesTrendAction,
-        protected ProcessPaymentAction $processPayment
+        protected CalculateDailySalesTrendAction $calculateDailySalesTrendAction
     ) {}
 
     /**
@@ -24,10 +20,8 @@ class SaleObserver implements ShouldHandleEventsAfterCommit
      */
     public function created(Sale $sale): void
     {
-        if ($sale->payment_status === PaymentStatus::PAID) {
-            $this->processAutomaticPayment($sale);
-            $this->refreshSalesCache();
-        }
+        // Don't need to process payment here since UpsertSaleAction already handles it.
+        $this->refreshSalesCache();
     }
 
     /**
@@ -35,18 +29,8 @@ class SaleObserver implements ShouldHandleEventsAfterCommit
      */
     public function updated(Sale $sale): void
     {
-        if ($sale->wasChanged('payment_status') && $sale->payment_status === PaymentStatus::PAID) {
-            $this->processAutomaticPayment($sale);
-        }
-
-        if ($sale->payment_status === PaymentStatus::PAID && $sale->wasChanged('total')) {
-            $payment = $sale->payment;
-            if ($payment) {
-                $payment->update(['amount' => $sale->total]);
-                $payment->transaction?->update(['amount' => $sale->total]);
-            }
-        }
-
+        // If the total or status has changed, refresh the cache.
+        // Synchronization of payment details is now handled in the UpsertSaleAction.
         $this->refreshSalesCache();
     }
 
@@ -57,34 +41,28 @@ class SaleObserver implements ShouldHandleEventsAfterCommit
     {
         $sale->saleDetails->each(fn ($detail) => $detail->delete());
 
-        $sale->payment?->delete();
-        $sale->payment?->transaction?->delete();
+        $sale->payments->each(function ($payment) {
+            $payment->transaction?->delete();
+            $payment->delete();
+        });
+
         $this->refreshSalesCache();
 
     }
 
-    private function processAutomaticPayment(Sale $sale): void
+    /**
+     * Handle the Sale "restored" event.
+     */
+    public function restored(Sale $sale): void
     {
-        // Refrescamos la relación para asegurarnos de tener los detalles más recientes
-        $sale->loadMissing('saleDetails');
+        $sale->saleDetails()->withTrashed()->each(fn ($detail) => $detail->restore());
+        $sale->payments()->withTrashed()->each(fn ($payment) => $payment->restore());
 
-        // Intentamos obtener el método del request, si no existe usamos CASH (Efectivo)
-        $methodValue = request()->input('payment_method', PaymentMethod::CASH->value);
-
-        // Intentamos transformar el valor a un Enum válido, si falla usamos CASH
-        $method = PaymentMethod::tryFrom($methodValue) ?? PaymentMethod::CASH;
-
-        $this->processPayment->execute($sale, [
-            'amount' => $sale->total,
-            'method' => $method,
-            'change_amount' => request()->input('change_amount', 0),
-            'reference' => request()->input('reference'),
-            'date' => now(),
-        ]);
+        $this->refreshSalesCache();
     }
 
     /**
-     * Helper para refrescar el caché usando la lógica solicitada
+     * Helper to refresh sales-related cache entries after changes to sales data.
      */
     private function refreshSalesCache(): void
     {
@@ -93,6 +71,7 @@ class SaleObserver implements ShouldHandleEventsAfterCommit
         Cache::forget('monthly_sales_stats');
         Cache::forget('daily_sales_stats');
 
+        // Get the latest sales stats and cache them for 10 minutes
         Cache::remember('today_sales_stats', now()->addMinutes(10), function () {
             return $this->calculateDailySalesTrendAction->execute();
         });
