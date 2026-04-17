@@ -23,16 +23,16 @@ class ProductSeeder extends Seeder
         $catBebida = Category::where('name', 'Licores')->first()->id;
 
         $products = [
-            ['category_id' => $catDesayuno, 'name' => 'Gallo Pinto Especial',         ],
-            ['category_id' => $catFuerte,   'name' => 'Casado con Carne en Salsa',    ],
-            ['category_id' => $catFuerte,   'name' => 'Arroz con Pollo',              ],
-            ['category_id' => $catFuerte,   'name' => 'Chifrijo Grande',              ],
-            ['category_id' => $catBebida,   'name' => 'Cerveza Imperial (Botella)',   ],
-            ['category_id' => $catBebida,   'name' => 'Cerveza Pilsen (Botella)',     ],
-            ['category_id' => $catFuerte,   'name' => 'Olla de Carne (Fin de semana)',],
-            ['category_id' => $catFuerte,   'name' => 'Hamburguesa Artesanal',        ],
-            ['category_id' => $catDesayuno, 'name' => 'Omelette con Tostadas',        ],
-            ['category_id' => $catFuerte,   'name' => 'Filete de Pescado al Ajillo',  ],
+            ['category_id' => $catDesayuno, 'name' => 'Gallo Pinto Especial'],
+            ['category_id' => $catFuerte,   'name' => 'Casado con Carne en Salsa'],
+            ['category_id' => $catFuerte,   'name' => 'Arroz con Pollo'],
+            ['category_id' => $catFuerte,   'name' => 'Chifrijo Grande'],
+            ['category_id' => $catBebida,   'name' => 'Cerveza Imperial (Botella)'],
+            ['category_id' => $catBebida,   'name' => 'Cerveza Pilsen (Botella)'],
+            ['category_id' => $catFuerte,   'name' => 'Olla de Carne (Fin de semana)'],
+            ['category_id' => $catFuerte,   'name' => 'Hamburguesa Artesanal'],
+            ['category_id' => $catDesayuno, 'name' => 'Omelette con Tostadas'],
+            ['category_id' => $catFuerte,   'name' => 'Filete de Pescado al Ajillo'],
         ];
 
         foreach ($products as $product) {
