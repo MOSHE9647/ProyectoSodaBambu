@@ -9,9 +9,10 @@ use App\Actions\Sale\GetMonthlySalesDataAction;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Sale;
+use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 use Illuminate\Support\Facades\Cache;
 
-class SaleObserver
+class SaleObserver implements ShouldHandleEventsAfterCommit
 {
     public function __construct(
         protected CalculateDailySalesTrendAction $calculateDailySalesTrendAction,
@@ -34,17 +35,19 @@ class SaleObserver
      */
     public function updated(Sale $sale): void
     {
-        // Checks if the sale has changed its payment status to PAID or if it was already paid
-        // and related values were modified. In either case, updates the sales cache to reflect
-        // the most recent changes.
-        $becamePaid = $sale->wasChanged('payment_status') && $sale->payment_status === PaymentStatus::PAID;
-
-        $isStillPaidAndValuesChanged = $sale->payment_status === PaymentStatus::PAID;
-
-        if ($becamePaid || $isStillPaidAndValuesChanged) {
+        if ($sale->wasChanged('payment_status') && $sale->payment_status === PaymentStatus::PAID) {
             $this->processAutomaticPayment($sale);
-            $this->refreshSalesCache();
         }
+
+        if ($sale->payment_status === PaymentStatus::PAID && $sale->wasChanged('total')) {
+            $payment = $sale->payment;
+            if ($payment) {
+                $payment->update(['amount' => $sale->total]);
+                $payment->transaction?->update(['amount' => $sale->total]);
+            }
+        }
+
+        $this->refreshSalesCache();
     }
 
     /**
@@ -52,13 +55,19 @@ class SaleObserver
      */
     public function deleted(Sale $sale): void
     {
-        if ($sale->payment_status === PaymentStatus::PAID) {
-            $this->refreshSalesCache();
-        }
+        $sale->saleDetails->each(fn ($detail) => $detail->delete());
+
+        $sale->payment?->delete();
+        $sale->payment?->transaction?->delete();
+        $this->refreshSalesCache();
+
     }
 
     private function processAutomaticPayment(Sale $sale): void
     {
+        // Refrescamos la relación para asegurarnos de tener los detalles más recientes
+        $sale->loadMissing('saleDetails');
+
         // Intentamos obtener el método del request, si no existe usamos CASH (Efectivo)
         $methodValue = request()->input('payment_method', PaymentMethod::CASH->value);
 

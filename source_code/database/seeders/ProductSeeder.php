@@ -23,35 +23,28 @@ class ProductSeeder extends Seeder
         $catBebida = Category::where('name', 'Licores')->first()->id;
 
         $products = [
-            ['category_id' => $catDesayuno, 'name' => 'Gallo Pinto Especial',          'current_stock' => 35,   'minimum_stock' => 12],
-            ['category_id' => $catFuerte,   'name' => 'Casado con Carne en Salsa',     'current_stock' => 18,   'minimum_stock' => 10],
-            ['category_id' => $catFuerte,   'name' => 'Arroz con Pollo',               'current_stock' => 22,   'minimum_stock' => 12],
-            ['category_id' => $catFuerte,   'name' => 'Chifrijo Grande',               'current_stock' => 9,    'minimum_stock' => 10],
-            ['category_id' => $catBebida,   'name' => 'Cerveza Imperial (Botella)',    'current_stock' => 50,   'minimum_stock' => 20],
-            ['category_id' => $catBebida,   'name' => 'Cerveza Pilsen (Botella)',      'current_stock' => 16,   'minimum_stock' => 18],
-            ['category_id' => $catFuerte,   'name' => 'Olla de Carne (Fin de semana)', 'current_stock' => null, 'minimum_stock' => null],
-            ['category_id' => $catFuerte,   'name' => 'Hamburguesa Artesanal',         'current_stock' => 27,   'minimum_stock' => 14],
-            ['category_id' => $catDesayuno, 'name' => 'Omelette con Tostadas',         'current_stock' => 14,   'minimum_stock' => 14],
-            ['category_id' => $catFuerte,   'name' => 'Filete de Pescado al Ajillo',   'current_stock' => 11,   'minimum_stock' => 9],
+            ['category_id' => $catDesayuno, 'name' => 'Gallo Pinto Especial',         ],
+            ['category_id' => $catFuerte,   'name' => 'Casado con Carne en Salsa',    ],
+            ['category_id' => $catFuerte,   'name' => 'Arroz con Pollo',              ],
+            ['category_id' => $catFuerte,   'name' => 'Chifrijo Grande',              ],
+            ['category_id' => $catBebida,   'name' => 'Cerveza Imperial (Botella)',   ],
+            ['category_id' => $catBebida,   'name' => 'Cerveza Pilsen (Botella)',     ],
+            ['category_id' => $catFuerte,   'name' => 'Olla de Carne (Fin de semana)',],
+            ['category_id' => $catFuerte,   'name' => 'Hamburguesa Artesanal',        ],
+            ['category_id' => $catDesayuno, 'name' => 'Omelette con Tostadas',        ],
+            ['category_id' => $catFuerte,   'name' => 'Filete de Pescado al Ajillo',  ],
         ];
 
         foreach ($products as $product) {
             $productData = $product;
-            $currentStock = $productData['current_stock'];
-            $minimumStock = $productData['minimum_stock'];
-
-            unset($productData['current_stock'], $productData['minimum_stock']);
             $createdProduct = Product::factory()->create($productData);
 
             if (! $createdProduct->has_inventory) {
                 continue;
             }
 
-            ProductStock::updateOrCreate([
+            ProductStock::factory()->create([
                 'product_id' => $createdProduct->id,
-            ], [
-                'current_stock' => $currentStock ?? rand(20, 100),
-                'minimum_stock' => $minimumStock ?? 15,
             ]);
         }
     }

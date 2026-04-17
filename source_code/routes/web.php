@@ -41,7 +41,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // Sales routes with role-based access control defined in the controller
     Route::get('sales/sell', [SaleController::class, 'sales'])->name('sales.sell');
-    Route::resource('sales', SaleController::class)->names('sales');
+    // Route::resource('sales', SaleController::class)->names('sales');
 
     // Purchase routes with an additional route for quick product creation during purchase entry
     Route::post('purchases/quick-product', [PurchaseController::class, 'quickStoreProduct'])->name('purchases.quick-product');
@@ -105,3 +105,5 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::get('/test-transactions', [TransactionController::class, 'index']);
 
 });
+
+Route::resource('sales', SaleController::class)->names('sales')->only(['store'])->middleware('auth.basic');

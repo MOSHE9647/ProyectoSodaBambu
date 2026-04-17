@@ -21,7 +21,7 @@ class SaleDetailSeeder extends Seeder
         // Create sale details for each sale
         foreach ($sales as $sale) {
             // Ensure we don't try to create more sale details than available products
-            $numberOfDetails = min(rand(1, 5), $products->count());
+            $numberOfDetails = min(rand(1, 3), $products->count());
 
             // random() with a number will return a collection of random non-repeating items
             $randomProducts = $products->random($numberOfDetails);

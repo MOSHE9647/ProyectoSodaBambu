@@ -6,7 +6,6 @@ use Database\Factories\SaleDetailFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\hasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SaleDetail extends Model
@@ -52,12 +51,12 @@ class SaleDetail extends Model
 
     /**
      * Relation: Product.
-     * A sale detail has one product associated with it.
+     * A sale detail belongs to a single product.
      *
-     * @return hasOne<Product, SaleDetail>
+     * @return BelongsTo<Product, SaleDetail>
      */
     public function product()
     {
-        return $this->hasOne(Product::class);
+        return $this->belongsTo(Product::class);
     }
 }

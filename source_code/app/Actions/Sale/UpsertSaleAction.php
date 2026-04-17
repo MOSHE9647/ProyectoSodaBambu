@@ -4,6 +4,7 @@ namespace App\Actions\Sale;
 
 use App\Enums\PaymentStatus;
 use App\Models\Sale;
+use App\Models\SaleDetail;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -17,14 +18,9 @@ class UpsertSaleAction
             $saleData = Arr::except($saleValidatedData, ['id', 'sale_details', 'created_at', 'updated_at', 'deleted_at']);
 
             if (! isset($saleValidatedData['id'])) {
-                $authenticatedUserId = auth()->id();
-                if ($authenticatedUserId === null) {
-                    throw new RuntimeException('Authenticated user is required to create a sale.');
-                }
-
                 $sale = Sale::create([
                     ...$saleData,
-                    'user_id' => $authenticatedUserId,
+                    'user_id' => auth()->id() ?? throw new RuntimeException('No authenticated user found.'),
                     'invoice_number' => 'INV-TEMP',
                 ]);
 
@@ -32,55 +28,44 @@ class UpsertSaleAction
                     'invoice_number' => $this->formatInvoiceNumber($sale->id),
                 ]);
             } else {
-                $sale = Sale::withTrashed()->updateOrCreate(
-                    ['id' => $saleValidatedData['id']],
-                    $saleData
-                );
-
+                $sale = Sale::withTrashed()->findOrFail($saleValidatedData['id']);
+                $sale->update($saleData);
                 if ($sale->trashed()) {
                     $sale->restore();
                 }
             }
 
             // 2. Identificar IDs entrantes
-            $incomingDetailIds = collect($saleDetailsData)
-                ->pluck('id')
-                ->filter()
-                ->map(fn ($id) => (int) $id)
-                ->values()
-                ->all();
+            $incomingDetailIds = collect($saleDetailsData)->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
 
             // 3. Eliminar (Soft Delete) los que no vienen en la petición
-            $detailsQuery = $sale->saleDetails()->whereNotIn('id', $incomingDetailIds);
-            match ($sale->payment_status) {
-                PaymentStatus::PAID => $detailsQuery->delete(),
-                PaymentStatus::PENDING => $detailsQuery->forceDelete(),
-                default => $detailsQuery->delete(),
-            };
-
-            // 4. Mapear datos para el upsert incluyendo 'deleted_at' => null para restaurar
-            $saleDetails = collect($saleDetailsData)
-                ->map(fn ($detail) => [
-                    'id' => isset($detail['id']) ? (int) $detail['id'] : null,
-                    'sale_id' => $sale->id,
-                    'product_id' => $detail['product_id'],
-                    'quantity' => $detail['quantity'],
-                    'unit_price' => $detail['unit_price'],
-                    'applied_tax' => $detail['applied_tax'],
-                    'sub_total' => $detail['sub_total'],
-                    'deleted_at' => null, // Restaurar si existía como Soft Deleted
-                    'updated_at' => now(),
-                    'created_at' => $detail['created_at'] ?? now(),
-                ])
-                ->all();
-
-            if (! empty($saleDetails)) {
-                // Añadimos 'deleted_at' y 'updated_at' a los campos que deben actualizarse
-                $fieldsToUpdate = ['product_id', 'quantity', 'unit_price', 'applied_tax', 'sub_total', 'deleted_at', 'updated_at'];
-                $sale->saleDetails()->withTrashed()->upsert($saleDetails, ['id'], $fieldsToUpdate);
+            $detailsToDelete = $sale->saleDetails()->whereNotIn('id', $incomingDetailIds)->get();
+            foreach ($detailsToDelete as $detail) {
+                match ($sale->payment_status) {
+                    PaymentStatus::PAID => $detail->delete(),
+                    PaymentStatus::PENDING => $detail->forceDelete(),
+                    default => $detail->delete(),
+                };
             }
 
-            // 5. IMPORTANTE: Cargar las relaciones frescas antes de devolver
+            // 4. Crear o actualizar los detalles entrantes
+            foreach ($saleDetailsData as $detailData) {
+                $id = $detailData['id'] ?? null;
+                $cleanData = Arr::except($detailData, ['created_at', 'updated_at', 'deleted_at']);
+
+                $detail = $id
+                    ? $sale->saleDetails()->withTrashed()->findOrFail($id)
+                    : new SaleDetail(['sale_id' => $sale->id]);
+
+                $detail->fill($cleanData);
+
+                if ($detail->trashed()) {
+                    $detail->restore();
+                }
+
+                $detail->save();
+            }
+
             return $sale;
         }, 5);
     }

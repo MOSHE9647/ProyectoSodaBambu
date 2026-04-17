@@ -22,7 +22,7 @@ class SaleDetailFactory extends Factory
         return [
             'sale_id' => Sale::factory(),
             'product_id' => Product::factory(),
-            'quantity' => $this->faker->numberBetween(1, 50),
+            'quantity' => $this->faker->numberBetween(1, 3),
             'unit_price' => $this->faker->randomFloat(2, 25, 60000),
             'applied_tax' => $this->faker->randomFloat(2, 13, 20),
             'sub_total' => $this->faker->randomFloat(2, 1250, 3000000),
