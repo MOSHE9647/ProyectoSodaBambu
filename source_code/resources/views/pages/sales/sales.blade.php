@@ -121,25 +121,32 @@
 
 			{{-- Action Buttons --}}
 			<div class="d-flex flex-column gap-2 mt-3">
-				<x-form.submit
-					id="finalize-sale-btn"
+				<x-form.button
+					id="finalize-sale-button"
+					spinnerId="finalize-sale-spinner"
 					class="btn btn-success w-100"
 					style="font-size: 15px;"
 					loadingMessage="Procesando..."
 					disabled
 				>
-					Proceder al pago
-				</x-form.submit>
-				<x-form.submit
+					<div id="finalize-sale-button-text" class="d-flex flex-row align-items-center justify-content-center">
+						<i class="bi bi-credit-card me-2"></i>
+						Proceder al pago
+					</div>
+				</x-form.button>
+				<x-form.button
 					id="clear-sale-btn"
 					type="button"
-					class="btn btn-outline-secondary w-100 p-1"
+					class="btn btn-outline-danger w-100 p-1"
 					style="font-size: 15px;"
 					loadingMessage="Limpiando..."
 					disabled
 				>
-					Limpiar orden
-				</x-form.submit>
+					<div id="clear-sale-button-text" class="d-flex flex-row align-items-center justify-content-center">
+						<i class="bi bi-trash me-2"></i>
+						Limpiar orden
+					</div>
+				</x-form.button>
 			</div>
 			
 		</section>

@@ -198,12 +198,12 @@
             </a>
 
             {{-- Submit Button --}}
-            <x-form.submit :id="isset($user) ? 'edit-user-form-button' : 'create-user-form-button'" :class="'btn-primary px-4'" :spinnerId="isset($user) ? 'edit-user-form-spinner' : 'create-user-form-spinner'" :loadingMessage="isset($user) ? 'Actualizando...' : 'Guardando...'">
+            <x-form.button :id="isset($user) ? 'edit-user-form-button' : 'create-user-form-button'" :class="'btn-primary px-4'" :spinnerId="isset($user) ? 'edit-user-form-spinner' : 'create-user-form-spinner'" :loadingMessage="isset($user) ? 'Actualizando...' : 'Guardando...'">
                 <div id="{{ isset($user) ? 'edit-user-form-button-text' : 'create-user-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-person-add me-2"></i>
                     {{ isset($user) ? 'Actualizar' : 'Guardar' }}
                 </div>
-            </x-form.submit>
+            </x-form.button>
         </div>
     </form>
 </div>

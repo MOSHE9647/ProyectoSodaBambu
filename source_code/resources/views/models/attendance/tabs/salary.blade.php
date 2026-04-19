@@ -61,12 +61,12 @@
         </div>
 
         <div class="d-flex justify-content-end mt-4">
-            <x-form.submit :id="'salary-submit-form-button'" :spinnerId="'salary-submit-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="'Calculando salario...'">
+            <x-form.button :id="'salary-submit-form-button'" :spinnerId="'salary-submit-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="'Calculando salario...'">
                 <div id="salary-submit-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-currency-dollar me-2"></i>
                     Calcular Salario
                 </div>
-            </x-form.submit>
+            </x-form.button>
         </div>
     </form>
 </div>

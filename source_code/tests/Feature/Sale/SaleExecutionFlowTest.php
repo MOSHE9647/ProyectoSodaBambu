@@ -107,7 +107,7 @@ test('CP-01_EIF-175_EIF-29 - creates a simple paid cash sale and registers stock
     $saleId = (int) $response->json('data.id');
     $sale = Sale::findOrFail($saleId);
 
-    expect($sale->invoice_number)->toMatch('/^INV-\d{10}$/');
+    expect($sale->invoice_number)->toMatch('/^FAC-\d{10}$/');
 
     $this->assertDatabaseHas('product_stocks', [
         'product_id' => $empanada->id,
@@ -516,8 +516,8 @@ test('CP-06_EIF-175_EIF-177_EIF-179_EIF-29 - keeps invoice sequence format and o
     $firstSale = Sale::findOrFail((int) $first->json('data.id'));
     $secondSale = Sale::findOrFail((int) $second->json('data.id'));
 
-    expect($firstSale->invoice_number)->toMatch('/^INV-\d{10}$/')
-        ->and($secondSale->invoice_number)->toMatch('/^INV-\d{10}$/');
+    expect($firstSale->invoice_number)->toMatch('/^FAC-\d{10}$/')
+        ->and($secondSale->invoice_number)->toMatch('/^FAC-\d{10}$/');
 
     $firstNumeric = (int) substr($firstSale->invoice_number, 4);
     $secondNumeric = (int) substr($secondSale->invoice_number, 4);

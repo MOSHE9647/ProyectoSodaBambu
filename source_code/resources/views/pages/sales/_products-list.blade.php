@@ -8,8 +8,8 @@
     $productData = [
         'id' => $product->id,
         'name' => $product->name,
-        'price' => number_format($priceWithMargin, 2, ',', '.'),
-        'tax_percentage' => number_format($product->tax_percentage ?? 0, 2, ',', '.'),
+        'price' => $priceWithMargin,
+        'tax_percentage' => $product->tax_percentage ?? 0,
         'has_inventory' => $product->has_inventory ? 1 : 0,
         'stock' => $product->stock?->current_stock ?? 0,
     ];

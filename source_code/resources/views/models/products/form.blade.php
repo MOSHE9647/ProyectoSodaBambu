@@ -179,12 +179,12 @@
             </a>
 
             {{-- Submit Button --}}
-            <x-form.submit :id="isset($product) ? 'edit-product-form-button' : 'create-product-form-button'" :spinnerId="isset($product) ? 'edit-product-form-spinner' : 'create-product-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="isset($product) ? 'Actualizando...' : 'Guardando...'">
+            <x-form.button :id="isset($product) ? 'edit-product-form-button' : 'create-product-form-button'" :spinnerId="isset($product) ? 'edit-product-form-spinner' : 'create-product-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="isset($product) ? 'Actualizando...' : 'Guardando...'">
                 <div id="{{ isset($product) ? 'edit-product-form-button-text' : 'create-product-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-box me-2"></i>
                     {{ isset($product) ? 'Actualizar' : 'Guardar' }}
                 </div>
-            </x-form.submit>
+            </x-form.button>
         </div>
     </form>
 </div>

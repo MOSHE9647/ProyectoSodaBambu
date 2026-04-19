@@ -44,9 +44,9 @@ const showError = (errorMessage, consoleErrorMessage) => {
 
 const formatCurrency = (amount) => {
 	const numericAmount = Number(amount) || 0;
-	const truncatedAmount = Math.trunc(numericAmount * 100) / 100;
+	const roundedAmount = Number(numericAmount.toFixed(2));
 
-	return `₡ ${truncatedAmount.toLocaleString("es-CR", {
+	return `₡ ${roundedAmount.toLocaleString("es-CR", {
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 2,
 	})}`;
@@ -96,7 +96,7 @@ const renderCartItems = () => {
 					<button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" data-product-id="${item.product_id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
 						<i class="bi bi-plus fs-6"></i>
 					</button>
-					<button type="button" class="btn btn-danger border-0 p-0 d-flex align-items-center justify-content-center rounded-2 ms-1" data-action="remove" data-product-id="${item.product_id}" style="width: 28px; height: 28px;">
+					<button type="button" class="btn btn-sm btn-danger d-flex align-items-center justify-content-center rounded-2 ms-1" data-action="remove" data-product-id="${item.product_id}" style="width: 28px; height: 28px;">
 						<i class="bi bi-trash"></i>
 					</button>
 				</div>
@@ -116,10 +116,10 @@ const renderCartItems = () => {
 const addToCart = (productId, productCard) => {
 	const name = productCard.dataset.productName;
 	const price = parseFloat(
-		productCard.dataset.productPrice.replace(".", "").replace(",", "."),
+		productCard.dataset.productPrice.replace(".", ",").replace(",", "."),
 	);
 	const tax = parseFloat(
-		productCard.dataset.productTaxPercentage.replace(".", "").replace(",", "."),
+		productCard.dataset.productTaxPercentage.replace(".", ",").replace(",", "."),
 	);
 
 	const currentCart = state.orders[state.activeOrderId];
@@ -208,8 +208,7 @@ export const getActiveSaleData = () => {
 	);
 
 	const numericTotalAmount = Number(total) || 0;
-	const truncatedTotalAmount = Math.trunc(numericTotalAmount * 100) / 100;
-	const formattedTotal = truncatedTotalAmount.toFixed(2);
+	const formattedTotal = numericTotalAmount.toFixed(2);
 
 	return {
 		// Estructura lista para enviar a la base de datos
@@ -231,7 +230,7 @@ export const initializeSalesCart = () => {
 	saleTax = document.getElementById("sale-tax");
 	saleSubtotal = document.getElementById("sale-subtotal");
 	saleTotal = document.getElementById("sale-total");
-	finalizeSaleButton = document.getElementById("finalize-sale-btn");
+	finalizeSaleButton = document.getElementById("finalize-sale-button");
 	clearSaleButton = document.getElementById("clear-sale-btn");
 
 	if (

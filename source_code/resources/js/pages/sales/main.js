@@ -1,6 +1,7 @@
-import { initializeSalesCart, getActiveSaleData } from "./cart.js";
+import { initializeSalesCart, getActiveSaleData, clearActiveCart } from "./cart.js";
 import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
+import { setLoadingState } from "../../utils/utils.js";
 
 const SaleData = {
 	payment_status: "paid",
@@ -45,6 +46,8 @@ const paymentTest = async () => {
 			amount: amountPerPayment,
 		}));
 
+		console.log("Prepared SaleData to send:", SaleData);
+
         const response = await fetch("/sales", {
 			method: "POST",
 			headers: {
@@ -58,13 +61,16 @@ const paymentTest = async () => {
 		if (response.ok) {
 			const responseData = await response.json();
 			alert(JSON.stringify(responseData, null, 2));
+			clearActiveCart();
 		} else {
 			const errorData = await response.json();
 			alert(`Error ${response.status}: ${errorData.message}`);
 		}
     } catch (error) {
         console.error("Error during test sale flow:", error);
-    }
+    } finally {
+		setLoadingState("finalize-sale", false);
+	}
 };
 
 $(() => {
@@ -72,10 +78,11 @@ $(() => {
     initializeSalesCart();
 	initializeSalesOrderTabs();
 
-    const finalizeSaleButton = $("#finalize-sale-btn");
+    const finalizeSaleButton = $("#finalize-sale-button");
     if (finalizeSaleButton.length) {
         finalizeSaleButton.on("click", function () {
             // Aquí puedes agregar la lógica para finalizar la venta, como mostrar un resumen o enviar los datos al servidor
+			setLoadingState('finalize-sale', true);
             paymentTest();
         });
     }
