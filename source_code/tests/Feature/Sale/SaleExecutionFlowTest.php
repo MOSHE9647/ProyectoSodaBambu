@@ -165,7 +165,7 @@ test('CP-02_EIF-176_EIF-29 - accepts split payments and creates one transaction 
             [
                 'method' => PaymentMethod::SINPE->value,
                 'amount' => 8000,
-                'reference' => '123456',
+                'reference' => '12345678',
             ],
         ],
     ]));
@@ -597,7 +597,7 @@ test('CP-08_EIF-178_EIF-179_EIF-29 - deleting a paid sale restores stock and sof
             [
                 'method' => PaymentMethod::CARD->value,
                 'amount' => 3500,
-                'reference' => 'CARD-DELETE-01',
+                'reference' => '000123456789',
             ],
         ],
     ]));

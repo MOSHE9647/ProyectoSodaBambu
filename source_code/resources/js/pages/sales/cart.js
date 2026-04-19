@@ -1,6 +1,39 @@
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert";
 
-// Función de error aislada
+const STORAGE_KEY = "pos_orders_state";
+
+// 1. Estado Global del Carrito
+const state = {
+	activeOrderId: "order-tab-0001",
+	orders: {}, // Formato: { 'order-tab-0001': [...items], 'order-tab-0002': [...items] }
+};
+
+// 2. Caché de variables del DOM (Se llenan en la inicialización)
+let productsGrid,
+	saleDetailsContainer,
+	saleTax,
+	saleSubtotal,
+	saleTotal,
+	finalizeSaleButton,
+	clearSaleButton;
+
+// 3. Manejo de LocalStorage (Persistencia)
+const saveToStorage = () => {
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(state.orders));
+};
+
+const loadFromStorage = () => {
+	const savedOrders = localStorage.getItem(STORAGE_KEY);
+	if (savedOrders) {
+		state.orders = JSON.parse(savedOrders);
+	}
+	// Garantizar que la pestaña activa tenga su lista inicializada
+	if (!state.orders[state.activeOrderId]) {
+		state.orders[state.activeOrderId] = [];
+	}
+};
+
+// 4. Utilidades UI y Alertas
 const showError = (errorMessage, consoleErrorMessage) => {
 	console.error(consoleErrorMessage);
 	SwalToast.fire({
@@ -9,17 +42,198 @@ const showError = (errorMessage, consoleErrorMessage) => {
 	});
 };
 
-export const initializeSalesCart = () => {
-	// 1. Caché de elementos críticos del DOM
-	const productsGrid = document.getElementById("products-grid");
-	const saleDetailsContainer = document.getElementById("sale-details");
-	const saleTax = document.getElementById("sale-tax");
-	const saleSubtotal = document.getElementById("sale-subtotal");
-	const saleTotal = document.getElementById("sale-total");
-	const finalizeSaleButton = document.getElementById("finalize-sale-btn");
-	const clearSaleButton = document.getElementById("clear-sale-btn");
+const formatCurrency = (amount) => {
+	const numericAmount = Number(amount) || 0;
+	const truncatedAmount = Math.trunc(numericAmount * 100) / 100;
 
-	// Cláusula de guarda
+	return `₡ ${truncatedAmount.toLocaleString("es-CR", {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	})}`;
+};
+
+// 5. Renderizado Visual del Carrito
+const renderCartItems = () => {
+	if (!saleDetailsContainer) return;
+
+	const currentCart = state.orders[state.activeOrderId] || [];
+
+	// Estado vacío
+	if (currentCart.length === 0) {
+		saleDetailsContainer.innerHTML = `
+            <div class="d-flex flex-column flex-grow-1 justify-content-center align-items-center text-center text-muted">
+                <i class="bi bi-bag fs-1 mb-2"></i>
+                <p>Selecciona un producto para agregarlo a la orden</p>
+            </div>
+        `;
+		saleTax.textContent = "₡ 0";
+		saleSubtotal.textContent = "₡ 0";
+		saleTotal.textContent = "₡ 0";
+		finalizeSaleButton.disabled = true;
+		return;
+	}
+
+	// Calcular totales y generar HTML
+	let subtotal = 0;
+	let taxAmount = 0;
+
+	const html = currentCart
+		.map((item) => {
+			subtotal += item.sub_total;
+			taxAmount += item.sub_total * item.applied_tax; // Impuesto según porcentaje
+
+			return `
+            <div class="d-flex flex-row justify-content-between align-items-center gap-2 w-100" data-cart-item-id="${item.product_id}">
+				<div class="d-flex flex-column text-start overflow-hidden flex-grow-1">
+					<span class="fw-bold text-truncate text-body" style="font-size: 0.95rem;" title="${item.name}">${item.name}</span>
+					<span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">${formatCurrency(item.unit_price)} c/u</span>
+				</div>
+				<div class="d-flex flex-row align-items-center justify-content-end gap-2 flex-shrink-0">
+					<button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" data-product-id="${item.product_id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
+						<i class="bi bi-dash fs-6"></i>
+					</button>
+					<span class="text-center fw-semibold d-inline-block text-body" style="min-width: 18px; font-size: 0.95rem;">${item.quantity}</span>
+					<button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" data-product-id="${item.product_id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
+						<i class="bi bi-plus fs-6"></i>
+					</button>
+					<button type="button" class="btn btn-danger border-0 p-0 d-flex align-items-center justify-content-center rounded-2 ms-1" data-action="remove" data-product-id="${item.product_id}" style="width: 28px; height: 28px;">
+						<i class="bi bi-trash"></i>
+					</button>
+				</div>
+			</div>
+        `;
+		})
+		.join("");
+
+	saleDetailsContainer.innerHTML = html;
+	saleSubtotal.textContent = formatCurrency(subtotal);
+	saleTax.textContent = formatCurrency(taxAmount);
+	saleTotal.textContent = formatCurrency(subtotal + taxAmount);
+	finalizeSaleButton.disabled = false;
+};
+
+// 6. Lógica de Carrito (Acciones)
+const addToCart = (productId, productCard) => {
+	const name = productCard.dataset.productName;
+	const price = parseFloat(
+		productCard.dataset.productPrice.replace(".", "").replace(",", "."),
+	);
+	const tax = parseFloat(
+		productCard.dataset.productTaxPercentage.replace(".", "").replace(",", "."),
+	);
+
+	const currentCart = state.orders[state.activeOrderId];
+	const existingItem = currentCart.find(
+		(item) => item.product_id === productId,
+	);
+
+	if (existingItem) {
+		// Validar límite de inventario si aplica (puedes agregar lógica extra aquí)
+		existingItem.quantity += 1;
+		existingItem.sub_total =
+			existingItem.quantity * existingItem.unit_price;
+	} else {
+		currentCart.push({
+			product_id: productId,
+			name: name, // Guardamos el nombre para poder dibujarlo en el UI
+			quantity: 1,
+			unit_price: price,
+			applied_tax: tax,
+			sub_total: price,
+		});
+	}
+
+	saveToStorage();
+	renderCartItems();
+};
+
+const cartActions = {
+	decrease: (productId) => {
+		const currentCart = state.orders[state.activeOrderId];
+		const item = currentCart.find((i) => i.product_id === productId);
+		if (item && item.quantity > 1) {
+			item.quantity -= 1;
+			item.sub_total = item.quantity * item.unit_price;
+			saveToStorage();
+			renderCartItems();
+		}
+	},
+	increase: (productId) => {
+		const currentCart = state.orders[state.activeOrderId];
+		const item = currentCart.find((i) => i.product_id === productId);
+		if (item) {
+			item.quantity += 1;
+			item.sub_total = item.quantity * item.unit_price;
+			saveToStorage();
+			renderCartItems();
+		}
+	},
+	remove: (productId) => {
+		state.orders[state.activeOrderId] = state.orders[
+			state.activeOrderId
+		].filter((i) => i.product_id !== productId);
+		saveToStorage();
+		renderCartItems();
+	},
+};
+
+// 7. Funciones Exportables (Para usar en otros archivos JS)
+export const clearActiveCart = () => {
+	state.orders[state.activeOrderId] = [];
+	saveToStorage();
+	renderCartItems();
+};
+
+export const switchActiveOrder = (newOrderId) => {
+	state.activeOrderId = newOrderId;
+	if (!state.orders[state.activeOrderId]) {
+		state.orders[state.activeOrderId] = [];
+	}
+	saveToStorage();
+	renderCartItems();
+};
+
+export const deleteOrderCart = (orderId) => {
+	delete state.orders[orderId];
+	saveToStorage();
+};
+
+// Obtiene los datos en formato de API para el endpoint /sales
+export const getActiveSaleData = () => {
+	const currentCart = state.orders[state.activeOrderId] || [];
+	const total = currentCart.reduce(
+		(sum, item) =>
+			sum + item.sub_total + (item.sub_total * item.applied_tax),
+		0,
+	);
+
+	const numericTotalAmount = Number(total) || 0;
+	const truncatedTotalAmount = Math.trunc(numericTotalAmount * 100) / 100;
+	const formattedTotal = truncatedTotalAmount.toFixed(2);
+
+	return {
+		// Estructura lista para enviar a la base de datos
+		sale_details: currentCart.map((item) => ({
+			product_id: item.product_id,
+			quantity: item.quantity,
+			unit_price: item.unit_price,
+			applied_tax: item.applied_tax,
+			sub_total: item.sub_total,
+		})),
+		total: formattedTotal,
+	};
+};
+
+// 8. Inicialización Principal
+export const initializeSalesCart = () => {
+	productsGrid = document.getElementById("products-grid");
+	saleDetailsContainer = document.getElementById("sale-details");
+	saleTax = document.getElementById("sale-tax");
+	saleSubtotal = document.getElementById("sale-subtotal");
+	saleTotal = document.getElementById("sale-total");
+	finalizeSaleButton = document.getElementById("finalize-sale-btn");
+	clearSaleButton = document.getElementById("clear-sale-btn");
+
 	if (
 		!productsGrid ||
 		!saleDetailsContainer ||
@@ -36,204 +250,12 @@ export const initializeSalesCart = () => {
 		return;
 	}
 
-	// 2. Estado local
-	const state = {
-		items: [],
-	};
+	// Cargar historial de LocalStorage al iniciar la página
+	loadFromStorage();
+	renderCartItems();
 
-	// 3. Utilidades y Validaciones
-
-	// formatCurrency solo redondea para la VISTA (UI), no altera el estado interno
-	const formatCurrency = (amount) =>
-		`₡ ${Math.round(amount).toLocaleString("es-CR")}`;
-
-	const escapeHtml = (value) =>
-		String(value ?? "")
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;")
-			.replace(/"/g, "&quot;")
-			.replace(/'/g, "&#39;");
-
-	const parsePrice = (rawPrice) => {
-		// Mantiene el valor original de la BD. Solo cambia comas por puntos por seguridad
-		// asumiendo que el backend envía formatos crudos como "1500" o "1500.50"
-		const cleanedPrice = String(rawPrice || "")
-			.replace(/[^\d,-]/g, "")
-			.replace(",", ".");
-
-		const value = Number(cleanedPrice);
-		return Number.isFinite(value) ? value : 0;
-	};
-
-	const normalizeTaxPercentage = (rawTaxPercentage) => {
-		const cleanString = String(rawTaxPercentage || "0")
-			.replace(/[^\d,.]/g, "")
-			.replace(",", ".");
-
-		const value = Number(cleanString);
-
-		// Confiamos ciegamente en el decimal que viene de la BD (ej. 0.13)
-		return Number.isFinite(value) && value > 0 ? value : 0;
-	};
-
-	const getProductFromCard = (card) => {
-		const id = card.dataset.productId;
-		const name =
-			card.dataset.productName ||
-			card.querySelector(".product-name")?.textContent?.trim() ||
-			"Producto";
-
-		const price = parsePrice(
-			card.dataset.productPrice ||
-				card.querySelector(".product-price")?.textContent,
-		);
-		
-		if (!id || price === 0) return null;
-
-		return {
-			id,
-			name,
-			price,
-			taxPercentage: normalizeTaxPercentage(
-				card.dataset.productTaxPercentage,
-			),
-			hasInventory: card.dataset.productHasInventory === "1",
-			availableStock: Number(card.dataset.productStock || 0),
-		};
-	};
-
-	// Alerta unificada de inventario
-	const hasEnoughStock = (item, currentQuantity) => {
-		if (item.hasInventory && currentQuantity >= item.availableStock) {
-			SwalToast.fire({
-				icon: SwalNotificationTypes.WARNING,
-				title: "No hay más unidades disponibles para este producto.",
-			});
-			return false;
-		}
-		return true;
-	};
-
-	// 4. Lógica de Renderizado y Componentes HTML
-	const updateTotals = () => {
-		// Las operaciones se hacen con los decimales crudos del estado para máxima precisión
-		const subtotal = state.items.reduce(
-			(sum, item) => sum + item.price * item.quantity,
-			0,
-		);
-		const tax = state.items.reduce(
-			(sum, item) =>
-				sum + item.price * item.quantity * item.taxPercentage,
-			0,
-		);
-		const total = subtotal + tax;
-
-		saleTax.textContent = formatCurrency(tax);
-		saleSubtotal.textContent = formatCurrency(subtotal);
-		saleTotal.textContent = formatCurrency(total);
-
-		const isCartEmpty = state.items.length === 0;
-		finalizeSaleButton.disabled = isCartEmpty;
-		clearSaleButton.disabled = isCartEmpty;
-	};
-
-	const emptyCartHTML = `
-        <div class="d-flex flex-column flex-grow-1 justify-content-center align-items-center text-center text-muted">
-            <i class="bi bi-bag fs-1 mb-2"></i>
-            <p>Selecciona un producto para agregarlo a la orden</p>
-        </div>
-    `;
-
-	const createCartItemHTML = (item) => {
-		const safeName = escapeHtml(item.name);
-
-		return `
-        <div class="d-flex flex-row justify-content-between align-items-center gap-2 w-100" data-cart-item-id="${item.id}">
-            <div class="d-flex flex-column text-start overflow-hidden flex-grow-1">
-				<span class="fw-bold text-truncate text-body" style="font-size: 0.95rem;" title="${safeName}">${safeName}</span>
-                <span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">${formatCurrency(item.price)} c/u</span>
-            </div>
-            <div class="d-flex flex-row align-items-center justify-content-end gap-2 flex-shrink-0">
-                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" data-product-id="${item.id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
-                    <i class="bi bi-dash fs-6"></i>
-                </button>
-                <span class="text-center fw-semibold d-inline-block text-body" style="min-width: 18px; font-size: 0.95rem;">${item.quantity}</span>
-                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" data-product-id="${item.id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
-                    <i class="bi bi-plus fs-6"></i>
-                </button>
-                <button type="button" class="btn btn-danger border-0 p-0 d-flex align-items-center justify-content-center rounded-2 ms-1" data-action="remove" data-product-id="${item.id}" style="width: 28px; height: 28px;">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        </div>
-	    `;
-	};
-
-	const renderCartItems = () => {
-		saleDetailsContainer.innerHTML =
-			state.items.length === 0
-				? emptyCartHTML
-				: state.items.map(createCartItemHTML).join("");
-
-		updateTotals();
-	};
-
-	// 5. Acciones del Carrito (Mutadores de Estado)
-	const addToCart = (productId, productCard) => {
-		const product = getProductFromCard(productCard);
-		if (!product) {
-			return showError(
-				"No se pudo leer la información del producto.",
-				`Datos inválidos para productId: ${productId}`,
-			);
-		}
-
-		const existingItem = state.items.find((item) => item.id === productId);
-		const currentQuantity = existingItem ? existingItem.quantity : 0;
-
-		if (!hasEnoughStock(product, currentQuantity)) return;
-
-		if (existingItem) {
-			existingItem.quantity += 1;
-		} else {
-			state.items.push({ ...product, quantity: 1 });
-		}
-
-		renderCartItems();
-	};
-
-	const cartActions = {
-		decrease: (productId) => {
-			const item = state.items.find((i) => i.id === productId);
-			if (!item) return;
-
-			item.quantity -= 1;
-			if (item.quantity <= 0) {
-				state.items = state.items.filter((i) => i.id !== productId);
-			}
-			renderCartItems();
-		},
-		increase: (productId) => {
-			const item = state.items.find((i) => i.id === productId);
-			if (item && hasEnoughStock(item, item.quantity)) {
-				item.quantity += 1;
-				renderCartItems();
-			}
-		},
-		remove: (productId) => {
-			state.items = state.items.filter((i) => i.id !== productId);
-			renderCartItems();
-		},
-	};
-
-	const clearCart = () => {
-		state.items = [];
-		renderCartItems();
-	};
-
-	// 6. Manejadores de Eventos (Delegation)
-	const handleProductClick = (event) => {
+	// Event Delegation para agregar productos
+	productsGrid.addEventListener("click", (event) => {
 		const productCard = event.target.closest(".product-card");
 		if (!productCard || !productsGrid.contains(productCard)) return;
 
@@ -241,29 +263,24 @@ export const initializeSalesCart = () => {
 		if (!productId) {
 			return showError(
 				"No se pudo agregar el producto al carrito.",
-				"No se encontró el ID del producto en la tarjeta.",
+				"No se encontró el ID del producto.",
 			);
 		}
 
 		addToCart(productId, productCard);
-	};
+	});
 
-	const handleCartActionClick = (event) => {
+	// Event Delegation para botones de + / - / eliminar dentro del carrito
+	saleDetailsContainer.addEventListener("click", (event) => {
 		const actionButton = event.target.closest("button[data-action]");
 		if (!actionButton) return;
 
 		const { action, productId } = actionButton.dataset;
-
-		// Ejecuta la acción correspondiente del diccionario si existe
 		if (productId && cartActions[action]) {
 			cartActions[action](productId);
 		}
-	};
+	});
 
-	// 7. Inicialización
-	productsGrid.addEventListener("click", handleProductClick);
-	saleDetailsContainer.addEventListener("click", handleCartActionClick);
-	clearSaleButton.addEventListener("click", clearCart);
-
-	renderCartItems(); // Render inicial
+	// Botón de limpiar carrito entero
+	clearSaleButton.addEventListener("click", clearActiveCart);
 };

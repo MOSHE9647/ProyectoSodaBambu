@@ -24,9 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
     })
-    ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->validateCsrfTokens(['sales']);
-    })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (UnauthorizedException $e, $request) {
             if ($request->expectsJson()) {

@@ -14,6 +14,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
 
 use function in_array;
+use function strlen;
 
 class SaleStoreRequest extends FormRequest
 {
@@ -23,7 +24,8 @@ class SaleStoreRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        if ($user && ($user->hasRole(UserRole::ADMIN->value) || $user->hasRole(UserRole::EMPLOYEE->value))) {
+        $allowedRoles = [UserRole::ADMIN->value, UserRole::EMPLOYEE->value];
+        if ($user && ($user->hasAnyRole($allowedRoles))) {
             return true;
         }
 
@@ -59,7 +61,7 @@ class SaleStoreRequest extends FormRequest
             'payment_details.*.method' => ['required', new Enum(PaymentMethod::class)],
             'payment_details.*.amount' => ['required', 'numeric', 'min:0.01'],
             'payment_details.*.change_amount' => ['numeric', 'min:0'],
-            'payment_details.*.reference' => ['nullable', 'string', 'max:255'],
+            'payment_details.*.reference' => ['nullable', 'string'],
         ];
     }
 
@@ -156,11 +158,11 @@ class SaleStoreRequest extends FormRequest
     private function validateTotalMatchesDetails(Validator $validator): void
     {
         $total = round((float) $this->input('total', 0), 2);
-        $detailsTotal = round(collect($this->input('sale_details', []))
-            ->sum(fn ($d) => (float) ($d['sub_total'] ?? 0)), 2);
+        $detailsTotalWithTax = round(collect($this->input('sale_details', []))
+            ->sum(fn ($d) => (float) ($d['sub_total'] ?? 0) + (($d['sub_total'] ?? 0) * ($d['applied_tax'] ?? 1))), 2);
 
-        if ($total !== $detailsTotal) {
-            $validator->errors()->add('total', "El total ($total) no coincide con la suma de los productos ($detailsTotal).");
+        if ($total !== $detailsTotalWithTax) {
+            $validator->errors()->add('total', "El total ($total) no coincide con la suma de los productos ($detailsTotalWithTax).");
         }
     }
 
@@ -229,7 +231,7 @@ class SaleStoreRequest extends FormRequest
      * Validates payment method-specific requirements for each payment detail.
      *
      * This method enforces validation rules that are specific to different payment methods:
-     * - SINPE and CARD payments require a reference number
+     * - SINPE and CARD payments require a reference number that must be between 4 and 12 characters long
      * - CASH payments require a change_amount value that does not exceed the amount paid
      *
      * @param  Validator  $validator  The validator instance to which errors will be added
@@ -247,9 +249,19 @@ class SaleStoreRequest extends FormRequest
                 $validator->errors()->add("payment_details.$index.reference", 'La referencia es obligatoria para este método de pago.');
             }
 
+            // Reference for electronic payments must be between 4 and 12 characters if provided
+            if (in_array($method, $requiresRef) && ! empty($payment['reference'])) {
+                $refLength = strlen($payment['reference']);
+                if ($method === PaymentMethod::SINPE->value && ($refLength < 8 || $refLength > 12)) {
+                    $validator->errors()->add("payment_details.$index.reference", 'El número de comprobante debe tener entre 8 y 12 caracteres.');
+                } elseif ($method === PaymentMethod::CARD->value && ($refLength < 4 || $refLength > 12)) {
+                    $validator->errors()->add("payment_details.$index.reference", 'El número de referencia debe tener entre 4 y 12 caracteres.');
+                }
+            }
+
             // If method is CASH, change_amount must be provided and cannot exceed the amount paid
             if ($method === PaymentMethod::CASH->value) {
-                if (blank($payment['change_amount'] ?? null)) {
+                if (blank($payment['change_amount'])) {
                     $validator->errors()->add("payment_details.$index.change_amount", 'El monto de cambio es obligatorio para pagos en efectivo.');
                 } elseif ($change > $amount) {
                     $validator->errors()->add("payment_details.$index.change_amount", 'El vuelto no puede ser mayor al monto entregado.');

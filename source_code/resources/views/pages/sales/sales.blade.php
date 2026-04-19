@@ -6,9 +6,9 @@
 		<x-header title="Ventas" subtitle="Gestión y seguimiento de ventas" />
 		
 		{{-- Tabs Navigation --}}
-		<x-scroll-tabs class="justify-content-end w-75">
-		    
-			<x-scroll-tabs.item :active="true" :id="'order-tab-001'">
+		<x-scroll-tabs id="order-tabs-container" class="justify-content-end w-75">
+
+		    <x-scroll-tabs.item :active="true" :id="'order-tab-0001'">
 		        ORD-0001
 		    </x-scroll-tabs.item>
 
@@ -121,8 +121,25 @@
 
 			{{-- Action Buttons --}}
 			<div class="d-flex flex-column gap-2 mt-3">
-				<button id="finalize-sale-btn" class="btn btn-success w-100" style="font-size: 15px;" disabled>Proceder al pago</button>
-				<button id="clear-sale-btn" class="btn btn-outline-secondary w-100 p-1" style="font-size: 15px;" disabled>Limpiar orden</button>
+				<x-form.submit
+					id="finalize-sale-btn"
+					class="btn btn-success w-100"
+					style="font-size: 15px;"
+					loadingMessage="Procesando..."
+					disabled
+				>
+					Proceder al pago
+				</x-form.submit>
+				<x-form.submit
+					id="clear-sale-btn"
+					type="button"
+					class="btn btn-outline-secondary w-100 p-1"
+					style="font-size: 15px;"
+					loadingMessage="Limpiando..."
+					disabled
+				>
+					Limpiar orden
+				</x-form.submit>
 			</div>
 			
 		</section>
@@ -130,5 +147,8 @@
 @endsection
 
 @section('scripts')
+	<script type="text/javascript">
+		const csrfToken = @json(csrf_token());
+	</script>
 	@vite(['resources/js/pages/sales/main.js'])
 @endsection
