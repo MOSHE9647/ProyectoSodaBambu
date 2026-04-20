@@ -17,6 +17,7 @@ class Transaction extends Model
         'type',         // Enum: income, expense
         'concept',      // Description of the transaction
         'payment_id',   // Associated payment ID
+        'cash_register_id', // Associated cash register ID
     ];
 
     protected $casts = [
