@@ -17,7 +17,6 @@ import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert";
 export const initializeSalesProducts = () => {
 	// DOM Elements Cache and Validation
 	const searchInput = document.getElementById("product-search");
-	const categorySelect = document.getElementById("category-select");
 	const categoryTabsContainer = document.getElementById("category-tabs-container");
 	const clearCategoryFilterButton = document.getElementById("clear-category-filter");
 	const productsContainer = document.getElementById("products-grid");
@@ -50,15 +49,16 @@ export const initializeSalesProducts = () => {
 	const extractCategoryIdFromTab = (tab) =>
 		tab?.id?.replace("category-tab-", "") ?? "";
 
+	const updateClearCategoryFilterButtonState = () => {
+		clearCategoryFilterButton.disabled = !state.selectedCategoryId;
+	};
+
 	const resetCategoryTabs = () => {
 		getCategoryTabs().forEach((tab) => {
 			tab.classList.remove("active");
 		});
 		state.selectedCategoryId = "";
-
-		if (categorySelect) {
-			categorySelect.value = "";
-		}
+		updateClearCategoryFilterButtonState();
 	};
 
 	const setActiveCategoryTab = (tab) => {
@@ -72,10 +72,7 @@ export const initializeSalesProducts = () => {
 		});
 
 		state.selectedCategoryId = extractCategoryIdFromTab(tab);
-
-		if (categorySelect) {
-			categorySelect.value = state.selectedCategoryId;
-		}
+		updateClearCategoryFilterButtonState();
 	};
 
 	// Auxiliary function to update sentinel visibility based on the presence of more pages

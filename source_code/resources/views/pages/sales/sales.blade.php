@@ -30,7 +30,7 @@
 
 			{{-- Search and Filter --}}
 			<div class="row mb-4 g-3">
-			    <div class="col-md-8 mb-3 mb-md-0">
+			    <div class="col-12 mb-3 mb-md-0">
 			        <x-form.input 
 						id="product-search"
 						name="product-search"
@@ -42,21 +42,6 @@
 						autocomplete="off"
 						autofocus
 					/>
-			    </div>
-			    <div class="col-md-4">
-			        <x-form.select
-			            id="category-select"
-			            name="category-select"
-			            class="border-secondary"
-						label-class="d-none"
-			        >
-			            <x-slot:options>
-							<option value="">Todas las categorías</option>
-							@foreach($categories as $category)
-								<option value="{{ $category->id }}">{{ $category->name }}</option>
-							@endforeach
-						</x-slot:options>
-			        </x-form.select>
 			    </div>
 			</div>
 
