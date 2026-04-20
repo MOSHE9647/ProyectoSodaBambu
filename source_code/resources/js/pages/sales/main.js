@@ -3,6 +3,7 @@ import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
 import { PaymentStatus, processSale } from "./api.js";
+import { initializeHotkeys } from "./hotkeys.js";
 
 // Initial sale data structure
 const SaleData = {
@@ -18,6 +19,7 @@ $(() => {
     initializeSalesProducts();
     initializeSalesCart();
 	initializeSalesOrderTabs();
+	initializeHotkeys();
 
 	// Handle finalize sale button click
     const finalizeSaleButton = $("#finalize-sale-button");
