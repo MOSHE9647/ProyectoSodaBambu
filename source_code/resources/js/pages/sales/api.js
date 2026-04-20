@@ -106,7 +106,14 @@ export const processSale = async (paymentDetails, paymentStatus = PaymentStatus.
 			// Clear the active cart after a successful sale
 			clearActiveCart();
 
-			// TODO: Implement logic to update the product list with the new stock levels after a sale is processed successfully.
+			// Dispatch a custom event to notify other parts of the application about the completed sale
+			window.dispatchEvent(
+				new CustomEvent("sales:refresh-products-after-sale", {
+					detail: {
+						sale: responseData?.data ?? null,
+					},
+				}),
+			);
 
 			return true; // Indicate success to the caller (SweetAlert Modal)
 		} else {

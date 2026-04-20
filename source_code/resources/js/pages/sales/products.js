@@ -180,6 +180,12 @@ export const initializeSalesProducts = () => {
 		handleNewSearch();
 	};
 
+	const refreshProductsAfterSale = () => {
+		state.currentPage = 1;
+		state.hasMorePages = true;
+		fetchProducts(false);
+	};
+
 	// Event handler for infinite scroll using IntersectionObserver, triggers product fetching when sentinel is in view and conditions are met
 	const handleScroll = (entries) => {
 		const [entry] = entries;
@@ -204,6 +210,7 @@ export const initializeSalesProducts = () => {
 	searchInput.addEventListener("input", handleNewSearch);
 	categoryTabsContainer.addEventListener("click", handleCategoryTabClick);
 	clearCategoryFilterButton.addEventListener("click", handleClearCategoryFilter);
+	window.addEventListener("sales:refresh-products-after-sale", refreshProductsAfterSale);
 
 	const scrollObserver = new IntersectionObserver(handleScroll, {
 		rootMargin: "200px",
