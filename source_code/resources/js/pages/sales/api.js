@@ -1,5 +1,9 @@
 import { setLoadingState } from "../../utils/utils.js";
-import { getActiveSaleData, clearActiveCart } from "./cart.js";
+import {
+	getActiveSaleData,
+	clearActiveCart,
+	syncFinalizeSaleButtonState,
+} from "./cart.js";
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 /**
@@ -136,5 +140,6 @@ export const processSale = async (paymentDetails, paymentStatus = PaymentStatus.
 		return false;
 	} finally {
 		setLoadingState("finalize-sale", false);
+		syncFinalizeSaleButtonState();
 	}
 };

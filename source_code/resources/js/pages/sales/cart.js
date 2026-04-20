@@ -23,7 +23,6 @@ const saveToStorage = () => {
 };
 
 const loadFromStorage = () => {
-	// TODO: Implement the logic to also load the order tabs UI state (active tab, existing tabs) from storage to restore the full user session, not just the cart items.
 	const savedOrders = localStorage.getItem(STORAGE_KEY);
 	if (savedOrders) {
 		state.orders = JSON.parse(savedOrders);
@@ -51,6 +50,23 @@ const formatCurrency = (amount) => {
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 2,
 	})}`;
+};
+
+/**
+ * Synchronizes the "finalize sale" button state with the active cart content.
+ *
+ * The button is enabled only when the active order has at least one item.
+ *
+ * @returns {void}
+ */
+export const syncFinalizeSaleButtonState = () => {
+	if (!finalizeSaleButton) {
+		return;
+	}
+
+	const hasProductsInActiveCart =
+		(state.orders[state.activeOrderId] || []).length > 0;
+	finalizeSaleButton.disabled = !hasProductsInActiveCart;
 };
 
 
@@ -87,7 +103,7 @@ const renderCartItems = () => {
 		saleTax.textContent = "₡ 0";
 		saleSubtotal.textContent = "₡ 0";
 		saleTotal.textContent = "₡ 0";
-		finalizeSaleButton.disabled = true;
+		syncFinalizeSaleButtonState();
 		return;
 	}
 
@@ -127,7 +143,7 @@ const renderCartItems = () => {
 	saleSubtotal.textContent = formatCurrency(subtotal);
 	saleTax.textContent = formatCurrency(taxAmount);
 	saleTotal.textContent = formatCurrency(subtotal + taxAmount);
-	finalizeSaleButton.disabled = false;
+	syncFinalizeSaleButtonState();
 };
 
 
