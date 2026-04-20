@@ -20,9 +20,8 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         $referenceCost = $this->faker->randomFloat(2, 500, 12000);
-        $taxPercentage = $this->faker->randomElement([0.00, 0.01, 0.04, 0.08, 0.13]);
         $marginPercentage = $this->faker->randomFloat(2, 0.20, 0.60);
-        $basePrice = $referenceCost + ($referenceCost * $taxPercentage);
+        $taxPercentage = 0.13; // 13% tax
 
         return [
             'category_id' => Category::factory(),
@@ -32,7 +31,7 @@ class ProductFactory extends Factory
             'expiration_date' => $this->faker->optional(0.65)->dateTimeBetween('today', '+8 months')?->format('Y-m-d'),
             'expiration_alert_days' => $this->faker->numberBetween(3, 10),
             'has_inventory' => $this->faker->boolean(),
-            'sale_price' => round($basePrice + ($basePrice * $marginPercentage), 2),
+            'sale_price' => Product::calculateSalePrice($referenceCost, $marginPercentage, $taxPercentage),
             'tax_percentage' => $taxPercentage,
             'reference_cost' => $referenceCost,
             'margin_percentage' => $marginPercentage,

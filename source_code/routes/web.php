@@ -39,6 +39,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // Sales routes with role-based access control defined in the controller
     Route::get('sales/sell', [SaleController::class, 'sales'])->name('sales.sell');
+    Route::get('sales/payment-modal/{paymentTotal}', [SaleController::class, 'showPaymentModal'])->name('sales.payment-modal');
     Route::resource('sales', SaleController::class)->names('sales');
 
     // Purchase routes with an additional route for quick product creation during purchase entry

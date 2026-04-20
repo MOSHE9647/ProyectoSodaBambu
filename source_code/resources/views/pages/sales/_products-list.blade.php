@@ -16,6 +16,7 @@
 @endphp
 
 <div
+    {{-- Product Information for JavaScript --}}
     class="card p-3 shadow-sm h-100 product-card"
     data-product-id="{{ $productData['id'] }}"
     data-product-name="{{ e($productData['name']) }}"
@@ -59,6 +60,7 @@
     </div>
 </div>
 @empty
+{{-- No products found --}}
 <div class="d-flex flex-column flex-grow-1 justify-content-center align-items-center text-center text-muted" style="grid-column: 1 / -1; min-height: 250px;">
     <i class="bi bi-box-seam fs-1 mb-2"></i>
     <p>No se encontraron productos</p>

@@ -56,7 +56,7 @@ class SaleStoreRequest extends FormRequest
             'sale_details.*.sub_total' => ['required', 'numeric', 'min:0'],
 
             // Payment fields (optional, but if present must be valid)
-            'payment_details' => ['sometimes', 'array', 'min:1'],
+            'payment_details' => ['sometimes', 'array'],
             'payment_details.*.id' => ['sometimes', 'integer', 'exists:payments,id'],
             'payment_details.*.method' => ['required', new Enum(PaymentMethod::class)],
             'payment_details.*.amount' => ['required', 'numeric', 'min:0.01'],
@@ -116,7 +116,6 @@ class SaleStoreRequest extends FormRequest
             'sale_details.*.sub_total.min' => 'El subtotal no puede ser negativo.',
 
             'payment_details.array' => 'Los detalles de pago deben ser un arreglo.',
-            'payment_details.min' => 'Debe haber al menos un detalle de pago.',
 
             'payment_details.*.method.required' => 'El método de pago es obligatorio en cada detalle de pago.',
             'payment_details.*.method.enum' => 'El método de pago debe ser uno de los siguientes: '.implode(', ', array_map(fn ($case) => $case->value, PaymentMethod::cases())),

@@ -31,7 +31,7 @@ test('CP-01_EIF-30 - creates sale with deterministic invoice number based on sal
 
     $sale->refresh();
 
-    expect($sale->invoice_number)->toBe('INV-'.str_pad((string) $sale->id, 10, '0', STR_PAD_LEFT));
+    expect($sale->invoice_number)->toBe('FAC-'.str_pad((string) $sale->id, 10, '0', STR_PAD_LEFT));
 });
 
 /**

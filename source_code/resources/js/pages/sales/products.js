@@ -1,14 +1,28 @@
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert";
 
+/**
+ * Initializes the sales products UI behavior, including:
+ * - DOM element validation and setup
+ * - Product fetching with pagination
+ * - Infinite scroll via `IntersectionObserver`
+ * - Debounced search and category filtering
+ * - Skeleton loading states and error notifications
+ *
+ * This function wires all required event listeners and performs an initial
+ * check for the server-side "has more pages" indicator to control sentinel visibility.
+ *
+ * @function initializeSalesProducts
+ * @returns {void}
+ */
 export const initializeSalesProducts = () => {
-	// 1. Caché de elementos del DOM
+	// DOM Elements Cache and Validation
 	const searchInput = document.getElementById("product-search");
 	const categorySelect = document.getElementById("category-select");
 	const productsContainer = document.getElementById("products-grid");
 	const sentinel = document.getElementById("products-scroll-sentinel");
 	const skeletonTemplate = document.getElementById("skeleton-template");
 
-	// Cláusula de guarda: Si no existen los elementos críticos, abortamos la inicialización
+	// Guard Clause: If critical elements are missing, abort initialization and notify the user
 	if (!productsContainer || !searchInput || !categorySelect || !sentinel) {
         console.error("Error al inicializar productos. No se encontraron los elementos necesarios.");
 		SwalToast.fire({
@@ -18,20 +32,20 @@ export const initializeSalesProducts = () => {
 		return;
     }
 
-	// 2. Agrupación del estado para mayor claridad
+	// Grouping state in a single object for better management and readability
 	const state = {
 		currentPage: 1,
 		isFetching: false,
 		hasMorePages: false,
 	};
 
-	// 3. Funciones Utilitarias (DOM y Lógica)
+	// Auxiliary function to update sentinel visibility based on the presence of more pages
 	const updateSentinelVisibility = () => {
 		sentinel.classList.toggle("d-flex", state.hasMorePages);
 		sentinel.classList.toggle("d-none", !state.hasMorePages);
 	};
 
-	// Centraliza la validación y limpieza del indicador de Laravel
+	// Centralized function to check for the server-side "has more pages" indicator and update state/UI accordingly
 	const checkAndRemoveMoreIndicator = () => {
 		const indicator = productsContainer.querySelector("#has-more-pages");
 		state.hasMorePages = !!indicator;
@@ -39,9 +53,10 @@ export const initializeSalesProducts = () => {
 		updateSentinelVisibility();
 	};
 
+	// Auxiliary function to toggle skeleton loading states, with an option to append or replace existing content
 	const toggleSkeletons = (show, append = false) => {
 		if (show) {
-			if (!append) productsContainer.innerHTML = ""; // Limpiar si es nueva búsqueda
+			if (!append) productsContainer.innerHTML = ""; // Clear content only if not appending
 			const skeletons = skeletonTemplate.content.cloneNode(true);
 			productsContainer.appendChild(skeletons);
 		} else {
@@ -51,7 +66,7 @@ export const initializeSalesProducts = () => {
 		}
 	};
 
-	// Función debounce reutilizable y aislada
+	// Debounce function for reutilizable and isolated use
 	const debounce = (func, delay) => {
 		let timeout;
 		return (...args) => {
@@ -60,14 +75,14 @@ export const initializeSalesProducts = () => {
 		};
 	};
 
-	// 4. Función principal de Fetch
+	// Core function to fetch products based on current state (page, search, category), with error handling and UI updates
 	const fetchProducts = async (append = false) => {
 		if (state.isFetching) return;
 
 		state.isFetching = true;
 		toggleSkeletons(true, append);
 
-		// Generación limpia de parámetros de URL
+		// URL parameters construction based on current state and input values
 		const params = new URLSearchParams({
 			page: state.currentPage,
 			search: searchInput.value,
@@ -106,14 +121,15 @@ export const initializeSalesProducts = () => {
 		}
 	};
 
-	// 5. Manejadores de Eventos (Handlers)
+	// Event handler for search input and category change, debounced to prevent excessive requests during typing or rapid changes
 	const handleNewSearch = debounce(() => {
 		state.currentPage = 1;
-		state.hasMorePages = true; // Asumimos true temporalmente hasta que el fetch lo valide
+		state.hasMorePages = true; // Assuming new search may have more pages until we check the indicator again
 		window.scrollTo({ top: 0, behavior: "smooth" });
 		fetchProducts(false);
 	}, 400);
 
+	// Event handler for infinite scroll using IntersectionObserver, triggers product fetching when sentinel is in view and conditions are met
 	const handleScroll = (entries) => {
 		const [entry] = entries;
 		if (entry.isIntersecting && !state.isFetching && state.hasMorePages) {
@@ -122,9 +138,8 @@ export const initializeSalesProducts = () => {
 		}
 	};
 
-	// 6. Inicialización y Asignación de Listeners
-	checkAndRemoveMoreIndicator(); // Validación inicial al cargar la vista
-
+	// Initial check for the "has more pages" indicator to set up the initial state and sentinel visibility correctly before any user interaction
+	checkAndRemoveMoreIndicator(); // Initial check on page load to set sentinel visibility based on server-side indicator
 	searchInput.addEventListener("input", handleNewSearch);
 	categorySelect.addEventListener("change", handleNewSearch);
 

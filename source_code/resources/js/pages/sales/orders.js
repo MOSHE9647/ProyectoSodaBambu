@@ -1,11 +1,29 @@
 import { switchActiveOrder, deleteOrderCart } from "./cart.js";
 
-// Variable de estado general
+// General state for the orders page
 const state = {
-	orderCounter: 2, // Inicia en 2 porque ya asumes que existe la ORD-0001
+	orderCounter: 2, // Starts at 2 because we assume there's already an "ORD-0001" in the HTML on load
 };
 
-// Generador de HTML limpio (sin eventos inline)
+
+/**
+ * Builds and returns the HTML markup for an order tab button item.
+ *
+ * The generated structure includes:
+ * - An optional `id` on the `<button>` element.
+ * - A base set of tab/button classes, with optional active state styling.
+ * - An optional left icon (custom icon class or default status dot).
+ * - Tab title content.
+ * - An optional close button.
+ *
+ * @param {string} [btnID=""] - Optional `id` attribute for the generated button.
+ * @param {boolean} [active=false] - Whether the tab should be rendered in its active state.
+ * @param {boolean} [showIcon=true] - Whether to display the left-side icon area.
+ * @param {string|null} [icon=null] - Icon class name(s) for a custom `<i>` icon; if `null` and `showIcon` is `true`, a default circular dot is rendered.
+ * @param {boolean} [showCloseBtn=true] - Whether to render the close control on the right side of the tab.
+ * @param {string} [buttonContent=""] - Inner HTML/text for the tab title content.
+ * @returns {string} HTML string representing a `<li>` nav item containing the configured tab button.
+ */
 const createOrderButton = (
 	btnID = "",
 	active = false,
@@ -42,33 +60,52 @@ const createOrderButton = (
     `;
 };
 
+/**
+ * Initializes dynamic behavior for sales order tabs in the UI.
+ *
+ * This function wires up all tab-related interactions for the sales order screen:
+ * - Handles creation of new order tabs from the "new order" button.
+ * - Ensures only one tab is active at a time and updates the active indicator.
+ * - Enables tab switching through delegated click events.
+ * - Manages tab closing with safety checks to prevent removing the last tab.
+ * - Automatically reactivates a remaining tab when the active one is closed.
+ * - Shows or hides close buttons depending on total tab count.
+ * - Scrolls the tab container to the end when a new tab is added.
+ * - Synchronizes external order/cart state through `switchActiveOrder` and `deleteOrderCart`.
+ *
+ * Guard clauses prevent initialization when the tab container is missing.
+ *
+ * @function initializeSalesOrderTabs
+ * @returns {void} This function does not return a value; it attaches event handlers and mutates DOM/state.
+ */
 export function initializeSalesOrderTabs() {
 	const tabsBtnsContainer = $("#order-tabs-container");
 	const newOrderBtn = $("#new-order-btn");
 
 	if (!tabsBtnsContainer.length) return;
 
-	// 1. Lógica de los botones de cierre (Previene borrar la última)
+	// Close button visibility logic: show close buttons only if there's more than one tab
 	const updateCloseButtons = () => {
 		const allTabs = tabsBtnsContainer.find(".nav-item");
 		if (allTabs.length === 1) {
-			// Ocultar botón de cerrar si solo queda una
+			// Hide close button if it's the only tab
 			allTabs.find(".close-tab-btn").hide();
 			allTabs.find(".tab-title").removeClass("pe-0").addClass("pe-2");
 		} else {
-			// Mostrar si hay más de una
+			// Show close buttons if there's more than one tab
 			allTabs.find(".close-tab-btn").show();
 			allTabs.find(".tab-title").removeClass("pe-2");
 		}
 	};
 
-	// 2. Función auxiliar para desactivar la pestaña actual
+	// Auxiliary function to deactivate all tabs before activating a new one
 	const deactivateAllTabs = () => {
 		const activeTabs = tabsBtnsContainer.find(".order-tab-btn.active");
 		activeTabs.removeClass("active");
-		activeTabs.find(".tab-btn-icon").remove(); // Quita el indicador de la anterior
+		activeTabs.find(".tab-btn-icon").remove(); // Remove the active indicator icon from all tabs
 	};
 
+	// Auxiliary function to scroll the tab container to the end (used after adding a new tab)
 	const scrollTabsToEnd = () => {
 		const container = tabsBtnsContainer.get(0);
 		if (!container) return;
@@ -79,7 +116,7 @@ export function initializeSalesOrderTabs() {
 		});
 	};
 
-	// 3. Agregar Nueva Orden
+	// Add new tab on "new order" button click
 	if (newOrderBtn.length) {
 		newOrderBtn.on("click", function () {
 			const tabBtnId = state.orderCounter.toString().padStart(4, "0");
@@ -102,22 +139,22 @@ export function initializeSalesOrderTabs() {
 			updateCloseButtons();
 			state.orderCounter++;
 
-			switchActiveOrder(newTabBtnId); // Cambia el estado a la nueva orden creada
+			switchActiveOrder(newTabBtnId); // Change active order/cart in the system to match the newly created tab
 		});
 	}
 
-	// 4. Cambiar entre pestañas (Delegación de Eventos)
+	// Switch active tab on click (Event Delegation)
 	tabsBtnsContainer.on("click", ".order-tab-btn", function (e) {
-		// Ignorar si el clic fue en la 'X' de cerrar
+		// Ignore clicks on the close button within the tab to prevent interference with tab activation logic
 		if ($(e.target).hasClass("close-tab-btn")) return;
 
-		// Ignorar si ya está activa
+		// Ignore if the clicked tab is already active to prevent unnecessary re-rendering and state changes
 		if ($(this).hasClass("active")) return;
 
 		deactivateAllTabs();
 		$(this).addClass("active");
 
-		// Renderizar el indicador circular
+		// Render the active indicator icon for the newly active tab
 		if (!$(this).find(".tab-btn-icon").length) {
 			$(this).prepend(
 				`<span class="tab-btn-icon rounded-circle flex-shrink-0" style="width: 6px; height: 6px; background-color: currentColor;"></span>`,
@@ -125,17 +162,18 @@ export function initializeSalesOrderTabs() {
 		}
 
 		const orderId = $(this).attr("id");
-		console.log("Cambiando a la orden:", orderId);
+		console.log("Switching to order:", orderId);
 		
         switchActiveOrder(orderId);
 	});
 
-	// 5. Cerrar Pestaña (Delegación de Eventos)
+	// Close tab on close button click (Event Delegation)
 	tabsBtnsContainer.on("click", ".close-tab-btn", function (e) {
-		e.stopPropagation(); // Evitar que el clic se propague y active la pestaña
+		e.stopPropagation(); // Prevent the click from bubbling up to the tab button's click handler which would activate the tab
 
+		// Safety check to prevent removing the last remaining tab
 		const totalTabs = tabsBtnsContainer.find(".nav-item").length;
-		if (totalTabs <= 1) return; // Doble validación de seguridad
+		if (totalTabs <= 1) return; // Double-check to ensure we don't remove the last tab, which would break the UI
 
 		const tabLi = $(this).closest(".nav-item");
 		const tabBtn = tabLi.find(".order-tab-btn");
@@ -143,16 +181,16 @@ export function initializeSalesOrderTabs() {
 
 		tabLi.remove();
 
-		// Si borramos la pestaña activa, forzamos la activación de la última que quede
+		// If we remove the active tab, force the activation of the last remaining tab
 		if (wasActive) {
 			const lastTab = tabsBtnsContainer.find(".order-tab-btn").last();
-			lastTab.click(); // Simulamos el clic para ejecutar la lógica de activación
+			lastTab.click(); // Simulate the click to execute the activation logic
 		}
 
 		updateCloseButtons();
-        deleteOrderCart(tabBtn.attr("id")); // Eliminar datos asociados a esa orden
+        deleteOrderCart(tabBtn.attr("id")); // Delete the order/cart in the system that corresponds to the closed tab
 	});
 
-	// Ejecutar al inicio por si la vista carga con 1 sola pestaña
+	// Initial call to set the correct visibility of close buttons based on the initial number of tabs
 	updateCloseButtons();
 }

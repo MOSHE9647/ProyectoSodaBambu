@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+{{-- TODO: Need to implement the logic to ask for the initial amount of money the customer has --}}
+
 @section('content')
 	{{-- Header --}}
 	<div class="d-flex flex-row align-items-center justify-content-between gap-2">
@@ -154,8 +156,5 @@
 @endsection
 
 @section('scripts')
-	<script type="text/javascript">
-		const csrfToken = @json(csrf_token());
-	</script>
 	@vite(['resources/js/pages/sales/main.js'])
 @endsection
