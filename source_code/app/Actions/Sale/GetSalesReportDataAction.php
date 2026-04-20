@@ -3,20 +3,19 @@
 namespace App\Actions\Sale;
 
 use App\Enums\PaymentStatus;
+use App\Enums\ProductType;
 use App\Models\Category;
 use App\Models\Sale;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class GetSalesReportDataAction
 {
     /**
      * Build the sales report data using the requested filters.
-     *
-     * The current schema only stores the sale header, so the report is filtered
-     * by date range and payment status. Product-type and category filters will
-     * require a sale details relation in a future iteration.
      */
     public function execute(array $filters = []): array
     {
@@ -96,16 +95,39 @@ class GetSalesReportDataAction
             ? $categories->firstWhere('id', $activeCategoryId)?->name
             : null;
 
-        $topProducts = collect();
+        $topProducts = $this->buildTopProducts(
+            $startLocal,
+            $endLocal,
+            $paymentStatus,
+            $activeProductType,
+            $activeCategoryId
+        );
 
-        $totalSoldQuantity = max((int) $topProducts->sum('sold_quantity'), 1);
-        $topProducts = $topProducts->map(function (array $product) use ($totalSoldQuantity) {
-            $percentage = ((int) $product['sold_quantity'] / $totalSoldQuantity) * 100;
+        [$previousStartLocal, $previousEndLocal, $previousPeriodLabel] = $this->resolvePreviousPeriod($startLocal, $endLocal);
+        $previousTopProducts = $this->buildTopProducts(
+            $previousStartLocal,
+            $previousEndLocal,
+            $paymentStatus,
+            $activeProductType,
+            $activeCategoryId
+        );
 
-            return array_merge($product, [
-                'total_percent' => round($percentage, 1),
-            ]);
-        })->all();
+        $totalSoldUnits = (int) collect($topProducts)->sum('sold_quantity');
+        $productsInRanking = count($topProducts);
+        $averageUnitsPerDay = $daysInPeriod > 0 ? $totalSoldUnits / $daysInPeriod : 0;
+        $previousDaysInPeriod = max($previousStartLocal->copy()->startOfDay()->diffInDays($previousEndLocal->copy()->startOfDay()) + 1, 1);
+        $previousTotalSoldUnits = (int) collect($previousTopProducts)->sum('sold_quantity');
+        $previousAverageUnitsPerDay = $previousDaysInPeriod > 0 ? $previousTotalSoldUnits / $previousDaysInPeriod : 0;
+
+        if ($previousAverageUnitsPerDay > 0) {
+            $averageUnitsVariationPercent = (($averageUnitsPerDay - $previousAverageUnitsPerDay) / $previousAverageUnitsPerDay) * 100;
+        } elseif ($averageUnitsPerDay > 0) {
+            $averageUnitsVariationPercent = 100;
+        } else {
+            $averageUnitsVariationPercent = 0;
+        }
+
+        $averageUnitsTrendDirection = $averageUnitsVariationPercent >= 0 ? 'up' : 'down';
 
         return [
             'activePeriod' => $filters['period'] ?? 'month',
@@ -120,11 +142,114 @@ class GetSalesReportDataAction
             'totalIncome' => $totalIncome,
             'totalOrders' => $totalOrders,
             'dailyAverage' => $daysInPeriod > 0 ? $totalIncome / $daysInPeriod : 0,
+            'totalSoldUnits' => $totalSoldUnits,
+            'productsInRanking' => $productsInRanking,
+            'averageUnitsPerDay' => $averageUnitsPerDay,
+            'averageUnitsVariationPercent' => round(abs($averageUnitsVariationPercent), 1),
+            'averageUnitsTrendDirection' => $averageUnitsTrendDirection,
+            'previousPeriodLabel' => $previousPeriodLabel,
             'dailyReports' => $dailyReports,
             'categories' => $categories,
             'topProducts' => $topProducts,
             'sales' => $sales,
         ];
+    }
+
+    /**
+     * Build top-selling products with quantity, income, and share percentage.
+     */
+    private function buildTopProducts(
+        Carbon $startLocal,
+        Carbon $endLocal,
+        string $paymentStatus,
+        string $activeProductType,
+        ?int $activeCategoryId,
+    ): array {
+        if (! Schema::hasTable('sale_details')) {
+            return [];
+        }
+
+        $requiredColumns = [
+            'sale_id',
+            'product_id',
+            'quantity',
+            'unit_price',
+            'subtotal',
+            'deleted_at',
+        ];
+
+        if (! Schema::hasColumns('sale_details', $requiredColumns)) {
+            return [];
+        }
+
+        $query = DB::table('sale_details as sd')
+            ->join('sales as s', 's.id', '=', 'sd.sale_id')
+            ->join('products as p', 'p.id', '=', 'sd.product_id')
+            ->leftJoin('categories as c', 'c.id', '=', 'p.category_id')
+            ->whereNull('sd.deleted_at')
+            ->whereNull('s.deleted_at')
+            ->whereNull('p.deleted_at')
+            ->whereBetween('s.date', [
+                $startLocal->copy()->timezone('UTC'),
+                $endLocal->copy()->timezone('UTC'),
+            ]);
+
+        $paymentStatusValues = array_map(
+            fn (PaymentStatus $status) => $status->value,
+            PaymentStatus::cases()
+        );
+
+        if (in_array($paymentStatus, $paymentStatusValues, true)) {
+            $query->where('s.payment_status', $paymentStatus);
+        }
+
+        if ($activeCategoryId) {
+            $query->where('p.category_id', $activeCategoryId);
+        }
+
+        if ($activeProductType === 'merchandise') {
+            $query->where('p.type', ProductType::MERCHANDISE->value);
+        }
+
+        if ($activeProductType === 'dishes') {
+            $query->whereIn('p.type', [
+                ProductType::DISH->value,
+                ProductType::DRINK->value,
+                ProductType::PACKAGED->value,
+            ]);
+        }
+
+        $products = $query
+            ->groupBy('p.id', 'p.name', 'p.type', 'c.name')
+            ->selectRaw('p.id as product_id, p.name as product_name, p.type as product_type, c.name as category_name, SUM(sd.quantity) as sold_quantity, SUM(sd.subtotal) as income')
+            ->orderByDesc('sold_quantity')
+            ->orderByDesc('income')
+            ->limit(30)
+            ->get();
+
+        if ($products->isEmpty()) {
+            return [];
+        }
+
+        $totalSoldQuantity = max((int) $products->sum('sold_quantity'), 1);
+
+        return $products
+            ->map(function (object $product) use ($totalSoldQuantity): array {
+                $quantity = (int) $product->sold_quantity;
+                $income = (float) $product->income;
+                $productType = ProductType::tryFrom((string) $product->product_type);
+
+                return [
+                    'product_name' => (string) $product->product_name,
+                    'category_name' => (string) ($product->category_name ?? 'Sin categoría'),
+                    'product_type_label' => $productType?->label() ?? (string) $product->product_type,
+                    'sold_quantity' => $quantity,
+                    'income' => round($income, 2),
+                    'total_percent' => round(($quantity / $totalSoldQuantity) * 100, 1),
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     /**
@@ -191,6 +316,20 @@ class GetSalesReportDataAction
     private function resolveSortColumn(string $sort): string
     {
         return in_array($sort, ['date', 'orders', 'income', 'avg_ticket'], true) ? $sort : 'date';
+    }
+
+    /**
+     * Resolve previous period range using the same amount of days as current period.
+     */
+    private function resolvePreviousPeriod(Carbon $startLocal, Carbon $endLocal): array
+    {
+        $totalDays = max($startLocal->copy()->startOfDay()->diffInDays($endLocal->copy()->startOfDay()) + 1, 1);
+
+        $previousEndLocal = $startLocal->copy()->subDay()->endOfDay();
+        $previousStartLocal = $previousEndLocal->copy()->startOfDay()->subDays($totalDays - 1);
+        $previousPeriodLabel = $previousStartLocal->translatedFormat('d/m/Y').' - '.$previousEndLocal->translatedFormat('d/m/Y');
+
+        return [$previousStartLocal, $previousEndLocal, $previousPeriodLabel];
     }
 
     /**

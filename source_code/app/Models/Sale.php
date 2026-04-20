@@ -55,18 +55,16 @@ class Sale extends Model
         return $this->belongsTo(Employee::class);
     }
 
-    // RELATIONSHIPS FOR DETAILS AND PAYMENTS ARE LEFT FOR FUTURE IMPLEMENTATIONS, AS THE CORRESPONDING MODELS HAVE NOT BEEN DEFINED YET.
-    // /**
-    //  * Relation: Contains SaleDetails.
-    //  * A sale has one or many details (the products sold).
-    //  *
-    //  * @return HasMany<SaleDetail, Sale>
-    //  */
-    // public function details(): HasMany
-    // {
-    //     // Nota: Asegúrate de que el modelo SaleDetail exista
-    //     return $this->hasMany(SaleDetail::class);
-    // }
+    /**
+     * Relation: Contains SaleDetails.
+     * A sale has one or many details (the products sold).
+     *
+     * @return HasMany<SaleDetail, Sale>
+     */
+    public function details(): HasMany
+    {
+        return $this->hasMany(SaleDetail::class);
+    }
 
     // /**
     //  * Relation: Payments.

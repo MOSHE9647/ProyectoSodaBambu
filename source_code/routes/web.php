@@ -14,6 +14,7 @@ use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Models\Employee;
+use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\Supplier;
@@ -81,6 +82,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::get('/test-sale-flow', function () {
         // Aseguramos que exista un empleado
         $employee = Employee::first() ?? Employee::factory()->create();
+        $product = Product::query()->whereNull('deleted_at')->first();
 
         $sale = Sale::create([
             'employee_id' => $employee->id,
@@ -90,9 +92,21 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
             'total' => 15500.50,
         ]);
 
+        if ($product) {
+            $sale->details()->create([
+                'product_id' => $product->id,
+                'quantity' => 1,
+                'unit_price' => $sale->total,
+                'subtotal' => $sale->total,
+            ]);
+        }
+
+        $sale->load('details.product');
+
         return [
             'message' => 'Venta creada exitosamente',
             'sale' => $sale,
+            'details' => $sale->details,
             'payment' => $sale->payment,
             'transaction' => $sale->payment?->transaction,
         ];

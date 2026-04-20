@@ -30,6 +30,9 @@ class BuildSalesReportSpreadsheetAction
         $sheet->setCellValue('A5', 'Generado el: '.$currentDate->format('d/m/Y H:i'));
 
         if ($activeSection === 'products') {
+            $productsIncomeTotal = collect($reportData['topProducts'] ?? [])->sum('income');
+            $sheet->setCellValue('A6', 'Ingresos totales (según tabla): ₡ '.number_format((float) $productsIncomeTotal, 0, ',', '.'));
+
             $headers = ['Producto', 'Categoría', 'Tipo', 'Cantidad Vendida', 'Ingresos', '% del Total'];
 
             foreach ($headers as $index => $header) {
@@ -48,11 +51,19 @@ class BuildSalesReportSpreadsheetAction
                 $row++;
             }
 
-            $lastRow = max($row - 1, 7);
-            $sheet->getStyle('A1:F5')->getFont()->setBold(true);
+            $summaryRow = $row;
+            $sheet->setCellValue('D'.$summaryRow, 'TOTAL INGRESOS');
+            $sheet->setCellValue('E'.$summaryRow, (float) $productsIncomeTotal);
+            $sheet->setCellValue('F'.$summaryRow, '100%');
+
+            $lastRow = max($summaryRow, 7);
+            $sheet->getStyle('A1:F6')->getFont()->setBold(true);
             $sheet->getStyle('A7:F7')->getFont()->setBold(true);
             $sheet->getStyle('A7:F7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle('A7:F7')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFD9EAD3');
+            $sheet->getStyle('D'.$summaryRow.':F'.$summaryRow)->getFont()->setBold(true);
+            $sheet->getStyle('D'.$summaryRow.':F'.$summaryRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('D'.$summaryRow.':F'.$summaryRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF3F8ED');
             $sheet->getStyle('A1:F'.$lastRow)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
             $sheet->getStyle('A1:F'.$lastRow)->getAlignment()->setWrapText(true);
 

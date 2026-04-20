@@ -15,6 +15,14 @@ $(document).ready(function () {
             return null;
         }
 
+        const bodyRows = table.find('tbody tr');
+        const hasOnlyPlaceholderRow = bodyRows.length === 1 && bodyRows.first().find('td[colspan]').length > 0;
+
+        // Prevent DataTables warnings when an empty-state row uses colspan.
+        if (hasOnlyPlaceholderRow) {
+            return null;
+        }
+
         const dataTable = table.DataTable({
             order: [],
         });

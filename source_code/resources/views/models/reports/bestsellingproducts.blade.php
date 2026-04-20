@@ -94,6 +94,45 @@
             </div>
         </form>
 
+        @php
+            $productsIncomeTotal = collect($topProducts ?? [])->sum('income');
+        @endphp
+
+        <div class="row row-cols-1 row-cols-lg-3 g-3 mb-3">
+            <div class="col-md-4">
+                <x-stat-card title="Ingresos totales" icon="cash-coin" color-theme="green" currency="false" hideTrend="true" value="">
+                    @slot('value')
+                        ₡ {{ number_format($productsIncomeTotal, 0, ',', '.') }}
+                        <br>
+                        <small class="text-muted fw-normal">Periodo: {{ $periodLabel ?? '' }}</small>
+                    @endslot
+                </x-stat-card>
+            </div>
+
+            <div class="col-md-4">
+                <x-stat-card title="Unidades Vendidas" icon="box-seam" color-theme="yellow" currency="false" hideTrend="true" value="">
+                    @slot('value')
+                        {{ number_format($totalSoldUnits ?? 0, 0, ',', '.') }}
+                        <br>
+                        <small class="text-muted fw-normal">Periodo: {{ $periodLabel ?? '' }}</small>
+                    @endslot
+                </x-stat-card>
+            </div>
+
+            <div class="col-md-4">
+                <x-stat-card
+                    title="Promedio de Unidades por Dia"
+                    icon="graph-up-arrow"
+                    color-theme="green"
+                    currency="false"
+                    trend="{{ ($averageUnitsTrendDirection ?? 'up') === 'down' ? '-' : '+' }}{{ number_format($averageUnitsVariationPercent ?? 0, 1, ',', '.') }}%"
+                    trend-context="vs periodo anterior ({{ $previousPeriodLabel ?? '' }})"
+                    trend-direction="{{ $averageUnitsTrendDirection ?? 'up' }}"
+                    value="{{ number_format($averageUnitsPerDay ?? 0, 1, ',', '.') }}"
+                />
+            </div>
+        </div>
+
         <div class="table-container rounded-2 p-4 mb-3">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold mb-0">Productos Más Vendidos</h5>
