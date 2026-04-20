@@ -17,7 +17,7 @@ class CashRegisterReport extends Model
     ];
 
     /**
-    * The cash register session to which this report belongs.
+     * The cash register session to which this report belongs.
      */
     public function cashRegister(): BelongsTo
     {
@@ -25,11 +25,10 @@ class CashRegisterReport extends Model
     }
 
     /**
-    * Breakdown by payment method (Cash, Card, SINPE).
+     * Breakdown by payment method (Cash, Card, SINPE).
      */
     public function details(): HasMany
     {
         return $this->hasMany(CashRegisterDetail::class);
     }
-
 }
