@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use app\Enums\CashRegisterStatus;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -31,7 +31,7 @@ class CashRegister extends Model
     ];
 
     /**
-    * The user (collaborator/administrator) who opened the cash register.
+     * The user (collaborator/administrator) who opened the cash register.
      */
     public function user(): BelongsTo
     {
@@ -39,7 +39,7 @@ class CashRegister extends Model
     }
 
     /**
-    * Accounting movements (Transactions) made during this session.
+     * Accounting movements (Transactions) made during this session.
      */
     public function transactions(): HasMany
     {
@@ -47,7 +47,7 @@ class CashRegister extends Model
     }
 
     /**
-    * The final validation report (CashClosure).
+     * The final validation report (CashClosure).
      */
     public function report(): HasOne
     {
