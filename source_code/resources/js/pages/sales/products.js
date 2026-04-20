@@ -18,12 +18,14 @@ export const initializeSalesProducts = () => {
 	// DOM Elements Cache and Validation
 	const searchInput = document.getElementById("product-search");
 	const categorySelect = document.getElementById("category-select");
+	const categoryTabsContainer = document.getElementById("category-tabs-container");
+	const clearCategoryFilterButton = document.getElementById("clear-category-filter");
 	const productsContainer = document.getElementById("products-grid");
 	const sentinel = document.getElementById("products-scroll-sentinel");
 	const skeletonTemplate = document.getElementById("skeleton-template");
 
 	// Guard Clause: If critical elements are missing, abort initialization and notify the user
-	if (!productsContainer || !searchInput || !categorySelect || !sentinel) {
+	if (!productsContainer || !searchInput || !sentinel || !categoryTabsContainer || !clearCategoryFilterButton) {
         console.error("Error al inicializar productos. No se encontraron los elementos necesarios.");
 		SwalToast.fire({
 			icon: SwalNotificationTypes.ERROR,
@@ -37,6 +39,43 @@ export const initializeSalesProducts = () => {
 		currentPage: 1,
 		isFetching: false,
 		hasMorePages: false,
+		selectedCategoryId: "",
+	};
+
+	const categoryTabSelector = 'button[id^="category-tab-"]';
+
+	const getCategoryTabs = () =>
+		Array.from(categoryTabsContainer.querySelectorAll(categoryTabSelector));
+
+	const extractCategoryIdFromTab = (tab) =>
+		tab?.id?.replace("category-tab-", "") ?? "";
+
+	const resetCategoryTabs = () => {
+		getCategoryTabs().forEach((tab) => {
+			tab.classList.remove("active");
+		});
+		state.selectedCategoryId = "";
+
+		if (categorySelect) {
+			categorySelect.value = "";
+		}
+	};
+
+	const setActiveCategoryTab = (tab) => {
+		if (!tab) {
+			resetCategoryTabs();
+			return;
+		}
+
+		getCategoryTabs().forEach((tabElement) => {
+			tabElement.classList.toggle("active", tabElement === tab);
+		});
+
+		state.selectedCategoryId = extractCategoryIdFromTab(tab);
+
+		if (categorySelect) {
+			categorySelect.value = state.selectedCategoryId;
+		}
 	};
 
 	// Auxiliary function to update sentinel visibility based on the presence of more pages
@@ -86,7 +125,7 @@ export const initializeSalesProducts = () => {
 		const params = new URLSearchParams({
 			page: state.currentPage,
 			search: searchInput.value,
-			category_id: categorySelect.value,
+			category_id: state.selectedCategoryId,
 		});
 
 		try {
@@ -129,6 +168,21 @@ export const initializeSalesProducts = () => {
 		fetchProducts(false);
 	}, 400);
 
+	const handleCategoryTabClick = (event) => {
+		const clickedTab = event.target.closest(categoryTabSelector);
+		if (!clickedTab || !categoryTabsContainer.contains(clickedTab)) {
+			return;
+		}
+
+		setActiveCategoryTab(clickedTab);
+		handleNewSearch();
+	};
+
+	const handleClearCategoryFilter = () => {
+		resetCategoryTabs();
+		handleNewSearch();
+	};
+
 	// Event handler for infinite scroll using IntersectionObserver, triggers product fetching when sentinel is in view and conditions are met
 	const handleScroll = (entries) => {
 		const [entry] = entries;
@@ -140,8 +194,19 @@ export const initializeSalesProducts = () => {
 
 	// Initial check for the "has more pages" indicator to set up the initial state and sentinel visibility correctly before any user interaction
 	checkAndRemoveMoreIndicator(); // Initial check on page load to set sentinel visibility based on server-side indicator
+
+	const initiallyActiveCategoryTab = getCategoryTabs().find((tab) =>
+		tab.classList.contains("active"),
+	);
+	if (initiallyActiveCategoryTab) {
+		setActiveCategoryTab(initiallyActiveCategoryTab);
+	} else {
+		resetCategoryTabs();
+	}
+
 	searchInput.addEventListener("input", handleNewSearch);
-	categorySelect.addEventListener("change", handleNewSearch);
+	categoryTabsContainer.addEventListener("click", handleCategoryTabClick);
+	clearCategoryFilterButton.addEventListener("click", handleClearCategoryFilter);
 
 	const scrollObserver = new IntersectionObserver(handleScroll, {
 		rootMargin: "200px",

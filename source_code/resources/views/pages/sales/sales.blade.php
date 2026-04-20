@@ -60,6 +60,19 @@
 			    </div>
 			</div>
 
+			<div class="d-flex flex-row align-items-center justify-content-between gap-2">
+			    {{-- Category Tabs --}}
+			    <x-scroll-tabs id="category-tabs-container" class="justify-content-start w-100 mb-4" newBtnId="clear-category-filter" newBtnText="Limpiar filtro" newBtnIcon="bi bi-x-lg" newBtnClass="btn btn-outline-danger btn-sm">
+
+					@foreach ($categories as $category)
+						<x-scroll-tabs.item :id="'category-tab-' . $category->id" :active="false" :showIcon="false" :showClose="false">
+							{{ $category->name }}
+						</x-scroll-tabs.item>
+					@endforeach
+
+			    </x-scroll-tabs>
+			</div>
+
 			{{-- Products List --}}
 			<div id="products-list" class="overflow-y-auto pe-1">
 
