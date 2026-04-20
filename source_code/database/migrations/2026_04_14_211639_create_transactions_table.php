@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('concept'); // moviment concept
             $table->foreignId('cash_register_id')->constrained()->onDelete('cascade');
 
-
             $table->timestamps();
             $table->softDeletes();
         });
