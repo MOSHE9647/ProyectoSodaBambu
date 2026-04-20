@@ -314,6 +314,24 @@ body {
 	box-shadow: var(--bambu-focus-ring-success);
 }
 
+.btn-outline-primary {
+	--bs-btn-color: var(--bambu-logo-bg);
+	--bs-btn-border-color: var(--bambu-logo-bg);
+	--bs-btn-hover-color: var(--bambu-text-light);
+	--bs-btn-hover-bg: var(--bambu-logo-bg);
+	--bs-btn-hover-border-color: var(--bambu-logo-bg);
+	--bs-btn-active-color: var(--bambu-text-light);
+	--bs-btn-active-bg: var(--bambu-logo-bg-hover);
+	--bs-btn-active-border-color: var(--bambu-logo-bg-hover);
+	--bs-btn-disabled-color: var(--bambu-logo-bg);
+	--bs-btn-disabled-bg: transparent;
+	--bs-btn-disabled-border-color: var(--bambu-logo-bg);
+}
+
+.btn-outline-primary:focus {
+	box-shadow: var(--bambu-focus-ring-success);
+}
+
 .radio-button .btn-check:checked:focus-visible + .btn {
 	background: var(--radio-button-bg);
 	border: 1px solid var(--bambu-check-border);
@@ -347,6 +365,7 @@ body {
 
 .btn.btn-primary:disabled,
 .btn.btn-danger:disabled,
+.btn.btn-outline-primary:disabled,
 .btn.btn-outline-secondary:disabled {
 	cursor: not-allowed;
 	opacity: var(--bambu-disabled-opacity);

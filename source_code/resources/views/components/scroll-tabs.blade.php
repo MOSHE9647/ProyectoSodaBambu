@@ -4,15 +4,20 @@
     'newBtnId' => 'new-order-btn',
     'newBtnText' => 'Nueva orden',
     'newBtnIcon' => 'bi bi-plus-lg',
-    'newBtnClass' => 'btn btn-outline-secondary',
+    'newBtnClass' => 'btn btn-outline-primary',
 ])
 
 <div {{ $attributes->merge(['class' => 'd-flex align-items-center gap-2 overflow-hidden']) }}>
-    <ul id="{{ $id }}" class="nav nav-pills flex-nowrap gap-2 overflow-x-auto m-0" role="tablist" style="scrollbar-width: none; -ms-overflow-style: none;">
+    <ul id="{{ $id }}" class="nav nav-pills flex-nowrap gap-2 overflow-x-auto m-0 rounded-3" role="tablist" style="scrollbar-width: none; -ms-overflow-style: none;">
         {{ $slot }}
     </ul>
-    
+
     @if($showNewBtn)
+        <hr 
+            class="d-block mx-1 my-0 border border-start border-secondary" 
+            style="height: 24px; margin-left: 0.1rem; margin-right: 0.1rem;"
+        >
+
         <button 
             id="{{ $newBtnId }}" 
             type="button" 
