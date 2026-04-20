@@ -1,10 +1,25 @@
 import { switchActiveOrder, deleteOrderCart } from "./cart.js";
 
+const TABS_STORAGE_KEY = "pos_orders_tabs_state";
+
 // General state for the orders page
 const state = {
 	orderCounter: 2, // Starts at 2 because we assume there's already an "ORD-0001" in the HTML on load
 };
 
+const getOrderNumberFromId = (orderId = "") => {
+	const match = String(orderId).match(/^order-tab-(\d{4})$/);
+	return match ? Number(match[1]) : null;
+};
+
+const getDefaultTabTextById = (orderId = "") => {
+	const orderNumber = getOrderNumberFromId(orderId);
+	if (orderNumber === null) {
+		return "";
+	}
+
+	return `ORD-${orderNumber.toString().padStart(4, "0")}`;
+};
 
 /**
  * Builds and returns the HTML markup for an order tab button item.
@@ -58,6 +73,114 @@ const createOrderButton = (
         </button>
     </li>
     `;
+};
+
+const saveTabsState = (tabsBtnsContainer) => {
+	const tabs = tabsBtnsContainer
+		.find(".order-tab-btn")
+		.map(function () {
+			const tabButton = $(this);
+			const tabId = tabButton.attr("id") || "";
+			const tabText = tabButton.find(".tab-title").text().trim();
+
+			return {
+				id: tabId,
+				text: tabText || getDefaultTabTextById(tabId),
+			};
+		})
+		.get()
+		.filter((tab) => tab.id);
+
+	if (!tabs.length) {
+		return;
+	}
+
+	const activeOrderId =
+		tabsBtnsContainer.find(".order-tab-btn.active").attr("id") ||
+		tabs[0].id;
+
+	const maxOrderNumber = tabs.reduce((currentMax, tab) => {
+		const orderNumber = getOrderNumberFromId(tab.id);
+		if (orderNumber === null) {
+			return currentMax;
+		}
+
+		return Math.max(currentMax, orderNumber);
+	}, 1);
+
+	const nextOrderCounter = Math.max(state.orderCounter, maxOrderNumber + 1);
+
+	localStorage.setItem(
+		TABS_STORAGE_KEY,
+		JSON.stringify({
+			tabs,
+			activeOrderId,
+			orderCounter: nextOrderCounter,
+		}),
+	);
+};
+
+const loadTabsState = (tabsBtnsContainer) => {
+	const savedTabsState = localStorage.getItem(TABS_STORAGE_KEY);
+	if (!savedTabsState) {
+		return null;
+	}
+
+	try {
+		const parsedState = JSON.parse(savedTabsState);
+		const tabs = Array.isArray(parsedState?.tabs)
+			? parsedState.tabs.filter((tab) => tab?.id)
+			: [];
+
+		if (!tabs.length) {
+			return null;
+		}
+
+		tabsBtnsContainer.empty();
+
+		const fallbackActiveOrderId = tabs[0].id;
+		const activeOrderId =
+			tabs.find((tab) => tab.id === parsedState?.activeOrderId)?.id ||
+			fallbackActiveOrderId;
+
+		tabs.forEach((tab) => {
+			const isActive = tab.id === activeOrderId;
+			const buttonText = tab.text || getDefaultTabTextById(tab.id);
+
+			tabsBtnsContainer.append(
+				createOrderButton(
+					tab.id,
+					isActive,
+					isActive,
+					null,
+					true,
+					buttonText,
+				),
+			);
+		});
+
+		const maxOrderNumber = tabs.reduce((currentMax, tab) => {
+			const orderNumber = getOrderNumberFromId(tab.id);
+			if (orderNumber === null) {
+				return currentMax;
+			}
+
+			return Math.max(currentMax, orderNumber);
+		}, 1);
+
+		const savedOrderCounter = Number(parsedState?.orderCounter);
+		state.orderCounter = Number.isFinite(savedOrderCounter)
+			? Math.max(savedOrderCounter, maxOrderNumber + 1)
+			: maxOrderNumber + 1;
+
+		return activeOrderId;
+	} catch (error) {
+		console.error(
+			"No se pudo restaurar el estado de pestañas de órdenes:",
+			error,
+		);
+		return null;
+	}
 };
 
 /**
@@ -140,6 +263,7 @@ export function initializeSalesOrderTabs() {
 			state.orderCounter++;
 
 			switchActiveOrder(newTabBtnId); // Change active order/cart in the system to match the newly created tab
+			saveTabsState(tabsBtnsContainer);
 		});
 	}
 
@@ -163,8 +287,9 @@ export function initializeSalesOrderTabs() {
 
 		const orderId = $(this).attr("id");
 		console.log("Switching to order:", orderId);
-		
-        switchActiveOrder(orderId);
+
+		switchActiveOrder(orderId);
+		saveTabsState(tabsBtnsContainer);
 	});
 
 	// Close tab on close button click (Event Delegation)
@@ -188,9 +313,44 @@ export function initializeSalesOrderTabs() {
 		}
 
 		updateCloseButtons();
-        deleteOrderCart(tabBtn.attr("id")); // Delete the order/cart in the system that corresponds to the closed tab
+		deleteOrderCart(tabBtn.attr("id")); // Delete the order/cart in the system that corresponds to the closed tab
+		saveTabsState(tabsBtnsContainer);
 	});
+
+	const restoredActiveOrderId = loadTabsState(tabsBtnsContainer);
+
+	if (!restoredActiveOrderId) {
+		const tabIds = tabsBtnsContainer
+			.find(".order-tab-btn")
+			.map(function () {
+				return $(this).attr("id") || "";
+			})
+			.get()
+			.filter(Boolean);
+
+		const maxOrderNumber = tabIds.reduce((currentMax, tabId) => {
+			const orderNumber = getOrderNumberFromId(tabId);
+			if (orderNumber === null) {
+				return currentMax;
+			}
+
+			return Math.max(currentMax, orderNumber);
+		}, 1);
+
+		state.orderCounter = Math.max(state.orderCounter, maxOrderNumber + 1);
+	}
 
 	// Initial call to set the correct visibility of close buttons based on the initial number of tabs
 	updateCloseButtons();
+
+	const initialActiveOrderId =
+		restoredActiveOrderId ||
+		tabsBtnsContainer.find(".order-tab-btn.active").attr("id") ||
+		tabsBtnsContainer.find(".order-tab-btn").first().attr("id");
+
+	if (initialActiveOrderId) {
+		switchActiveOrder(initialActiveOrderId);
+	}
+
+	saveTabsState(tabsBtnsContainer);
 }
