@@ -1,3 +1,4 @@
+import { SwalModal, SwalNotificationTypes } from "../../utils/sweetalert.js";
 import { switchActiveOrder, deleteOrderCart } from "./cart.js";
 
 const TABS_STORAGE_KEY = "pos_orders_tabs_state";
@@ -294,27 +295,43 @@ export function initializeSalesOrderTabs() {
 
 	// Close tab on close button click (Event Delegation)
 	tabsBtnsContainer.on("click", ".close-tab-btn", function (e) {
-		e.stopPropagation(); // Prevent the click from bubbling up to the tab button's click handler which would activate the tab
+		SwalModal.fire({
+			title: "¿Estás seguro de querer eliminar esta orden?",
+			text: "Esta acción no se puede deshacer.",
+			icon: SwalNotificationTypes.WARNING,
+			showCancelButton: true,
+			confirmButtonText: "Sí, eliminar",
+			cancelButtonText: "Cancelar",
+		}).then((result) => {
+			// If confirmed, submit the form
+			if (result.isConfirmed) {
+				e.stopPropagation(); // Prevent the click from bubbling up to the tab button's click handler which would activate the tab
 
-		// Safety check to prevent removing the last remaining tab
-		const totalTabs = tabsBtnsContainer.find(".nav-item").length;
-		if (totalTabs <= 1) return; // Double-check to ensure we don't remove the last tab, which would break the UI
+				// Safety check to prevent removing the last remaining tab
+				const totalTabs = tabsBtnsContainer.find(".nav-item").length;
+				if (totalTabs <= 1) return; // Double-check to ensure we don't remove the last tab, which would break the UI
 
-		const tabLi = $(this).closest(".nav-item");
-		const tabBtn = tabLi.find(".order-tab-btn");
-		const wasActive = tabBtn.hasClass("active");
+				const tabLi = $(this).closest(".nav-item");
+				const tabBtn = tabLi.find(".order-tab-btn");
+				const wasActive = tabBtn.hasClass("active");
 
-		tabLi.remove();
+				tabLi.remove();
 
-		// If we remove the active tab, force the activation of the last remaining tab
-		if (wasActive) {
-			const lastTab = tabsBtnsContainer.find(".order-tab-btn").last();
-			lastTab.click(); // Simulate the click to execute the activation logic
-		}
+				// If we remove the active tab, force the activation of the last remaining tab
+				if (wasActive) {
+					const lastTab = tabsBtnsContainer
+						.find(".order-tab-btn")
+						.last();
+					lastTab.click(); // Simulate the click to execute the activation logic
+				}
 
-		updateCloseButtons();
-		deleteOrderCart(tabBtn.attr("id")); // Delete the order/cart in the system that corresponds to the closed tab
-		saveTabsState(tabsBtnsContainer);
+				updateCloseButtons();
+				deleteOrderCart(tabBtn.attr("id")); // Delete the order/cart in the system that corresponds to the closed tab
+				saveTabsState(tabsBtnsContainer);
+			} else {
+				return false;
+			}
+		});
 	});
 
 	const restoredActiveOrderId = loadTabsState(tabsBtnsContainer);
