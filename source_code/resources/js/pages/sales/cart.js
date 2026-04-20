@@ -60,13 +60,14 @@ const formatCurrency = (amount) => {
  * @returns {void}
  */
 export const syncFinalizeSaleButtonState = () => {
-	if (!finalizeSaleButton) {
+	if (!finalizeSaleButton || !clearSaleButton) {
 		return;
 	}
 
 	const hasProductsInActiveCart =
 		(state.orders[state.activeOrderId] || []).length > 0;
 	finalizeSaleButton.disabled = !hasProductsInActiveCart;
+	clearSaleButton.disabled = !hasProductsInActiveCart;
 };
 
 

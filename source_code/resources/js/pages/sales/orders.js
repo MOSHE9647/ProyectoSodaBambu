@@ -22,6 +22,23 @@ const getDefaultTabTextById = (orderId = "") => {
 	return `ORD-${orderNumber.toString().padStart(4, "0")}`;
 };
 
+const getNextOrderCounter = (tabsOrIds = []) => {
+	const tabIds = Array.isArray(tabsOrIds)
+		? tabsOrIds.map((tab) => (typeof tab === "string" ? tab : tab?.id || ""))
+		: [];
+
+	const maxOrderNumber = tabIds.reduce((currentMax, tabId) => {
+		const orderNumber = getOrderNumberFromId(tabId);
+		if (orderNumber === null) {
+			return currentMax;
+		}
+
+		return Math.max(currentMax, orderNumber);
+	}, 1);
+
+	return maxOrderNumber + 1;
+};
+
 /**
  * Builds and returns the HTML markup for an order tab button item.
  *
@@ -100,16 +117,8 @@ const saveTabsState = (tabsBtnsContainer) => {
 		tabsBtnsContainer.find(".order-tab-btn.active").attr("id") ||
 		tabs[0].id;
 
-	const maxOrderNumber = tabs.reduce((currentMax, tab) => {
-		const orderNumber = getOrderNumberFromId(tab.id);
-		if (orderNumber === null) {
-			return currentMax;
-		}
-
-		return Math.max(currentMax, orderNumber);
-	}, 1);
-
-	const nextOrderCounter = Math.max(state.orderCounter, maxOrderNumber + 1);
+	const nextOrderCounter = getNextOrderCounter(tabs);
+	state.orderCounter = nextOrderCounter;
 
 	localStorage.setItem(
 		TABS_STORAGE_KEY,
@@ -160,19 +169,7 @@ const loadTabsState = (tabsBtnsContainer) => {
 			);
 		});
 
-		const maxOrderNumber = tabs.reduce((currentMax, tab) => {
-			const orderNumber = getOrderNumberFromId(tab.id);
-			if (orderNumber === null) {
-				return currentMax;
-			}
-
-			return Math.max(currentMax, orderNumber);
-		}, 1);
-
-		const savedOrderCounter = Number(parsedState?.orderCounter);
-		state.orderCounter = Number.isFinite(savedOrderCounter)
-			? Math.max(savedOrderCounter, maxOrderNumber + 1)
-			: maxOrderNumber + 1;
+		state.orderCounter = getNextOrderCounter(tabs);
 
 		return activeOrderId;
 	} catch (error) {
@@ -243,6 +240,15 @@ export function initializeSalesOrderTabs() {
 	// Add new tab on "new order" button click
 	if (newOrderBtn.length) {
 		newOrderBtn.on("click", function () {
+			state.orderCounter = getNextOrderCounter(
+				tabsBtnsContainer
+					.find(".order-tab-btn")
+					.map(function () {
+						return $(this).attr("id") || "";
+					})
+					.get(),
+			);
+
 			const tabBtnId = state.orderCounter.toString().padStart(4, "0");
 			const newTabBtnId = `order-tab-${tabBtnId}`;
 			const newTabBtnContent = `ORD-${tabBtnId}`;
@@ -261,7 +267,6 @@ export function initializeSalesOrderTabs() {
 
 			scrollTabsToEnd();
 			updateCloseButtons();
-			state.orderCounter++;
 
 			switchActiveOrder(newTabBtnId); // Change active order/cart in the system to match the newly created tab
 			saveTabsState(tabsBtnsContainer);
@@ -337,24 +342,15 @@ export function initializeSalesOrderTabs() {
 	const restoredActiveOrderId = loadTabsState(tabsBtnsContainer);
 
 	if (!restoredActiveOrderId) {
-		const tabIds = tabsBtnsContainer
+		state.orderCounter = getNextOrderCounter(
+			tabsBtnsContainer
 			.find(".order-tab-btn")
 			.map(function () {
 				return $(this).attr("id") || "";
 			})
 			.get()
-			.filter(Boolean);
-
-		const maxOrderNumber = tabIds.reduce((currentMax, tabId) => {
-			const orderNumber = getOrderNumberFromId(tabId);
-			if (orderNumber === null) {
-				return currentMax;
-			}
-
-			return Math.max(currentMax, orderNumber);
-		}, 1);
-
-		state.orderCounter = Math.max(state.orderCounter, maxOrderNumber + 1);
+			.filter(Boolean),
+		);
 	}
 
 	// Initial call to set the correct visibility of close buttons based on the initial number of tabs
