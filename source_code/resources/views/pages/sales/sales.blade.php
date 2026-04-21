@@ -1,8 +1,9 @@
 @extends('layouts.app')
 
-{{-- TODO: Need to implement the logic to ask for the initial amount of money the customer has --}}
-
 @section('content')
+
+	<div id="show-opening-cash-modal" data-show-modal="{{ $showOpeningCashModal ?? false }}" class="d-none"></div>
+
 	{{-- Header --}}
 	<div class="d-flex flex-row align-items-center justify-content-between gap-2">
 		<x-header title="Ventas" subtitle="Gestión y seguimiento de ventas" />

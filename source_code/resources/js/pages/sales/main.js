@@ -1,4 +1,5 @@
 import { initializeSalesCart, getActiveSaleData, clearActiveCart } from "./cart.js";
+import { initializeCashRegister } from "./cash-register.js";
 import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
@@ -15,6 +16,7 @@ const SaleData = {
 
 $(() => {
 	// Initialize all sales-related components
+	initializeCashRegister();
     initializeSalesProducts();
     initializeSalesCart();
 	initializeSalesOrderTabs();

@@ -2,6 +2,7 @@
 
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\HelpController;
@@ -54,6 +55,8 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
         Route::get('/tabs/{tab}', [AttendanceController::class, 'tab'])->name('attendance.tabs');
         Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
     });
+
+    Route::post('/cash-registers', [CashRegisterController::class, 'store'])->name('cash-registers.store');
 
     // RUTA TEMPORAL PARA validar el proceso de pago automático al marcar una venta o compra como pagada
     // 1. Crear una COMPRA completada
