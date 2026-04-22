@@ -1,10 +1,9 @@
 @php
 	use App\Enums\PaymentMethod;
-    use Illuminate\Support\Facades\Blade;
 
 	$paymentMethod = $lastSale?->payments?->first()?->method;
 	$paymentIcon = match($paymentMethod) {
-        PaymentMethod::SINPE => Blade::render('<x-icons.sinpe-movil width="28" height="18" />', deleteCachedView: true),
+		PaymentMethod::SINPE => '<x-icons.sinpe-movil width="28" height="18" />',
 		PaymentMethod::CARD => '<i class="bi bi-credit-card"></i>',
 		PaymentMethod::CASH => '<i class="bi bi-cash"></i>',
 		null => '<i class="bi bi-hourglass-split text-warning me-1"></i>',

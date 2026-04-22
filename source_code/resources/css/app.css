@@ -213,3 +213,121 @@ main {
 	margin-left: 0.35rem;
 	transform: translateX(0);
 }
+
+.sales-hotkeys-swal {
+	border-color: var(--table-container-border);
+	box-shadow: var(--table-container-shadow);
+	padding: 1rem;
+	max-width: 25rem;
+	width: min(92vw, 25rem);
+	border-radius: 0.9rem;
+}
+
+.sales-hotkeys-swal-title {
+	display: flex;
+	flex-direction: row;
+	text-align: left;
+	padding: 0.95rem 1.2rem 0 1.2rem;
+	font-weight: 700;
+	font-size: 1.5rem;
+	color: var(--status-bar-text-color);
+}
+
+.sales-hotkeys-swal-html {
+	padding: 0.3rem 1.2rem 0.4rem 1.2rem !important;
+	margin: 0 !important;
+}
+
+.sales-hotkeys-swal-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+
+.sales-hotkeys-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.38rem;
+}
+
+.sales-hotkeys-subtitle {
+	margin-bottom: 0.25rem;
+	border-bottom: 1px solid var(--bs-border-color);
+	padding-bottom: .8rem;
+	text-align: left;
+	font-size: 0.8rem;
+	color: var(--bs-secondary-color);
+}
+
+.sales-hotkeys-row {
+	display: grid;
+	grid-template-columns: auto auto 1fr;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.5rem 0.65rem;
+	border-radius: 0.55rem;
+	border: 1px solid var(--bambu-translucent-border);
+	background: var(--bs-tertiary-bg);
+}
+
+.sales-hotkeys-row--positive {
+	border-color: rgb(40 167 69 / 30%);
+}
+
+.sales-hotkeys-row--caution {
+	border-color: rgb(255 193 7 / 30%);
+}
+
+.sales-hotkeys-row--destructive {
+	border-color: rgb(220 53 69 / 30%);
+}
+
+.sales-hotkeys-key {
+	min-width: 3rem;
+	text-align: center;
+	padding: 0.15rem 0.45rem;
+	border: 1px solid var(--bambu-translucent-border);
+	border-radius: 0.45rem;
+	font-size: 0.75rem;
+	font-weight: 700;
+	font-family: "Consolas", "Courier New", monospace;
+	background: var(--bs-secondary-bg);
+	color: var(--status-bar-text-color);
+	line-height: 1.35;
+	white-space: nowrap;
+}
+
+.sales-hotkeys-key--positive {
+	color: var(--bs-success-text-emphasis);
+	border-color: rgb(40 167 69 / 35%);
+	background: rgb(40 167 69 / 12%);
+}
+
+.sales-hotkeys-key--caution {
+	color: var(--bs-warning-text-emphasis);
+	border-color: rgb(255 193 7 / 45%);
+	background: rgb(255 193 7 / 12%);
+}
+
+.sales-hotkeys-key--destructive {
+	color: var(--bs-danger-text-emphasis);
+	border-color: rgb(220 53 69 / 35%);
+	background: rgb(220 53 69 / 12%);
+}
+
+.sales-hotkeys-icon {
+	font-size: 0.95rem;
+	color: var(--bs-secondary-color);
+}
+
+.sales-hotkeys-label {
+	text-align: left;
+	font-size: 0.88rem;
+	color: var(--status-bar-text-color);
+}
+
+.sales-hotkeys-footer {
+	border-top: 1px solid var(--bs-border-color);
+	padding: 0.7rem 0 0.25rem;
+	text-align: center;
+}

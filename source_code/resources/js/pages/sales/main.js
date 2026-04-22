@@ -1,9 +1,10 @@
+import { formatTimeAgo, PaymentMethods, PaymentStatus, processSale, startTimeUpdateInterval } from "./api.js";
 import { initializeSalesCart, getActiveSaleData, clearActiveCart } from "./cart.js";
 import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
-import { formatTimeAgo, PaymentMethods, PaymentStatus, processSale, startTimeUpdateInterval } from "./api.js";
 import { initializeHotkeys } from "./hotkeys.js";
+import { SwalModal } from "../../utils/sweetalert.js";
 
 /**
  * Mutable sale draft used as payload source when finalizing a sale.
@@ -90,7 +91,7 @@ $(() => {
 			SaleData.payment_details = SaleData.payment_status === PaymentStatus.PAID
 				? SaleData.payment_details = [
 					{
-						method: PaymentMethods.CASH, // Assuming cash payment for simplicity; this can be dynamic based on user input
+						method: PaymentMethods.CARD, // Assuming cash payment for simplicity; this can be dynamic based on user input
 						amount: SaleData.total, // Full amount paid in cash; adjust if partial payments or multiple methods are implemented
 						change_amount: 0, // Assuming no change for simplicity; calculate if needed based on payment amount and total
 						reference: String(Math.floor(10000000 + Math.random() * 90000000)), // Numeric 8-digit reference
@@ -102,4 +103,40 @@ $(() => {
 			processSale(SaleData.payment_details, SaleData.payment_status);
 		});
     }
+
+	const rePrintLastSaleButton = $("#reprint-last-sale");
+	if (rePrintLastSaleButton.length) {
+		const SweetModalCustomClass = {
+			title: "d-flex justify-content-center align-items-center border-bottom pb-3 mb-3",
+			popup: "swal-popup w-auto h-auto",
+			closeButton: "swal-close-btn fs-3",
+			htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
+			confirmButton: "btn btn-primary mx-1",
+			cancelButton: "btn btn-danger mx-1",
+			icon: "mb-4",
+		};
+
+		rePrintLastSaleButton.on("click", () => {
+			SwalModal.fire({
+				title: "Reimprimir última venta",
+				text: "¿Deseas reimprimir el recibo de la última venta?",
+				icon: "question",
+				showCancelButton: true,
+				customClass: SweetModalCustomClass,
+				confirmButtonText: "Sí, reimprimir",
+				cancelButtonText: "No, cancelar",
+			}).then((result) => {
+				if (result.isConfirmed) {
+					// Placeholder for reprint logic; implement actual reprint functionality here.
+					SwalModal.fire({
+						title: "Funcionalidad no implementada",
+						text: "La función de reimprimir la última venta aún no está implementada.",
+						icon: "info",
+						customClass: SweetModalCustomClass,
+					});
+					// Example of triggering a click on the finalize button to simulate reprint; replace with actual reprint logic.
+				}
+			});
+		});
+	}
 });
