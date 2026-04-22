@@ -20,8 +20,8 @@ class ProductStockFactory extends Factory
     {
         return [
             'product_id' => Product::factory(),
-            'current_stock' => $this->faker->numberBetween(0, 1000),
-            'minimum_stock' => $this->faker->numberBetween(0, 100),
+            'current_stock' => $this->faker->numberBetween(500, 1000),
+            'minimum_stock' => $this->faker->numberBetween(15, 100),
         ];
     }
 }

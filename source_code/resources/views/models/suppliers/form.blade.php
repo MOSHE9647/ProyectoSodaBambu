@@ -56,12 +56,12 @@
             </a>
 
             {{-- Submit Button --}}
-            <x-form.submit :id="isset($supplier) ? 'edit-supplier-form-button' : 'create-supplier-form-button'" :spinnerId="isset($supplier) ? 'edit-supplier-form-spinner' : 'create-supplier-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="isset($supplier) ? 'Actualizando...' : 'Guardando...'">
+            <x-form.button :id="isset($supplier) ? 'edit-supplier-form-button' : 'create-supplier-form-button'" :spinnerId="isset($supplier) ? 'edit-supplier-form-spinner' : 'create-supplier-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="isset($supplier) ? 'Actualizando...' : 'Guardando...'">
                 <div id="{{ isset($supplier) ? 'edit-supplier-form-button-text' : 'create-supplier-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-building me-2"></i>
                     {{ isset($supplier) ? 'Actualizar' : 'Guardar' }}
                 </div>
-            </x-form.submit>
+            </x-form.button>
         </div>
     </form>
 </div>

@@ -60,7 +60,7 @@
 		@csrf
 
 		{{-- Submit Button --}}
-		<x-form.submit
+		<x-form.button
 			:id="'resend-button'"
 			:class="'btn-primary w-100'"
 			:spinnerId="'resend-spinner'"
@@ -69,7 +69,7 @@
 				<i class="bi bi-envelope-arrow-up me-2"></i>
 				Enviar Correo de Verificación
 			</div>
-		</x-form.submit>
+		</x-form.button>
 	</form>
 
 	{{-- Logout Form --}}
@@ -79,7 +79,7 @@
 		@csrf
 
 		{{-- Submit Button --}}
-		<x-form.submit
+		<x-form.button
 			:id="'logout-button'"
 			:class="'btn-danger w-100'"
 			:spinnerId="'logout-spinner'"
@@ -88,7 +88,7 @@
 				<i class="bi bi-box-arrow-right me-2"></i>
 				Cerrar Sesión
 			</div>
-		</x-form.submit>
+		</x-form.button>
 	</form>
 @endsection
 

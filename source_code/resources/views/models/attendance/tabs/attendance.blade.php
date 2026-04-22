@@ -133,10 +133,10 @@
         </div>
     </x-alert>
 
-    <x-form.submit :id="'attendance-submit-form-button'" :spinnerId="'attendance-submit-form-spinner'" :class="'btn-primary w-100 mt-3'">
+    <x-form.button :id="'attendance-submit-form-button'" :spinnerId="'attendance-submit-form-spinner'" :class="'btn-primary w-100 mt-3'">
         <div id="attendance-submit-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
             <i class="bi bi-clipboard-check-fill me-2"></i>
             Registrar Asistencia
         </div>
-    </x-form.submit>
+    </x-form.button>
 </form>

@@ -23,7 +23,8 @@ class SaleDetail extends Model
         'product_id',
         'quantity',
         'unit_price',
-        'subtotal',
+        'applied_tax',
+        'sub_total',
     ];
 
     /**
@@ -32,27 +33,29 @@ class SaleDetail extends Model
      * @return array<string, string>
      */
     protected $casts = [
-        'quantity' => 'integer',
         'unit_price' => 'decimal:2',
-        'subtotal' => 'decimal:2',
+        'applied_tax' => 'decimal:2',
+        'sub_total' => 'decimal:2',
     ];
 
     /**
-     * Get the sale that owns this detail row.
+     * Relation: Sale.
+     * A sale detail belongs to a single sale.
      *
-     * @return BelongsTo<Sale, SaleDetail>
+     * @return BelongsTo<SaleDetail, Sale>
      */
-    public function sale(): BelongsTo
+    public function sale()
     {
         return $this->belongsTo(Sale::class);
     }
 
     /**
-     * Get the product sold in this detail row.
+     * Relation: Product.
+     * A sale detail belongs to a single product.
      *
      * @return BelongsTo<Product, SaleDetail>
      */
-    public function product(): BelongsTo
+    public function product()
     {
         return $this->belongsTo(Product::class);
     }

@@ -63,6 +63,7 @@
 				</li>
 				
 				<li class="list-item">
+					{{-- TODO: Consider if is necessary to clear the sales cart session data on logout --}}
 					<a
 						id="logoutBtn"
 						class="dropdown-item"

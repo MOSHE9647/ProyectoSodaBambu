@@ -19,15 +19,13 @@ class SaleDetailFactory extends Factory
      */
     public function definition(): array
     {
-        $quantity = fake()->numberBetween(1, 5);
-        $unitPrice = fake()->randomFloat(2, 500, 30000);
-
         return [
             'sale_id' => Sale::factory(),
             'product_id' => Product::factory(),
-            'quantity' => $quantity,
-            'unit_price' => $unitPrice,
-            'subtotal' => round($quantity * $unitPrice, 2),
+            'quantity' => $this->faker->numberBetween(1, 3),
+            'unit_price' => $this->faker->randomFloat(2, 25, 60000),
+            'applied_tax' => $this->faker->randomFloat(2, 13, 20),
+            'sub_total' => $this->faker->randomFloat(2, 1250, 3000000),
         ];
     }
 }

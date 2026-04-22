@@ -95,7 +95,7 @@
 		</x-form.auth.input>
 
 		{{-- Submit Button --}}
-		<x-form.submit
+		<x-form.button
 			:id="'reset-password-button'"
 			:class="'btn-primary w-100 my-3'"
 			:spinnerId="'reset-password-spinner'"
@@ -104,7 +104,7 @@
 				<i class="bi bi-check-circle me-2"></i>
 				Cambiar Contraseña
 			</div>
-		</x-form.submit>
+		</x-form.button>
 
 		{{-- Additional Links --}}
 		<a
