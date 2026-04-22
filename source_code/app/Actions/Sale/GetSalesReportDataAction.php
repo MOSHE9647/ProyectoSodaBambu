@@ -29,7 +29,7 @@ class GetSalesReportDataAction
         $paymentStatus = $filters['payment_status'] ?? PaymentStatus::PAID->value;
 
         $query = Sale::query()
-            ->with('employee.user')
+            ->with('user')
             ->whereBetween('date', [
                 $startLocal->copy()->timezone('UTC'),
                 $endLocal->copy()->timezone('UTC'),
@@ -46,7 +46,7 @@ class GetSalesReportDataAction
 
         $sales = $query
             ->orderBy('date', 'desc')
-            ->get(['id', 'employee_id', 'invoice_number', 'payment_status', 'date', 'total']);
+            ->get(['id', 'user_id', 'invoice_number', 'payment_status', 'date', 'total']);
 
         $salesByDate = $sales->groupBy(function (Sale $sale) use ($timezone) {
             return Carbon::parse($sale->date)->timezone($timezone)->format('Y-m-d');
