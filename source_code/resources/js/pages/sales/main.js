@@ -14,12 +14,29 @@ const SaleData = {
 	payment_details: [],
 };
 
+/**
+ * Updates the sales page clock element with the current local time.
+ * If the target element does not exist, no update is performed.
+ */
+const tickClock = () => {
+	const currentTimeElement = $("#current-time");
+	if (currentTimeElement.length) {
+		const now = new Date();
+		const formattedTime = now.toLocaleTimeString();
+		currentTimeElement.text(formattedTime);
+	}
+};
+
 $(() => {
 	// Initialize all sales-related components
     initializeSalesProducts();
     initializeSalesCart();
 	initializeSalesOrderTabs();
 	initializeHotkeys();
+
+	// Start the clock
+	tickClock();
+	setInterval(tickClock, 1000); // Update the clock every second
 
 	// Handle finalize sale button click
     const finalizeSaleButton = $("#finalize-sale-button");

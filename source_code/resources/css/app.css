@@ -2,6 +2,15 @@
 
 :root {
 	--sidebar-width: 290px;
+	--status-bar-text-color: #1a211a;
+}
+
+[data-bs-theme="light"] {
+	--status-bar-text-color: #1a211a;
+}
+
+[data-bs-theme="dark"] {
+	--status-bar-text-color: #e2e8e2;
 }
 
 main {
