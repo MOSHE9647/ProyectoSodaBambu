@@ -39,9 +39,6 @@ class Purchase extends Model
         'date' => 'datetime',
         'total' => 'decimal:2',
         'payment_status' => PaymentStatus::class,
-        // 'created_at' => CostaRicaDatetime::class,
-        // 'updated_at' => CostaRicaDatetime::class,
-        // 'deleted_at' => CostaRicaDatetime::class,
     ];
 
     /**

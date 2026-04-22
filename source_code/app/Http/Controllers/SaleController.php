@@ -35,7 +35,7 @@ class SaleController extends Controller implements HasMiddleware
             return view('pages.sales._products-list', compact('products'))->render();
         }
 
-        $lastSale = Sale::with('saleDetails', 'payments')->latest()?->first();
+        $lastSale = Sale::with('details', 'payments')->latest()?->first();
 
         return view('pages.sales.sales', compact('products', 'categories', 'lastSale'));
     }
@@ -70,7 +70,7 @@ class SaleController extends Controller implements HasMiddleware
 
         return response()->json([
             'message' => 'Venta registrada exitosamente.',
-            'data' => $sale->load('saleDetails', 'payments'),
+            'data' => $sale->load('details', 'payments'),
         ], 201);
     }
 
@@ -129,7 +129,7 @@ class SaleController extends Controller implements HasMiddleware
 
         return response()->json([
             'message' => 'Venta actualizada exitosamente.',
-            'data' => $sale->load('saleDetails', 'payments'),
+            'data' => $sale->load('details', 'payments'),
         ], 200);
     }
 

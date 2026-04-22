@@ -39,7 +39,7 @@ class SaleObserver implements ShouldHandleEventsAfterCommit
      */
     public function deleted(Sale $sale): void
     {
-        $sale->saleDetails->each(fn ($detail) => $detail->delete());
+        $sale->details->each(fn ($detail) => $detail->delete());
 
         $sale->payments->each(function ($payment) {
             $payment->transaction?->delete();
@@ -55,7 +55,7 @@ class SaleObserver implements ShouldHandleEventsAfterCommit
      */
     public function restored(Sale $sale): void
     {
-        $sale->saleDetails()->withTrashed()->each(fn ($detail) => $detail->restore());
+        $sale->details()->withTrashed()->each(fn ($detail) => $detail->restore());
         $sale->payments()->withTrashed()->each(fn ($payment) => $payment->restore());
 
         $this->refreshSalesCache();

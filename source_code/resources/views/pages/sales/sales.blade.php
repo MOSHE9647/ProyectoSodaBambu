@@ -184,7 +184,7 @@
             {{-- Sale Details --}}
             <div class="d-flex align-items-center gap-2 text-muted small">
                 <i class="bi bi-box-seam"></i>
-                <span id="last-sale-items">{{ $lastSale?->saleDetails?->count() ?? 0 }} ítem(s)</span>
+                <span id="last-sale-items">{{ $lastSale?->details?->count() ?? 0 }} ítem(s)</span>
                 <span>·</span>
                 <span id="last-sale-time" data-sale-time="{{ $lastSale?->date?->toIso8601String() ?? '' }}">
                     {{ $lastSale?->date ? $lastSale->date->locale('es')->diffForHumans(null, true, true) : 'hace 0 min' }}

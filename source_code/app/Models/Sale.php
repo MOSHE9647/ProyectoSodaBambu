@@ -57,7 +57,7 @@ class Sale extends Model
      *
      * @return HasMany<SaleDetail>
      */
-    public function saleDetails()
+    public function details()
     {
         return $this->hasMany(SaleDetail::class);
     }

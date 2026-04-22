@@ -69,7 +69,7 @@ test('CP-02_EIF-183 - creates pending sale with two details', function () {
 
     $sale = $sale->fresh();
 
-    expect($sale->saleDetails()->count('*'))->toBe(2);
+    expect($sale->details()->count('*'))->toBe(2);
 });
 
 /**
@@ -108,10 +108,10 @@ test('CP-03_EIF-183 - updates pending sale with hard delete for removed details'
 
     $sale = $sale->fresh();
 
-    $gallopintoDetail = $sale->saleDetails()
+    $gallopintoDetail = $sale->details()
         ->where('product_id', '=', $gallopinto->id)
         ->firstOrFail(['*']);
-    $coffeeDetail = $sale->saleDetails()
+    $coffeeDetail = $sale->details()
         ->where('product_id', '=', $coffee->id)
         ->firstOrFail(['*']);
 
@@ -140,7 +140,7 @@ test('CP-03_EIF-183 - updates pending sale with hard delete for removed details'
 
     $sale = $sale->fresh();
 
-    expect($sale->saleDetails()->count('*'))->toBe(2);
+    expect($sale->details()->count('*'))->toBe(2);
     $this->assertDatabaseMissing('sale_details', ['id' => $coffeeDetail->id]);
 });
 
@@ -179,10 +179,10 @@ test('CP-04_EIF-183 - changes sale status from pending to paid', function () {
 
     $sale = $sale->fresh();
 
-    $gallopintoDetail = $sale->saleDetails()
+    $gallopintoDetail = $sale->details()
         ->where('product_id', '=', $gallopinto->id)
         ->firstOrFail(['*']);
-    $coffeeDetail = $sale->saleDetails()
+    $coffeeDetail = $sale->details()
         ->where('product_id', '=', $coffee->id)
         ->firstOrFail(['*']);
 
@@ -211,7 +211,7 @@ test('CP-04_EIF-183 - changes sale status from pending to paid', function () {
     ], null);
 
     expect($sale->fresh()->payment_status)->toBe(PaymentStatus::PAID);
-    expect($sale->fresh()->saleDetails()->count('*'))->toBe(2);
+    expect($sale->fresh()->details()->count('*'))->toBe(2);
 });
 
 /**
@@ -249,10 +249,10 @@ test('CP-05_EIF-183 - updates paid sale with soft delete for removed details', f
 
     $sale = $sale->fresh();
 
-    $gallopintoDetail = $sale->saleDetails()
+    $gallopintoDetail = $sale->details()
         ->where('product_id', '=', $gallopinto->id)
         ->firstOrFail(['*']);
-    $empanadaDetail = $sale->saleDetails()
+    $empanadaDetail = $sale->details()
         ->where('product_id', '=', $empanada->id)
         ->firstOrFail(['*']);
 
@@ -310,11 +310,11 @@ test('CP-06_EIF-183 - restores soft deleted detail when sent again in paid sale'
 
     $sale = $sale->fresh();
 
-    $gallopintoDetail = $sale->saleDetails()
+    $gallopintoDetail = $sale->details()
         ->where('product_id', '=', $gallopinto->id)
         ->firstOrFail(['*']);
 
-    $empanadaDetail = $sale->saleDetails()
+    $empanadaDetail = $sale->details()
         ->where('product_id', '=', $empanada->id)
         ->firstOrFail(['*']);
 
@@ -361,5 +361,5 @@ test('CP-06_EIF-183 - restores soft deleted detail when sent again in paid sale'
     ], null);
 
     $this->assertNotSoftDeleted('sale_details', ['id' => $empanadaDetail->id]);
-    expect($sale->fresh()->saleDetails()->count('*'))->toBe(2);
+    expect($sale->fresh()->details()->count('*'))->toBe(2);
 });

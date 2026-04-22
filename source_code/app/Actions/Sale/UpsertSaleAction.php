@@ -65,7 +65,7 @@ class UpsertSaleAction
             ->all();
 
         // Soft-delete existing details that are not in the incoming data
-        $detailsToDelete = $sale->saleDetails()->whereNotIn('id', $incomingDetailIds)->get();
+        $detailsToDelete = $sale->details()->whereNotIn('id', $incomingDetailIds)->get();
         foreach ($detailsToDelete as $detail) {
             match ($sale->payment_status) {
                 PaymentStatus::PAID => $detail->delete(),
@@ -80,7 +80,7 @@ class UpsertSaleAction
             $cleanData = Arr::except($detailData, ['created_at', 'updated_at', 'deleted_at']);
 
             $detail = $id
-                ? $sale->saleDetails()->withTrashed()->findOrFail($id)
+                ? $sale->details()->withTrashed()->findOrFail($id)
                 : new SaleDetail(['sale_id' => $sale->id]);
 
             $detail->fill($cleanData);
