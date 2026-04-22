@@ -169,12 +169,22 @@ class GetSalesReportDataAction
             return [];
         }
 
+        $subtotalColumn = null;
+        if (Schema::hasColumn('sale_details', 'sub_total')) {
+            $subtotalColumn = 'sub_total';
+        } elseif (Schema::hasColumn('sale_details', 'subtotal')) {
+            $subtotalColumn = 'subtotal';
+        }
+
+        if ($subtotalColumn === null) {
+            return [];
+        }
+
         $requiredColumns = [
             'sale_id',
             'product_id',
             'quantity',
             'unit_price',
-            'subtotal',
             'deleted_at',
         ];
 
@@ -221,7 +231,7 @@ class GetSalesReportDataAction
 
         $products = $query
             ->groupBy('p.id', 'p.name', 'p.type', 'c.name')
-            ->selectRaw('p.id as product_id, p.name as product_name, p.type as product_type, c.name as category_name, SUM(sd.quantity) as sold_quantity, SUM(sd.subtotal) as income')
+            ->selectRaw("p.id as product_id, p.name as product_name, p.type as product_type, c.name as category_name, SUM(sd.quantity) as sold_quantity, SUM(sd.{$subtotalColumn}) as income")
             ->orderByDesc('sold_quantity')
             ->orderByDesc('income')
             ->limit(30)
