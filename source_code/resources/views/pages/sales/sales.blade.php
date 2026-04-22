@@ -1,3 +1,18 @@
+@php
+	use App\Enums\PaymentMethod;
+
+	$paymentMethod = $lastSale?->payments?->first()?->method;
+	$paymentIcon = match($paymentMethod) {
+		PaymentMethod::SINPE => '<x-icons.sinpe-movil width="28" height="18" />',
+		PaymentMethod::CARD => '<i class="bi bi-credit-card"></i>',
+		PaymentMethod::CASH => '<i class="bi bi-cash"></i>',
+		null => '<i class="bi bi-hourglass-split text-warning me-1"></i>',
+		default => '<i class="bi bi-x-circle text-danger"></i>',
+	};
+	$paymentStatusClass = $paymentMethod ? 'text-success' : 'text-warning';
+	$paymentText = $paymentMethod ? "Pago vía {$paymentMethod->label()}" : "Pago Pendiente";
+@endphp
+
 @extends('layouts.app')
 
 @section('content')
@@ -145,17 +160,23 @@
             <div class="d-flex align-items-center gap-2">
                 <i class="bi bi-receipt text-muted"></i>
                 <span class="text-muted small">Última venta:</span>
-                <span id="last-sale-info" class="fw-semibold" style="color: var(--status-bar-text-color);">ORD-0031</span>
+                <span id="last-sale-order-id" class="fw-semibold" style="color: var(--status-bar-text-color);">{{ $lastSale?->invoice_number ?? 'N/A' }}</span>
             </div>
 
             <span class="text-muted">·</span>
 
             {{-- Payment Method --}}
             <div class="d-flex align-items-center gap-2">
-                <span id="payment-method" class="text-success" title="Pago vía SINPE Móvil">
-                    <x-icons.sinpe-movil width="28" height="18" />
+                <span id="last-sale-payment-method" class="{{ $paymentStatusClass }} d-flex align-items-center gap-2" title="{{ $paymentText }}">
+					{!! $paymentIcon !!}
+					@if(!$paymentMethod) 
+						<span class="d-none d-sm-inline">Pago Pendiente</span> 
+						<span class="text-muted">·</span>
+					@endif
                 </span>
-                <span id="payment-amount" class="text-success fw-bold">₡ 23.450,00</span>
+                <span id="last-sale-payment-amount" class="text-success fw-bold">
+					₡ {{ number_format($lastSale?->total ?? 0, 2, ',', ' ') }}
+				</span>
             </div>
 
             <span class="text-muted">·</span>
@@ -163,9 +184,11 @@
             {{-- Sale Details --}}
             <div class="d-flex align-items-center gap-2 text-muted small">
                 <i class="bi bi-box-seam"></i>
-                <span id="sale-items">3 ítem(s)</span>
+                <span id="last-sale-items">{{ $lastSale?->saleDetails?->count() ?? 0 }} ítem(s)</span>
                 <span>·</span>
-                <span id="sale-time">hace 4 min</span>
+                <span id="last-sale-time" data-sale-time="{{ $lastSale?->date?->toIso8601String() ?? '' }}">
+                    {{ $lastSale?->date ? $lastSale->date->locale('es')->diffForHumans(null, true, true) : 'hace 0 min' }}
+				</span>
             </div>
 
         </div>

@@ -42,7 +42,7 @@ const showError = (errorMessage, consoleErrorMessage) => {
 	});
 };
 
-const formatCurrency = (amount) => {
+export const formatCurrency = (amount) => {
 	const numericAmount = Number(amount) || 0;
 	const roundedAmount = Number(numericAmount.toFixed(2));
 

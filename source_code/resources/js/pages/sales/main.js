@@ -2,12 +2,12 @@ import { initializeSalesCart, getActiveSaleData, clearActiveCart } from "./cart.
 import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
-import { PaymentStatus, processSale } from "./api.js";
+import { formatTimeAgo, PaymentStatus, processSale, startTimeUpdateInterval } from "./api.js";
 import { initializeHotkeys } from "./hotkeys.js";
 
 // Initial sale data structure
 const SaleData = {
-	payment_status: PaymentStatus.PENDING, // Default to pending; this can be updated based on user input
+	payment_status: PaymentStatus.PAID, // Default to pending; this can be updated based on user input
 	date: new Date().toISOString(),
 	total: 8500,
 	sale_details: [],
@@ -27,6 +27,29 @@ const tickClock = () => {
 	}
 };
 
+/**
+ * Updates the "last sale" label with a relative timestamp (e.g., "2 minutes ago").
+ *
+ * Reads the original sale timestamp from the `data-sale-time` attribute in
+ * `#last-sale-time`, renders the relative text once, and then starts a periodic
+ * updater so the displayed value stays current over time.
+ *
+ * If the target element or timestamp is missing, no action is performed.
+ */
+const updateLastSaleTime = () => {
+	const lastSaleTimeElement = $("#last-sale-time");
+	if (lastSaleTimeElement.length) {
+		const lastSaleTime = lastSaleTimeElement.data("sale-time");
+		if (lastSaleTime) {
+			const relativeTime = formatTimeAgo(lastSaleTime);
+			lastSaleTimeElement.text(relativeTime);
+
+			// Start interval to update the time every minute
+			startTimeUpdateInterval(lastSaleTimeElement, lastSaleTime);
+		}
+	}
+}
+
 $(() => {
 	// Initialize all sales-related components
     initializeSalesProducts();
@@ -37,6 +60,9 @@ $(() => {
 	// Start the clock
 	tickClock();
 	setInterval(tickClock, 1000); // Update the clock every second
+
+	// Update the last sale time display
+	updateLastSaleTime();
 
 	// Handle finalize sale button click
     const finalizeSaleButton = $("#finalize-sale-button");
