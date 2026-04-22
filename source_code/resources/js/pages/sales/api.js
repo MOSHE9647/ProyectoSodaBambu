@@ -6,6 +6,7 @@ import {
 	formatCurrency,
 } from "./cart.js";
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { createSinpeMovilIcon } from "../../utils/sinpemovil-icon.js";
 
 /**
  * Available payment methods used in the sales flow.
@@ -150,9 +151,14 @@ const updatePaymentStatusUI = (saleData) => {
         const paymentAmount = saleData.payments[0].amount || 0;
 
         const methodIcons = {
-            [PaymentMethods.CASH]: '<i class="bi bi-cash-coin text-success"></i>',
-            [PaymentMethods.CARD]: '<i class="bi bi-credit-card text-primary"></i>',
-            [PaymentMethods.SINPE]: '<x-icons.sinpe-movil width="28" height="18" />'
+            [PaymentMethods.CASH]: '<i class="bi bi-cash text-success"></i>',
+            [PaymentMethods.CARD]: '<i class="bi bi-credit-card text-success"></i>',
+			[PaymentMethods.SINPE]: createSinpeMovilIcon({
+				attributes: {
+					width: "28",
+					height: "18",
+				},
+			}).outerHTML,
         };
 
         lastSalePaymentMethodElement.html(methodIcons[paymentMethod] || '<i class="bi bi-question-circle text-muted"></i>');

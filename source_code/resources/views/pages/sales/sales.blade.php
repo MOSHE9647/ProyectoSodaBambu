@@ -1,9 +1,10 @@
 @php
 	use App\Enums\PaymentMethod;
+    use Illuminate\Support\Facades\Blade;
 
 	$paymentMethod = $lastSale?->payments?->first()?->method;
 	$paymentIcon = match($paymentMethod) {
-		PaymentMethod::SINPE => '<x-icons.sinpe-movil width="28" height="18" />',
+        PaymentMethod::SINPE => Blade::render('<x-icons.sinpe-movil width="28" height="18" />', deleteCachedView: true),
 		PaymentMethod::CARD => '<i class="bi bi-credit-card"></i>',
 		PaymentMethod::CASH => '<i class="bi bi-cash"></i>',
 		null => '<i class="bi bi-hourglass-split text-warning me-1"></i>',
@@ -195,13 +196,14 @@
 
         {{-- Action Buttons --}}
         <div class="d-flex align-items-center gap-2" style="height: 2.2rem;">
-            <button id="reprint-last-sale" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" title="Reimprimir ticket de la última venta">
+            {{-- TODO: Implement reprint functionality --}}
+            <button id="reprint-last-sale" class="btn btn-outline-primary btn-sm d-flex align-items-center action-icon-reveal" title="Reimprimir ticket de la última venta">
                 <i class="bi bi-printer"></i>
-                <span class="d-none d-md-inline">Reimprimir</span>
+                <span class="action-icon-reveal__label">Reimprimir</span>
             </button>
-            <button id="show-actions" class="btn btn-outline-info btn-sm d-flex align-items-center gap-1" title="Mostrar accesos directos">
+            <button id="show-actions" class="btn btn-outline-info btn-sm d-flex align-items-center action-icon-reveal" title="Mostrar accesos directos">
                 <i class="bi bi-shift"></i>
-                <span class="d-none d-md-inline">Acciones</span>
+                <span class="action-icon-reveal__label">Acciones</span>
             </button>
         </div>
 

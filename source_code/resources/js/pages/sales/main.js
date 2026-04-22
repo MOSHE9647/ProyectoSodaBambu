@@ -2,7 +2,7 @@ import { initializeSalesCart, getActiveSaleData, clearActiveCart } from "./cart.
 import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
-import { formatTimeAgo, PaymentStatus, processSale, startTimeUpdateInterval } from "./api.js";
+import { formatTimeAgo, PaymentMethods, PaymentStatus, processSale, startTimeUpdateInterval } from "./api.js";
 import { initializeHotkeys } from "./hotkeys.js";
 
 /**
@@ -90,9 +90,10 @@ $(() => {
 			SaleData.payment_details = SaleData.payment_status === PaymentStatus.PAID
 				? SaleData.payment_details = [
 					{
-						method: "cash", // Assuming cash payment for simplicity; this can be dynamic based on user input
+						method: PaymentMethods.CASH, // Assuming cash payment for simplicity; this can be dynamic based on user input
 						amount: SaleData.total, // Full amount paid in cash; adjust if partial payments or multiple methods are implemented
 						change_amount: 0, // Assuming no change for simplicity; calculate if needed based on payment amount and total
+						reference: String(Math.floor(10000000 + Math.random() * 90000000)), // Numeric 8-digit reference
 					},
 				]
 				: [];

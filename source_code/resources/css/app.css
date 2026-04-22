@@ -189,3 +189,27 @@ main {
 .stat-card-link:hover h4 {
 	color: var(--anchor-status-link-hover-color) !important;
 }
+
+.action-icon-reveal {
+	overflow: hidden;
+	gap: 0;
+	transition: padding-inline 0.3s ease, gap 0.3s ease, transform 0.3s ease;
+}
+
+.action-icon-reveal__label {
+	max-width: 0;
+	opacity: 0;
+	overflow: hidden;
+	display: inline-block;
+	white-space: nowrap;
+	transform: translateX(-0.25rem);
+	transition: max-width 0.3s ease, opacity 0.2s ease, transform 0.3s ease, margin-left 0.3s ease;
+}
+
+.action-icon-reveal:hover .action-icon-reveal__label,
+.action-icon-reveal:focus-visible .action-icon-reveal__label {
+	max-width: 8rem;
+	opacity: 1;
+	margin-left: 0.35rem;
+	transform: translateX(0);
+}
