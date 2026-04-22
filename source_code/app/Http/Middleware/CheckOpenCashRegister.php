@@ -7,6 +7,7 @@ use App\Models\CashRegister;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Carbon\Carbon;  
 
 class CheckOpenCashRegister
 {
@@ -18,12 +19,24 @@ class CheckOpenCashRegister
     public function handle(Request $request, Closure $next): Response
     {
         if (auth()->check()) {
-            $hasOpenRegister = CashRegister::where('user_id', auth()->id())
-                ->where('status', CashRegisterStatus::OPEN)
+            /**
+             * Get the start and end of the current day in the local time zone (America/Costa_Rica - UTC-6).
+             */
+            $localTz = 'America/Costa_Rica';
+            $todayStartLocal = Carbon::now($localTz)->startOfDay();
+            $todayEndLocal = Carbon::now($localTz)->endOfDay();
+
+            // Convert those limits to UTC to query the database
+            $startUtc = $todayStartLocal->copy()->setTimezone('UTC');
+            $endUtc = $todayEndLocal->copy()->setTimezone('UTC');
+
+            // Check whether there is an open cash register created within the current day's range (local)
+            $hasOpenRegister = CashRegister::where('status', CashRegisterStatus::OPEN)
+                ->whereBetween('opened_at', [$startUtc, $endUtc])
                 ->exists();
 
             if (! $hasOpenRegister) {
-                // Compartimos una variable con todas las vistas de la solicitud actual
+                // Share a variable with all views for the current request
                 view()->share('showOpeningCashModal', true);
             }
         }
