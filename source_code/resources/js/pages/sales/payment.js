@@ -22,6 +22,26 @@ const formatCurrency = (amount) => {
 	})}`;
 };
 
+const roundToTwo = (value) => Math.round((Number(value) || 0) * 100) / 100;
+
+const formatAmountInputValue = (value) => roundToTwo(value).toFixed(2);
+
+const parseAmountInputValue = (value) => {
+	const normalizedValue = String(value || "")
+		.replace(/\s+/g, "")
+		.replace(",", ".");
+	const parsedValue = Number.parseFloat(normalizedValue);
+	return Number.isFinite(parsedValue) ? roundToTwo(parsedValue) : 0;
+};
+
+const appendKeyboardValue = (currentValue, appendedValue) => {
+	if (!currentValue || currentValue === "0") {
+		return String(appendedValue);
+	}
+
+	return `${currentValue}${appendedValue}`;
+};
+
 const renderHiddenPaymentRows = (rowsContainer, payments) => {
 	rowsContainer.innerHTML = "";
 
@@ -37,7 +57,7 @@ const renderHiddenPaymentRows = (rowsContainer, payments) => {
 		const amountInput = document.createElement("input");
 		amountInput.type = "hidden";
 		amountInput.className = "payment-amount";
-		amountInput.value = String(payment.amount);
+		amountInput.value = formatAmountInputValue(payment.amount);
 
 		const referenceInput = document.createElement("input");
 		referenceInput.type = "hidden";
@@ -55,9 +75,11 @@ const renderHiddenPaymentRows = (rowsContainer, payments) => {
 const initializePaymentModalUI = (popup, saleData) => {
 	const methodButtons = popup.querySelectorAll("[data-payment-method]");
 	const amountInput = popup.querySelector("#payment-amount-input");
+	const clearPaymentAmountButton = popup.querySelector("#clear-payment-amount-button");
 	const paymentChangePreview = popup.querySelector("#payment-change-preview");
 	const referenceInput = popup.querySelector("#payment-reference-input");
 	const referenceGroup = popup.querySelector("#payment-reference-group");
+	const keyboardBtns = popup.querySelectorAll("[data-keyboard-key]");
 	const addPaymentButton = popup.querySelector("#add-payment-button");
 	const paymentSummaryList = popup.querySelector("#payment-summary-list");
 	const paymentTotalElement = popup.querySelector("#payment-total");
@@ -70,9 +92,11 @@ const initializePaymentModalUI = (popup, saleData) => {
 	if (
 		!methodButtons.length ||
 		!amountInput ||
+		!clearPaymentAmountButton ||
 		!paymentChangePreview ||
 		!referenceInput ||
 		!referenceGroup ||
+		!keyboardBtns.length ||
 		!addPaymentButton ||
 		!paymentSummaryList ||
 		!paymentTotalElement ||
@@ -88,6 +112,36 @@ const initializePaymentModalUI = (popup, saleData) => {
 	const saleTotal = Number(saleData.total || 0);
 	const payments = [];
 	let selectedMethod = PaymentMethods.CASH;
+
+	const showReferenceRequiredAlert = () => {
+		const existingAlert = popup.querySelector("#payment-inline-alert");
+		if (existingAlert) {
+			existingAlert.remove();
+		}
+
+		const alertBackdrop = document.createElement("div");
+		alertBackdrop.id = "payment-inline-alert";
+		alertBackdrop.className = "payment-inline-alert-backdrop";
+		alertBackdrop.innerHTML = `
+			<div class="payment-inline-alert-card" role="alertdialog" aria-live="assertive" aria-modal="true">
+				<div class="payment-inline-alert-title">Referencia requerida</div>
+				<div class="small">El número de referencia es obligatorio para SINPE y Tarjeta.</div>
+				<div class="payment-inline-alert-actions">
+					<button type="button" class="btn btn-success btn-sm" id="payment-inline-alert-accept">Aceptar</button>
+				</div>
+			</div>
+		`;
+
+		popup.appendChild(alertBackdrop);
+
+		const acceptButton = alertBackdrop.querySelector("#payment-inline-alert-accept");
+		if (acceptButton) {
+			acceptButton.addEventListener("click", () => {
+				alertBackdrop.remove();
+				referenceInput.focus();
+			});
+		}
+	};
 
 	const renderSummary = () => {
 		if (payments.length === 0) {
@@ -152,12 +206,12 @@ const initializePaymentModalUI = (popup, saleData) => {
 		}
 
 		const paidTotal = payments.reduce(
-			(sum, payment) => sum + Number(payment.amount || 0),
+			(sum, payment) => roundToTwo(sum + Number(payment.amount || 0)),
 			0,
 		);
-		const remainingBeforeCurrent = Math.max(0, saleTotal - paidTotal);
-		const receivedAmount = Number(amountInput.value || 0);
-		const estimatedChange = Math.max(0, receivedAmount - remainingBeforeCurrent);
+		const remainingBeforeCurrent = roundToTwo(Math.max(0, saleTotal - paidTotal));
+		const receivedAmount = parseAmountInputValue(amountInput.value);
+		const estimatedChange = roundToTwo(Math.max(0, receivedAmount - remainingBeforeCurrent));
 
 		paymentChangePreview.textContent = `Vuelto estimado: ${formatCurrency(estimatedChange)}`;
 		paymentChangePreview.classList.remove("d-none");
@@ -165,11 +219,11 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 	const refreshTotals = () => {
 		const paidTotal = payments.reduce(
-			(sum, payment) => sum + Number(payment.amount || 0),
+			(sum, payment) => roundToTwo(sum + Number(payment.amount || 0)),
 			0,
 		);
-		const remaining = Math.max(0, saleTotal - paidTotal);
-		const change = Math.max(0, paidTotal - saleTotal);
+		const remaining = roundToTwo(Math.max(0, saleTotal - paidTotal));
+		const change = roundToTwo(Math.max(0, paidTotal - saleTotal));
 
 		paymentTotalElement.textContent = formatCurrency(saleTotal);
 		paymentPaidElement.textContent = formatCurrency(paidTotal);
@@ -180,9 +234,9 @@ const initializePaymentModalUI = (popup, saleData) => {
 		addPaymentButton.disabled = remaining === 0;
 
 		if (remaining > 0) {
-			amountInput.value = remaining.toFixed(2);
+			amountInput.value = formatAmountInputValue(remaining);
 		} else {
-			amountInput.value = "0";
+			amountInput.value = formatAmountInputValue(0);
 		}
 
 		renderSummary();
@@ -201,8 +255,63 @@ const initializePaymentModalUI = (popup, saleData) => {
 		updateCashChangePreview();
 	});
 
+	clearPaymentAmountButton.addEventListener("click", () => {
+		amountInput.value = "";
+		amountInput.focus();
+		updateCashChangePreview();
+	});
+
+	keyboardBtns.forEach((btn) => {
+		btn.addEventListener("click", () => {
+			const key = btn.dataset.keyboardKey;
+			let currentValue = amountInput.value || "0";
+			const currentAmount = parseAmountInputValue(currentValue);
+
+			switch (key) {
+				case "0":
+				case "1":
+				case "2":
+				case "3":
+				case "4":
+				case "5":
+				case "6":
+				case "7":
+				case "8":
+				case "9":
+					amountInput.value = appendKeyboardValue(currentValue, key);
+					break;
+
+				case "00":
+				case "000":
+					amountInput.value = appendKeyboardValue(currentValue, key);
+					break;
+
+				case "delete":
+					if (currentValue.length > 1) {
+						amountInput.value = currentValue.slice(0, -1);
+					} else {
+						amountInput.value = "0";
+					}
+					break;
+
+				case "100":
+				case "500":
+				case "1000":
+					amountInput.value = formatAmountInputValue(
+						roundToTwo(currentAmount + Number(key)),
+					);
+					break;
+
+				default:
+					break;
+			}
+
+			updateCashChangePreview();
+		});
+	});
+
 	addPaymentButton.addEventListener("click", () => {
-		const amount = Number(amountInput.value || 0);
+		const amount = parseAmountInputValue(amountInput.value);
 		const reference = referenceInput.value.trim();
 
 		if (!Number.isFinite(amount) || amount <= 0) {
@@ -213,11 +322,16 @@ const initializePaymentModalUI = (popup, saleData) => {
 			return;
 		}
 
+		if (selectedMethod !== PaymentMethods.CASH && reference.length === 0) {
+			showReferenceRequiredAlert();
+			return;
+		}
+
 		const paidTotal = payments.reduce(
-			(sum, payment) => sum + Number(payment.amount || 0),
+			(sum, payment) => roundToTwo(sum + Number(payment.amount || 0)),
 			0,
 		);
-		const remaining = Math.max(0, saleTotal - paidTotal);
+		const remaining = roundToTwo(Math.max(0, saleTotal - paidTotal));
 
 		if (remaining === 0) {
 			SwalToast.fire({
@@ -235,9 +349,23 @@ const initializePaymentModalUI = (popup, saleData) => {
 			return;
 		}
 
+		// Acumular pagos en efectivo si ya existe uno
+		if (selectedMethod === PaymentMethods.CASH) {
+			const existingCashPayment = payments.find(
+				(p) => p.method === PaymentMethods.CASH,
+			);
+
+			if (existingCashPayment) {
+				existingCashPayment.amount = roundToTwo(existingCashPayment.amount + amount);
+				referenceInput.value = "";
+				refreshTotals();
+				return;
+			}
+		}
+
 		payments.push({
 			method: selectedMethod,
-			amount,
+			amount: roundToTwo(amount),
 			reference:
 				selectedMethod === PaymentMethods.CASH || reference.length === 0
 					? null
@@ -314,12 +442,13 @@ const paymentFormEventListener = async (event, saleData) => {
 	}
 
 	const changeAmount = Math.max(0, totalTendered - saleTotal);
+		const roundedChangeAmount = roundToTwo(changeAmount);
 	const cashPaymentIndex = paymentDetails.findIndex(
 		(payment) => payment.method === PaymentMethods.CASH,
 	);
 
 	if (cashPaymentIndex >= 0) {
-		paymentDetails[cashPaymentIndex].change_amount = changeAmount;
+			paymentDetails[cashPaymentIndex].change_amount = roundedChangeAmount;
 	}
 
 	SwalModal.showLoading();
@@ -362,7 +491,7 @@ export async function showPaymentModal() {
 
 		if (modalHtml) {
 			SwalModal.fire({
-				title: "Procesar Pago",
+				title: `Procesar pago: ${formatCurrency(saleData.total)}`,
 				showConfirmButton: false,
 				showCancelButton: false,
 				showCloseButton: true,
