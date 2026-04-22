@@ -47,6 +47,16 @@ const hotkeyActions = {
 	},
 };
 
+/**
+ * Registers keyboard shortcuts for the sales page.
+ *
+ * Shortcuts:
+ * - F6: create new order tab
+ * - F10: focus product search input
+ * - F12: trigger finalize sale action
+ *
+ * @returns {void}
+ */
 export function initializeHotkeys() {
     hotkeys(Object.keys(hotkeyActions).join(","), (event, handler) => {
 		event.preventDefault();

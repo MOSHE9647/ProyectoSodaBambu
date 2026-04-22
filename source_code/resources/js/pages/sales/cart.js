@@ -13,10 +13,21 @@ let elements = {};
 
 // --- STATE MANAGEMENT ---
 
+/**
+ * Persists all order carts in LocalStorage.
+ *
+ * @returns {void}
+ */
 const saveToStorage = () => {
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(state.orders));
 };
 
+/**
+ * Restores cart state from LocalStorage and ensures
+ * the active order has an initialized cart array.
+ *
+ * @returns {void}
+ */
 const loadFromStorage = () => {
 	const savedOrders = localStorage.getItem(STORAGE_KEY);
 	if (savedOrders) {
@@ -31,6 +42,13 @@ const getActiveCart = () => state.orders[state.activeOrderId] || [];
 
 // --- UTILITIES ---
 
+/**
+ * Logs a technical error and shows a user-facing toast.
+ *
+ * @param {string} errorMessage
+ * @param {string} consoleErrorMessage
+ * @returns {void}
+ */
 const showError = (errorMessage, consoleErrorMessage) => {
 	console.error(consoleErrorMessage);
 	SwalToast.fire({
@@ -50,11 +68,22 @@ const currencyFormatter = new Intl.NumberFormat("es-CR", {
 export const formatCurrency = (amount) =>
 	currencyFormatter.format(Number(amount) || 0);
 
-// Helper to safely parse localized string numbers if needed
+/**
+ * Parses a localized numeric string to a float.
+ *
+ * @param {string|undefined} value
+ * @returns {number}
+ */
 const parsePrice = (value) => parseFloat(value?.replace(/,/g, ".") || 0);
 
 // --- VALIDATIONS ---
 
+/**
+ * Validates whether a product with inventory can be added to cart at least once.
+ *
+ * @param {HTMLElement} productCard
+ * @returns {boolean}
+ */
 export const validateProductStock = (productCard) => {
 	const hasInventory = productCard.dataset.productHasInventory === "1";
 	if (!hasInventory) return true;
@@ -70,6 +99,17 @@ export const validateProductStock = (productCard) => {
 	return true;
 };
 
+/**
+ * Validates stock availability against a desired quantity.
+ *
+ * @param {{
+ *   hasInventory: boolean,
+ *   availableStock: number,
+ *   desiredQuantity: number,
+ *   productName: string
+ * }} params
+ * @returns {boolean}
+ */
 const validateStockForQuantity = ({
 	hasInventory,
 	availableStock,
@@ -98,6 +138,11 @@ const validateStockForQuantity = ({
 
 // --- UI UPDATES ---
 
+/**
+ * Enables or disables finalize/clear buttons based on active cart content.
+ *
+ * @returns {void}
+ */
 export const syncFinalizeSaleButtonState = () => {
 	if (!elements.finalizeSaleButton || !elements.clearSaleButton) return;
 
@@ -106,6 +151,17 @@ export const syncFinalizeSaleButtonState = () => {
 	elements.clearSaleButton.disabled = !hasProducts;
 };
 
+/**
+ * Creates the HTML markup for a single cart row.
+ *
+ * @param {{
+ *   product_id: string|number,
+ *   name: string,
+ *   quantity: number,
+ *   unit_price: number
+ * }} item
+ * @returns {string}
+ */
 const createCartItemHTML = (item) => `
     <div class="d-flex flex-row justify-content-between align-items-center gap-2 w-100" data-cart-item-id="${item.product_id}">
         <div class="d-flex flex-column text-start overflow-hidden flex-grow-1">
@@ -134,6 +190,11 @@ const createCartItemHTML = (item) => `
     </div>
 `;
 
+/**
+ * Renders all active cart items and recalculates subtotal, tax, and total.
+ *
+ * @returns {void}
+ */
 const renderCartItems = () => {
 	if (!elements.saleDetailsContainer) return;
 
@@ -174,6 +235,14 @@ const renderCartItems = () => {
 
 // --- CART ACTIONS ---
 
+/**
+ * Adds a product to the active cart, or increases its quantity if already present.
+ * Stock is validated before any mutation.
+ *
+ * @param {string|number} productId
+ * @param {HTMLElement} productCard
+ * @returns {void}
+ */
 const addToCart = (productId, productCard) => {
 	const name = productCard.dataset.productName;
 	const price = parsePrice(productCard.dataset.productPrice);
@@ -222,7 +291,23 @@ const addToCart = (productId, productCard) => {
 	renderCartItems();
 };
 
+/**
+ * Cart mutation handlers for the active order.
+ *
+ * @type {{
+ *   decrease: (productId: string|number) => void,
+ *   increase: (productId: string|number) => void,
+ *   update: (productId: string|number, newQuantityStr: string) => void,
+ *   remove: (productId: string|number) => void
+ * }}
+ */
 const cartActions = {
+	/**
+	 * Decreases quantity by one (minimum quantity is 1).
+	 *
+	 * @param {string|number} productId
+	 * @returns {void}
+	 */
 	decrease: (productId) => {
 		const item = getActiveCart().find((i) => i.product_id === productId);
 		if (item && item.quantity > 1) {
@@ -232,6 +317,12 @@ const cartActions = {
 			renderCartItems();
 		}
 	},
+	/**
+	 * Increases quantity by one after validating stock limits.
+	 *
+	 * @param {string|number} productId
+	 * @returns {void}
+	 */
 	increase: (productId) => {
 		const item = getActiveCart().find((i) => i.product_id === productId);
 		if (!item) return;
@@ -252,24 +343,32 @@ const cartActions = {
 		saveToStorage();
 		renderCartItems();
 	},
+	/**
+	 * Updates quantity from direct input, enforcing minimum quantity
+	 * and stock constraints.
+	 *
+	 * @param {string|number} productId
+	 * @param {string} newQuantityStr
+	 * @returns {void}
+	 */
 	update: (productId, newQuantityStr) => {
 		const item = getActiveCart().find((i) => i.product_id === productId);
 		if (!item) return;
 
 		let newQuantity = parseInt(newQuantityStr, 10);
 
-		// Avoid NaN and enforce minimum quantity of 1
+		// Prevent NaN values and enforce minimum quantity of 1.
 		if (isNaN(newQuantity) || newQuantity < 1) {
 			SwalToast.fire({
 				icon: SwalNotificationTypes.WARNING,
 				title: "La cantidad mínima debe ser 1.",
 			});
-			// Si es inválido, re-renderizamos para restaurar el valor anterior en el input
+			// Restore the previous valid quantity in the input.
 			renderCartItems();
 			return;
 		}
 
-		// Validate stock for the new desired quantity before updating
+		// Validate stock before applying the new quantity.
 		if (
 			!validateStockForQuantity({
 				hasInventory: item.has_inventory,
@@ -278,17 +377,23 @@ const cartActions = {
 				productName: item.name,
 			})
 		) {
-			// If validation fails, re-render to reset the input to the last valid quantity
+			// Re-render to reset the input to the last valid quantity.
 			renderCartItems();
 			return;
 		}
 
-		// If validation passes, update the quantity and subtotal
+		// Apply the quantity update after validation succeeds.
 		item.quantity = newQuantity;
 		item.sub_total = item.quantity * item.unit_price;
 		saveToStorage();
 		renderCartItems();
 	},
+	/**
+	 * Removes an item from the active cart.
+	 *
+	 * @param {string|number} productId
+	 * @returns {void}
+	 */
 	remove: (productId) => {
 		state.orders[state.activeOrderId] = getActiveCart().filter(
 			(i) => i.product_id !== productId,
@@ -300,12 +405,23 @@ const cartActions = {
 
 // --- EXPORTED APIS ---
 
+/**
+ * Clears all items from the active cart.
+ *
+ * @returns {void}
+ */
 export const clearActiveCart = () => {
 	state.orders[state.activeOrderId] = [];
 	saveToStorage();
 	renderCartItems();
 };
 
+/**
+ * Switches the active order tab and initializes an empty cart if needed.
+ *
+ * @param {string|number} newOrderId
+ * @returns {void}
+ */
 export const switchActiveOrder = (newOrderId) => {
 	state.activeOrderId = newOrderId;
 	if (!state.orders[state.activeOrderId]) {
@@ -315,11 +431,31 @@ export const switchActiveOrder = (newOrderId) => {
 	renderCartItems();
 };
 
+/**
+ * Deletes a stored cart by order id.
+ *
+ * @param {string|number} orderId
+ * @returns {void}
+ */
 export const deleteOrderCart = (orderId) => {
 	delete state.orders[orderId];
 	saveToStorage();
 };
 
+/**
+ * Builds and returns the active sale payload for backend submission.
+ *
+ * @returns {{
+ *   sale_details: Array<{
+ *     product_id: string|number,
+ *     quantity: number,
+ *     unit_price: number,
+ *     applied_tax: number,
+ *     sub_total: number
+ *   }>,
+ *   total: string
+ * }}
+ */
 export const getActiveSaleData = () => {
 	const currentCart = getActiveCart();
 	const total = currentCart.reduce(
@@ -341,6 +477,15 @@ export const getActiveSaleData = () => {
 	};
 };
 
+/**
+ * Initializes the sales cart module:
+ * - caches required DOM nodes
+ * - loads persisted state
+ * - renders cart and totals
+ * - wires product/cart event listeners
+ *
+ * @returns {void}
+ */
 export const initializeSalesCart = () => {
 	elements = {
 		productsGrid: document.getElementById("products-grid"),

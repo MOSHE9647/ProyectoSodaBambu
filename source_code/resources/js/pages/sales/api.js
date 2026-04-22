@@ -84,11 +84,11 @@ export const formatTimeAgo = (dateString) => {
  * @param {string} dateString - The ISO date string of the sale.
  */
 export const startTimeUpdateInterval = (element, dateString) => {
-	// Clear any existing interval to prevent overlapping timers
+	// Clear existing interval to avoid overlapping timers.
 	if (timeUpdateInterval) clearInterval(timeUpdateInterval);
 	if (!dateString) return;
 
-	// Update the DOM element every 60 seconds (60000ms)
+	// Update DOM element every 60 seconds.
 	timeUpdateInterval = setInterval(() => {
 		element.text(formatTimeAgo(dateString));
 	}, 60000);
@@ -204,7 +204,7 @@ export const processSale = async (
 		return false;
 	}
 
-	// Build the payload to send to the server
+	// Build request payload.
 	const payload = {
 		payment_status: paymentStatus,
 		date: new Date().toISOString(),
@@ -213,7 +213,7 @@ export const processSale = async (
 		payment_details: paymentDetails,
 	};
 
-	// Set loading state to true while processing the sale
+	// Enable loading state while processing sale.
 	setLoadingState("finalize-sale", true);
 
 	try {
@@ -238,13 +238,13 @@ export const processSale = async (
 				title: responseData.message || "Venta registrada con éxito.",
 			});
 
-			// Clear the active cart after a successful sale
+			// Clear active cart after successful sale.
 			clearActiveCart();
 
-			// Update the payment status UI with the new sale data
+			// Update last-sale status UI with latest sale data.
 			updatePaymentStatusUI(responseData.data);
 
-			// Dispatch a custom event to notify other parts of the application about the completed sale
+			// Dispatch custom event so other modules can refresh their state.
 			window.dispatchEvent(
 				new CustomEvent("sales:refresh-products-after-sale", {
 					detail: {
@@ -253,7 +253,7 @@ export const processSale = async (
 				}),
 			);
 
-			return true; // Indicate success to the caller (SweetAlert Modal)
+			return true; // Indicate successful completion to caller.
 		} else {
 			const errorData = await response.json();
 			SwalToast.fire({

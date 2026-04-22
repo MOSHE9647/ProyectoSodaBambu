@@ -5,7 +5,17 @@ import { setLoadingState } from "../../utils/utils.js";
 import { formatTimeAgo, PaymentStatus, processSale, startTimeUpdateInterval } from "./api.js";
 import { initializeHotkeys } from "./hotkeys.js";
 
-// Initial sale data structure
+/**
+ * Mutable sale draft used as payload source when finalizing a sale.
+ *
+ * @type {{
+ *   payment_status: string,
+ *   date: string,
+ *   total: number,
+ *   sale_details: Array<object>,
+ *   payment_details: Array<object>
+ * }}
+ */
 const SaleData = {
 	payment_status: PaymentStatus.PAID, // Default to pending; this can be updated based on user input
 	date: new Date().toISOString(),
@@ -44,31 +54,36 @@ const updateLastSaleTime = () => {
 			const relativeTime = formatTimeAgo(lastSaleTime);
 			lastSaleTimeElement.text(relativeTime);
 
-			// Start interval to update the time every minute
+			// Start periodic updates so relative time stays current.
 			startTimeUpdateInterval(lastSaleTimeElement, lastSaleTime);
 		}
 	}
 }
 
+/**
+ * Boots all sales page modules and wires primary UI events.
+ *
+ * @returns {void}
+ */
 $(() => {
-	// Initialize all sales-related components
+	// Initialize all sales-related modules.
     initializeSalesProducts();
     initializeSalesCart();
 	initializeSalesOrderTabs();
 	initializeHotkeys();
 
-	// Start the clock
+	// Start current time ticker.
 	tickClock();
-	setInterval(tickClock, 1000); // Update the clock every second
+	setInterval(tickClock, 1000); // Refresh clock every second.
 
-	// Update the last sale time display
+	// Render and start auto-updating the last sale relative time.
 	updateLastSaleTime();
 
-	// Handle finalize sale button click
+	// Handle finalize sale action.
     const finalizeSaleButton = $("#finalize-sale-button");
     if (finalizeSaleButton.length) {
         finalizeSaleButton.on("click", async () => {
-			// Set SaleData with current cart data
+			// Populate payload from active cart state.
 			SaleData.sale_details = getActiveSaleData().sale_details;
 			SaleData.total = Number(getActiveSaleData().total || 0);
 
@@ -82,7 +97,7 @@ $(() => {
 				]
 				: [];
 
-			// Process the sale with current payment details and status
+			// Submit sale with selected payment details/status.
 			processSale(SaleData.payment_details, SaleData.payment_status);
 		});
     }
