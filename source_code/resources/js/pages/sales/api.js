@@ -40,8 +40,8 @@ export const PaymentStatus = {
  * payload (for example, payment method, reference, or transaction metadata).
  * @param {string} [paymentStatus=PaymentStatus.PAID] - Payment status to assign to the sale
  * (e.g., `PaymentStatus.PAID` or `PaymentStatus.PENDING`).
- * @returns {Promise<boolean>} Resolves to `true` when the sale is successfully created;
- * otherwise resolves to `false`.
+ * @returns {Promise<{ success: boolean, data?: object, message?: string }>} Resolves with
+ * sale result information to let the UI render a custom success summary.
  *
  * @description
  * - Validates that an active cart exists and contains at least one sale item.
@@ -61,7 +61,7 @@ export const processSale = async (paymentDetails, paymentStatus = PaymentStatus.
 			icon: SwalNotificationTypes.ERROR,
 			title: "El carrito está vacío.",
 		});
-		return false;
+		return { success: false };
 	}
 
 	// Build the payload to send to the server
@@ -91,13 +91,9 @@ export const processSale = async (paymentDetails, paymentStatus = PaymentStatus.
 		if (response.ok) {
 			const responseData = await response.json();
 
-			// TODO: Remove the following line after confirming the response structure and content
-			alert(JSON.stringify(responseData, null, 2)); // Temporary alert for testing purposes
-
 			SwalToast.fire({
 				icon: SwalNotificationTypes.SUCCESS,
 				title: responseData.message || "Venta registrada con éxito.",
-				// TODO: Delete the following line
 				text: responseData.data.payment_status
 					? `Estado de pago: ${responseData.data.payment_status}`
 					: "",
@@ -108,7 +104,11 @@ export const processSale = async (paymentDetails, paymentStatus = PaymentStatus.
 
 			// TODO: Implement logic to update the product list with the new stock levels after a sale is processed successfully.
 
-			return true; // Indicate success to the caller (SweetAlert Modal)
+			return {
+				success: true,
+				data: responseData.data || null,
+				message: responseData.message || "Venta registrada con éxito.",
+			};
 		} else {
 			const errorData = await response.json();
 			SwalToast.fire({
@@ -117,7 +117,7 @@ export const processSale = async (paymentDetails, paymentStatus = PaymentStatus.
                 timer: 15000, // Extend timer for error messages
 			});
             console.error("Error response from server:", errorData);
-			return false;
+			return { success: false };
 		}
 	} catch (error) {
 		console.error("Error durante el flujo de venta:", error);
@@ -126,7 +126,7 @@ export const processSale = async (paymentDetails, paymentStatus = PaymentStatus.
 			title: "Error de conexión con el servidor.",
             timer: 15000, // Extend timer for error messages
 		});
-		return false;
+		return { success: false };
 	} finally {
 		setLoadingState("finalize-sale", false);
 	}

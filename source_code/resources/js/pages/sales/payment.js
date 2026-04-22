@@ -22,6 +22,14 @@ const formatCurrency = (amount) => {
 	})}`;
 };
 
+const escapeHtml = (value) =>
+	String(value ?? "")
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/\"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+
 const roundToTwo = (value) => Math.round((Number(value) || 0) * 100) / 100;
 
 const formatAmountInputValue = (value) => roundToTwo(value).toFixed(2);
@@ -40,6 +48,47 @@ const appendKeyboardValue = (currentValue, appendedValue) => {
 	}
 
 	return `${currentValue}${appendedValue}`;
+};
+
+const getSaleSuccessSummaryHtml = (saleResult) => {
+	const saleData = saleResult?.data || {};
+	const invoiceNumber = saleData.invoice_number || "N/A";
+	const paymentStatusRaw = String(saleData.payment_status || "").toLowerCase();
+	const paymentStatus =
+		paymentStatusRaw === "paid"
+			? "Pagada"
+			: paymentStatusRaw === "pending"
+				? "Pendiente"
+				: "N/A";
+	const total = Number(saleData.total || 0);
+	const dateValue = saleData.date ? new Date(saleData.date) : null;
+	const formattedDate = dateValue && !Number.isNaN(dateValue.getTime())
+		? dateValue.toLocaleString("es-CR")
+		: "N/A";
+
+	return `
+		<div style="text-align: left; color: #1f1f1f;">
+			<div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: #198754;">Venta exitosa</div>
+			<div style="border: 1px solid #e9ecef; border-radius: 10px; background: #ffffff; padding: 14px; font-size: 1rem;">
+				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+					<span>Factura:</span>
+					<span style="font-weight: 600;">${escapeHtml(invoiceNumber)}</span>
+				</div>
+				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+					<span>Estado del pago:</span>
+					<span style="font-weight: 600;">${escapeHtml(paymentStatus)}</span>
+				</div>
+				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+					<span>Total:</span>
+					<span style="font-weight: 700; color: #198754;">${formatCurrency(total)}</span>
+				</div>
+				<div style="display: flex; justify-content: space-between;">
+					<span>Fecha:</span>
+					<span style="font-weight: 600;">${escapeHtml(formattedDate)}</span>
+				</div>
+			</div>
+		</div>
+	`;
 };
 
 const renderHiddenPaymentRows = (rowsContainer, payments) => {
@@ -453,9 +502,31 @@ const paymentFormEventListener = async (event, saleData) => {
 
 	SwalModal.showLoading();
 
-	const isSuccess = await processSale(paymentDetails);
-	if (isSuccess) {
+	const saleResult = await processSale(paymentDetails);
+	if (saleResult?.success) {
 		SwalModal.close();
+
+		await SwalModal.fire({
+			title: "",
+			html: getSaleSuccessSummaryHtml(saleResult),
+			width: 760,
+			background: "#ffffff",
+			color: "#1f1f1f",
+			showConfirmButton: true,
+			showCancelButton: false,
+			confirmButtonText: "Cerrar",
+			allowEscapeKey: true,
+			allowOutsideClick: true,
+			customClass: {
+				popup: "swal-popup w-auto h-auto",
+				title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
+				closeButton: "swal-close-btn fs-3",
+				htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
+				confirmButton: "btn btn-success mx-1",
+				cancelButton: "btn btn-outline-secondary mx-1",
+				icon: "mb-4",
+			},
+		});
 	} else {
 		SwalModal.hideLoading();
 	}
