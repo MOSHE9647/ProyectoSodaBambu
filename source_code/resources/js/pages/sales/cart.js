@@ -65,8 +65,24 @@ const currencyFormatter = new Intl.NumberFormat("es-CR", {
 	maximumFractionDigits: 2,
 });
 
-export const formatCurrency = (amount) =>
-	currencyFormatter.format(Number(amount) || 0);
+export const formatCurrency = (amount) => {
+	const parts = currencyFormatter.formatToParts(Number(amount) || 0);
+
+	return parts
+		.map((part, index) => {
+			if (part.type === "currency") {
+				const nextPart = parts[index + 1];
+				if (!nextPart || nextPart.type !== "literal" || !/\s/.test(nextPart.value)) {
+					return `${part.value} `;
+				}
+			}
+
+			if (part.type === "literal" && /\s/.test(part.value)) return " ";
+
+			return part.value;
+		})
+		.join("");
+};
 
 /**
  * Parses a localized numeric string to a float.
