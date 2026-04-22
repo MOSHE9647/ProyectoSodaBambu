@@ -2,14 +2,14 @@
 
 namespace App\Actions\Finance;
 
+use App\Enums\CashRegisterStatus;
 use App\Enums\TransactionType;
+use App\Models\CashRegister;
 use App\Models\Payment;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\Transaction;
 use Carbon\Carbon;
-use App\Models\CashRegister;
-use App\Enums\CashRegisterStatus;
 
 class RegisterTransactionAction
 {
@@ -55,7 +55,7 @@ class RegisterTransactionAction
             ->first();
 
         if (! $cashRegister) {
-            throw new \Exception("No hay una caja abierta para registrar la transacción.");
+            throw new \Exception('No hay una caja abierta para registrar la transacción.');
         }
 
         return Transaction::create([

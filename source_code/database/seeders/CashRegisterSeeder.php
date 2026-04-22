@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
+use App\Enums\CashRegisterStatus;
 use App\Models\CashRegister;
 use App\Models\User;
-use App\Enums\CashRegisterStatus;
+use Illuminate\Database\Seeder;
 
 class CashRegisterSeeder extends Seeder
 {

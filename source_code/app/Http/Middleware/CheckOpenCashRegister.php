@@ -4,10 +4,10 @@ namespace App\Http\Middleware;
 
 use App\Enums\CashRegisterStatus;
 use App\Models\CashRegister;
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Carbon\Carbon;  
 
 class CheckOpenCashRegister
 {
