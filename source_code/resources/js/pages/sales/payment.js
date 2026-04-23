@@ -42,6 +42,15 @@ const parseAmountInputValue = (value) => {
 	return Number.isFinite(parsedValue) ? roundToTwo(parsedValue) : 0;
 };
 
+const sanitizeAmountInputValue = (value) => {
+	const sanitized = String(value || "")
+		.replace(/[^0-9.,]/g, "")
+		.replace(/[,\.]/g, (match, index, str) => {
+			return str.indexOf(match) === index ? "." : "";
+		});
+	return sanitized;
+};
+
 const appendKeyboardValue = (currentValue, appendedValue) => {
 	if (!currentValue || currentValue === "0") {
 		return String(appendedValue);
@@ -163,37 +172,22 @@ const initializePaymentModalUI = (popup, saleData) => {
 	let selectedMethod = PaymentMethods.CASH;
 
 	const showReferenceRequiredAlert = () => {
-		const existingAlert = popup.querySelector("#payment-inline-alert");
-		if (existingAlert) {
-			existingAlert.remove();
-		}
-
-		const alertBackdrop = document.createElement("div");
-		alertBackdrop.id = "payment-inline-alert";
-		alertBackdrop.className = "payment-inline-alert-backdrop";
-		alertBackdrop.innerHTML = `
-			<div class="payment-inline-alert-card" role="alertdialog" aria-live="assertive" aria-modal="true">
-				<div class="payment-inline-alert-title">Referencia requerida</div>
-				<div class="small">El número de referencia es obligatorio para SINPE y Tarjeta.</div>
-				<div class="payment-inline-alert-actions">
-					<button type="button" class="btn btn-success btn-sm" id="payment-inline-alert-accept">Aceptar</button>
-				</div>
-			</div>
-		`;
-
-		popup.appendChild(alertBackdrop);
-
-		const acceptButton = alertBackdrop.querySelector("#payment-inline-alert-accept");
-		if (acceptButton) {
-			acceptButton.addEventListener("click", () => {
-				alertBackdrop.remove();
-				referenceInput.focus();
-			});
-		}
+		showPaymentInlineAlert(
+			"Referencia requerida",
+			"El número de referencia es obligatorio para SINPE y Tarjeta.",
+			referenceInput,
+		);
 	};
-	//Validar monto ingresado
 
-	const showInvalidAmountAlert = () => {
+	const showReferenceInvalidAlert = () => {
+		showPaymentInlineAlert(
+			"Referencia inválida",
+			"La referencia debe tener entre 8 y 12 dígitos para Tarjeta o SINPE.",
+			referenceInput,
+		);
+	};
+
+	const showPaymentInlineAlert = (title, message, focusElement = null) => {
 		const existingAlert = popup.querySelector("#payment-inline-alert");
 		if (existingAlert) {
 			existingAlert.remove();
@@ -204,19 +198,23 @@ const initializePaymentModalUI = (popup, saleData) => {
 		alertBackdrop.className = "payment-inline-alert-backdrop";
 		alertBackdrop.innerHTML = `
 			<div class="payment-inline-alert-card" role="alertdialog" aria-live="assertive" aria-modal="true">
-				<div class="payment-inline-alert-title">Monto inválido</div>
-				<div class="small">Ingresa un monto válido para agregar el pago.</div>
+				<div class="payment-inline-alert-title">${title}</div>
+				<div class="small">${message}</div>
 				<div class="payment-inline-alert-actions">
 					<button type="button" class="btn btn-success btn-sm" id="payment-inline-alert-accept">Aceptar</button>
 				</div>
 			</div>
 		`;
+
 		popup.appendChild(alertBackdrop);
+
 		const acceptButton = alertBackdrop.querySelector("#payment-inline-alert-accept");
 		if (acceptButton) {
 			acceptButton.addEventListener("click", () => {
 				alertBackdrop.remove();
-				amountInput.focus();
+				if (focusElement) {
+					focusElement.focus();
+				}
 			});
 		}
 	};
@@ -330,7 +328,60 @@ const initializePaymentModalUI = (popup, saleData) => {
 	});
 
 	amountInput.addEventListener("input", () => {
+		amountInput.value = sanitizeAmountInputValue(amountInput.value);
 		updateCashChangePreview();
+	});
+
+	referenceInput.addEventListener("input", () => {
+		referenceInput.value = referenceInput.value.replace(/\D/g, "");
+	});
+
+	referenceInput.addEventListener("keydown", (event) => {
+		const allowedKeys = [
+			"Backspace",
+			"Tab",
+			"ArrowLeft",
+			"ArrowRight",
+			"Delete",
+			"Home",
+			"End",
+			"Enter",
+		];
+
+		if (allowedKeys.includes(event.key)) {
+			return;
+		}
+
+		if (/^[0-9]$/.test(event.key)) {
+			return;
+		}
+
+		event.preventDefault();
+	});
+
+	amountInput.addEventListener("keydown", (event) => {
+		const allowedKeys = [
+			"Backspace",
+			"Tab",
+			"ArrowLeft",
+			"ArrowRight",
+			"Delete",
+			"Home",
+			"End",
+			"Enter",
+			".",
+			",",
+		];
+
+		if (allowedKeys.includes(event.key)) {
+			return;
+		}
+
+		if (/^[0-9]$/.test(event.key)) {
+			return;
+		}
+
+		event.preventDefault();
 	});
 
 	clearPaymentAmountButton.addEventListener("click", () => {
@@ -393,13 +444,24 @@ const initializePaymentModalUI = (popup, saleData) => {
 		const reference = referenceInput.value.trim();
 
 		if (!Number.isFinite(amount) || amount <= 0) {
-			showInvalidAmountAlert();
+			showPaymentInlineAlert(
+				"Monto inválido",
+				"Ingresa un monto válido para agregar el pago.",
+				amountInput,
+			);
 			return;
 		}
 
-		if (selectedMethod !== PaymentMethods.CASH && reference.length === 0) {
-			showReferenceRequiredAlert();
-			return;
+		if (selectedMethod !== PaymentMethods.CASH) {
+			if (reference.length === 0) {
+				showReferenceRequiredAlert();
+				return;
+			}
+
+			if (!/^[0-9]{8,12}$/.test(reference)) {
+				showReferenceInvalidAlert();
+				return;
+			}
 		}
 
 		const paidTotal = payments.reduce(
@@ -417,10 +479,11 @@ const initializePaymentModalUI = (popup, saleData) => {
 		}
 
 		if (selectedMethod !== PaymentMethods.CASH && amount > remaining) {
-			SwalToast.fire({
-				icon: SwalNotificationTypes.WARNING,
-				title: "Tarjeta y SINPE no deben exceder el restante.",
-			});
+			showPaymentInlineAlert(
+				"Monto demasiado alto",
+				"Tarjeta y SINPE no deben exceder el restante.",
+				amountInput,
+			);
 			return;
 		}
 
