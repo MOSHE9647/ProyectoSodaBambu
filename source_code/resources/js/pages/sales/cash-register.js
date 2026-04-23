@@ -141,7 +141,10 @@ const showOpeningCashModal = async () => {
 			// Persist the opening amount entered by the user.
 			const initialAmount = result.value;
 			saveInitialCashRegisterAmount(initialAmount);
-		}
+
+			const $menuItem = $('#cash-closure-menu-item');
+    		$menuItem.removeClass('d-none').addClass('d-block').attr('data-is-active', 'true');
+    	}
 	});
 };
 

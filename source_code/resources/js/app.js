@@ -44,5 +44,6 @@ $(document).ready(function () {
 	// Start checking connection status
 	checkConnectionStatus();
 
-	initializeCashClosure(); //<- Initialize cash closure page scripts if on that page
+	//Initialize cash closure page scripts if on that page
+	initializeCashClosure(); 
 })

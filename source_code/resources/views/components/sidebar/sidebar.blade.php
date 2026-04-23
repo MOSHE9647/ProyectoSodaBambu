@@ -51,25 +51,24 @@
 			</a>
 			<ul class="dropdown-menu text-small shadow">
 
-				@php
-					// Buscamos si existe una caja abierta en el sistema
+				@php			
 					$activeCashRegister = CashRegister::where('status', CashRegisterStatus::OPEN)->first();
+					$activeCashRegisterClass = $activeCashRegister ? 'd-block' : 'd-none';
+					$isActiveValue = $activeCashRegister ? 'true' : 'false';
 				@endphp
 
-				@if($activeCashRegister)
-					<li class="list-item">
-						<button 
-							type="button"
-							class="dropdown-item" 
-							id="btn-trigger-cash-closure" {{-- El ID que busca cash-closure.js --}}
-							data-register-id="{{ $activeCashRegister->id }}" {{-- El ID de la caja --}}
-						>
-							<i class="bi bi-lock-fill me-1 text-danger"></i>
-							Cierre de caja
-						</button>
-					</li>
-					<li><hr class="dropdown-divider"></li>
-				@endif
+				<li class="list-item {{ $activeCashRegisterClass }}" id="cash-closure-menu-item" data-is-active="{{ $isActiveValue }}">
+					<button 
+						type="button"
+						class="dropdown-item" 
+						id="btn-trigger-cash-closure" 
+						data-register-id="{{ $activeCashRegister?->id }}" 
+					>
+						<i class="bi bi-lock-fill me-1 text-danger"></i>
+						Cierre de caja
+					</button>
+					<hr class="dropdown-divider">
+				</li>
 				
 				<li class="list-item">
 					<a 
