@@ -5,6 +5,7 @@
 	'iconLeft' => null,
 	'textIconLeft' => false,
 	'iconRight' => null,
+	'buttonIconRight' => null,
 	'textIconRight' => false,
 	'selectClass' => '',
 	'labelClass' => '',
@@ -52,12 +53,16 @@
 		{{-- Right Icon --}}
 		@isset($iconRight)
 			<span class="input-group-text">
-			@if($textIconRight)
+				@if($textIconRight)
 					{!! $iconRight !!}
 				@else
 					<i class="{{ $iconRight }}"></i>
 				@endif
-		</span>
+			</span>
+		@endisset
+
+		@isset($buttonIconRight)
+			{!! $buttonIconRight !!}
 		@endisset
 
 		{{-- Error Message --}}
