@@ -192,6 +192,36 @@ const initializePaymentModalUI = (popup, saleData) => {
 		}
 	};
 
+	const showInvalidAmountAlert = () => {
+		const existingAlert = popup.querySelector("#payment-inline-alert");
+		if (existingAlert) {
+			existingAlert.remove();
+		}
+
+		const alertBackdrop = document.createElement("div");
+		alertBackdrop.id = "payment-inline-alert";
+		alertBackdrop.className = "payment-inline-alert-backdrop";
+		alertBackdrop.innerHTML = `
+			<div class="payment-inline-alert-card" role="alertdialog" aria-live="assertive" aria-modal="true">
+				<div class="payment-inline-alert-title">Monto inválido</div>
+				<div class="small">Ingresa un monto válido para agregar el pago.</div>
+				<div class="payment-inline-alert-actions">
+					<button type="button" class="btn btn-success btn-sm" id="payment-inline-alert-accept">Aceptar</button>
+				</div>
+			</div>
+		`;
+
+		popup.appendChild(alertBackdrop);
+
+		const acceptButton = alertBackdrop.querySelector("#payment-inline-alert-accept");
+		if (acceptButton) {
+			acceptButton.addEventListener("click", () => {
+				alertBackdrop.remove();
+				amountInput.focus();
+			});
+		}
+	};
+
 	const renderSummary = () => {
 		if (payments.length === 0) {
 			paymentSummaryList.innerHTML = `
@@ -364,10 +394,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 		const reference = referenceInput.value.trim();
 
 		if (!Number.isFinite(amount) || amount <= 0) {
-			SwalToast.fire({
-				icon: SwalNotificationTypes.WARNING,
-				title: "Ingresa un monto valido para agregar el pago.",
-			});
+			showInvalidAmountAlert();
 			return;
 		}
 
