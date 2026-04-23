@@ -178,11 +178,20 @@
 
         document.querySelectorAll('.report-period').forEach((radio) => {
             radio.addEventListener('change', () => {
-                toggleCustomDates(radio.value);
-
-                if (filtersForm) {
-                    filtersForm.requestSubmit();
+                if (radio.value !== 'custom') {
+                    reportDateInputs.forEach((input) => {
+                        input.value = '';
+                    });
                 }
+
+                toggleCustomDates(radio.value);
+                
+            if (filtersForm) {
+                if (radio.value !== 'custom') {
+                    reportDateInputs.forEach(input => input.disabled = true);
+                }
+                filtersForm.requestSubmit();
+            }
             });
         });
 
