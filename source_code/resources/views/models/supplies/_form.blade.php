@@ -59,12 +59,12 @@
                 Cancelar
             </a>
 
-            <x-form.submit :id="$isEdit ? 'edit-supply-form-button' : 'create-supply-form-button'" :spinnerId="$isEdit ? 'edit-supply-form-spinner' : 'create-supply-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="'Guardando...'">
+            <x-form.button :id="$isEdit ? 'edit-supply-form-button' : 'create-supply-form-button'" :spinnerId="$isEdit ? 'edit-supply-form-spinner' : 'create-supply-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="'Guardando...'">
                 <div id="{{ $isEdit ? 'edit-supply-form-button-text' : 'create-supply-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi {{ $isEdit ? 'bi-pencil-square' : 'bi-plus-circle' }} me-2"></i>
                     {{ $isEdit ? 'Actualizar' : 'Guardar' }}
                 </div>
-            </x-form.submit>
+            </x-form.button>
         </div>
     </form>
 </div>

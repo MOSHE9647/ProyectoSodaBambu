@@ -48,12 +48,12 @@
             </a>
 
             {{-- Submit Button --}}
-            <x-form.submit :id="isset($category) ? 'edit-category-form-button' : 'create-category-form-button'" :spinnerId="isset($category) ? 'edit-category-form-spinner' : 'create-category-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="isset($category) ? 'Actualizando...' : 'Guardando...'">
+            <x-form.button :id="isset($category) ? 'edit-category-form-button' : 'create-category-form-button'" :spinnerId="isset($category) ? 'edit-category-form-spinner' : 'create-category-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="isset($category) ? 'Actualizando...' : 'Guardando...'">
                 <div id="{{ isset($category) ? 'edit-category-form-button-text' : 'create-category-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-save me-2"></i>
                     {{ isset($category) ? 'Actualizar' : 'Guardar' }}
                 </div>
-            </x-form.submit>
+            </x-form.button>
         </div>
     </form>
 </div>

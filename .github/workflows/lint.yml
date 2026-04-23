@@ -25,3 +25,5 @@ jobs:
 
       - name: Commit linted files
         uses: stefanzweifel/git-auto-commit-action@v6
+        with:
+          commit_message: Fixed code style with Laravel Pint

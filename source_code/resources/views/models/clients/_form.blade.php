@@ -64,12 +64,12 @@
             </a>
 
             {{-- Submit Button --}}
-            <x-form.submit :id="isset($client) ? 'edit-client-form-button' : 'create-client-form-button'" :spinnerId="isset($client) ? 'edit-client-form-spinner' : 'create-client-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="isset($client) ? 'Actualizando...' : 'Guardando...'">
+            <x-form.button :id="isset($client) ? 'edit-client-form-button' : 'create-client-form-button'" :spinnerId="isset($client) ? 'edit-client-form-spinner' : 'create-client-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="isset($client) ? 'Actualizando...' : 'Guardando...'">
                 <div id="{{ isset($client) ? 'edit-client-form-button-text' : 'create-client-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-person-add me-2"></i>
                     {{ isset($client) ? 'Actualizar' : 'Guardar' }}
                 </div>
-            </x-form.submit>
+            </x-form.button>
         </div>
     </form>
 </div>

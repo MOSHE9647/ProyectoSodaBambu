@@ -21,6 +21,10 @@
 	@vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="overflow-hidden">
+	<div id="page-loading-progress" class="progress" role="progressbar" aria-label="Cargando pagina" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+		<div class="progress-bar progress-bar-animated" style="width: 0%; background: var(--bambu-logo-bg);"></div>
+	</div>
+
 	<div id="app">
 		{{-- Sidebar Component --}}
 		<x-sidebar/>
@@ -39,17 +43,6 @@
 	{{-- Additional Scripts --}}
 	@routes
 	@yield('scripts')
-
-
-	{{-- warning toast --}}
-	@if(session('warning'))
-		<script type="module">
-			SwalToast.fire({
-				icon: SwalNotificationTypes.WARNING, 
-				title: @json(session('warning'))
-			});
-		</script>
-	@endif
 
 	{{-- Flash Toast Notifications --}}
 	<x-flash-toast />
