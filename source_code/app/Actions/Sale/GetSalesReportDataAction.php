@@ -38,10 +38,10 @@ class GetSalesReportDataAction
             $query->whereHas('saleDetails.product', function ($q) use ($activeProductType) {
                 match ($activeProductType) {
                     'merchandise' => $q->where('type', ProductType::MERCHANDISE->value),
-                    'dishes'      => $q->where('type', ProductType::DISH->value),
-                    'drinks'      => $q->where('type', ProductType::DRINK->value),
-                    'packaged'    => $q->where('type', ProductType::PACKAGED->value),
-                    default       => null,
+                    'dishes' => $q->where('type', ProductType::DISH->value),
+                    'drinks' => $q->where('type', ProductType::DRINK->value),
+                    'packaged' => $q->where('type', ProductType::PACKAGED->value),
+                    default => null,
                 };
             });
         }
@@ -118,7 +118,6 @@ class GetSalesReportDataAction
         $activeCategoryName = $activeCategoryId
             ? $categories->firstWhere('id', $activeCategoryId)?->name
             : null;
-
 
         [$previousStartLocal, $previousEndLocal, $previousPeriodLabel] = $this->resolvePreviousPeriod($startLocal, $endLocal);
         $previousTopProducts = $this->buildTopProducts(
@@ -363,6 +362,7 @@ class GetSalesReportDataAction
     private function resolveProductTypeScope(string $scope): string
     {
         $allowed = ['all', 'merchandise', 'dishes', 'drinks', 'packaged'];
+
         return in_array($scope, $allowed, true) ? $scope : 'all';
     }
 
@@ -385,10 +385,10 @@ class GetSalesReportDataAction
     {
         return match ($scope) {
             'merchandise' => 'Mercancía',
-            'dishes'      => 'Platillos',
-            'drinks'      => 'Bebidas',
-            'packaged'    => 'Empacados',
-            default       => 'Todos',
+            'dishes' => 'Platillos',
+            'drinks' => 'Bebidas',
+            'packaged' => 'Empacados',
+            default => 'Todos',
         };
     }
 }
