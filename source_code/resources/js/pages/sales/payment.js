@@ -191,6 +191,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 			});
 		}
 	};
+	//Validar monto ingresado
 
 	const showInvalidAmountAlert = () => {
 		const existingAlert = popup.querySelector("#payment-inline-alert");
@@ -210,9 +211,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 				</div>
 			</div>
 		`;
-
 		popup.appendChild(alertBackdrop);
-
 		const acceptButton = alertBackdrop.querySelector("#payment-inline-alert-accept");
 		if (acceptButton) {
 			acceptButton.addEventListener("click", () => {
