@@ -18,7 +18,7 @@ class BuildSalesReportSpreadsheetAction
     {
         $currentDate = Carbon::now('America/Costa_Rica');
         $activeSection = $reportData['activeSection'] ?? 'sales';
-        $currencyFormat = '"₡" #,##0'; 
+        $currencyFormat = '"₡" #,##0';
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle($activeSection === 'products' ? 'Productos Vendidos' : 'Reporte de Ventas');
@@ -47,7 +47,7 @@ class BuildSalesReportSpreadsheetAction
                 $sheet->setCellValue('C'.$row, $product['product_type_label'] ?? '');
                 $sheet->setCellValue('D'.$row, (int) ($product['sold_quantity'] ?? 0));
                 $incomeAdjusted = (int) (($product['income'] ?? 0) / 1000);
-                $sheet->setCellValue('E' . $row, $incomeAdjusted);
+                $sheet->setCellValue('E'.$row, $incomeAdjusted);
                 $sheet->setCellValue('F'.$row, (float) ($product['total_percent'] ?? 0));
                 $row++;
             }
@@ -76,7 +76,7 @@ class BuildSalesReportSpreadsheetAction
         $totalSalesIncome = 0;
         $row = 8;
         foreach (($reportData['dailyReports'] ?? []) as $report) {
-            $income = (int) ($report['income'] ?? 0/1000);
+            $income = (int) ($report['income'] ?? 0 / 1000);
             $totalSalesIncome += $income;
             $sheet->setCellValue('A'.$row, $report['date'] ?? '');
             $sheet->setCellValue('B'.$row, (int) ($report['orders'] ?? 0));
@@ -85,7 +85,7 @@ class BuildSalesReportSpreadsheetAction
             $sheet->setCellValue('D'.$row, $avgTicket);
             $row++;
         }
-        $currencyFormat = '"₡" #,##0'; 
+        $currencyFormat = '"₡" #,##0';
         $sheet->getStyle('C8:C'.$row)->getNumberFormat()->setFormatCode($currencyFormat);
         $sheet->getStyle('D8:D'.$row)->getNumberFormat()->setFormatCode($currencyFormat);
         $lastRow = max($row - 1, 7);
@@ -94,7 +94,7 @@ class BuildSalesReportSpreadsheetAction
         $sheet->setCellValue('C'.$summaryRow, $totalSalesIncome);
         $currencyFormat = '"₡" #,##0';
         $sheet->getStyle('C8:C'.$summaryRow)->getNumberFormat()->setFormatCode($currencyFormat);
-        $sheet->getStyle('D8:D'.($row-1))->getNumberFormat()->setFormatCode($currencyFormat);
+        $sheet->getStyle('D8:D'.($row - 1))->getNumberFormat()->setFormatCode($currencyFormat);
 
         $lastRow = max($summaryRow, 7);
         $this->applyStyles($sheet, $lastRow, 'D', $summaryRow);
@@ -115,7 +115,7 @@ class BuildSalesReportSpreadsheetAction
         $sheet->getStyle('A7:'.$lastColLetter.'7')->getFont()->setBold(true);
         $sheet->getStyle('A7:'.$lastColLetter.'7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle('A7:'.$lastColLetter.'7')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFD9EAD3');
-        
+
         // Estilo fila de totales
         $sheet->getStyle('A'.$summaryRow.':'.$lastColLetter.$summaryRow)->getFont()->setBold(true);
         $sheet->getStyle('A'.$summaryRow.':'.$lastColLetter.$summaryRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF3F8ED');
