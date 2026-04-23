@@ -77,9 +77,21 @@
 
                 <div class="ms-lg-auto d-flex flex-wrap align-items-center gap-2">
                     <select name="product_type" class="form-select form-select-sm report-auto-submit" style="min-width: 180px;">
-                        <option value="all" {{ ($activeProductType ?? 'all') === 'all' ? 'selected' : '' }}>Todos los tipos</option>
-                        <option value="merchandise" {{ ($activeProductType ?? 'all') === 'merchandise' ? 'selected' : '' }}>Mercancía</option>
-                        <option value="dishes" {{ ($activeProductType ?? 'all') === 'dishes' ? 'selected' : '' }}>Platillos</option>
+                        <option value="all" {{ ($activeProductType ?? 'all') === 'all' ? 'selected' : '' }}>
+                            Todos los tipos
+                        </option>
+                        <option value="merchandise" {{ ($activeProductType ?? '') === 'merchandise' ? 'selected' : '' }}>
+                            Mercancía
+                        </option>
+                        <option value="dishes" {{ ($activeProductType ?? '') === 'dishes' ? 'selected' : '' }}>
+                            Platillos
+                        </option>
+                        <option value="drinks" {{ ($activeProductType ?? '') === 'drinks' ? 'selected' : '' }}>
+                            Bebidas
+                        </option>
+                        <option value="packaged" {{ ($activeProductType ?? '') === 'packaged' ? 'selected' : '' }}>
+                            Empacados
+                        </option>
                     </select>
 
                     <select name="category_id" class="form-select form-select-sm report-auto-submit" style="min-width: 200px;">

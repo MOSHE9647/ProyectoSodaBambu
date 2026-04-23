@@ -34,7 +34,22 @@ class GetSalesReportDataAction
                 $startLocal->copy()->timezone('UTC'),
                 $endLocal->copy()->timezone('UTC'),
             ]);
-
+        if ($activeProductType !== 'all') {
+            $query->whereHas('saleDetails.product', function ($q) use ($activeProductType) {
+                match ($activeProductType) {
+                    'merchandise' => $q->where('type', ProductType::MERCHANDISE->value),
+                    'dishes'      => $q->where('type', ProductType::DISH->value),
+                    'drinks'      => $q->where('type', ProductType::DRINK->value),
+                    'packaged'    => $q->where('type', ProductType::PACKAGED->value),
+                    default       => null,
+                };
+            });
+        }
+        if ($activeCategoryId) {
+            $query->whereHas('saleDetails.product', function ($q) use ($activeCategoryId) {
+                $q->where('category_id', $activeCategoryId);
+            });
+        }
         $paymentStatusValues = array_map(
             fn (PaymentStatus $status) => $status->value,
             PaymentStatus::cases()
@@ -87,14 +102,6 @@ class GetSalesReportDataAction
             ->map(fn (array $report) => Arr::except($report, ['date_raw']))
             ->all();
 
-        $totalIncome = (float) $sales->sum('total');
-        $totalOrders = $sales->count();
-        $daysInPeriod = max($startLocal->copy()->startOfDay()->diffInDays($endLocal->copy()->startOfDay()) + 1, 1);
-        $categories = Category::query()->orderBy('name')->get(['id', 'name']);
-        $activeCategoryName = $activeCategoryId
-            ? $categories->firstWhere('id', $activeCategoryId)?->name
-            : null;
-
         $topProducts = $this->buildTopProducts(
             $startLocal,
             $endLocal,
@@ -102,6 +109,16 @@ class GetSalesReportDataAction
             $activeProductType,
             $activeCategoryId
         );
+
+        $totalIncome = (float) collect($topProducts)->sum('income');
+        $totalSoldUnits = (int) collect($topProducts)->sum('sold_quantity');
+        $totalOrders = $sales->count();
+        $daysInPeriod = max($startLocal->copy()->startOfDay()->diffInDays($endLocal->copy()->startOfDay()) + 1, 1);
+        $categories = Category::query()->orderBy('name')->get(['id', 'name']);
+        $activeCategoryName = $activeCategoryId
+            ? $categories->firstWhere('id', $activeCategoryId)?->name
+            : null;
+
 
         [$previousStartLocal, $previousEndLocal, $previousPeriodLabel] = $this->resolvePreviousPeriod($startLocal, $endLocal);
         $previousTopProducts = $this->buildTopProducts(
@@ -219,14 +236,12 @@ class GetSalesReportDataAction
 
         if ($activeProductType === 'merchandise') {
             $query->where('p.type', ProductType::MERCHANDISE->value);
-        }
-
-        if ($activeProductType === 'dishes') {
-            $query->whereIn('p.type', [
-                ProductType::DISH->value,
-                ProductType::DRINK->value,
-                ProductType::PACKAGED->value,
-            ]);
+        } elseif ($activeProductType === 'dishes') {
+            $query->where('p.type', ProductType::DISH->value);
+        } elseif ($activeProductType === 'drinks') {
+            $query->where('p.type', ProductType::DRINK->value);
+        } elseif ($activeProductType === 'packaged') {
+            $query->where('p.type', ProductType::PACKAGED->value);
         }
 
         $products = $query
@@ -347,7 +362,8 @@ class GetSalesReportDataAction
      */
     private function resolveProductTypeScope(string $scope): string
     {
-        return in_array($scope, ['all', 'merchandise', 'dishes'], true) ? $scope : 'all';
+        $allowed = ['all', 'merchandise', 'dishes', 'drinks', 'packaged'];
+        return in_array($scope, $allowed, true) ? $scope : 'all';
     }
 
     /**
@@ -369,8 +385,10 @@ class GetSalesReportDataAction
     {
         return match ($scope) {
             'merchandise' => 'Mercancía',
-            'dishes' => 'Platillos',
-            default => 'Todos',
+            'dishes'      => 'Platillos',
+            'drinks'      => 'Bebidas',
+            'packaged'    => 'Empacados',
+            default       => 'Todos',
         };
     }
 }
