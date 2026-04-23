@@ -24,6 +24,7 @@ class Supply extends Model
         'quantity',
         'unit_price',
         'expiration_date',
+        'expiration_alert_date',
         'expiration_alert_days',
     ];
 
@@ -36,6 +37,7 @@ class Supply extends Model
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
         'expiration_date' => 'date',
+        'expiration_alert_date' => 'date',
         'expiration_alert_days' => 'integer',
 
     ];

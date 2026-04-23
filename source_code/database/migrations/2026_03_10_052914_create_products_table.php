@@ -17,9 +17,12 @@ return new class extends Migration
             $table->string('barcode')->unique()->nullable();
             $table->string('name');
             $table->string('type');
-            $table->date('expiration_date')->nullable();
-            $table->unsignedInteger('expiration_alert_days')->default(7);
+
+            // Inventory management fields
             $table->boolean('has_inventory')->default(false);
+            $table->date('expiration_date')->nullable();
+            $table->date('expiration_alert_date')->nullable();
+            $table->unsignedInteger('expiration_alert_days')->default(7);
 
             // Cost and pricing fields
             $table->decimal('sale_price', 10, 2)->default(0);

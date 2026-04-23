@@ -30,7 +30,9 @@ class PurchaseDetailFactory extends Factory
                 Product::class,
                 Supply::class,
             ]),
-            'subtotal' => $this->faker->randomFloat(2, 10, 25000),
+            'quantity' => $this->faker->numberBetween(1, 20),
+            'unit_price' => $this->faker->randomFloat(2, 1000, 25000),
+            'sub_total' => $this->faker->randomFloat(2, 1000, 25000),
         ];
     }
 }

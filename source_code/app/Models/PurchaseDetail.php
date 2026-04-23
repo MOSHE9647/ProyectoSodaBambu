@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Casts\CostaRicaDatetime;
 use Database\Factories\PurchaseDetailFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,9 +21,11 @@ class PurchaseDetail extends Model
      */
     protected $fillable = [
         'purchase_id',
+        'quantity',
+        'unit_price',
+        'sub_total',
         'purchasable_id',
         'purchasable_type',
-        'subtotal',
     ];
 
     /**
@@ -33,29 +34,29 @@ class PurchaseDetail extends Model
      * @return array<string, string>
      */
     protected $casts = [
-        'subtotal' => 'decimal:2',
-        // 'created_at' => CostaRicaDatetime::class,
-        // 'updated_at' => CostaRicaDatetime::class,
-        // 'deleted_at' => CostaRicaDatetime::class,
+        'unit_price' => 'decimal:2',
+        'sub_total' => 'decimal:2',
     ];
 
     /**
-     * Get the parent purchasable model (Product or Supply).
+     * Relation: Purchase.
+     * A purchase detail belongs to a single purchase.
      *
-     * @return MorphTo<PurchaseDetail>
+     * @return BelongsTo<PurchaseDetail, Purchase>
      */
-    public function purchasable()
+    public function purchase(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(Purchase::class);
     }
 
     /**
-     * Get the purchase that owns the detail.
+     * Relation: Purchasable.
+     * A purchase detail can belong to either a product or a supply.
      *
-     * @return BelongsTo<Purchase, PurchaseDetail>
+     * @return MorphTo<PurchaseDetail>
      */
-    public function purchase()
+    public function purchasable(): MorphTo
     {
-        return $this->belongsTo(Purchase::class);
+        return $this->morphTo();
     }
 }

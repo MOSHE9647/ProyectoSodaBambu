@@ -21,14 +21,14 @@ class SaleFactory extends Factory
     public function definition(): array
     {
         $userRole = $this->faker->randomElement([UserRole::ADMIN, UserRole::EMPLOYEE]);
-        $paymentStatuses = [PaymentStatus::PAID, PaymentStatus::PENDING, PaymentStatus::CANCELLED, PaymentStatus::PARTIAL];
+        $paymentStatuses = [PaymentStatus::PAID, PaymentStatus::PENDING, PaymentStatus::CANCELLED];
 
         return [
             'user_id' => User::factory()->withRole($userRole),
             'invoice_number' => $this->faker->unique()->numerify('FAC-##########'),
-            'payment_status' => $this->faker->randomElement($paymentStatuses),
-            'date' => $this->faker->dateTimeThisMonth(),
+            'date' => $this->faker->dateTimeBetween('-1 year', 'now'),
             'total' => $this->faker->randomFloat(2, 20000, 600000),
+            'payment_status' => $this->faker->randomElement($paymentStatuses),
         ];
     }
 }

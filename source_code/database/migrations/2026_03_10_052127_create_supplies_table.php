@@ -13,12 +13,16 @@ return new class extends Migration
     {
         Schema::create('supplies', function (Blueprint $table) {
             $table->id();
+
             $table->string('name');
-            $table->string('measure_unit', 50); // Corrección solicitada por Melanie
+            $table->string('measure_unit', 50);
             $table->integer('quantity')->default(0);
             $table->decimal('unit_price', 10, 2)->default(0);
+
             $table->date('expiration_date')->nullable();
+            $table->date('expiration_alert_date')->nullable();
             $table->unsignedInteger('expiration_alert_days')->default(7);
+
             $table->timestamps();
             $table->softDeletes();
         });

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProductType;
+use Carbon\Carbon;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,9 +28,10 @@ class Product extends Model
         'barcode',
         'name',
         'type',
-        'expiration_date',
-        'expiration_alert_days',
         'has_inventory',
+        'expiration_date',
+        'expiration_alert_date',
+        'expiration_alert_days',
         'reference_cost',
         'tax_percentage',
         'margin_percentage',
@@ -44,16 +46,30 @@ class Product extends Model
     protected $casts = [
         'has_inventory' => 'boolean',
         'expiration_date' => 'date',
+        'expiration_alert_date' => 'date',
         'expiration_alert_days' => 'integer',
         'reference_cost' => 'decimal:2',
         'tax_percentage' => 'decimal:2',
         'margin_percentage' => 'decimal:2',
         'sale_price' => 'decimal:2',
         'type' => ProductType::class,
-        // 'created_at' => CostaRicaDatetime::class,
-        // 'updated_at' => CostaRicaDatetime::class,
-        // 'deleted_at' => CostaRicaDatetime::class,
     ];
+
+    /**
+     * Boot the model to hook into lifecycle events.
+     */
+    protected static function booted(): void
+    {
+        // Intercepts the saving event to calculate the expiration alert date based on the expiration date and alert days.
+        static::saving(function (Product $product) {
+            $product->expiration_alert_date =
+                ($product->expiration_date && $product->expiration_alert_days !== null)
+                    ? Carbon::parse($product->expiration_date)
+                        ->subDays($product->expiration_alert_days)
+                        ->toDateString()
+                    : null;
+        });
+    }
 
     /**
      * Get the category that owns the product.
@@ -102,13 +118,13 @@ class Product extends Model
      */
     public function scopeWithStockDetails(Builder $query): Builder
     {
-        return $query->leftJoin('product_stocks as ps', function ($join) {
-            $join->on('ps.product_id', '=', 'products.id')
-                ->whereNull('ps.deleted_at');
-        })->select([
-            'products.*',
-            'ps.current_stock',
-            'ps.minimum_stock',
+        return $query->addSelect([
+            'current_stock' => ProductStock::select('current_stock')
+                ->whereColumn('product_id', 'products.id')
+                ->take(1),
+            'minimum_stock' => ProductStock::select('minimum_stock')
+                ->whereColumn('product_id', 'products.id')
+                ->take(1),
         ]);
     }
 
@@ -118,9 +134,10 @@ class Product extends Model
      */
     public function scopeLowStock(Builder $query): Builder
     {
-        return $query->where('products.has_inventory', true)
-            ->whereNotNull('ps.current_stock')
-            ->whereColumn('ps.current_stock', '<=', 'ps.minimum_stock');
+        return $query->where('has_inventory', true)
+            ->whereHas('stock', function (Builder $q) {
+                $q->whereColumn('current_stock', '<=', 'minimum_stock');
+            });
     }
 
     /**
@@ -128,25 +145,10 @@ class Product extends Model
      */
     public function scopeExpiringSoon(Builder $query): Builder
     {
-        // Obtenemos la fecha de hoy desde PHP (Formato YYYY-MM-DD)
         $today = now()->toDateString();
 
-        // Identificamos qué base de datos estamos usando
-        $driver = $query->getConnection()->getDriverName();
-
-        // 1. Aseguramos que la fecha sea hoy o en el futuro (Esto reemplaza la parte "BETWEEN 0")
-        $query->whereDate('products.expiration_date', '>=', $today);
-
-        // 2. Aplicamos la suma de días según el motor de base de datos
-        return match ($driver) {
-            'sqlite' => $query->whereRaw(
-                "products.expiration_date <= date(?, '+' || products.expiration_alert_days || ' days')",
-                [$today]
-            ),
-            default => clone $query->whereRaw(
-                'products.expiration_date <= DATE_ADD(?, INTERVAL products.expiration_alert_days DAY)',
-                [$today]
-            ), // MySQL / MariaDB
-        };
+        return $query->whereNotNull('expiration_alert_date')
+            ->whereDate('expiration_date', '>=', $today)
+            ->whereDate('expiration_alert_date', '<=', $today);
     }
 }

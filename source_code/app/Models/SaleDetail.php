@@ -44,7 +44,7 @@ class SaleDetail extends Model
      *
      * @return BelongsTo<SaleDetail, Sale>
      */
-    public function sale()
+    public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);
     }
@@ -55,7 +55,7 @@ class SaleDetail extends Model
      *
      * @return BelongsTo<Product, SaleDetail>
      */
-    public function product()
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
