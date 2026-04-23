@@ -37,7 +37,7 @@ class CashRegisterController extends Controller
 
     public function getCloseData(CashRegister $cashRegister): JsonResponse
     {
-        
+
         // Only transactions from this cash register that have an associated payment (where the method is defined)
         $transactions = $cashRegister->transactions()->with('payment')->get();
 
