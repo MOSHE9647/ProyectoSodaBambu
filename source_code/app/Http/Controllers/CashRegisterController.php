@@ -6,6 +6,12 @@ use App\Enums\CashRegisterStatus;
 use App\Models\CashRegister;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Models\CashRegisterReport;
+use App\Models\CashRegisterDetail;
+use App\Enums\PaymentMethod;
+use App\Enums\TransactionType;
+use Illuminate\Support\Facades\DB;
+
 
 class CashRegisterController extends Controller
 {
@@ -30,4 +36,91 @@ class CashRegisterController extends Controller
         // Redirect to the sales page or wherever appropriate
         return response()->json(['message' => 'La caja se abrió correctamente.']);
     }
+
+    public function getCloseData(CashRegister $cashRegister): JsonResponse
+    {
+        // Solo transacciones de esta caja que tengan un pago asociado (donde se define el método)
+        $transactions = $cashRegister->transactions()->with('payment')->get();
+
+        // Agrupar por método de pago y calcular balance (Ingresos - Gastos)
+        $methodData = $transactions->groupBy('payment.method.value')
+            ->map(function ($group) {
+                return $group->reduce(function ($carry, $t) {
+                    return $t->type === TransactionType::INCOME 
+                        ? $carry + $t->amount 
+                        : $carry - $t->amount;
+                }, 0);
+            });
+
+        // El efectivo en sistema incluye el monto de apertura
+        $systemCash = $cashRegister->opening_balance + $methodData->get(PaymentMethod::CASH->value, 0);
+
+        return response()->json([
+            'total_orders'    => $transactions->count(),
+            'system_cash'     => (float) $systemCash,
+            'system_card'     => (float) $methodData->get(PaymentMethod::CARD->value, 0),
+            'system_sinpe'    => (float) $methodData->get(PaymentMethod::SINPE->value, 0),
+            'system_total'    => (float) ($systemCash + $methodData->get(PaymentMethod::CARD->value) + $methodData->get(PaymentMethod::SINPE->value)),
+        ]);
+    }
+
+    /**
+     * Procesa el cierre definitivo de la caja.
+     */
+    public function close(Request $request, CashRegister $cashRegister): JsonResponse
+    {
+        $validated = $request->validate([
+            'physical_cash' => 'required|numeric|min:0',
+            'physical_card' => 'required|numeric|min:0',
+            'physical_sinpe' => 'required|numeric|min:0',
+            'notes'         => 'nullable|string|max:500',
+        ]);
+
+        try {
+            return DB::transaction(function () use ($validated, $cashRegister) {
+                // 1. Obtener datos actuales del sistema (recalcular para seguridad)
+                $data = $this->getCloseData($cashRegister)->getData();
+
+                // 2. Crear el Reporte Principal
+                $totalPhysical = $validated['physical_cash'] + $validated['physical_card'] + $validated['physical_sinpe'];
+                $report = CashRegisterReport::create([
+                    'cash_register_id'      => $cashRegister->id,
+                    'total_system_amount'   => $data->system_total,
+                    'total_physical_amount' => $totalPhysical,
+                    'total_difference'      => $totalPhysical - $data->system_total,
+                    'notes'                 => $validated['notes'] ?? null,
+                ]);
+
+                // 3. Crear Detalles por Método (Efectivo, Tarjeta, SINPE)
+                $methods = [
+                    ['method' => PaymentMethod::CASH,  'sys' => $data->system_cash,  'phys' => $validated['physical_cash']],
+                    ['method' => PaymentMethod::CARD,  'sys' => $data->system_card,  'phys' => $validated['physical_card']],
+                    ['method' => PaymentMethod::SINPE, 'sys' => $data->system_sinpe, 'phys' => $validated['physical_sinpe']],
+                ];
+
+                foreach ($methods as $item) {
+                    $report->details()->create([
+                        'payment_method'  => $item['method'],
+                        'system_amount'   => $item['sys'],
+                        'physical_amount' => $item['phys'],
+                        'difference'      => $item['phys'] - $item['sys'],
+                    ]);
+                }
+
+                // 4. Actualizar estado de la Caja
+                $cashRegister->update([
+                    'status'          => CashRegisterStatus::CLOSED,
+                    'closed_at'       => now(),
+                    'closing_balance' => $report->total_physical_amount,
+                ]);
+
+                return response()->json(['message' => 'Caja cerrada y reporte generado con éxito.']);
+            });
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error al cerrar caja: ' . $e->getMessage()], 500);
+        }
+    }
+
+
+
 }

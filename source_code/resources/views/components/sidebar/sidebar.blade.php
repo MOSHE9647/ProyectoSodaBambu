@@ -1,6 +1,8 @@
 @php
 
 	use App\Enums\UserRole;
+	use App\Models\CashRegister;
+	use App\Enums\CashRegisterStatus;
 
 @endphp
 
@@ -48,6 +50,26 @@
 				</div>
 			</a>
 			<ul class="dropdown-menu text-small shadow">
+
+				@php
+					// Buscamos si existe una caja abierta en el sistema
+					$activeCashRegister = CashRegister::where('status', CashRegisterStatus::OPEN)->first();
+				@endphp
+
+				@if($activeCashRegister)
+					<li class="list-item">
+						<button 
+							type="button"
+							class="dropdown-item" 
+							id="btn-trigger-cash-closure" {{-- El ID que busca cash-closure.js --}}
+							data-register-id="{{ $activeCashRegister->id }}" {{-- El ID de la caja --}}
+						>
+							<i class="bi bi-lock-fill me-1 text-danger"></i>
+							Cierre de caja
+						</button>
+					</li>
+					<li><hr class="dropdown-divider"></li>
+				@endif
 				
 				<li class="list-item">
 					<a 

@@ -52,6 +52,14 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
         Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
     });
 
-    Route::post('/cash-registers', [CashRegisterController::class, 'store'])->name('cash-registers.store');
+    // Rutas para la gestión de Caja Registradora
+    Route::prefix('cash-registers')->name('cash-registers.')->group(function () {
+        // Ruta para obtener los datos que se muestran en el modal (GET)
+        Route::get('/{cashRegister}/close-data', [CashRegisterController::class, 'getCloseData'])->name('close-data');
+        // Ruta para procesar el cierre definitivo (POST)
+        Route::post('/{cashRegister}/close', [CashRegisterController::class, 'close'])->name('close');   
+        // Ruta existente de apertura (si ya la tenías)
+        Route::post('/', [CashRegisterController::class, 'store'])->name('store');
+    });
 
 });

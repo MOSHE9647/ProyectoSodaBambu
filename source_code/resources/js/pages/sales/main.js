@@ -90,14 +90,25 @@ $(() => {
 			SaleData.sale_details = getActiveSaleData().sale_details;
 			SaleData.total = Number(getActiveSaleData().total || 0);
 
+			let totalPayment = SaleData.total/3; // This can be adjusted based on user input for partial payments or multiple methods
+
 			SaleData.payment_details = SaleData.payment_status === PaymentStatus.PAID
 				? SaleData.payment_details = [
 					{
-						method: PaymentMethods.CARD, // Assuming cash payment for simplicity; this can be dynamic based on user input
-						amount: SaleData.total, // Full amount paid in cash; adjust if partial payments or multiple methods are implemented
-						change_amount: 0, // Assuming no change for simplicity; calculate if needed based on payment amount and total
+						method: PaymentMethods.CASH, // Assuming cash payment for simplicity; this can be dynamic based on user input
+						amount: totalPayment, // Full amount paid in cash; adjust if partial payments or multiple methods are implemented
+						change_amount: 0, // Assuming no change for simplicity; calculate if needed based on payment amount and total	
+					},
+					{
+						method: PaymentMethods.CARD, // Assuming card payment for simplicity; this can be dynamic based on user input
+						amount: totalPayment, // Full amount paid with card; adjust if partial payments or multiple methods are implemented
 						reference: String(Math.floor(10000000 + Math.random() * 90000000)), // Numeric 8-digit reference
 					},
+					{
+						method: PaymentMethods.SINPE, // Assuming SINPE payment for simplicity; this can be dynamic based on user input
+						amount: totalPayment, // Full amount paid with SINPE; adjust if partial payments or multiple methods are implemented
+						reference: String(Math.floor(10000000 + Math.random() * 90000000)), // Numeric 8-digit reference
+					}
 				]
 				: [];
 
