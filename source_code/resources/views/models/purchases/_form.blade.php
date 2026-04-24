@@ -11,7 +11,7 @@
     subtitle="{{ isset($purchase) ? 'Modifica la información de la compra existente' : 'Registra una nueva compra a un proveedor' }}" 
 />
 
-<form id="{{ $formId }}" action="{{ $actionUrl }}" method="POST" class="d-flex flex-column gap-3 w-auto">
+<form id="{{ $formId }}" action="{{ $actionUrl }}" method="POST" class="d-flex flex-column gap-3" style="width: 80%;">
 
     @csrf
     @if(isset($purchase))
@@ -131,6 +131,21 @@
 
         </div>
 
+        <div class="row g-3 mb-3">
+            <div class="col-12">
+                <x-form.textarea 
+                    :id="'notes'"
+                    :class="'border-secondary w-auto'"
+                    :inputClass="$errors->has('notes') ? 'is-invalid' : ''"
+                    :placeholder="'Agregue notas o comentarios adicionales sobre esta compra (opcional)'"
+                    :value="old('notes', $purchase->notes ?? '')"
+                    :errorMessage="$errors->first('notes') ?? ''"
+                >
+                    Notas Adicionales
+                </x-form.textarea>
+            </div>
+        </div>
+
     </section>
 
     <section id="purchased-items" class="card-container justify-content-start rounded-2 p-4">
@@ -184,7 +199,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr id="empty-row">
+                    {{-- Empty Row --}}
+                    <tr id="empty-row" class="d-none">
                         <td colspan="6">
                             <div class="empty-state text-secondary pt-2 pb-3">
                                 <i class="bi bi-inbox fs-1"></i>
@@ -193,11 +209,135 @@
                             </div>
                         </td>
                     </tr>
+
+                    {{-- Product Info Row --}}
+                    <tr data-type="product">
+                        {{-- Item Type --}}
+                        <td>
+                            <span class="badge bg-info text-info-emphasis border border-info bg-info-subtle rounded-pill px-3 py-2" style="width: 100px;">
+                                <i class="bi bi-box-seam me-1"></i>
+                                Producto
+                            </span>
+                        </td>
+                        {{-- Item Name --}}
+                        <td>
+                            <x-form.select :name="'item-select'" :class="'item-id border-secondary w-auto'" style="font-size:12px" :labelClass="'d-none'">
+                                <x-slot:options>
+                                    <option value="-1">Seleccione un producto</option>
+                                    @foreach($products as $product)
+                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                    @endforeach
+                                </x-slot:options>
+
+                                <x-slot:buttonIconRight>
+                                    <button type="button" class="new-product-btn btn btn-sm btn-outline-info rounded-end-2" title="Crear nuevo producto">
+                                        <i class="bi bi-plus-circle mx-1"></i>
+                                    </button>
+                                </x-slot:buttonIconRight>
+                            </x-form.select>
+                        </td>
+                        {{-- Item Quantity --}}
+                        <td>
+                            <div class="item-quantity d-flex flex-row align-items-center justify-content-center gap-2">
+                                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
+                                    <i class="bi bi-dash fs-6"></i>
+                                </button>
+
+                                <input type="number" name="quantity" class="quantity-input form-control text-center fw-semibold text-body px-1 py-0 border-0" value="1" min="1" style="width: 38px; background-color: transparent;">
+
+                                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
+                                    <i class="bi bi-plus fs-6"></i>
+                                </button>
+                            </div>
+                        </td>
+                        {{-- Item Price --}}
+                        <td class="text-end">
+                            <x-form.input 
+                                :name="'item-unit-price'"
+                                :type="'number'" 
+                                :labelClass="'d-none'"
+                                :inputClass="'item-unit-price border-secondary-subtle text-end fw-semibold text-body px-1 py-1 border-1'"
+                                :style="'width: 135px; background-color: transparent;'"
+                                :errorMessage="''"
+                                :value="0"
+                                :required="true"
+                                data-product-id="1"
+                            >
+                                Precio Unitario <span class="text-danger">*</span>
+                            </x-form.input>
+                        </td>
+                        {{-- Item SubTotal --}}
+                        <td class="item-sub-total fw-bold text-end">₡ 1 000,00</td>
+                        {{-- Item Actions --}}
+                        <td>
+                            <button class="action-btn btn btn-sm btn-outline-danger" title="Eliminar Item de la Compra">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr data-type="supply">
+                        <td>
+                            <span class="badge bg-warning text-warning-emphasis border border-warning bg-warning-subtle rounded-pill px-3 py-2" style="width: 100px;">
+                                <i class="bi bi-clipboard2 me-1"></i>
+                                Insumo
+                            </span>
+                        </td>
+                        <td>
+                            <x-form.select :name="'item-select'" :class="'item-id border-secondary w-auto'" style="font-size:12px" :labelClass="'d-none'">
+                                <x-slot:options>
+                                    <option value="-1">Seleccione un insumo</option>
+                                    @foreach($supplies as $supply)
+                                    <option value="{{ $supply->id }}">{{ $supply->name }}</option>
+                                    @endforeach
+                                </x-slot:options>
+
+                                <x-slot:buttonIconRight>
+                                    <button type="button" class="new-supply-btn btn btn-sm btn-outline-warning rounded-end-2" title="Agregar nuevo insumo">
+                                        <i class="bi bi-plus-circle mx-1"></i>
+                                    </button>
+                                </x-slot:buttonIconRight>
+                            </x-form.select>
+                        </td>
+                        <td>
+                            <div class="item-quantity d-flex flex-row align-items-center justify-content-center gap-2">
+                                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
+                                    <i class="bi bi-dash fs-6"></i>
+                                </button>
+
+                                <input type="number" name="quantity" class="quantity-input form-control text-center fw-semibold text-body px-1 py-0 border-0" value="1" min="1" style="width: 38px; background-color: transparent;">
+
+                                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
+                                    <i class="bi bi-plus fs-6"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <x-form.input 
+                                :name="'item-unit-price'"
+                                :type="'number'" 
+                                :labelClass="'d-none'"
+                                :inputClass="'item-unit-price border-secondary-subtle text-end fw-semibold text-body px-1 py-1 border-1'"
+                                :style="'width: 135px; background-color: transparent;'"
+                                :errorMessage="''"
+                                :value="0"
+                                :required="true"
+                                data-product-id="1"
+                            >
+                                Precio Unitario <span class="text-danger">*</span>
+                            </x-form.input>
+                        </td>
+                        <td class="item-sub-total fw-bold text-end">₡ 1 000,00</td>
+                        <td>
+                            <button class="action-btn btn btn-sm btn-outline-danger" title="Eliminar Item de la Compra">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </td>
+                    </tr>
                 </tbody>
                 <tfoot>
                     <tr>
                         <td colspan="4" class="text-end fw-bold border-bottom-0">Total:</td>
-                        <td id="total-amount" class="text-end fw-bold border-bottom-0" style="color: var(--bambu-logo-bg);">₡ 0,00</td>
+                        <td id="total-amount" class="text-end fw-bolder border-bottom-0" style="color: var(--bambu-logo-bg);">₡ 2 000,00</td>
                         <td class="border-bottom-0"></td>
                     </tr>
             </table>
