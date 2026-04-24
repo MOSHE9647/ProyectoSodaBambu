@@ -93,8 +93,12 @@ test('CP-04_EIF-35 - purchase casts payment status and date correctly', function
  * Jira Link: https://est-una.atlassian.net/browse/EIF-35
  */
 test('CP-05_EIF-35 - purchase model is mass-assignable for fillable attributes', function () {
+    // Given: a admin user for creating the purchase.
+    actingAsAdmin();
+
     // When: a purchase is created with mass assignment.
     $purchase = Purchase::create([
+        'user_id' => auth()->id(),
         'supplier_id' => Supplier::factory()->create()->id,
         'invoice_number' => 'INV-10001',
         'payment_status' => PaymentStatus::PAID,

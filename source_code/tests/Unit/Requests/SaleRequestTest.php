@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\PaymentStatus;
-use App\Http\Requests\SaleStoreRequest;
+use App\Http\Requests\SaleRequest;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
@@ -38,7 +38,7 @@ function saleStorePayload(float $total): array
 
 function validateSaleStoreRequest(array $payload)
 {
-    $request = SaleStoreRequest::create('/', 'POST', $payload);
+    $request = SaleRequest::create('/', 'POST', $payload);
     $validator = Validator::make($request->all(), $request->rules());
 
     foreach ($request->after() as $callback) {

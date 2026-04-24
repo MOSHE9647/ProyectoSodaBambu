@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Inventory\UpsertPurchaseAction;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductType;
+use App\Http\Requests\PurchaseRequest;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\Purchase;
@@ -12,6 +14,7 @@ use App\Models\Supplier;
 use App\Models\Supply;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -132,44 +135,21 @@ class PurchaseController extends Controller
         return view('models.purchases.create', compact('suppliers', 'products', 'supplies'));
     }
 
-    public function store(Request $request)
+    public function store(PurchaseRequest $purchaseRequest, UpsertPurchaseAction $upsertPurchaseAction)
     {
-        $paymentValues = implode(',', array_column(PaymentStatus::cases(), 'value'));
+        $validatedData = $purchaseRequest->validated();
 
-        $validated = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
-            'invoice_number' => 'required|string|max:255|unique:purchases,invoice_number',
-            'date' => 'required|date',
-            'payment_status' => 'required|string|in:'.$paymentValues,
-            'total' => 'required|numeric|min:0',
-            'details' => 'required|array|min:1',
-            'details.*.purchasable_type' => 'required|in:product,supply',
-            'details.*.purchasable_id' => 'required|integer',
-            'details.*.subtotal' => 'required|numeric|min:0',
-        ]);
+        $purchaseData = Arr::except($validatedData, ['sale_details', 'payment_details']);
+        $purchaseDetailsData = $validatedData['sale_details'] ?? [];
+        $purchasePaymentData = $validatedData['payment_details'] ?? null;
 
-        DB::transaction(function () use ($validated) {
-            $purchase = Purchase::create([
-                'supplier_id' => $validated['supplier_id'],
-                'invoice_number' => $validated['invoice_number'],
-                'date' => $validated['date'],
-                'payment_status' => $validated['payment_status'],
-                'total' => $validated['total'],
-            ]);
+        $upsertPurchaseAction->execute(
+            $purchaseData, 
+            $purchaseDetailsData, 
+            $purchasePaymentData
+        );
 
-            foreach ($validated['details'] as $detail) {
-                $modelClass = $detail['purchasable_type'] === 'product' ? Product::class : Supply::class;
-                $purchasable = $modelClass::findOrFail($detail['purchasable_id']);
-
-                $purchase->details()->create([
-                    'purchasable_type' => $modelClass,
-                    'purchasable_id' => $purchasable->id,
-                    'subtotal' => $detail['subtotal'],
-                ]);
-            }
-        });
-
-        return redirect()->route('purchases.index')->with('success', 'Compra creada correctamente.');
+        return redirect()->route('purchases.index')->with('success', 'Compra registrada exitosamente.');
     }
 
     public function show(Purchase $purchase)
@@ -189,59 +169,21 @@ class PurchaseController extends Controller
         return view('models.purchases.edit', compact('purchase', 'suppliers', 'products', 'supplies'));
     }
 
-    public function update(Request $request, Purchase $purchase)
+    public function update(PurchaseRequest $purchaseRequest, UpsertPurchaseAction $upsertPurchaseAction)
     {
-        $paymentValues = implode(',', array_column(PaymentStatus::cases(), 'value'));
+        $validatedData = $purchaseRequest->validated();
 
-        $validated = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
-            'invoice_number' => 'required|string|max:255|unique:purchases,invoice_number,'.$purchase->id,
-            'date' => 'required|date',
-            'payment_status' => 'required|string|in:'.$paymentValues,
-            'total' => 'required|numeric|min:0',
-            'details' => 'required|array|min:1',
-            'details.*.id' => 'nullable|exists:purchase_details,id',
-            'details.*.purchasable_type' => 'required|in:product,supply',
-            'details.*.purchasable_id' => 'required|integer',
-            'details.*.subtotal' => 'required|numeric|min:0',
-        ]);
+        $purchaseData = Arr::except($validatedData, ['sale_details', 'payment_details']);
+        $purchaseDetailsData = $validatedData['sale_details'] ?? [];
+        $purchasePaymentData = $validatedData['payment_details'] ?? null;
 
-        DB::transaction(function () use ($validated, $purchase) {
-            $purchase->update([
-                'supplier_id' => $validated['supplier_id'],
-                'invoice_number' => $validated['invoice_number'],
-                'date' => $validated['date'],
-                'payment_status' => $validated['payment_status'],
-                'total' => $validated['total'],
-            ]);
+        $upsertPurchaseAction->execute(
+            $purchaseData,
+            $purchaseDetailsData,
+            $purchasePaymentData
+        );
 
-            $existingIds = $purchase->details()->pluck('id')->toArray();
-            $updatedIds = [];
-
-            foreach ($validated['details'] as $detail) {
-                $modelClass = $detail['purchasable_type'] === 'product' ? Product::class : Supply::class;
-                $purchasable = $modelClass::findOrFail($detail['purchasable_id']);
-
-                $data = [
-                    'purchasable_type' => $modelClass,
-                    'purchasable_id' => $purchasable->id,
-                    'subtotal' => $detail['subtotal'],
-                ];
-
-                if (isset($detail['id']) && in_array($detail['id'], $existingIds)) {
-                    $purchase->details()->where('id', $detail['id'])->update($data);
-                    $updatedIds[] = $detail['id'];
-                } else {
-                    $newDetail = $purchase->details()->create($data);
-                    $updatedIds[] = $newDetail->id;
-                }
-            }
-
-            $toDelete = array_diff($existingIds, $updatedIds);
-            $purchase->details()->whereIn('id', $toDelete)->delete();
-        });
-
-        return redirect()->route('purchases.index')->with('success', 'Compra actualizada correctamente.');
+        return redirect()->route('purchases.index')->with('success', 'Compra actualizada exitosamente.');
     }
 
     /**

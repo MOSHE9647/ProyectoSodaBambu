@@ -16,7 +16,7 @@ use Illuminate\Validation\Validator;
 use function in_array;
 use function strlen;
 
-class SaleStoreRequest extends FormRequest
+class SaleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

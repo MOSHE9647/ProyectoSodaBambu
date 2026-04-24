@@ -1,15 +1,15 @@
 @php
     use App\Enums\PaymentStatus;
 
+    $pageTitle = isset($purchase) ? 'Editar Compra' : 'Nueva Compra';
+    $pageSubtitle = isset($purchase) ? 'Modifica la información de la compra existente' : 'Registra una nueva compra a un proveedor';
+
     $formId = isset($purchase) ? 'edit-purchase-form' : 'create-purchase-form';
     $actionUrl = isset($purchase) ? route('purchases.update', $purchase) : route('purchases.store');
     $paymentStatuses = [PaymentStatus::PENDING, PaymentStatus::PAID];
 @endphp
 
-<x-header 
-    title="{{ isset($purchase) ? 'Editar Compra' : 'Nueva Compra' }}" 
-    subtitle="{{ isset($purchase) ? 'Modifica la información de la compra existente' : 'Registra una nueva compra a un proveedor' }}" 
-/>
+<x-header title="{{ $pageTitle }}" subtitle="{{ $pageSubtitle }}" />
 
 <form id="{{ $formId }}" action="{{ $actionUrl }}" method="POST" class="d-flex flex-column gap-3" style="width: 80%;">
 
