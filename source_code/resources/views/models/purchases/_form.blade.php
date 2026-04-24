@@ -36,6 +36,8 @@
                 <x-form.input 
                     :id="'invoice_number'"
                     :type="'text'" 
+                    :min="2"
+                    :max="255"
                     :class="'border-secondary w-auto'"
                     :inputClass="$errors->has('invoice_number') ? 'is-invalid' : ''"
                     :placeholder="'Ingrese el número de factura. Ej. FAC-1234567890'"
@@ -50,12 +52,13 @@
 
             <div class="col-4">
                 <x-form.input 
-                    :id="'invoice_date'"
+                    :id="'date'"
                     :type="'date'" 
                     :class="'border-secondary w-auto'"
-                    :inputClass="$errors->has('invoice_date') ? 'is-invalid' : ''"
-                    :value="old('invoice_date', isset($purchase) ? $purchase->invoice_date->format('Y-m-d') : '')"
-                    :errorMessage="$errors->first('invoice_date') ?? ''"
+                    :max="Carbon\Carbon::now()->timezone('America/Costa_Rica')->format('Y-m-d')"
+                    :inputClass="$errors->has('date') ? 'is-invalid' : ''"
+                    :value="old('date', isset($purchase) ? $purchase->date->format('Y-m-d') : '')"
+                    :errorMessage="$errors->first('date') ?? ''"
                     :iconLeft="'bi bi-calendar-date'"
                     :required="true"
                 >
@@ -70,7 +73,6 @@
             <div class="col-6">
                 <x-form.select
                     :id="'supplier_id'"
-                    :type="'text'" 
                     :class="'border-secondary w-auto'"
                     :inputClass="$errors->has('supplier_id') ? 'is-invalid' : ''"
                     :placeholder="'Seleccione un proveedor'"
@@ -107,7 +109,6 @@
             <div class="col-6">
                 <x-form.select
                     :id="'payment_status'"
-                    :type="'text'" 
                     :class="'border-secondary w-auto'"
                     :inputClass="$errors->has('payment_status') ? 'is-invalid' : ''"
                     :placeholder="'Seleccione el estado de pago'"
@@ -139,6 +140,7 @@
                     :inputClass="$errors->has('notes') ? 'is-invalid' : ''"
                     :placeholder="'Agregue notas o comentarios adicionales sobre esta compra (opcional)'"
                     :value="old('notes', $purchase->notes ?? '')"
+                    :maxlength="1000"
                     :errorMessage="$errors->first('notes') ?? ''"
                 >
                     Notas Adicionales
@@ -182,16 +184,16 @@
             </div>
             <span class="text-muted" style="font-size: 12px;">
                 <i class="bi bi-info-circle me-1"></i>
-                <span id="items-label">Sin ítems agregados</span>
+                <span id="items-count-label">Sin ítems agregados</span>
             </span>
         </div>
 
         <div class="table-responsive border border-1 rounded-2 mb-4">
-            <table id="items-table" class="table table-hover align-middle text-center mb-0" style="min-width: 600px;">
+            <table id="purchase-details-table" class="table table-hover align-middle text-center mb-0" style="min-width: 600px;">
                 <thead class="table-subtle text-secondary-emphasis">
                     <tr>
                         <th style="width:115px">Tipo</th>
-                        <th>Producto / Insumo</th>
+                        <th>Nombre</th>
                         <th style="width:125px; text-align:center">Cantidad</th>
                         <th style="width:135px; text-align:right">Precio Unit. (₡)</th>
                         <th style="width:120px; text-align:right">Subtotal</th>
@@ -199,8 +201,107 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @if(optional($purchase)->details?->isNotEmpty())
+                    {{-- Purchase Details --}}
+                        @foreach ($purchase->details as $purchaseDetail)
+                        <tr data-purchasable-id="{{ $purchaseDetail->purchasable_id }}" data-purchasable-type="{{ $purchaseDetail->purchasable_type }}">
+                            @php
+                                $itemTheme = match($purchaseDetail->purchasable_type) {
+                                    App\Models\Product::class => ['color' => 'info', 'icon' => 'bi bi-box-seam'],
+                                    App\Models\Supply::class => ['color' => 'warning', 'icon' => 'bi bi-basket'],
+                                    default => ['color' => 'secondary', 'icon' => 'bi bi-question-circle'],
+                                };
+                            @endphp
+
+                            {{-- Item Type --}}
+                            <td>
+                                <span class="badge bg-{{ $itemTheme['color'] }} text-{{ $itemTheme['color'] }}-emphasis border border-{{ $itemTheme['color'] }} bg-{{ $itemTheme['color'] }}-subtle rounded-pill px-3 py-2" style="width: 100px;">
+                                    <i class="{{ $itemTheme['icon'] }} me-1"></i>
+                                    {{ class_basename($purchaseDetail->purchasable_type) == 'Product' ? 'Producto' : 'Insumo' }}
+                                </span>
+                            </td>
+
+                            {{-- Item Name --}}
+                            <td>
+                                <x-form.select :name="'purchasable_id'" :class="'border-secondary w-auto text-start'" :selectClass="$errors->has('purchasable_id') ? 'is-invalid' : ''" :errorMessage="$errors->first('purchasable_id') ?? ''" style="font-size:12px" :labelClass="'d-none'">
+                                    <x-slot:options>
+                                        <option value="-1">Seleccione un producto</option>
+                                        @foreach($products as $product)
+                                        <option value="{{ $product->id }}" {{ $purchaseDetail->purchasable_id == $product->id ? 'selected' : '' }}>
+                                            {{ $product->name }}
+                                        </option>
+                                        @endforeach
+                                    </x-slot:options>
+
+                                    <x-slot:buttonIconRight>
+                                        <button type="button" class="new-product-btn btn btn-sm btn-outline-{{ $itemTheme['color'] }} rounded-end-2" title="Crear nuevo producto">
+                                            <i class="bi bi-plus-circle mx-1"></i>
+                                        </button>
+                                    </x-slot:buttonIconRight>
+                                </x-form.select>
+                            </td>
+
+                            {{-- Item Quantity --}}
+                            <td>
+                                <div class="item-quantity d-flex flex-row align-items-center justify-content-center gap-2">
+                                    <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
+                                        <i class="bi bi-dash fs-6"></i>
+                                    </button>
+
+                                    <x-form.input 
+                                        :name="'quantity'" 
+                                        :type="'number'" 
+                                        :labelClass="'d-none'" 
+                                        :inputClass="'quantity-input border-0 text-center fw-semibold text-body px-1 py-0' . ($errors->has('quantity') ? 'is-invalid' : '')" 
+                                        :inputStyle="'width: 38px; background-color: transparent;'" 
+                                        :errorMessage="$errors->first('quantity') ?? ''" 
+                                        :value="old('quantity', $purchaseDetail->quantity)" 
+                                        :min="1" 
+                                        required
+                                    >
+                                        Cantidad <span class="text-danger">*</span>
+                                    </x-form.input>
+
+                                    <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
+                                        <i class="bi bi-plus fs-6"></i>
+                                    </button>
+                                </div>
+                            </td>
+
+                            {{-- Item Price --}}
+                            <td class="text-end">
+                                <x-form.input 
+                                    :name="'unit-price'" 
+                                    :type="'number'" 
+                                    :labelClass="'d-none'" 
+                                    :inputClass="'border-secondary-subtle text-end fw-semibold text-body px-1 py-1 border-1' . ($errors->has('unit-price') ? 'is-invalid' : '')" 
+                                    :inputStyle="'width: 135px; background-color: transparent;'" 
+                                    :errorMessage="$errors->first('unit-price') ?? ''" 
+                                    :value="old('unit-price', $purchaseDetail->unit_price)" 
+                                    :min="0.01"
+                                    :required="true" 
+                                >
+                                    Precio Unitario <span class="text-danger">*</span>
+                                </x-form.input>
+                            </td>
+
+                            {{-- Item SubTotal --}}
+                            <td class="fw-bold text-end">
+                                ₡ <span class="sub_total">
+                                    {{ number_format($purchaseDetail->sub_total, 2, ',', ' ') }}
+                                </span>
+                            </td>
+                            {{-- Item Actions --}}
+                            <td>
+                                <button class="action-btn btn btn-sm btn-outline-danger" title="Eliminar Item de la Compra">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    @else
                     {{-- Empty Row --}}
-                    <tr id="empty-row" class="d-none">
+                    <tr id="empty-row">
                         <td colspan="6">
                             <div class="empty-state text-secondary pt-2 pb-3">
                                 <i class="bi bi-inbox fs-1"></i>
@@ -209,137 +310,19 @@
                             </div>
                         </td>
                     </tr>
-
-                    {{-- Product Info Row --}}
-                    <tr data-type="product">
-                        {{-- Item Type --}}
-                        <td>
-                            <span class="badge bg-info text-info-emphasis border border-info bg-info-subtle rounded-pill px-3 py-2" style="width: 100px;">
-                                <i class="bi bi-box-seam me-1"></i>
-                                Producto
-                            </span>
-                        </td>
-                        {{-- Item Name --}}
-                        <td>
-                            <x-form.select :name="'item-select'" :class="'item-id border-secondary w-auto'" style="font-size:12px" :labelClass="'d-none'">
-                                <x-slot:options>
-                                    <option value="-1">Seleccione un producto</option>
-                                    @foreach($products as $product)
-                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
-                                    @endforeach
-                                </x-slot:options>
-
-                                <x-slot:buttonIconRight>
-                                    <button type="button" class="new-product-btn btn btn-sm btn-outline-info rounded-end-2" title="Crear nuevo producto">
-                                        <i class="bi bi-plus-circle mx-1"></i>
-                                    </button>
-                                </x-slot:buttonIconRight>
-                            </x-form.select>
-                        </td>
-                        {{-- Item Quantity --}}
-                        <td>
-                            <div class="item-quantity d-flex flex-row align-items-center justify-content-center gap-2">
-                                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
-                                    <i class="bi bi-dash fs-6"></i>
-                                </button>
-
-                                <input type="number" name="quantity" class="quantity-input form-control text-center fw-semibold text-body px-1 py-0 border-0" value="1" min="1" style="width: 38px; background-color: transparent;">
-
-                                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
-                                    <i class="bi bi-plus fs-6"></i>
-                                </button>
-                            </div>
-                        </td>
-                        {{-- Item Price --}}
-                        <td class="text-end">
-                            <x-form.input 
-                                :name="'item-unit-price'"
-                                :type="'number'" 
-                                :labelClass="'d-none'"
-                                :inputClass="'item-unit-price border-secondary-subtle text-end fw-semibold text-body px-1 py-1 border-1'"
-                                :style="'width: 135px; background-color: transparent;'"
-                                :errorMessage="''"
-                                :value="0"
-                                :required="true"
-                                data-product-id="1"
-                            >
-                                Precio Unitario <span class="text-danger">*</span>
-                            </x-form.input>
-                        </td>
-                        {{-- Item SubTotal --}}
-                        <td class="item-sub-total fw-bold text-end">₡ 1 000,00</td>
-                        {{-- Item Actions --}}
-                        <td>
-                            <button class="action-btn btn btn-sm btn-outline-danger" title="Eliminar Item de la Compra">
-                                <i class="bi bi-trash3"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr data-type="supply">
-                        <td>
-                            <span class="badge bg-warning text-warning-emphasis border border-warning bg-warning-subtle rounded-pill px-3 py-2" style="width: 100px;">
-                                <i class="bi bi-clipboard2 me-1"></i>
-                                Insumo
-                            </span>
-                        </td>
-                        <td>
-                            <x-form.select :name="'item-select'" :class="'item-id border-secondary w-auto'" style="font-size:12px" :labelClass="'d-none'">
-                                <x-slot:options>
-                                    <option value="-1">Seleccione un insumo</option>
-                                    @foreach($supplies as $supply)
-                                    <option value="{{ $supply->id }}">{{ $supply->name }}</option>
-                                    @endforeach
-                                </x-slot:options>
-
-                                <x-slot:buttonIconRight>
-                                    <button type="button" class="new-supply-btn btn btn-sm btn-outline-warning rounded-end-2" title="Agregar nuevo insumo">
-                                        <i class="bi bi-plus-circle mx-1"></i>
-                                    </button>
-                                </x-slot:buttonIconRight>
-                            </x-form.select>
-                        </td>
-                        <td>
-                            <div class="item-quantity d-flex flex-row align-items-center justify-content-center gap-2">
-                                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
-                                    <i class="bi bi-dash fs-6"></i>
-                                </button>
-
-                                <input type="number" name="quantity" class="quantity-input form-control text-center fw-semibold text-body px-1 py-0 border-0" value="1" min="1" style="width: 38px; background-color: transparent;">
-
-                                <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
-                                    <i class="bi bi-plus fs-6"></i>
-                                </button>
-                            </div>
-                        </td>
-                        <td class="text-end">
-                            <x-form.input 
-                                :name="'item-unit-price'"
-                                :type="'number'" 
-                                :labelClass="'d-none'"
-                                :inputClass="'item-unit-price border-secondary-subtle text-end fw-semibold text-body px-1 py-1 border-1'"
-                                :style="'width: 135px; background-color: transparent;'"
-                                :errorMessage="''"
-                                :value="0"
-                                :required="true"
-                                data-product-id="1"
-                            >
-                                Precio Unitario <span class="text-danger">*</span>
-                            </x-form.input>
-                        </td>
-                        <td class="item-sub-total fw-bold text-end">₡ 1 000,00</td>
-                        <td>
-                            <button class="action-btn btn btn-sm btn-outline-danger" title="Eliminar Item de la Compra">
-                                <i class="bi bi-trash3"></i>
-                            </button>
-                        </td>
-                    </tr>
+                    @endif
                 </tbody>
                 <tfoot>
                     <tr>
                         <td colspan="4" class="text-end fw-bold border-bottom-0">Total:</td>
-                        <td id="total-amount" class="text-end fw-bolder border-bottom-0" style="color: var(--bambu-logo-bg);">₡ 2 000,00</td>
-                        <td class="border-bottom-0"></td>
+                        <td colspan="2" class="text-center fw-bolder border-bottom-0 fs-5" style="color: var(--bambu-logo-bg);">
+                            ₡ <span id="total">
+                                {{ number_format($purchase->total ?? 0, 2, ',', ' ') }}
+                            </span>
+                        </td>
+                        {{-- <td class="border-bottom-0"></td> --}}
                     </tr>
+                </tfoot>
             </table>
         </div>
 

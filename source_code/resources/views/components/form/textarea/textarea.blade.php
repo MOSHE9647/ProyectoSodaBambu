@@ -9,6 +9,7 @@
 	'textIconRight' => false,
 	'inputClass' => '',
 	'value' => null,
+	'maxlength' => 1000,
 	'rows' => 3,
 	'cols' => null,
 	'required' => false,
@@ -42,6 +43,7 @@
 			class="form-control {{ $inputClass }}"
 			placeholder="{{ $placeholder }}"
 			rows="{{ $rows }}"
+			maxlength="{{ $maxlength }}"
 			@isset($cols) cols="{{ $cols }}" @endisset
 			aria-describedby="{{ isset($iconLeft) ? ($name ?? $id).'-icon-left' : '' }} {{ $name ?? $id }}-error"
 			{{ $required ? 'required' : '' }}

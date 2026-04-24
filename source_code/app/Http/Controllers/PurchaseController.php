@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Inventory\UpsertPurchaseAction;
-use App\Enums\PaymentStatus;
 use App\Enums\ProductType;
 use App\Http\Requests\PurchaseRequest;
 use App\Models\Product;

@@ -46,7 +46,7 @@ class PurchaseRequest extends FormRequest
             'supplier_id' => ['required', 'integer', 'exists:suppliers,id'],
             'invoice_number' => ['required', 'string', 'min:2', 'max:255', 'unique:purchases,invoice_number'],
             'payment_status' => ['required', new Enum(PaymentStatus::class)],
-            'date' => ['required', 'date_format:Y-m-d H:i:s', 'before_or_equal:now'],
+            'date' => ['required', 'before_or_equal:now'],
             'total' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
 
@@ -94,7 +94,6 @@ class PurchaseRequest extends FormRequest
             'payment_status.enum' => 'El estado de pago debe ser uno de los siguientes: ' . implode(', ', array_map(fn($case) => $case->value, PaymentStatus::cases())),
 
             'date.required' => 'La fecha de la compra es obligatoria.',
-            'date.date_format' => 'La fecha debe tener el formato YYYY-MM-DD HH:MM:SS.',
             'date.before_or_equal' => 'La fecha de la compra no puede ser futura.',
 
             'total.required' => 'El total de la compra es obligatorio.',
