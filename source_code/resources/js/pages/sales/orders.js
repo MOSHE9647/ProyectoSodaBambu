@@ -8,11 +8,23 @@ const state = {
 	orderCounter: 2, // Starts at 2 because we assume there's already an "ORD-0001" in the HTML on load
 };
 
+/**
+ * Extracts the numeric order sequence from a tab id.
+ *
+ * @param {string} [orderId=""]
+ * @returns {number|null}
+ */
 const getOrderNumberFromId = (orderId = "") => {
 	const match = String(orderId).match(/^order-tab-(\d{4})$/);
 	return match ? Number(match[1]) : null;
 };
 
+/**
+ * Returns fallback tab label text for a given order id.
+ *
+ * @param {string} [orderId=""]
+ * @returns {string}
+ */
 const getDefaultTabTextById = (orderId = "") => {
 	const orderNumber = getOrderNumberFromId(orderId);
 	if (orderNumber === null) {
@@ -22,6 +34,12 @@ const getDefaultTabTextById = (orderId = "") => {
 	return `ORD-${orderNumber.toString().padStart(4, "0")}`;
 };
 
+/**
+ * Computes the next order counter based on existing tab ids.
+ *
+ * @param {Array<{id?: string}|string>} [tabsOrIds=[]]
+ * @returns {number}
+ */
 const getNextOrderCounter = (tabsOrIds = []) => {
 	const tabIds = Array.isArray(tabsOrIds)
 		? tabsOrIds.map((tab) => (typeof tab === "string" ? tab : tab?.id || ""))
@@ -93,6 +111,12 @@ const createOrderButton = (
     `;
 };
 
+/**
+ * Persists tab list, active tab, and next counter in LocalStorage.
+ *
+ * @param {JQuery<HTMLElement>} tabsBtnsContainer
+ * @returns {void}
+ */
 const saveTabsState = (tabsBtnsContainer) => {
 	const tabs = tabsBtnsContainer
 		.find(".order-tab-btn")
@@ -130,6 +154,12 @@ const saveTabsState = (tabsBtnsContainer) => {
 	);
 };
 
+/**
+ * Restores tabs from LocalStorage and rebuilds tab markup.
+ *
+ * @param {JQuery<HTMLElement>} tabsBtnsContainer
+ * @returns {string|null} Active order id restored from storage or null.
+ */
 const loadTabsState = (tabsBtnsContainer) => {
 	const savedTabsState = localStorage.getItem(TABS_STORAGE_KEY);
 	if (!savedTabsState) {
@@ -205,28 +235,28 @@ export function initializeSalesOrderTabs() {
 
 	if (!tabsBtnsContainer.length) return;
 
-	// Close button visibility logic: show close buttons only if there's more than one tab
+	// Show close buttons only when there is more than one tab.
 	const updateCloseButtons = () => {
 		const allTabs = tabsBtnsContainer.find(".nav-item");
 		if (allTabs.length === 1) {
-			// Hide close button if it's the only tab
+			// Hide close button when it is the only tab.
 			allTabs.find(".close-tab-btn").hide();
 			allTabs.find(".tab-title").removeClass("pe-0").addClass("pe-2");
 		} else {
-			// Show close buttons if there's more than one tab
+			// Show close buttons when there is more than one tab.
 			allTabs.find(".close-tab-btn").show();
 			allTabs.find(".tab-title").removeClass("pe-2");
 		}
 	};
 
-	// Auxiliary function to deactivate all tabs before activating a new one
+	// Deactivate all tabs before activating a new one.
 	const deactivateAllTabs = () => {
 		const activeTabs = tabsBtnsContainer.find(".order-tab-btn.active");
 		activeTabs.removeClass("active");
-		activeTabs.find(".tab-btn-icon").remove(); // Remove the active indicator icon from all tabs
+		activeTabs.find(".tab-btn-icon").remove(); // Remove active indicator icon from all tabs.
 	};
 
-	// Auxiliary function to scroll the tab container to the end (used after adding a new tab)
+	// Scroll tab container to the end after adding a new tab.
 	const scrollTabsToEnd = () => {
 		const container = tabsBtnsContainer.get(0);
 		if (!container) return;
@@ -237,7 +267,7 @@ export function initializeSalesOrderTabs() {
 		});
 	};
 
-	// Add new tab on "new order" button click
+	// Create a new order tab from the "new order" button.
 	if (newOrderBtn.length) {
 		newOrderBtn.on("click", function () {
 			state.orderCounter = getNextOrderCounter(
@@ -268,23 +298,23 @@ export function initializeSalesOrderTabs() {
 			scrollTabsToEnd();
 			updateCloseButtons();
 
-			switchActiveOrder(newTabBtnId); // Change active order/cart in the system to match the newly created tab
+			switchActiveOrder(newTabBtnId); // Sync active order/cart with the new tab.
 			saveTabsState(tabsBtnsContainer);
 		});
 	}
 
-	// Switch active tab on click (Event Delegation)
+	// Switch active tab on click using event delegation.
 	tabsBtnsContainer.on("click", ".order-tab-btn", function (e) {
-		// Ignore clicks on the close button within the tab to prevent interference with tab activation logic
+		// Ignore close button clicks to avoid interfering with tab activation.
 		if ($(e.target).hasClass("close-tab-btn")) return;
 
-		// Ignore if the clicked tab is already active to prevent unnecessary re-rendering and state changes
+		// Ignore clicks on the already active tab.
 		if ($(this).hasClass("active")) return;
 
 		deactivateAllTabs();
 		$(this).addClass("active");
 
-		// Render the active indicator icon for the newly active tab
+		// Render active indicator icon for the newly active tab.
 		if (!$(this).find(".tab-btn-icon").length) {
 			$(this).prepend(
 				`<span class="tab-btn-icon rounded-circle flex-shrink-0" style="width: 6px; height: 6px; background-color: currentColor;"></span>`,
@@ -298,7 +328,7 @@ export function initializeSalesOrderTabs() {
 		saveTabsState(tabsBtnsContainer);
 	});
 
-	// Close tab on close button click (Event Delegation)
+	// Close tab on close button click using event delegation.
 	tabsBtnsContainer.on("click", ".close-tab-btn", function (e) {
 		SwalModal.fire({
 			title: "¿Estás seguro de querer eliminar esta orden?",
@@ -308,13 +338,13 @@ export function initializeSalesOrderTabs() {
 			confirmButtonText: "Sí, eliminar",
 			cancelButtonText: "Cancelar",
 		}).then((result) => {
-			// If confirmed, submit the form
+			// If confirmed, close the tab.
 			if (result.isConfirmed) {
-				e.stopPropagation(); // Prevent the click from bubbling up to the tab button's click handler which would activate the tab
+				e.stopPropagation(); // Prevent bubbling to tab activation handler.
 
-				// Safety check to prevent removing the last remaining tab
+				// Safety check to prevent removing the last remaining tab.
 				const totalTabs = tabsBtnsContainer.find(".nav-item").length;
-				if (totalTabs <= 1) return; // Double-check to ensure we don't remove the last tab, which would break the UI
+				if (totalTabs <= 1) return; // Keep at least one tab to avoid breaking the UI.
 
 				const tabLi = $(this).closest(".nav-item");
 				const tabBtn = tabLi.find(".order-tab-btn");
@@ -322,16 +352,16 @@ export function initializeSalesOrderTabs() {
 
 				tabLi.remove();
 
-				// If we remove the active tab, force the activation of the last remaining tab
+				// If active tab is removed, activate the last remaining tab.
 				if (wasActive) {
 					const lastTab = tabsBtnsContainer
 						.find(".order-tab-btn")
 						.last();
-					lastTab.click(); // Simulate the click to execute the activation logic
+					lastTab.click(); // Reuse existing activation logic.
 				}
 
 				updateCloseButtons();
-				deleteOrderCart(tabBtn.attr("id")); // Delete the order/cart in the system that corresponds to the closed tab
+				deleteOrderCart(tabBtn.attr("id")); // Remove corresponding cart state.
 				saveTabsState(tabsBtnsContainer);
 			} else {
 				return false;
@@ -353,7 +383,7 @@ export function initializeSalesOrderTabs() {
 		);
 	}
 
-	// Initial call to set the correct visibility of close buttons based on the initial number of tabs
+	// Initial close-button visibility based on initial tab count.
 	updateCloseButtons();
 
 	const initialActiveOrderId =
