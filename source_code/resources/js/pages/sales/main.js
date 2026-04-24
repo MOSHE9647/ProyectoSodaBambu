@@ -4,26 +4,8 @@ import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
 import { initializeHotkeys } from "./hotkeys.js";
+import { showPaymentModal } from "./payment.js";
 import { SwalModal } from "../../utils/sweetalert.js";
-
-/**
- * Mutable sale draft used as payload source when finalizing a sale.
- *
- * @type {{
- *   payment_status: string,
- *   date: string,
- *   total: number,
- *   sale_details: Array<object>,
- *   payment_details: Array<object>
- * }}
- */
-const SaleData = {
-	payment_status: PaymentStatus.PAID, // Default to pending; this can be updated based on user input
-	date: new Date().toISOString(),
-	total: 8500,
-	sale_details: [],
-	payment_details: [],
-};
 
 /**
  * Updates the sales page clock element with the current local time.
@@ -68,8 +50,8 @@ const updateLastSaleTime = () => {
  */
 $(() => {
 	// Initialize all sales-related modules.
-    initializeSalesProducts();
-    initializeSalesCart();
+  initializeSalesProducts();
+  initializeSalesCart();
 	initializeSalesOrderTabs();
 	initializeHotkeys();
 
@@ -84,23 +66,7 @@ $(() => {
     const finalizeSaleButton = $("#finalize-sale-button");
     if (finalizeSaleButton.length) {
         finalizeSaleButton.on("click", async () => {
-			// Populate payload from active cart state.
-			SaleData.sale_details = getActiveSaleData().sale_details;
-			SaleData.total = Number(getActiveSaleData().total || 0);
-
-			SaleData.payment_details = SaleData.payment_status === PaymentStatus.PAID
-				? SaleData.payment_details = [
-					{
-						method: PaymentMethods.CARD, // Assuming cash payment for simplicity; this can be dynamic based on user input
-						amount: SaleData.total, // Full amount paid in cash; adjust if partial payments or multiple methods are implemented
-						change_amount: 0, // Assuming no change for simplicity; calculate if needed based on payment amount and total
-						reference: String(Math.floor(10000000 + Math.random() * 90000000)), // Numeric 8-digit reference
-					},
-				]
-				: [];
-
-			// Submit sale with selected payment details/status.
-			processSale(SaleData.payment_details, SaleData.payment_status);
+			showPaymentModal();
 		});
     }
 
