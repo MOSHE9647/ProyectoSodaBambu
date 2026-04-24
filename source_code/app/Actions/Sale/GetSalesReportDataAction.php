@@ -161,7 +161,7 @@ class GetSalesReportDataAction
             'totalSoldUnits' => $totalSoldUnits,
             'productsInRanking' => $productsInRanking,
             'averageUnitsPerDay' => $averageUnitsPerDay,
-            'averageUnitsVariationPercent' => round(abs($averageUnitsVariationPercent), 1),
+            'averageUnitsVariationPercent' => round($averageUnitsVariationPercent, 1),
             'averageUnitsTrendDirection' => $averageUnitsTrendDirection,
             'previousPeriodLabel' => $previousPeriodLabel,
             'dailyReports' => $dailyReports,

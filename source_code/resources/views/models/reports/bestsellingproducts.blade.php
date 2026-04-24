@@ -14,14 +14,16 @@
             background-color: transparent;
         }
 
-        .report-top-btn-secondary:hover {
+        .report-top-btn-secondary:hover,
+        .report-top-btn-secondary.active {
             color: var(--bs-body-color);
             border-color: var(--bambu-logo-bg);
-            background-color: rgba(var(--bs-body-color-rgb), 0.06);
+            background-color: rgba(var(--bs-body-color-rgb), 0.08);
+            font-weight: 600;
         }
 
         .report-date-input {
-            min-width: 220px;
+            min-width: 160px;
         }
     </style>
 
@@ -44,64 +46,113 @@
         </div>
 
         <form method="GET" action="{{ route('reports') }}" class="card-container rounded-2 p-4 mb-3" id="bestselling-report-filters">
-            <h6 class="fw-bold mb-3">Filtros de Reporte</h6>
-
             <input type="hidden" name="section" value="products">
             <input type="hidden" name="payment_status" value="{{ request('payment_status', 'paid') }}">
 
-            <div class="d-flex flex-wrap align-items-center gap-3">
-                <div class="form-check">
-                    <input class="form-check-input report-period" type="radio" name="period" value="today" id="today-filter" {{ request('period', 'month') === 'today' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="today-filter">Hoy</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input report-period" type="radio" name="period" value="week" id="week-filter" {{ request('period') === 'week' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="week-filter">Esta Semana</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input report-period" type="radio" name="period" value="month" id="month-filter" {{ request('period', 'month') === 'month' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="month-filter">Este Mes</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input report-period" type="radio" name="period" value="custom" id="custom-filter" {{ request('period') === 'custom' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="custom-filter">Personalizado</label>
+            <h6 class="fw-bold mb-3">Filtros de Fecha</h6>
+
+            <div class="row g-3">
+                {{-- Periodo --}}
+                <div class="col-6 pe-4">
+                    <div class="d-flex flex-column align-items-start gap-2">
+                        <x-form.input.radio-group label-class="text-muted" group-class="d-flex justify-content-start align-items-center flex-wrap gap-2">
+                            @slot('label')
+                                <i class="bi bi-calendar3 me-2"></i>Periodo
+                            @endslot
+    
+                            @foreach([
+                                'today'  => 'Hoy',
+                                'week'   => 'Esta Semana',
+                                'month'  => 'Este Mes',
+                                'custom' => 'Personalizado',
+                            ] as $value => $label)
+                                <x-form.input.radio-button
+                                    id="{{ $value }}-filter"
+                                    name="period"
+                                    value="{{ $value }}"
+                                    checked="{{ request('period', 'month') === $value }}"
+                                    class="mb-0 {{ request('period', 'month') === $value ? 'active' : '' }}"
+                                >
+                                    {{ $label }}
+                                </x-form.input.radio-button>
+                            @endforeach
+                        </x-form.input.radio-group>
+                    </div>
+
+                    <hr class="border-secondary w-100 report-custom-dates {{ request('period') === 'custom' ? '' : 'd-none' }}">
+
+                    <div class="d-flex justify-content-start align-items-end gap-3 mt-2 report-custom-dates {{ request('period') === 'custom' ? '' : 'd-none' }}">
+
+                        <x-form.input
+                            id="start_date"
+                            type="date"
+                            class="border-secondary report-date-input"
+                            value="{{ request('start_date') }}"
+                            disabled="{{ request('period') !== 'custom' }}"
+                        >
+                            Fecha Inicio
+                        </x-form.input>
+
+                        <x-form.input
+                            id="end_date"
+                            type="date"
+                            class="border-secondary report-date-input"
+                            value="{{ request('end_date') }}"
+                            disabled="{{ request('period') !== 'custom' }}"
+                        >
+                            Fecha Fin
+                        </x-form.input>
+
+                        <x-form.button
+                            type="button"
+                            id="clear-custom-dates"
+                            class="btn-outline-danger"
+                            disabled="{{ request('period') !== 'custom' }}"
+                        >
+                            <i class="bi bi-x-circle me-1"></i>
+                            Limpiar
+                        </x-form.button>
+                        
+                    </div>
                 </div>
 
-                <div class="d-flex flex-wrap gap-2 ms-lg-3 align-items-center report-custom-dates {{ request('period') === 'custom' ? '' : 'd-none' }}">
-                    <input type="date" name="start_date" class="form-control form-control-sm report-date-input" value="{{ request('start_date') }}">
-                    <input type="date" name="end_date" class="form-control form-control-sm report-date-input" value="{{ request('end_date') }}">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="clear-custom-dates">
-                        Limpiar datos
-                    </button>
-                </div>
+                {{-- Filtros de producto --}}
+                <div class="col-6 border-start border-1 border-secondary-subtle ps-4">
+                    <div class="d-flex justify-content-start align-items-end gap-3 w-auto">
 
-                <div class="ms-lg-auto d-flex flex-wrap align-items-center gap-2">
-                    <select name="product_type" class="form-select form-select-sm report-auto-submit" style="min-width: 180px;">
-                        <option value="all" {{ ($activeProductType ?? 'all') === 'all' ? 'selected' : '' }}>
-                            Todos los tipos
-                        </option>
-                        <option value="merchandise" {{ ($activeProductType ?? '') === 'merchandise' ? 'selected' : '' }}>
-                            Mercancía
-                        </option>
-                        <option value="dishes" {{ ($activeProductType ?? '') === 'dishes' ? 'selected' : '' }}>
-                            Platillos
-                        </option>
-                        <option value="drinks" {{ ($activeProductType ?? '') === 'drinks' ? 'selected' : '' }}>
-                            Bebidas
-                        </option>
-                        <option value="packaged" {{ ($activeProductType ?? '') === 'packaged' ? 'selected' : '' }}>
-                            Empacados
-                        </option>
-                    </select>
+                        <x-form.select
+                            id="product_type"
+                            class="border-secondary report-auto-submit w-50"
+                            labelClass="text-muted"
+                        >
+                            <i class="bi bi-tags me-2"></i>Tipo de Producto
+                            <x-slot:options>
+                                <option value="all" {{ ($activeProductType ?? 'all') === 'all' ? 'selected' : '' }}>Todos los tipos</option>
+                                <option value="merchandise" {{ ($activeProductType ?? '') === 'merchandise' ? 'selected' : '' }}>Mercancía</option>
+                                <option value="dishes" {{ ($activeProductType ?? '') === 'dishes' ? 'selected' : '' }}>Platillos</option>
+                                <option value="drinks" {{ ($activeProductType ?? '') === 'drinks' ? 'selected' : '' }}>Bebidas</option>
+                                <option value="packaged" {{ ($activeProductType ?? '') === 'packaged' ? 'selected' : '' }}>Empacados</option>
+                            </x-slot:options>
+                        </x-form.select>
 
-                    <select name="category_id" class="form-select form-select-sm report-auto-submit" style="min-width: 200px;">
-                        <option value="">Todas las categorías</option>
-                        @foreach(($categories ?? collect()) as $category)
-                            <option value="{{ $category->id }}" {{ (int) ($activeCategoryId ?? 0) === (int) $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                        <x-form.select
+                            id="category_id"
+                            class="border-secondary report-auto-submit w-50"
+                            labelClass="text-muted"
+                        >
+                            <i class="bi bi-grid me-2"></i>Categoría
+                            <x-slot:options>
+                                <option value="">Todas las categorías</option>
+                                @foreach(($categories ?? collect()) as $category)
+                                    <option value="{{ $category->id }}" {{ (int) ($activeCategoryId ?? 0) === (int) $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </x-slot:options>
+                        </x-form.select>
+
+                    </div>
+
                 </div>
             </div>
         </form>
@@ -112,34 +163,53 @@
 
         <div class="row row-cols-1 row-cols-lg-3 g-3 mb-3">
             <div class="col-md-4">
-                <x-stat-card title="Ingresos totales" icon="cash-coin" color-theme="green" currency="false" hideTrend="true" value="">
+                <x-stat-card
+					title="Ingresos Totales"
+					:currency="false" 
+					icon="cash"
+					color-theme="green"
+					hideTrend="true"
+				>
                     @slot('value')
-                        ₡ {{ number_format($productsIncomeTotal, 0, ',', '.') }}
-                        <br>
-                        <small class="text-muted fw-normal">Periodo: {{ $periodLabel ?? '' }}</small>
-                    @endslot
-                </x-stat-card>
-            </div>
-
-            <div class="col-md-4">
-                <x-stat-card title="Unidades Vendidas" icon="box-seam" color-theme="yellow" currency="false" hideTrend="true" value="">
-                    @slot('value')
-                        {{ number_format($totalSoldUnits ?? 0, 0, ',', '.') }}
-                        <br>
-                        <small class="text-muted fw-normal">Periodo: {{ $periodLabel ?? '' }}</small>
+                        <div class="d-flex flex-column justify-content-start align-items-start gap-2" style="margin-bottom: -0.1rem !important;">
+                            <div class="d-flex align-items-baseline gap-2">
+                                <x-icons.colon-icon width="18" height="18" />
+                                {{ number_format($productsIncomeTotal ?? 0, 0, ',', '.') }}
+                            </div>
+                            <span class="text-muted fw-normal" style="font-size: 16px;">{{ $periodLabel ?? '' }}</span>
+                        </div>
                     @endslot
                 </x-stat-card>
             </div>
 
             <div class="col-md-4">
                 <x-stat-card
-                    title="Promedio de Unidades por Dia"
-                    icon="graph-up-arrow"
+					title="Unidades Vendidas"
+					:currency="false" 
+					icon="box-seam"
+					color-theme="yellow"
+					hideTrend="true"
+				>
+                    @slot('value')
+                        <div class="d-flex flex-column justify-content-start align-items-start gap-2" style="margin-bottom: -0.1rem !important;">
+                            <div class="d-flex align-items-baseline gap-2">
+                                <x-icons.colon-icon width="18" height="18" />
+                                {{ number_format($totalSoldUnits ?? 0, 0, ',', '.') }}
+                            </div>
+                            <span class="text-muted fw-normal" style="font-size: 16px;">{{ $periodLabel ?? '' }}</span>
+                        </div>
+                    @endslot
+                </x-stat-card>
+            </div>
+
+            <div class="col-md-4">
+                <x-stat-card
+                    title="Unidades por Dia (promedio)"
                     color-theme="green"
                     currency="false"
                     trend="{{ ($averageUnitsTrendDirection ?? 'up') === 'down' ? '-' : '+' }}{{ number_format($averageUnitsVariationPercent ?? 0, 1, ',', '.') }}%"
-                    trend-context="vs periodo anterior ({{ $previousPeriodLabel ?? '' }})"
-                    trend-direction="{{ $averageUnitsTrendDirection ?? 'up' }}"
+                    trend-context="vs periodo anterior"
+                    trend-direction="{{ $averageUnitsTrendDirection }}"
                     value="{{ number_format($averageUnitsPerDay ?? 0, 1, ',', '.') }}"
                 />
             </div>
@@ -202,19 +272,35 @@
 @section('scripts')
     <script>
         const filtersForm = document.getElementById('bestselling-report-filters');
-        const customDates = document.querySelector('.report-custom-dates');
+        const customDates = document.querySelectorAll('.report-custom-dates');
         const clearCustomDatesBtn = document.getElementById('clear-custom-dates');
         const reportDateInputs = document.querySelectorAll('.report-date-input');
+        const periodRadios = document.querySelectorAll('#bestselling-report-filters input[name="period"]');
 
         const toggleCustomDates = (period) => {
-            if (!customDates) {
+            if (!customDates.length) {
                 return;
             }
 
-            customDates.classList.toggle('d-none', period !== 'custom');
+            customDates.forEach((element) => {
+                element.classList.toggle('d-none', period !== 'custom');
+            });
+
+            reportDateInputs.forEach((input) => {
+                input.disabled = period !== 'custom';
+            });
         };
 
-        document.querySelectorAll('.report-period').forEach((radio) => {
+        const syncPeriodLabels = (activeValue) => {
+            periodRadios.forEach((radio) => {
+                const label = document.querySelector(`label[for="${radio.id}"]`);
+                if (label) {
+                    label.classList.toggle('active', radio.value === activeValue);
+                }
+            });
+        };
+
+        periodRadios.forEach((radio) => {
             radio.addEventListener('change', () => {
                 if (radio.value !== 'custom') {
                     reportDateInputs.forEach((input) => {
@@ -223,19 +309,17 @@
                 }
 
                 toggleCustomDates(radio.value);
-                
-            if (filtersForm) {
-                if (radio.value !== 'custom') {
-                    reportDateInputs.forEach(input => input.disabled = true);
+                syncPeriodLabels(radio.value);
+
+                if (filtersForm) {
+                    filtersForm.requestSubmit();
                 }
-                filtersForm.requestSubmit();
-            }
             });
         });
 
         document.querySelectorAll('#bestselling-report-filters input[type="date"]').forEach((input) => {
             input.addEventListener('change', () => {
-                const selectedPeriod = document.querySelector('.report-period:checked')?.value ?? 'month';
+                const selectedPeriod = document.querySelector('#bestselling-report-filters input[name="period"]:checked')?.value ?? 'month';
                 toggleCustomDates(selectedPeriod);
 
                 if (selectedPeriod === 'custom' && filtersForm) {
@@ -264,7 +348,9 @@
             });
         }
 
-        toggleCustomDates(document.querySelector('.report-period:checked')?.value ?? 'month');
+        const initialPeriod = document.querySelector('#bestselling-report-filters input[name="period"]:checked')?.value ?? 'month';
+        toggleCustomDates(initialPeriod);
+        syncPeriodLabels(initialPeriod);
 
         window.ReportsData = {
             products: {

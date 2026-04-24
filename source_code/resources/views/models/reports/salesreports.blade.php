@@ -14,14 +14,16 @@
             background-color: transparent;
         }
 
-        .report-top-btn-secondary:hover {
+        .report-top-btn-secondary:hover,
+        .report-top-btn-secondary.active {
             color: var(--bs-body-color);
             border-color: var(--bambu-logo-bg);
-            background-color: rgba(var(--bs-body-color-rgb), 0.06);
+            background-color: rgba(var(--bs-body-color-rgb), 0.08);
+            font-weight: 600;
         }
 
         .report-date-input {
-            min-width: 220px;
+            min-width: 160px;
         }
     </style>
 
@@ -44,55 +46,117 @@
         </div>
 
         <form method="GET" action="{{ route('reports') }}" class="card-container rounded-2 p-4 mb-3" id="sales-report-filters">
-            <h6 class="fw-bold mb-3">Filtros de Fecha</h6>
-
             <input type="hidden" name="section" value="{{ $activeSection ?? 'sales' }}">
             <input type="hidden" name="payment_status" value="{{ request('payment_status', 'paid') }}">
+            
+            <h6 class="fw-bold mb-3">Filtros de Fecha</h6>
 
-            <div class="d-flex flex-wrap align-items-center gap-3">
-                <div class="form-check">
-                    <input class="form-check-input report-period" type="radio" name="period" value="today" id="today-filter" {{ request('period', 'month') === 'today' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="today-filter">Hoy</label>
+            <div class="row g-3 align-items-end">
+                {{-- Periodo --}}
+                <div class="col-6 pe-4">
+                    <div class="d-flex flex-column align-items-start gap-2">
+                        <x-form.input.radio-group label-class="text-muted" group-class="d-flex justify-content-start align-items-center flex-wrap gap-2">
+                            @slot('label')
+                                <i class="bi bi-calendar3 me-2"></i>Periodo
+                            @endslot
+    
+                            @foreach([
+                                'today'  => 'Hoy',
+                                'week'   => 'Esta Semana',
+                                'month'  => 'Este Mes',
+                                'custom' => 'Personalizado',
+                            ] as $value => $label)
+                                <x-form.input.radio-button
+                                    id="{{ $value }}-filter"
+                                    name="period"
+                                    value="{{ $value }}"
+                                    checked="{{ request('period', 'month') === $value }}"
+                                    class="mb-0 {{ request('period', 'month') === $value ? 'active' : '' }}"
+                                >
+                                    {{ $label }}
+                                </x-form.input.radio-button>
+                            @endforeach
+                        </x-form.input.radio-group>
+                    </div>
+
+                    {{-- <hr class="border-secondary w-100 report-custom-dates {{ request('period') === 'custom' ? '' : 'd-none' }}"> --}}
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input report-period" type="radio" name="period" value="week" id="week-filter" {{ request('period') === 'week' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="week-filter">Esta Semana</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input report-period" type="radio" name="period" value="month" id="month-filter" {{ request('period', 'month') === 'month' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="month-filter">Este Mes</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input report-period" type="radio" name="period" value="custom" id="custom-filter" {{ request('period') === 'custom' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="custom-filter">Personalizado</label>
-                </div>
-                <div class="d-flex flex-wrap gap-2 ms-lg-3 align-items-center report-custom-dates {{ request('period') === 'custom' ? '' : 'd-none' }}">
-                    <input type="date" name="start_date" class="form-control form-control-sm report-date-input" value="{{ request('start_date') }}">
-                    <input type="date" name="end_date" class="form-control form-control-sm report-date-input" value="{{ request('end_date') }}">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="clear-custom-dates">
-                        Limpiar datos
-                    </button>
+
+                {{-- Fechas Personalizadas --}}
+                <div class="col-6 border-start border-1 border-secondary-subtle ps-4 report-custom-dates {{ request('period') === 'custom' ? '' : 'd-none' }}">
+                    <div class="d-flex justify-content-start align-items-end gap-3 mt-2">
+
+                        <x-form.input
+                            id="start_date"
+                            type="date"
+                            class="border-secondary report-date-input"
+                            value="{{ request('start_date') }}"
+                            disabled="{{ request('period') !== 'custom' }}"
+                        >
+                            Fecha Inicio
+                        </x-form.input>
+
+                        <x-form.input
+                            id="end_date"
+                            type="date"
+                            class="border-secondary report-date-input"
+                            value="{{ request('end_date') }}"
+                            disabled="{{ request('period') !== 'custom' }}"
+                        >
+                            Fecha Fin
+                        </x-form.input>
+
+                        <x-form.button
+                            type="button"
+                            id="clear-custom-dates"
+                            class="btn-outline-danger"
+                            disabled="{{ request('period') !== 'custom' }}"
+                        >
+                            <i class="bi bi-x-circle me-1"></i>
+                            Limpiar
+                        </x-form.button>
+                        
+                    </div>
                 </div>
             </div>
         </form>
 
         <div class="row row-cols-1 row-cols-lg-3 g-3 mb-3">
             <div class="col-md-4">
-                <x-stat-card title="Ingresos Totales" icon="cash-coin" color-theme="green" currency="false" hideTrend="true" value="">
+                <x-stat-card
+					title="Ingresos Totales"
+					:currency="false" 
+					icon="cash"
+					color-theme="green"
+					hideTrend="true"
+				>
                     @slot('value')
-                        ₡ {{ number_format($totalIncome ?? 0, 0, ',', '.') }}
-                        <br>
-                        <small class="text-muted fw-normal">{{ $periodLabel ?? '' }}</small>
+                        <div class="d-flex flex-column justify-content-start align-items-start gap-2" style="margin-bottom: -0.1rem !important;">
+                            <div class="d-flex align-items-baseline gap-2">
+                                <x-icons.colon-icon width="18" height="18" />
+                                {{ number_format($totalIncome ?? 0, 0, ',', '.') }}
+                            </div>
+                            <span class="text-muted fw-normal" style="font-size: 16px;">{{ $periodLabel ?? '' }}</span>
+                        </div>
                     @endslot
                 </x-stat-card>
             </div>
 
             <div class="col-md-4">
-                <x-stat-card title="Órdenes Totales" icon="receipt" color-theme="yellow" currency="false" hideTrend="true" value="">
+                <x-stat-card
+					title="Órdenes Totales"
+					:currency="false" 
+					icon="receipt"
+					color-theme="yellow"
+					hideTrend="true"
+				>
                     @slot('value')
-                        {{ number_format($totalOrders ?? 0, 0, ',', '.') }}
-                        <br>
-                        <small class="text-muted fw-normal">{{ $periodLabel ?? '' }}</small>
+                        <div class="d-flex flex-column justify-content-start align-items-start gap-2" style="margin-bottom: -0.1rem !important;">
+                            <div class="d-flex align-items-baseline gap-2">
+                                {{ number_format($totalOrders ?? 0, 0, ',', '.') }}
+                            </div>
+                            <span class="text-muted fw-normal" style="font-size: 16px;">{{ $periodLabel ?? '' }}</span>
+                        </div>
                     @endslot
                 </x-stat-card>
             </div>
@@ -100,12 +164,11 @@
             <div class="col-md-4">
                 <x-stat-card
                     title="Promedio Diario"
-                    icon="graph-up-arrow"
                     color-theme="green"
-                    currency="false"
+                    :currency="false"
                     trend="{{ $totalOrders ?? 0 }} ventas"
                     trend-context="en el periodo filtrado"
-                    trend-direction="up"
+                    trend-direction="{{ $averageUnitsTrendDirection }}"
                     value="{{ number_format($dailyAverage ?? 0, 0, ',', '.') }}"
                 />
             </div>
@@ -164,19 +227,35 @@
 @section('scripts')
     <script>
         const filtersForm = document.getElementById('sales-report-filters');
-        const customDates = document.querySelector('.report-custom-dates');
+        const customDates = document.querySelectorAll('.report-custom-dates');
         const clearCustomDatesBtn = document.getElementById('clear-custom-dates');
         const reportDateInputs = document.querySelectorAll('.report-date-input');
+        const periodRadios = document.querySelectorAll('#sales-report-filters input[name="period"]');
 
         const toggleCustomDates = (period) => {
-            if (!customDates) {
+            if (!customDates.length) {
                 return;
             }
 
-            customDates.classList.toggle('d-none', period !== 'custom');
+            customDates.forEach((element) => {
+                element.classList.toggle('d-none', period !== 'custom');
+            });
+
+            reportDateInputs.forEach((input) => {
+                input.disabled = period !== 'custom';
+            });
         };
 
-        document.querySelectorAll('.report-period').forEach((radio) => {
+        const syncPeriodLabels = (activeValue) => {
+            periodRadios.forEach((radio) => {
+                const label = document.querySelector(`label[for="${radio.id}"]`);
+                if (label) {
+                    label.classList.toggle('active', radio.value === activeValue);
+                }
+            });
+        };
+
+        periodRadios.forEach((radio) => {
             radio.addEventListener('change', () => {
                 if (radio.value !== 'custom') {
                     reportDateInputs.forEach((input) => {
@@ -185,19 +264,17 @@
                 }
 
                 toggleCustomDates(radio.value);
-                
-            if (filtersForm) {
-                if (radio.value !== 'custom') {
-                    reportDateInputs.forEach(input => input.disabled = true);
+                syncPeriodLabels(radio.value);
+
+                if (filtersForm) {
+                    filtersForm.requestSubmit();
                 }
-                filtersForm.requestSubmit();
-            }
             });
         });
 
         document.querySelectorAll('#sales-report-filters input[type="date"]').forEach((input) => {
             input.addEventListener('change', () => {
-                const selectedPeriod = document.querySelector('.report-period:checked')?.value ?? 'month';
+                const selectedPeriod = document.querySelector('#sales-report-filters input[name="period"]:checked')?.value ?? 'month';
                 toggleCustomDates(selectedPeriod);
 
                 if (selectedPeriod === 'custom' && filtersForm) {
@@ -218,7 +295,9 @@
             });
         }
 
-        toggleCustomDates(document.querySelector('.report-period:checked')?.value ?? 'month');
+        const initialPeriod = document.querySelector('#sales-report-filters input[name="period"]:checked')?.value ?? 'month';
+        toggleCustomDates(initialPeriod);
+        syncPeriodLabels(initialPeriod);
 
         window.ReportsData = {
             sales: {
