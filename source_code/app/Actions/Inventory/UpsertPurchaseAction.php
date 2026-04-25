@@ -22,7 +22,7 @@ class UpsertPurchaseAction
         return DB::transaction(function () use ($purchaseData, $purchaseDetailsData, $purchasePaymentData) {
             // Clean the main purchase data by removing non-fillable fields
             $purchaseId = $purchaseData['id'] ?? null;
-            $purchaseData = Arr::except($purchaseData, ['id', 'created_at', 'updated_at', 'deleted_at']); 
+            $purchaseData = Arr::except($purchaseData, ['id', 'created_at', 'updated_at', 'deleted_at']);
 
             if (! $purchaseId) {
                 $purchase = Purchase::create([
@@ -36,6 +36,11 @@ class UpsertPurchaseAction
                     $purchase->restore();
                 }
             }
+
+            // TODO: Revisar porqué se pierden los items de los detalles al actualizar la compra, aunque se mantengan en la base de datos. 
+            // Posible causa: el método handlePurchaseDetails elimina los detalles que no están presentes en el request, 
+            //                pero si el request no incluye los IDs de los detalles existentes, se eliminarán todos los detalles. 
+            // Solución: asegurar que el request incluya los IDs de los detalles existentes para que no se eliminen.
 
             $this->handlePurchaseDetails($purchase, $purchaseDetailsData);
             $this->handlePaymentDetails($purchase, $purchasePaymentData);
@@ -51,9 +56,8 @@ class UpsertPurchaseAction
      * - Deletes details that are not present in the incoming data (soft or force delete depending on payment status).
      * - Updates existing details or creates new ones as needed.
      *
-     * @param Purchase $purchase The purchase model instance to update details for.
-     * @param array $purchaseDetailsData Array of detail data to upsert.
-     * @return void
+     * @param  Purchase  $purchase  The purchase model instance to update details for.
+     * @param  array  $purchaseDetailsData  Array of detail data to upsert.
      */
     private function handlePurchaseDetails(Purchase $purchase, array $purchaseDetailsData): void
     {
@@ -61,7 +65,7 @@ class UpsertPurchaseAction
         $incomingDetailIds = collect($purchaseDetailsData)
             ->pluck('id')
             ->filter()
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->all();
 
         // Find and delete details that are not present in the incoming data
@@ -104,9 +108,8 @@ class UpsertPurchaseAction
      * - Deletes payments that are not present in the incoming data (including their related transactions).
      * - Updates existing payments or creates new ones as needed.
      *
-     * @param Purchase $purchase The purchase model instance to update payments for.
-     * @param array|null $purchasePaymentData Array of payment data to upsert, or null if no payments are provided.
-     * @return void
+     * @param  Purchase  $purchase  The purchase model instance to update payments for.
+     * @param  array|null  $purchasePaymentData  Array of payment data to upsert, or null if no payments are provided.
      */
     private function handlePaymentDetails(Purchase $purchase, ?array $purchasePaymentData): void
     {
@@ -118,7 +121,7 @@ class UpsertPurchaseAction
         $incomingPaymentIds = collect($purchasePaymentData)
             ->pluck('id')
             ->filter()
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->all();
 
         // Find and delete payments that are not present in the incoming data

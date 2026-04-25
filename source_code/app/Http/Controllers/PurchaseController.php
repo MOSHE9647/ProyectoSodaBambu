@@ -138,17 +138,23 @@ class PurchaseController extends Controller
     {
         $validatedData = $purchaseRequest->validated();
 
-        $purchaseData = Arr::except($validatedData, ['sale_details', 'payment_details']);
-        $purchaseDetailsData = $validatedData['sale_details'] ?? [];
-        $purchasePaymentData = $validatedData['payment_details'] ?? null;
+        return response()->json([
+            'success' => true,
+            'message' => 'Datos de compra validados correctamente.',
+            'purchase_data' => $validatedData,
+        ]);
 
-        $upsertPurchaseAction->execute(
-            $purchaseData, 
-            $purchaseDetailsData, 
-            $purchasePaymentData
-        );
+        // $purchaseData = Arr::except($validatedData, ['sale_details', 'payment_details']);
+        // $purchaseDetailsData = $validatedData['sale_details'] ?? [];
+        // $purchasePaymentData = $validatedData['payment_details'] ?? null;
 
-        return redirect()->route('purchases.index')->with('success', 'Compra registrada exitosamente.');
+        // $upsertPurchaseAction->execute(
+        //     $purchaseData,
+        //     $purchaseDetailsData,
+        //     $purchasePaymentData
+        // );
+
+        // return redirect()->route('purchases.index')->with('success', 'Compra registrada exitosamente.');
     }
 
     public function show(Purchase $purchase)
@@ -182,7 +188,12 @@ class PurchaseController extends Controller
             $purchasePaymentData
         );
 
-        return redirect()->route('purchases.index')->with('success', 'Compra actualizada exitosamente.');
+        session()->flash('success', 'Compra actualizada exitosamente.');
+
+        return response()->json([
+            'redirect' => route('purchases.index'),
+            'message' => 'Datos de compra validados correctamente.',
+        ]);
     }
 
     /**

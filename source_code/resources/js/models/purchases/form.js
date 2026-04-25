@@ -1,626 +1,440 @@
-import {
-    clearAllFieldErrors,
-    showFieldError,
-    clearFieldError,
-    validateAndDisplayField
-} from '../../utils/validation.js';
-import { setLoadingState } from '../../utils/utils.js';
-import { fetchWithErrorHandling } from '../../utils/error-handling.js';
-import { SwalNotificationTypes, SwalToast } from '../../utils/sweetalert.js';
+import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation";
+import { setLoadingState } from "../../utils/utils";
+import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
-let detailIndex  = window.detailIndex || 0;
-let productsList = window.products    || [];
-let suppliesList = window.supplies    || [];
+// ==================== Environment Checks ====================
+if (typeof $ === 'undefined') {
+    throw new Error('This script requires jQuery');
+}
 
-const TYPE_LABELS = {
-    product: 'Producto',
-    supply:  'Insumo',
+// ======================== Constants =========================
+
+const PURCHASE_DATA = window.purchaseFormData || [];
+const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
+const FORM_ID = IS_EDITING ? 'edit-purchase-form' : 'create-purchase-form';
+const PAYMENT_METHODS = { CASH: 'cash', CARD: 'card', SINPE: 'sinpe' };
+
+// =========================== Helpers ==========================
+
+const parseFormattedNumber = (text) => {
+	if (!text) return 0;
+	return parseFloat(text.replace(/[^0-9,-]+/g, "").replace(",", ".")) || 0;
 };
 
-// ─────────────────────────────────────────────
-//  Helpers
-// ─────────────────────────────────────────────
+function showFieldErrorInAlert(fieldId, errorMessage) {
+	const $alert = $("#form-error-alert");
+	$alert.removeClass("d-none").html(`
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span>${errorMessage}</span>
+    `);
 
-/** Formatea un número como moneda costarricense */
-function formatCRC(value) {
-    return '₡' + parseFloat(value || 0).toLocaleString('es-CR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+	if (fieldId) {
+		$(`#${fieldId}`).focus();
+	}
+
+	window.scrollTo({ top: $alert.offset()?.top - 100, behavior: "smooth" });
+}
+
+function clearFieldErrorInAlert() {
+    const $alert = $("#form-error-alert");
+    $alert.addClass("d-none").html("");
+}
+
+function getLaravelFirstError(errorData) {
+    let firstField = null;
+	let firstMessage = null;
+	if (errorData.errors && typeof errorData.errors === "object") {
+		const keys = Object.keys(errorData.errors);
+		if (keys.length > 0) {
+			firstField = keys[0];
+			const messages = errorData.errors[firstField];
+			if (Array.isArray(messages) && messages.length > 0) {
+				firstMessage = messages[0];
+			} else if (typeof messages === "string") {
+				firstMessage = messages;
+			}
+		}
+	}
+	return { field: firstField, message: firstMessage };
+}
+
+function getFormFields() {
+    const purchase = {
+		invoice_number: $("#invoice_number").val()?.trim() || '',
+		supplier_id: $("#supplier_id").val(),
+		payment_status: $("#payment_status").val(),
+		date: $("#date").val(),
+        total: parseFormattedNumber($("#total").text()),
+		notes: $("#notes").val()?.trim() || '',
+	};
+
+    purchase.purchase_details = $("#purchase-details-table")
+		.find("tbody tr:not(#empty-row)")
+		.map((_, row) => {
+			const $row = $(row);
+			return {
+				purchasable_id: $row.find('[name="purchasable_id"]').val(),
+				purchasable_type: $row.data("purchasable-type"),
+				quantity: $row.find('[name="quantity"]').val(),
+				unit_price: $row.find('[name="unit-price"]').val(),
+				sub_total: parseFormattedNumber($row.find(".sub-total").text()),
+			};
+		})
+		.get();
+
+	if ($("#payment_status").val() === "paid") {
+		purchase.payment_details = [
+			{
+				method: PAYMENT_METHODS.CASH || "cash",
+				change_amount: 0,
+				amount: purchase.total / 3,
+			},
+			{
+				method: PAYMENT_METHODS.CARD || "card",
+				reference: Math.random().toString(36).substring(2, 10),
+				amount: purchase.total / 3,
+			},
+			{
+				method: PAYMENT_METHODS.SINPE || "sinpe",
+				reference: Math.random().toString(36).substring(2, 10),
+				amount: purchase.total / 3,
+			},
+		];
+	}
+
+    return purchase;
+}
+
+// ===================== Validation Helpers =====================
+const rules = {
+	isNum: (v) => v !== "" && !isNaN(v) && v !== null,
+	isInt: (v) => /^\d+$/.test(v),
+	isString: (v) => typeof v === "string" && v.trim().length > 0,
+	isValidId: (v) => /^\d+$/.test(v) && v !== "-1",
+    inList: (v, list, key = 'value') => list.some(item => String(item[key]) === String(v))
+};
+
+// ===================== Field Validators =====================
+const baseFieldValidators = {
+	supplier_id: {
+		validate: (v) => rules.isValidId(v),
+		message: "Debe seleccionar un proveedor válido.",
+	},
+	invoice_number: {
+		validate: (v) => rules.isString(v) && v.length >= 2 && v.length <= 255,
+		message: "El número de factura es obligatorio (2-255 caracteres).",
+	},
+	payment_status: {
+		validate: (v) => rules.inList(v, PURCHASE_DATA.paymentStatuses || []),
+		message: "Debe seleccionar un estado de pago válido.",
+	},
+	date: {
+		validate: (v) => {
+			if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+			const date = new Date(v);
+			return !isNaN(date) && date <= new Date().setHours(23, 59, 59);
+		},
+		message: "La fecha es obligatoria y no puede ser futura.",
+	},
+	total: {
+		validate: (v) => rules.isNum(v) && parseFloat(v) >= 0,
+		message: "El total de la compra no puede ser negativo.",
+	},
+	purchase_details: {
+		validate: (arr) => {
+			if (!Array.isArray(arr) || arr.length === 0) return false;
+			return arr.every(
+				(i) =>
+					rules.isValidId(i.purchasable_id) &&
+					i.quantity > 0 &&
+					i.unit_price >= 0,
+			);
+		},
+		message:
+			"Debe agregar al menos un producto válido (con cantidad y precio).",
+	},
+	payment_details: {
+		validate: (v) => {
+			if (!v) return true; // Opcional
+			const payments = rules.isValidJSON(v);
+			if (!Array.isArray(payments)) return false;
+			return payments.every((p) =>
+				rules.inList(
+					p.method,
+					PURCHASE_DATA.paymentMethods || [],
+					"label",
+				),
+			);
+		},
+		message: "Los métodos de pago seleccionados no son válidos.",
+	},
+	notes: {
+		validate: (v) => !v || (typeof v === "string" && v.length <= 1000), // En Blade pusiste maxlength="1000"
+		message: "Las notas no pueden exceder los 1000 caracteres.",
+	},
+};
+
+// Purchase detail validators (for each item in purchase_details)
+const purchaseDetailValidators = {
+	quantity: (v) => rules.isNum(v) && parseInt(v) > 0,
+	unit_price: (v) => rules.isNum(v) && parseFloat(v) >= 0,
+	sub_total: (v) => rules.isNum(v) && parseFloat(v) >= 0,
+	purchasable_id: (v) => rules.isValidId(v),
+	purchasable_type: (v) =>
+		Object.values(PURCHASE_DATA.purchasableTypes || {}).includes(v),
+};
+
+// Payment detail validators (for each item in payment_details)
+const paymentDetailValidators = {
+    method: (v) => rules.inList(v, PURCHASE_DATA.paymentMethods || [], 'label'),
+    change_amount: (v) => rules.isNum(v) && parseFloat(v) > 0,
+    reference: (v) => !v || (typeof v === 'string' && v.length >= 4 && v.length <= 12)
+};
+
+// ==================== Validation Functions ====================
+
+function getActiveFieldValidators() {
+    const validators = {...baseFieldValidators};
+
+    // Remove Notes validator if not provided
+    if (!$('#notes').val().trim()) {
+        delete validators.notes;
+    }
+
+    // Remove Payment Details validator if payment status is not 'paid'
+    if ($('#payment_status').val() !== 'paid') {
+        delete validators.payment_details;
+    }
+
+    return validators;
+}
+
+function validatePurchaseForm(values, fieldValidators) {
+	// Get current form values and details
+	const { purchase_details = [], payment_details = [], ...purchase } = values;
+	let errors = []; // Array to store validation errors
+
+	// Validate main purchase fields
+	Object.entries(fieldValidators).forEach(([fieldId, config]) => {
+		const value =
+			purchase[fieldId] !== undefined
+				? purchase[fieldId]
+				: values[fieldId];
+
+		// Skip purchase_details and payment_details here, they are validated separately
+		if (fieldId !== "purchase_details" && fieldId !== "payment_details") {
+			if (!config.validate(value)) {
+				if (fieldId !== 'total') showFieldError(fieldId, config.message);
+				errors.push([false, fieldId, config.message]);
+			} else {
+				if (fieldId !== 'total') clearFieldError(fieldId);
+			}
+		}
+	});
+
+    // Validate purchase_details array is not empty and has valid items
+    if (!fieldValidators.purchase_details.validate(purchase_details)) {
+        errors.push([false, 'form-error-alert', fieldValidators.purchase_details.message]);
+    }
+
+	// Validate purchase_details
+	purchase_details.forEach((detail, index) => {
+		Object.entries(purchaseDetailValidators).forEach(([key, validator]) => {
+			if (!validator(detail[key])) {
+				const fieldName = `Detalle ${index + 1}: ${key}`;
+				errors.push([
+					false,
+					null,
+					`Línea ${index + 1}: Compruebe que el producto, cantidad y precio sean válidos.`,
+				]);
+				// Aquí podrías agregar lógica para resaltar la fila específica (ej. agregar 'is-invalid' al input de esa fila)
+			}
+		});
+	});
+
+	// Validate payment_details if payment status is 'paid'
+	if (
+		purchase.payment_status === "paid" &&
+		typeof payment_details !== "undefined"
+	) {
+		payment_details.forEach((payment, index) => {
+			Object.entries(paymentDetailValidators).forEach(([key, validator]) => {
+				if (!validator(payment[key])) {
+					errors.push([
+						false,
+						null,
+						`Pago ${index + 1}: Campo ${key} inválido.`,
+					]);
+				}
+			});
+		});
+	}
+
+	return errors.length > 0 ? errors[0] : [true, "", ""];
+}
+
+// ==================== Real-Time Validation Handler ====================
+
+function bindRealTimeValidation() {
+    // Real-time validation for main fields
+    const mainFields = ['invoice_number', 'supplier_id', 'payment_status', 'date', 'notes'];
+
+    mainFields.forEach(fieldId => {
+        const $element = $(`#${fieldId}`);
+        if (!$element.length) return;
+
+        // Infer event type based on element type (selects and date inputs use 'change', others use 'input' and 'focusout')
+        const eventType = $element.is('select, input[type="date"]') ? 'change' : 'input focusout';
+
+        $element.on(eventType, function() {
+            const config = baseFieldValidators[fieldId];
+            const value = $(this).val();
+
+            // Special exception for 'notes' field: if it's empty, we clear errors instead of showing them
+            if (fieldId === 'notes' && (!value || !value.trim())) {
+                clearFieldError(fieldId);
+                return;
+            }
+
+            if (config) {
+                if (!config.validate(value)) {
+                    showFieldError(fieldId, config.message);
+                } else {
+                    clearFieldError(fieldId);
+                }
+            }
+        });
     });
-}
 
-/**
- * Recalcula el subtotal de una fila (cantidad × precio unitario),
- * actualiza su display y el hidden input de subtotal.
- */
-function recalcRowSubtotal($row) {
-    const qty       = parseFloat($row.find('.quantity-input').val())  || 0;
-    const unitPrice = parseFloat($row.find('.unit-price-input').val()) || 0;
-    const subtotal  = qty * unitPrice;
+    // Delegated real-time validation for purchase details (quantity and unit price)
+	// We use delegation (.on on the table ID) so it works with newly added rows
+    $('#purchase-details-table').on('input focusout', 'input[name="quantity"], input[name="unit-price"]', function() {
+        const $input = $(this);
+        const name = $input.attr('name');
+        // Map 'unit-price' to rule name 'unit_price' for validation
+        const key = name === 'unit-price' ? 'unit_price' : name; 
+        const validator = purchaseDetailValidators[key];
 
-    $row.find('.subtotal-display').text(formatCRC(subtotal));
-    $row.find('.subtotal-input').val(subtotal.toFixed(2));
-}
-
-/**
- * Recalcula el total de la compra sumando los subtotales de todas las filas.
- * Actualiza el hidden #total y el display #total-display.
- */
-function recalcTotal() {
-    let total = 0;
-    $('#details-container .detail-row').each(function () {
-        total += parseFloat($(this).find('.subtotal-input').val()) || 0;
+        if (validator) {
+            if (!validator($input.val())) {
+                $input.addClass('is-invalid');
+                showFieldErrorInAlert(
+					$(this),
+					`Compruebe que la ${key === "unit_price" ? "cantidad y el precio unitario sean válidos" : "cantidad se válida"}  para cada producto agregado.`,
+				);
+            } else {
+                $input.removeClass('is-invalid');
+                clearFieldErrorInAlert();
+            }
+        }
     });
-    $('#total').val(total.toFixed(2));
-    $('#total-display').text(formatCRC(total));
-}
 
-/**
- * Poblar el select de producto/insumo según el tipo seleccionado.
- * Devuelve el jQuery del select para encadenamiento.
- */
-function populateSelect(selectElement, type) {
-    const list = type === 'product' ? productsList : suppliesList;
-    // Marcar para suprimir el listener change durante la repoblación
-    selectElement.data('populating', true);
-    selectElement.empty().append('<option value="">Seleccionar</option>');
-    list.forEach(item => {
-        selectElement.append(`<option value="${item.id}">${item.name}</option>`);
-    });
-    selectElement.data('populating', false);
-    return selectElement;
-}
+    $('#purchase-details-table').on('change', 'select[name="purchasable_id"]', function() {
+        const $select = $(this);
+        const validator = purchaseDetailValidators.purchasable_id;
 
-/**
- * FIX #2: Aplica el unit_price del item seleccionado a la fila.
- * Se llama tanto al cambiar el select de tipo como al cambiar el select de item.
- */
-function applyUnitPrice($row) {
-    const type = $row.find('.purchasable-type').val();
-    const idVal = $row.find('.purchasable-id').val();
-
-    // Si no hay item seleccionado, no hacer nada
-    if (!idVal) return;
-
-    const id   = parseInt(idVal, 10);
-    const list = type === 'product' ? productsList : suppliesList;
-    const item = list.find(i => i.id === id);
-
-    const price = (item && item.unit_price != null) ? item.unit_price : 0;
-    $row.find('.unit-price-input').val(price.toFixed(2));
-    recalcRowSubtotal($row);
-    recalcTotal();
-}
-
-/**
- * FIX #1: Refresca todos los selects del tipo dado y conserva la selección actual.
- * Se usa cuando se crea un producto/insumo desde el offcanvas.
- */
-function refreshAllSelectsOfType(type) {
-    $('.detail-row').each(function () {
-        if ($(this).find('.purchasable-type').val() === type) {
-            const select  = $(this).find('.purchasable-id');
-            const current = select.val();
-            populateSelect(select, type);
-            select.val(current);
+        if (validator) {
+            if (!validator($select.val())) {
+                $select.addClass('is-invalid');
+                showFieldErrorInAlert($(this), `Debe seleccionar un producto válido para cada detalle de compra.`);
+            } else {
+                $select.removeClass('is-invalid');
+                clearFieldErrorInAlert();
+            }
         }
     });
 }
 
-function toggleEmptyRow() {
-    const hasRows = $('#details-container .detail-row').length > 0;
-    $('#empty-details-row').toggle(!hasRows);
-}
-
-function buildTypeSelect(name, selectedValue = 'product') {
-    const options = Object.entries(TYPE_LABELS)
-        .map(([val, label]) => `<option value="${val}" ${val === selectedValue ? 'selected' : ''}>${label}</option>`)
-        .join('');
-    return `<select name="${name}" class="form-select form-select-sm purchasable-type" required>${options}</select>`;
-}
-
-/**
- * FIX #1: Agrega una nueva fila a la tabla preseleccionando el item recién creado.
- * type = 'product' | 'supply'
- * item = { id, name, unit_price }
- */
-function addDetailRowForNewItem(type, item) {
-    const index = detailIndex++;
-
-    const template = `
-        <tr class="detail-row" data-index="${index}">
-            <td>${buildTypeSelect(`details[${index}][purchasable_type]`, type)}</td>
-            <td>
-                <select name="details[${index}][purchasable_id]" class="form-select form-select-sm purchasable-id" required>
-                    <option value="">Seleccionar</option>
-                </select>
-            </td>
-            <td>
-                <input type="number" name="details[${index}][quantity]"
-                       class="form-control form-control-sm quantity-input"
-                       value="1" min="0.0001" step="0.0001" required>
-            </td>
-            <td>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text">₡</span>
-                    <input type="number" name="details[${index}][unit_price]"
-                           class="form-control form-control-sm unit-price-input"
-                           value="${item.unit_price ? item.unit_price.toFixed(2) : '0.00'}"
-                           min="0" step="0.01" required>
-                </div>
-            </td>
-            <td class="align-middle">
-                <span class="subtotal-display fw-semibold text-success">₡0.00</span>
-                <input type="hidden" name="details[${index}][subtotal]" class="subtotal-input" value="0">
-            </td>
-            <td>
-                <button type="button" class="btn btn-sm btn-danger remove-detail">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-        </tr>
-    `;
-
-    $('#details-container').append(template);
-    const $newRow = $('#details-container tr').last();
-
-    // Poblar el select con todos los items del tipo y preseleccionar el recién creado
-    populateSelect($newRow.find('.purchasable-id'), type).val(item.id);
-
-    // Calcular subtotal inicial (qty=1 × unit_price)
-    recalcRowSubtotal($newRow);
-    toggleEmptyRow();
-    recalcTotal();
-}
-
-// ─────────────────────────────────────────────
-//  Tabla de detalles — botón "Agregar"
-// ─────────────────────────────────────────────
-
-$('#add-detail').on('click', function () {
-    const index = detailIndex++;
-
-    const template = `
-        <tr class="detail-row" data-index="${index}">
-            <td>${buildTypeSelect(`details[${index}][purchasable_type]`)}</td>
-            <td>
-                <select name="details[${index}][purchasable_id]" class="form-select form-select-sm purchasable-id" required>
-                    <option value="">Seleccionar</option>
-                </select>
-            </td>
-            <td>
-                <input type="number" name="details[${index}][quantity]"
-                       class="form-control form-control-sm quantity-input"
-                       value="1" min="0.0001" step="0.0001" required>
-            </td>
-            <td>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text">₡</span>
-                    <input type="number" name="details[${index}][unit_price]"
-                           class="form-control form-control-sm unit-price-input"
-                           value="0.00" min="0" step="0.01" required>
-                </div>
-            </td>
-            <td class="align-middle">
-                <span class="subtotal-display fw-semibold text-success">₡0.00</span>
-                <input type="hidden" name="details[${index}][subtotal]" class="subtotal-input" value="0">
-            </td>
-            <td>
-                <button type="button" class="btn btn-sm btn-danger remove-detail">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-        </tr>
-    `;
-
-    $('#details-container').append(template);
-    const $newRow = $('#details-container tr').last();
-    populateSelect($newRow.find('.purchasable-id'), 'product');
-    toggleEmptyRow();
-    recalcTotal();
-});
-
-$(document).on('click', '.remove-detail', function () {
-    $(this).closest('tr').remove();
-    toggleEmptyRow();
-    recalcTotal();
-});
-
-// FIX #2: Al cambiar el tipo (producto/insumo), repoblar el select y resetear precio
-$(document).on('change', '.purchasable-type', function () {
-    const $row = $(this).closest('tr');
-    populateSelect($row.find('.purchasable-id'), $(this).val());
-    // Resetear precio al cambiar tipo ya que no hay item seleccionado
-    $row.find('.unit-price-input').val('0.00');
-    recalcRowSubtotal($row);
-    recalcTotal();
-});
-
-// FIX #2: Al seleccionar un item del select, autocompletar el precio unitario
-// Usamos un flag para ignorar el change disparado por populateSelect(.empty())
-$(document).on('change', '.purchasable-id', function () {
-    if ($(this).data('populating')) return;
-    applyUnitPrice($(this).closest('tr'));
-});
-
-// Recalcular subtotal de fila y total global al editar cantidad o precio unitario
-$(document).on('input change', '.quantity-input, .unit-price-input', function () {
-    recalcRowSubtotal($(this).closest('tr'));
-    recalcTotal();
-});
-
-// ─────────────────────────────────────────────
-//  Cálculo de precio de venta (producto rápido)
-// ─────────────────────────────────────────────
-
-function calcSalePrice() {
-    const cost   = parseFloat($('#quick-product-reference-cost').val()) || 0;
-    const tax    = parseFloat($('#quick-product-tax-percentage').val())  || 0;
-    const margin = parseFloat($('#quick-product-margin-percentage').val()) || 0;
-    if (cost > 0) {
-        // tax y margin vienen como decimales (ej: 0.13), no como porcentaje
-        $('#quick-product-sale-price').val((cost * (1 + tax) * (1 + margin)).toFixed(2));
-    }
-}
-
-$('#quick-product-reference-cost, #quick-product-tax-percentage, #quick-product-margin-percentage')
-    .on('input change', calcSalePrice);
-
-// ─────────────────────────────────────────────
-//  Validación y envío del formulario principal
-// ─────────────────────────────────────────────
+// ==================== Form Submission Handler ====================
 
 function submitPurchaseForm() {
-    if (!$('#invoice_number').val().trim()) {
-        SwalToast.fire({ icon: 'error', text: 'El número de factura es obligatorio.' });
-        return false;
-    }
-    if (!$('#date').val()) {
-        SwalToast.fire({ icon: 'error', text: 'La fecha es obligatoria.' });
-        return false;
-    }
-    if (!$('#supplier_id').val()) {
-        SwalToast.fire({ icon: 'error', text: 'Debe seleccionar un proveedor.' });
-        return false;
-    }
-    if (!$('#payment_status').val()) {
-        SwalToast.fire({ icon: 'error', text: 'Debe seleccionar un estado de pago.' });
-        return false;
-    }
-    if ($('#details-container .detail-row').length === 0) {
-        SwalToast.fire({ icon: 'error', text: 'Debe agregar al menos un producto/insumo.' });
-        return false;
-    }
+    const fieldValidators = getActiveFieldValidators();
+    const values = getFormFields();
 
-    let valid = true;
-    $('#details-container .detail-row').each(function () {
-        const $purchasableId = $(this).find('.purchasable-id');
-        const $qty           = $(this).find('.quantity-input');
-        const $price         = $(this).find('.unit-price-input');
+	// Exclude fields 'total', 'purchase_details' y 'payment_details' from error clearing since they are validated separately
+	const filteredValidators = Object.fromEntries(
+		Object.entries(fieldValidators).filter(
+			([key]) => !['total', 'purchase_details', 'payment_details'].includes(key)
+		)
+	);
 
-        if (!$purchasableId.val()) {
-            $purchasableId.addClass('is-invalid');
-            valid = false;
-        } else {
-            $purchasableId.removeClass('is-invalid');
-        }
+	clearAllFieldErrors(filteredValidators);
+    const validationResult = validatePurchaseForm(values, fieldValidators);
 
-        if (!$qty.val() || parseFloat($qty.val()) <= 0) {
-            $qty.addClass('is-invalid');
-            valid = false;
-        } else {
-            $qty.removeClass('is-invalid');
-        }
-
-        if ($price.val() === '' || parseFloat($price.val()) < 0) {
-            $price.addClass('is-invalid');
-            valid = false;
-        } else {
-            $price.removeClass('is-invalid');
-        }
-    });
-
-    if (valid) recalcTotal();
-
-    return valid;
+    return [...validationResult, values];
 }
 
-$(document).on('submit', 'form[id$="-purchase-form"]', (e) => {
+$(document).on('submit', `#${FORM_ID}`, async function(e) {
+    // Prevent default form submission
     e.preventDefault();
-    const formId = e.currentTarget.id;
-    setLoadingState(formId, true);
-    if (submitPurchaseForm()) {
-        e.currentTarget.submit();
-    } else {
-        setLoadingState(formId, false);
-    }
-});
+    setLoadingState(FORM_ID, true);
 
-// ─────────────────────────────────────────────
-//  Quick supplier
-// ─────────────────────────────────────────────
+	// Imprimir los datos del formulario
+	const formData = $(this).serializeArray();
+	console.log('Datos del formulario:', formData);
 
-$('#quick-phone').on('input', function () {
-    this.value = this.value.replace(/\D/g, '').slice(0, 8);
-});
+    // Validate and submit form
+    const [isValid, fieldId, message, values] = submitPurchaseForm();
 
-function clearSupplierErrors() {
-    ['name', 'phone', 'email'].forEach(field => {
-        $(`#quick-${field}`).removeClass('is-invalid');
-        $(`#quick-${field}-error`).addClass('d-none').text('');
-    });
-}
-
-$(document).on('submit', '#quick-supplier-form', async function (e) {
-    e.preventDefault();
-
-    const $form      = $(this);
-    const $submitBtn = $('#quick-supplier-submit');
-    const $spinner   = $('#quick-supplier-spinner');
-    const url        = $form.attr('action');
-
-    clearSupplierErrors();
-    $submitBtn.prop('disabled', true);
-    $spinner.removeClass('d-none');
-
-    try {
-        const response = await fetch(url, {
-            method:  'POST',
-            body:    new FormData($form[0]),
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept':           'application/json',
-            },
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            const $select = $('#supplier_id');
-            $select.append(`<option value="${data.supplier.id}">${data.supplier.name}</option>`);
-            $select.val(data.supplier.id);
-
-            const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasSupplier'));
-            if (offcanvas) offcanvas.hide();
-            $form[0].reset();
-
-            SwalToast.fire({ icon: 'success', text: data.message || 'Proveedor creado correctamente.' });
-        } else {
-            if (data.errors) {
-                Object.entries(data.errors).forEach(([field, messages]) => {
-                    $(`#quick-${field}`).addClass('is-invalid');
-                    $(`#quick-${field}-error`).removeClass('d-none').text(messages[0]);
-                });
-            } else {
-                SwalToast.fire({ icon: 'error', text: data.message || 'Error al crear el proveedor.' });
-            }
+    // If valid, submit the form
+    if (isValid) {
+		// Hide any previous error alert
+		$("#form-error-alert").addClass("d-none");
+		
+        const form = this;
+        const url = form.action;
+        const token = $(form).find('input[name="_token"]').val();
+        const method = $(form).find('input[name="_method"]').val();
+        const httpMethod = method ? method.toUpperCase() : 'POST';
+        
+        if (httpMethod === 'PUT') {
+            const purchaseId = httpMethod === 'PUT' ? url.split('/').pop() : null; // Extract ID from URL for editing
+            values.id = purchaseId; // Include ID in payload for updates
         }
-    } catch (error) {
-        console.error('Error creando proveedor:', error);
-        SwalToast.fire({ icon: 'error', text: 'Ocurrió un error inesperado.' });
-    } finally {
-        $submitBtn.prop('disabled', false);
-        $spinner.addClass('d-none');
-    }
-});
 
-// ─────────────────────────────────────────────
-//  Quick product
-// ─────────────────────────────────────────────
+        // TODO: Implementar lógica de pagos y funcionalidad de botones (offcanvas, agregar detalles, proveedores, etc.)
 
-$('#quick-product-has-inventory').on('change', function () {
-    if ($(this).is(':checked')) {
-        $('#quick-product-stock-fields').slideDown();
-        $('#quick-product-stock-minimo').prop('required', true);
-    } else {
-        $('#quick-product-stock-fields').slideUp();
-        $('#quick-product-stock-minimo').prop('required', false).val('');
-    }
-});
+        console.log('Enviando datos al servidor:', httpMethod, url, values);
 
-function loadCategories() {
-    const $cat = $('#quick-product-category');
-    $cat.prop('disabled', true).empty().append('<option value="">Cargando categorías...</option>');
+        try {
+            const response = await fetch(url, {
+                method: httpMethod,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify(values)
+            });
 
-    $.ajax({
-        url:      window.categoriesIndexUrl,
-        method:   'GET',
-        data:     { simple: 1 },
-        dataType: 'json',
-        headers:  { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-        success:  (data) => {
-            $cat.empty().append('<option value="">Seleccionar categoría</option>');
-            data.forEach(cat => $cat.append(`<option value="${cat.id}">${cat.name}</option>`));
-        },
-        error: (xhr) => {
-            console.error('Error cargando categorías:', xhr.status, xhr.responseText);
-            $cat.empty().append('<option value="">Error al cargar</option>');
-            SwalToast.fire({ icon: 'error', text: 'No se pudieron cargar las categorías.' });
-        },
-        complete: () => $cat.prop('disabled', false),
-    });
-}
+            if (response.ok) {
+				const data = await response.json();
+				window.location.href = data.redirect || route('purchases.index');
+			} else {
+				const errorData = await response.json();
+				console.error('Error en la respuesta del servidor:', errorData);
 
-document.addEventListener('show.bs.offcanvas', (e) => {
-    if (e.target?.id === 'offcanvasProduct') loadCategories();
-});
-
-$('#quick-product-form').on('submit', async function (e) {
-    e.preventDefault();
-
-    const $form      = $(this);
-    const $submitBtn = $('#quick-product-submit');
-    const $spinner   = $('#quick-product-spinner');
-
-    $form.find('.is-invalid').removeClass('is-invalid');
-    $form.find('.invalid-feedback').text('');
-
-    if ($('#quick-product-has-inventory').is(':checked')) {
-        const stockMin = $('#quick-product-stock-minimo').val();
-        if (stockMin === '' || stockMin < 0) {
-            $('#quick-product-stock-minimo').addClass('is-invalid');
-            $('#quick-product-stock-minimo-error').text('El stock mínimo es obligatorio y debe ser ≥ 0.');
-            return;
+                const { field: firstField, message: firstMessage } = getLaravelFirstError(errorData);
+				showFieldError(firstField, firstMessage);
+				showFieldErrorInAlert(null, errorData.message || 'Error al enviar el formulario. Por favor, inténtelo de nuevo.');
+			}
+        } catch (error) {
+			SwalToast.fire({
+                icon: SwalNotificationTypes.ERROR,
+                title: "Error al enviar el formulario"
+            });
+        } finally {
+            setLoadingState(FORM_ID, false);
         }
-    }
-
-    $submitBtn.prop('disabled', true);
-    $spinner.removeClass('d-none');
-
-    try {
-        const formData = new FormData($form[0]);
-        if (!formData.has('has_inventory'))    formData.set('has_inventory', '0');
-        if (!formData.has('barcode'))           formData.set('barcode', '');
-        if (!formData.get('reference_cost'))    formData.set('reference_cost', '0');
-        if (!formData.get('tax_percentage'))    formData.set('tax_percentage', '0');
-        if (!formData.get('margin_percentage')) formData.set('margin_percentage', '0');
-        if (!formData.get('sale_price'))        formData.set('sale_price', '0');
-        formData.delete('stock_actual');
-
-        const response = await fetch($form.attr('action'), {
-            method:  'POST',
-            body:    formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // FIX #1 + #2: incluir unit_price (reference_cost) para el autocomplete
-            const newItem = {
-                id:         data.product.id,
-                name:       data.product.name,
-                type:       data.product.type || '',
-                unit_price: parseFloat(data.product.reference_cost ?? 0),
-            };
-            productsList.push(newItem);
-            refreshAllSelectsOfType('product');
-
-            // FIX #1: agregar automáticamente a la tabla de detalles
-            addDetailRowForNewItem('product', newItem);
-
-            const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasProduct'));
-            if (offcanvas) offcanvas.hide();
-
-            $form[0].reset();
-            $('#quick-product-stock-fields').hide();
-            SwalToast.fire({ icon: 'success', text: 'Producto creado correctamente.' });
-        } else {
-            if (data.errors) {
-                Object.entries(data.errors).forEach(([field, messages]) => {
-                    const key = field.replace(/_/g, '-');
-                    $(`#quick-product-${key}`).addClass('is-invalid');
-                    $(`#quick-product-${key}-error`).text(messages[0]);
-                });
-            } else {
-                SwalToast.fire({ icon: 'error', text: data.message || 'Error al crear el producto.' });
-            }
-        }
-    } catch (err) {
-        console.error(err);
-        SwalToast.fire({ icon: 'error', text: 'Ocurrió un error inesperado.' });
-    } finally {
-        $submitBtn.prop('disabled', false);
-        $spinner.addClass('d-none');
+	}
+	else {
+        // Show error message in alert and focus the first invalid field
+        setLoadingState(FORM_ID, false);
+        showFieldErrorInAlert(fieldId, message);
     }
 });
 
-$('#offcanvasProduct').on('hidden.bs.offcanvas', function () {
-    $('#quick-product-form')[0].reset();
-    $('#quick-product-stock-fields').hide();
-    $('#quick-product-stock-minimo').prop('required', false);
-    $('#quick-product-form').find('.is-invalid').removeClass('is-invalid');
-    $('#quick-product-form').find('.invalid-feedback').text('');
-    $('#quick-product-sale-price').val('');
-});
-
-// ─────────────────────────────────────────────
-//  Quick supply
-// ─────────────────────────────────────────────
-
-$('#quick-supply-form').on('submit', async function (e) {
-    e.preventDefault();
-
-    const $form      = $(this);
-    const $submitBtn = $('#quick-supply-submit');
-    const $spinner   = $('#quick-supply-spinner');
-
-    $form.find('.is-invalid').removeClass('is-invalid');
-    $form.find('.invalid-feedback').text('');
-
-    $submitBtn.prop('disabled', true);
-    $spinner.removeClass('d-none');
-
-    try {
-        const formData = new FormData($form[0]);
-        if (!formData.get('quantity'))              formData.set('quantity', '0');
-        if (!formData.get('unit_price'))            formData.set('unit_price', '0');
-        if (!formData.get('expiration_alert_days')) formData.set('expiration_alert_days', '7');
-
-        const response = await fetch($form.attr('action'), {
-            method:  'POST',
-            body:    formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // FIX #1 + #2: incluir unit_price para el autocomplete
-            const newItem = {
-                id:         data.supply.id,
-                name:       data.supply.name,
-                unit_price: parseFloat(data.supply.unit_price ?? 0),
-            };
-            suppliesList.push(newItem);
-            refreshAllSelectsOfType('supply');
-
-            // FIX #1: agregar automáticamente a la tabla de detalles
-            addDetailRowForNewItem('supply', newItem);
-
-            const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasSupply'));
-            if (offcanvas) offcanvas.hide();
-
-            $form[0].reset();
-            SwalToast.fire({ icon: 'success', text: 'Insumo creado correctamente.' });
-        } else {
-            if (data.errors) {
-                Object.entries(data.errors).forEach(([field, messages]) => {
-                    const key = field.replace(/_/g, '-');
-                    $(`#quick-supply-${key}`).addClass('is-invalid');
-                    $(`#quick-supply-${key}-error`).text(messages[0]);
-                });
-            } else {
-                SwalToast.fire({ icon: 'error', text: data.message || 'Error al crear el insumo.' });
-            }
-        }
-    } catch (err) {
-        console.error(err);
-        SwalToast.fire({ icon: 'error', text: 'Ocurrió un error inesperado.' });
-    } finally {
-        $submitBtn.prop('disabled', false);
-        $spinner.addClass('d-none');
-    }
-});
-
-// Limpiar offcanvas al cerrar
-$('#offcanvasProduct, #offcanvasSupply, #offcanvasSupplier').on('hidden.bs.offcanvas', function () {
-    let formId;
-    if      (this.id === 'offcanvasProduct')  formId = '#quick-product-form';
-    else if (this.id === 'offcanvasSupply')   formId = '#quick-supply-form';
-    else                                       formId = '#quick-supplier-form';
-
-    $(formId)[0].reset();
-    $(formId).find('.is-invalid').removeClass('is-invalid');
-    $(formId).find('.invalid-feedback').text('');
-});
-
-// ─────────────────────────────────────────────
-//  Init: calcular total en modo edición
-// ─────────────────────────────────────────────
+// Initialize real-time validation when the document is ready
 $(function () {
-    $('#details-container .detail-row').each(function () {
-        recalcRowSubtotal($(this));
-    });
-    recalcTotal();
+	bindRealTimeValidation();
 });

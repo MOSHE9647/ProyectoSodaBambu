@@ -5,6 +5,8 @@ namespace App\Http\Requests;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
+use App\Models\Product;
+use App\Models\Supply;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -15,8 +17,8 @@ use Illuminate\Validation\ValidationException;
 class PurchaseRequest extends FormRequest
 {
     private const PURCHASABLE_TYPES = [
-        'product' => 'products',
-        'supply' => 'supplies',
+        Product::class => 'products',
+        Supply::class => 'supplies',
     ];
 
     /**
@@ -44,7 +46,15 @@ class PurchaseRequest extends FormRequest
             // Purchase fields
             'id' => ['sometimes', 'integer', 'exists:purchases,id'],
             'supplier_id' => ['required', 'integer', 'exists:suppliers,id'],
-            'invoice_number' => ['required', 'string', 'min:2', 'max:255', 'unique:purchases,invoice_number'],
+            'invoice_number' => [
+                'required',
+                'string',
+                'min:2',
+                'max:255',
+                Rule::unique('purchases', 'invoice_number')
+                    ->ignore($this->route('purchase'))
+                    ->whereNull('deleted_at'),
+            ],
             'payment_status' => ['required', new Enum(PaymentStatus::class)],
             'date' => ['required', 'before_or_equal:now'],
             'total' => ['required', 'numeric', 'min:0'],
@@ -91,7 +101,7 @@ class PurchaseRequest extends FormRequest
             'invoice_number.unique' => 'El número de factura ya existe. Por favor, ingresa uno diferente.',
 
             'payment_status.required' => 'El estado de pago es obligatorio.',
-            'payment_status.enum' => 'El estado de pago debe ser uno de los siguientes: ' . implode(', ', array_map(fn($case) => $case->value, PaymentStatus::cases())),
+            'payment_status.enum' => 'El estado de pago debe ser uno de los siguientes: '.implode(', ', array_map(fn ($case) => $case->value, PaymentStatus::cases())),
 
             'date.required' => 'La fecha de la compra es obligatoria.',
             'date.before_or_equal' => 'La fecha de la compra no puede ser futura.',
@@ -124,7 +134,7 @@ class PurchaseRequest extends FormRequest
 
             'purchase_details.*.purchasable_type.required' => 'El tipo de producto o suministro es obligatorio en cada detalle.',
             'purchase_details.*.purchasable_type.string' => 'El tipo de producto o suministro debe ser una cadena de texto.',
-            'purchase_details.*.purchasable_type.in' => 'El tipo de producto o suministro debe ser uno de los siguientes: ' . implode(', ', array_keys(self::PURCHASABLE_TYPES)) . '.',
+            'purchase_details.*.purchasable_type.in' => 'El tipo de producto o suministro debe ser uno de los siguientes: '.implode(', ', array_keys(self::PURCHASABLE_TYPES)).'.',
 
             'purchase_details.*.purchasable_id.required' => 'El ID del producto o suministro es obligatorio en cada detalle.',
             'purchase_details.*.purchasable_id.integer' => 'El ID del producto o suministro debe ser un número entero.',
@@ -132,7 +142,7 @@ class PurchaseRequest extends FormRequest
             'payment_details.array' => 'Los detalles de pago deben ser un arreglo.',
 
             'payment_details.*.method.required' => 'El método de pago es obligatorio en cada detalle de pago.',
-            'payment_details.*.method.enum' => 'El método de pago debe ser uno de los siguientes: ' . implode(', ', array_map(fn($case) => $case->value, PaymentMethod::cases())),
+            'payment_details.*.method.enum' => 'El método de pago debe ser uno de los siguientes: '.implode(', ', array_map(fn ($case) => $case->value, PaymentMethod::cases())),
 
             'payment_details.*.change_amount.numeric' => 'El monto de cambio debe ser un número.',
             'payment_details.*.change_amount.min' => 'El monto de cambio no puede ser negativo.',
@@ -143,7 +153,7 @@ class PurchaseRequest extends FormRequest
 
     /**
      * Get the "after" validation callables for the request
-     * 
+     *
      * @return array<int, callable(Validator): void>
      */
     public function after(): array
@@ -172,7 +182,7 @@ class PurchaseRequest extends FormRequest
     {
         $total = round((float) $this->input('total', 0), 2);
         $detailsTotal = round(collect($this->input('purchase_details', []))
-            ->sum(fn($d) => (float) ($d['sub_total'] ?? 0)), 2);
+            ->sum(fn ($d) => (float) ($d['sub_total'] ?? 0)), 2);
 
         if ($total !== $detailsTotal) {
             $validator->errors()->add('total', "El total ($total) no coincide con la suma de los productos ($detailsTotal).");
@@ -216,7 +226,7 @@ class PurchaseRequest extends FormRequest
         }
 
         // If the status is PENDING, there should be no payments recorded yet
-        if ($status === PaymentStatus::PENDING->value && !$payments->isEmpty()) {
+        if ($status === PaymentStatus::PENDING->value && ! $payments->isEmpty()) {
             $validator->errors()->add('payment_details', 'Una compra PENDIENTE no debería tener pagos registrados aún.');
         }
     }
@@ -240,7 +250,7 @@ class PurchaseRequest extends FormRequest
 
             if ($type && $id) {
                 $table = self::PURCHASABLE_TYPES[$type] ?? null;
-                if ($table && !\DB::table($table)->where('id', $id)->exists()) {
+                if ($table && ! \DB::table($table)->where('id', $id)->exists()) {
                     $capitalizedType = ucfirst($type);
                     $validator->errors()->add("purchase_details.$index.purchasable_id", "El ID del {$capitalizedType} con valor {$id} no existe. (Fila: $index)");
                 }
@@ -256,17 +266,17 @@ class PurchaseRequest extends FormRequest
      * to the corresponding field in the validator, prompting the user to combine quantities
      * into a single row.
      *
-     * @param Validator $validator The validator instance used to collect errors
+     * @param  Validator  $validator  The validator instance used to collect errors
      */
     private function validatePurchasableUniqueness(Validator $validator): void
     {
         collect($this->input('purchase_details', []))
-            ->filter(fn($d) => filled($d['purchasable_type'] ?? null) && filled($d['purchasable_id'] ?? null))
-            ->map(fn($d) => $d['purchasable_type'] . '_' . $d['purchasable_id'])
+            ->filter(fn ($d) => filled($d['purchasable_type'] ?? null) && filled($d['purchasable_id'] ?? null))
+            ->map(fn ($d) => $d['purchasable_type'].'_'.$d['purchasable_id'])
             ->duplicates()
-            ->each(fn($val, $index) => $validator->errors()->add(
+            ->each(fn ($val, $index) => $validator->errors()->add(
                 "purchase_details.$index.purchasable_id",
-                "Este producto/suministro está duplicado. Por favor, combina las cantidades en una sola fila."
+                'Este producto/suministro está duplicado. Por favor, combina las cantidades en una sola fila.'
             ));
     }
 

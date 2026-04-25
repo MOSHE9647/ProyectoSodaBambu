@@ -57,7 +57,10 @@
                     :class="'border-secondary w-auto'"
                     :max="Carbon\Carbon::now()->timezone('America/Costa_Rica')->format('Y-m-d')"
                     :inputClass="$errors->has('date') ? 'is-invalid' : ''"
-                    :value="old('date', isset($purchase) ? $purchase->date->format('Y-m-d') : '')"
+                    :value="old('date', isset($purchase) 
+                        ? $purchase->date->format('Y-m-d') 
+                        : Carbon\Carbon::now()->timezone('America/Costa_Rica')->format('Y-m-d')
+                    )"
                     :errorMessage="$errors->first('date') ?? ''"
                     :iconLeft="'bi bi-calendar-date'"
                     :required="true"
@@ -204,7 +207,7 @@
                     @if(optional($purchase)->details?->isNotEmpty())
                     {{-- Purchase Details --}}
                         @foreach ($purchase->details as $purchaseDetail)
-                        <tr data-purchasable-id="{{ $purchaseDetail->purchasable_id }}" data-purchasable-type="{{ $purchaseDetail->purchasable_type }}">
+                        <tr data-purchasable-type="{{ $purchaseDetail->purchasable_type }}">
                             @php
                                 $itemTheme = match($purchaseDetail->purchasable_type) {
                                     App\Models\Product::class => ['color' => 'info', 'icon' => 'bi bi-box-seam'],
@@ -257,6 +260,7 @@
                                         :errorMessage="$errors->first('quantity') ?? ''" 
                                         :value="old('quantity', $purchaseDetail->quantity)" 
                                         :min="1" 
+                                        :step="0.5"
                                         required
                                     >
                                         Cantidad <span class="text-danger">*</span>
@@ -279,6 +283,7 @@
                                     :errorMessage="$errors->first('unit-price') ?? ''" 
                                     :value="old('unit-price', $purchaseDetail->unit_price)" 
                                     :min="0.01"
+                                    :step="0.01"
                                     :required="true" 
                                 >
                                     Precio Unitario <span class="text-danger">*</span>
@@ -287,7 +292,7 @@
 
                             {{-- Item SubTotal --}}
                             <td class="fw-bold text-end">
-                                ₡ <span class="sub_total">
+                                ₡ <span class="sub-total">
                                     {{ number_format($purchaseDetail->sub_total, 2, ',', ' ') }}
                                 </span>
                             </td>
@@ -326,6 +331,8 @@
             </table>
         </div>
 
+        <x-alert id="form-error-alert" type="danger" class="d-none" :showIcon="true"></x-alert>
+
         <div class="d-flex gap-3 justify-content-end" style="min-width: 160px;">
             <a href="{{ route('purchases.index') }}" class="btn btn-outline-danger px-4">
                 Cancelar
@@ -342,3 +349,26 @@
     </section>
 
 </form>
+
+@section('scripts')
+    <script type="text/javascript">
+        // Global JS variables for the purchase form
+        window.purchaseFormData = {
+            purchasableTypes: {
+                product: @json(App\Models\Product::class),
+                supply: @json(App\Models\Supply::class),
+            },
+            paymentStatuses: @json(collect($paymentStatuses)
+                ->map(fn($status) => [
+                    'value' => $status->value, 'label' => $status->label()
+                ])
+            ),
+            paymentMethods: @json(collect(App\Enums\PaymentMethod::cases())
+                ->map(fn($method) => [
+                    'value' => $method->value, 'label' => $method->label()
+                ])
+            ),
+        };
+    </script>
+    @vite(['resources/js/models/purchases/form.js'])
+@endsection
