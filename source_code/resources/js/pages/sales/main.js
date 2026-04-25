@@ -1,5 +1,6 @@
 import { formatTimeAgo, PaymentMethods, PaymentStatus, processSale, startTimeUpdateInterval } from "./api.js";
 import { initializeSalesCart, getActiveSaleData, clearActiveCart } from "./cart.js";
+import { initializeCashRegister } from "./cash-register.js";
 import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
@@ -49,7 +50,8 @@ const updateLastSaleTime = () => {
  * @returns {void}
  */
 $(() => {
-	// Initialize all sales-related modules.
+	// Initialize all sales-related components
+	initializeCashRegister();
   initializeSalesProducts();
   initializeSalesCart();
 	initializeSalesOrderTabs();

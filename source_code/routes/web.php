@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\HelpController;
@@ -53,4 +54,12 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
         Route::get('/tabs/{tab}', [AttendanceController::class, 'tab'])->name('attendance.tabs');
         Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
     });
+
+    // Routes for Cash Register management
+    Route::prefix('cash-registers')->name('cash-registers.')->group(function () {
+        Route::get('/{cashRegister}/close-data', [CashRegisterController::class, 'getCloseData'])->name('close-data');
+        Route::post('/{cashRegister}/close', [CashRegisterController::class, 'close'])->name('close');
+        Route::post('/', [CashRegisterController::class, 'store'])->name('store');
+    });
+
 });

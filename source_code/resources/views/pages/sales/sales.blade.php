@@ -16,18 +16,22 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="d-flex flex-column">
-    {{-- Header --}}
-    <div class="d-flex align-items-center justify-content-between gap-2">
-        <x-header title="Ventas" subtitle="Gestión y seguimiento de ventas" :class="'mb-3'" />
 
-        {{-- Tabs Navigation --}}
-        <x-scroll-tabs id="order-tabs-container" class="justify-content-end w-75">
-            <x-scroll-tabs.item :active="true" :id="'order-tab-0001'">
-                ORD-0001
-            </x-scroll-tabs.item>
-        </x-scroll-tabs>
-    </div>
+	<div id="show-opening-cash-modal" data-show-modal="{{ $showOpeningCashModal ?? false }}" class="d-none"></div>
+
+	{{-- Header --}}
+	<div class="d-flex flex-row align-items-center justify-content-between gap-2">
+		<x-header title="Ventas" subtitle="Gestión y seguimiento de ventas" />
+		
+		{{-- Tabs Navigation --}}
+		<x-scroll-tabs id="order-tabs-container" class="justify-content-end w-75">
+
+		    <x-scroll-tabs.item :active="true" :id="'order-tab-0001'">
+		        ORD-0001
+		    </x-scroll-tabs.item>
+
+		</x-scroll-tabs>
+	</div>
 
     {{-- Main Content --}}
     <div class="d-flex flex-column flex-grow-1">

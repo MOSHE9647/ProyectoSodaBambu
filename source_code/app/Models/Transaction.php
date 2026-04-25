@@ -17,6 +17,7 @@ class Transaction extends Model
         'type',         // Enum: income, expense
         'concept',      // Description of the transaction
         'payment_id',   // Associated payment ID
+        'cash_register_id', // Associated cash register ID
     ];
 
     protected $casts = [
@@ -46,5 +47,10 @@ class Transaction extends Model
     public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    public function cashRegister(): BelongsTo
+    {
+        return $this->belongsTo(CashRegister::class);
     }
 }
