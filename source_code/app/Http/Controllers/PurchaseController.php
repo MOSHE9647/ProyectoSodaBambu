@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Amp\Http\HttpStatus;
 use App\Actions\Inventory\UpsertPurchaseAction;
 use App\Enums\ProductType;
 use App\Http\Requests\PurchaseRequest;
@@ -128,7 +129,8 @@ class PurchaseController extends Controller
     public function create()
     {
         $suppliers = Supplier::all(['id', 'name']);
-        $products = Product::all(['id', 'name', 'sale_price', 'reference_cost', 'type']);
+        $products = Product::where('type', ProductType::MERCHANDISE)
+            ->get(['id', 'name', 'sale_price', 'reference_cost', 'type']);
         $supplies = Supply::all(['id', 'name', 'measure_unit', 'unit_price']);
 
         return view('models.purchases.create', compact('suppliers', 'products', 'supplies'));
@@ -138,23 +140,22 @@ class PurchaseController extends Controller
     {
         $validatedData = $purchaseRequest->validated();
 
+        $purchaseData = Arr::except($validatedData, ['purchase_details', 'payment_details']);
+        $purchaseDetailsData = $validatedData['purchase_details'] ?? [];
+        $purchasePaymentData = $validatedData['payment_details'] ?? null;
+
+        $upsertPurchaseAction->execute(
+            $purchaseData,
+            $purchaseDetailsData,
+            $purchasePaymentData
+        );
+
+        session()->flash('success', 'Compra registrada exitosamente.');
+
         return response()->json([
-            'success' => true,
+            'redirect' => route('purchases.index'),
             'message' => 'Datos de compra validados correctamente.',
-            'purchase_data' => $validatedData,
-        ]);
-
-        // $purchaseData = Arr::except($validatedData, ['purchase_details', 'payment_details']);
-        // $purchaseDetailsData = $validatedData['purchase_details'] ?? [];
-        // $purchasePaymentData = $validatedData['payment_details'] ?? null;
-
-        // $upsertPurchaseAction->execute(
-        //     $purchaseData,
-        //     $purchaseDetailsData,
-        //     $purchasePaymentData
-        // );
-
-        // return redirect()->route('purchases.index')->with('success', 'Compra registrada exitosamente.');
+        ], HttpStatus::CREATED);
     }
 
     public function show(Purchase $purchase)
@@ -168,7 +169,8 @@ class PurchaseController extends Controller
     {
         $purchase->load('details.purchasable');
         $suppliers = Supplier::all(['id', 'name']);
-        $products = Product::all(['id', 'name', 'sale_price', 'reference_cost', 'type']);
+        $products = Product::where('type', ProductType::MERCHANDISE)
+            ->get(['id', 'name', 'sale_price', 'reference_cost', 'type']);
         $supplies = Supply::all(['id', 'name', 'measure_unit', 'unit_price']);
 
         return view('models.purchases.edit', compact('purchase', 'suppliers', 'products', 'supplies'));
@@ -193,7 +195,7 @@ class PurchaseController extends Controller
         return response()->json([
             'redirect' => route('purchases.index'),
             'message' => 'Datos de compra validados correctamente.',
-        ]);
+        ], HttpStatus::OK);
     }
 
     /**

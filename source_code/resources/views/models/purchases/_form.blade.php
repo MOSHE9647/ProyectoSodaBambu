@@ -169,7 +169,7 @@
 
             <span class="badge border rounded-pill text-info-emphasis bg-info-subtle px-3 py-2">
                 <i class="bi bi-list-ul me-1"></i>
-                <span id="added-items">0</span> ítems
+                <span id="added-items-badge">0</span> ítems
             </span>
 
         </div>
@@ -214,13 +214,19 @@
                                     App\Models\Supply::class => ['color' => 'warning', 'icon' => 'bi bi-basket'],
                                     default => ['color' => 'secondary', 'icon' => 'bi bi-question-circle'],
                                 };
+                                $itemsList = match($purchaseDetail->purchasable_type) {
+                                    App\Models\Product::class => $products,
+                                    App\Models\Supply::class => $supplies,
+                                    default => collect(),
+                                };
+                                $itemTypeLabel = class_basename($purchaseDetail->purchasable_type) == 'Product' ? 'Producto' : 'Insumo';
                             @endphp
 
                             {{-- Item Type --}}
                             <td>
                                 <span class="badge bg-{{ $itemTheme['color'] }} text-{{ $itemTheme['color'] }}-emphasis border border-{{ $itemTheme['color'] }} bg-{{ $itemTheme['color'] }}-subtle rounded-pill px-3 py-2" style="width: 100px;">
                                     <i class="{{ $itemTheme['icon'] }} me-1"></i>
-                                    {{ class_basename($purchaseDetail->purchasable_type) == 'Product' ? 'Producto' : 'Insumo' }}
+                                    {{ $itemTypeLabel }}
                                 </span>
                             </td>
 
@@ -228,16 +234,16 @@
                             <td>
                                 <x-form.select :name="'purchasable_id'" :class="'border-secondary w-auto text-start'" :selectClass="$errors->has('purchasable_id') ? 'is-invalid' : ''" :errorMessage="$errors->first('purchasable_id') ?? ''" style="font-size:12px" :labelClass="'d-none'">
                                     <x-slot:options>
-                                        <option value="-1">Seleccione un producto</option>
-                                        @foreach($products as $product)
-                                        <option value="{{ $product->id }}" {{ $purchaseDetail->purchasable_id == $product->id ? 'selected' : '' }}>
-                                            {{ $product->name }}
+                                        <option value="-1">Seleccione un {{ $itemTypeLabel }}</option>
+                                        @foreach($itemsList as $item)
+                                        <option value="{{ $item->id }}" {{ $purchaseDetail->purchasable_id == $item->id ? 'selected' : '' }}>
+                                            {{ $item->name }}
                                         </option>
                                         @endforeach
                                     </x-slot:options>
 
                                     <x-slot:buttonIconRight>
-                                        <button type="button" class="new-product-btn btn btn-sm btn-outline-{{ $itemTheme['color'] }} rounded-end-2" title="Crear nuevo producto">
+                                        <button type="button" class="new-product-btn btn btn-sm btn-outline-{{ $itemTheme['color'] }} rounded-end-2" title="Crear nuevo {{ strtolower($itemTypeLabel) }}">
                                             <i class="bi bi-plus-circle mx-1"></i>
                                         </button>
                                     </x-slot:buttonIconRight>
@@ -298,15 +304,15 @@
                             </td>
                             {{-- Item Actions --}}
                             <td>
-                                <button class="action-btn btn btn-sm btn-outline-danger" title="Eliminar Item de la Compra">
-                                    <i class="bi bi-trash3"></i>
+                                <button type="button" class="action-btn btn btn-sm btn-outline-danger" data-action="remove" title="Eliminar Item de la Compra">
+                                    <i class="bi bi-trash3 pointer-events-none"></i>
                                 </button>
                             </td>
                         </tr>
                         @endforeach
-                    @else
+                    @endif
                     {{-- Empty Row --}}
-                    <tr id="empty-row">
+                    <tr id="empty-row" class="{{ optional($purchase)->details?->isNotEmpty() ? 'd-none' : '' }}">
                         <td colspan="6">
                             <div class="empty-state text-secondary pt-2 pb-3">
                                 <i class="bi bi-inbox fs-1"></i>
@@ -315,7 +321,6 @@
                             </div>
                         </td>
                     </tr>
-                    @endif
                 </tbody>
                 <tfoot>
                     <tr>
@@ -325,7 +330,6 @@
                                 {{ number_format($purchase->total ?? 0, 2, ',', ' ') }}
                             </span>
                         </td>
-                        {{-- <td class="border-bottom-0"></td> --}}
                     </tr>
                 </tfoot>
             </table>
@@ -368,6 +372,14 @@
                     'value' => $method->value, 'label' => $method->label()
                 ])
             ),
+            products: @json($products->map(fn($product) => [
+                'id' => $product->id, 
+                'name' => $product->name
+            ])),
+            supplies: @json($supplies->map(fn($supply) => [
+                'id' => $supply->id, 
+                'name' => $supply->name
+            ])),
         };
     </script>
     @vite(['resources/js/models/purchases/form.js'])

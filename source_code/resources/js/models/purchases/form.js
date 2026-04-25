@@ -1,6 +1,7 @@
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation";
 import { setLoadingState } from "../../utils/utils";
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { bindPurchaseFormEvents } from "./items.js";
 
 // ==================== Environment Checks ====================
 if (typeof $ === 'undefined') {
@@ -370,10 +371,6 @@ $(document).on('submit', `#${FORM_ID}`, async function(e) {
     e.preventDefault();
     setLoadingState(FORM_ID, true);
 
-	// Imprimir los datos del formulario
-	const formData = $(this).serializeArray();
-	console.log('Datos del formulario:', formData);
-
     // Validate and submit form
     const [isValid, fieldId, message, values] = submitPurchaseForm();
 
@@ -393,9 +390,16 @@ $(document).on('submit', `#${FORM_ID}`, async function(e) {
             values.id = purchaseId; // Include ID in payload for updates
         }
 
-        // TODO: Implementar lógica de pagos y funcionalidad de botones (offcanvas, agregar detalles, proveedores, etc.)
-
-        console.log('Enviando datos al servidor:', httpMethod, url, values);
+		// Delete all null IDs from purchase_details 
+		if (Array.isArray(values.purchase_details)) {
+			values.purchase_details = values.purchase_details.map(detail => {
+				if (detail.id === null) {
+					const { id, ...rest } = detail;
+					return rest;
+				}
+				return detail;
+			});
+		}
 
         try {
             const response = await fetch(url, {
@@ -436,6 +440,7 @@ $(document).on('submit', `#${FORM_ID}`, async function(e) {
 });
 
 // Initialize real-time validation when the document is ready
-$(function () {
+$(() => {
 	bindRealTimeValidation();
+	bindPurchaseFormEvents();
 });
