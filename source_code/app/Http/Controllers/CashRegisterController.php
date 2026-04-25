@@ -34,7 +34,7 @@ class CashRegisterController extends Controller
         // Redirect to the sales page or wherever appropriate
         return response()->json([
             'message' => 'La caja se abrió correctamente.',
-            'cash_register' => $cashRegister
+            'cash_register' => $cashRegister,
         ]);
     }
 
