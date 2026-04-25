@@ -73,11 +73,12 @@ function getFormFields() {
 		.map((_, row) => {
 			const $row = $(row);
 			return {
-				purchasable_id: $row.find('[name="purchasable_id"]').val(),
-				purchasable_type: $row.data("purchasable-type"),
+				id: $row.data("id") || null,
 				quantity: $row.find('[name="quantity"]').val(),
 				unit_price: $row.find('[name="unit-price"]').val(),
 				sub_total: parseFormattedNumber($row.find(".sub-total").text()),
+				purchasable_id: $row.find('[name="purchasable_id"]').val(),
+				purchasable_type: $row.data("purchasable-type"),
 			};
 		})
 		.get();
@@ -176,6 +177,7 @@ const baseFieldValidators = {
 
 // Purchase detail validators (for each item in purchase_details)
 const purchaseDetailValidators = {
+	id: (v) => v === null || rules.isValidId(v),
 	quantity: (v) => rules.isNum(v) && parseInt(v) > 0,
 	unit_price: (v) => rules.isNum(v) && parseFloat(v) >= 0,
 	sub_total: (v) => rules.isNum(v) && parseFloat(v) >= 0,
@@ -245,9 +247,8 @@ function validatePurchaseForm(values, fieldValidators) {
 				errors.push([
 					false,
 					null,
-					`Línea ${index + 1}: Compruebe que el producto, cantidad y precio sean válidos.`,
+					`Item ${index + 1}: Compruebe que el producto, cantidad y precio sean válidos.`,
 				]);
-				// Aquí podrías agregar lógica para resaltar la fila específica (ej. agregar 'is-invalid' al input de esa fila)
 			}
 		});
 	});

@@ -207,7 +207,7 @@
                     @if(optional($purchase)->details?->isNotEmpty())
                     {{-- Purchase Details --}}
                         @foreach ($purchase->details as $purchaseDetail)
-                        <tr data-purchasable-type="{{ $purchaseDetail->purchasable_type }}">
+                        <tr data-id="{{ $purchaseDetail->id }}" data-purchasable-type="{{ $purchaseDetail->purchasable_type }}">
                             @php
                                 $itemTheme = match($purchaseDetail->purchasable_type) {
                                     App\Models\Product::class => ['color' => 'info', 'icon' => 'bi bi-box-seam'],

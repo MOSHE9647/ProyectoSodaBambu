@@ -144,8 +144,8 @@ class PurchaseController extends Controller
             'purchase_data' => $validatedData,
         ]);
 
-        // $purchaseData = Arr::except($validatedData, ['sale_details', 'payment_details']);
-        // $purchaseDetailsData = $validatedData['sale_details'] ?? [];
+        // $purchaseData = Arr::except($validatedData, ['purchase_details', 'payment_details']);
+        // $purchaseDetailsData = $validatedData['purchase_details'] ?? [];
         // $purchasePaymentData = $validatedData['payment_details'] ?? null;
 
         // $upsertPurchaseAction->execute(
@@ -178,8 +178,8 @@ class PurchaseController extends Controller
     {
         $validatedData = $purchaseRequest->validated();
 
-        $purchaseData = Arr::except($validatedData, ['sale_details', 'payment_details']);
-        $purchaseDetailsData = $validatedData['sale_details'] ?? [];
+        $purchaseData = Arr::except($validatedData, ['purchase_details', 'payment_details']);
+        $purchaseDetailsData = $validatedData['purchase_details'] ?? [];
         $purchasePaymentData = $validatedData['payment_details'] ?? null;
 
         $upsertPurchaseAction->execute(

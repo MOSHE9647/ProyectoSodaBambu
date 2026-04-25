@@ -37,11 +37,6 @@ class UpsertPurchaseAction
                 }
             }
 
-            // TODO: Revisar porqué se pierden los items de los detalles al actualizar la compra, aunque se mantengan en la base de datos. 
-            // Posible causa: el método handlePurchaseDetails elimina los detalles que no están presentes en el request, 
-            //                pero si el request no incluye los IDs de los detalles existentes, se eliminarán todos los detalles. 
-            // Solución: asegurar que el request incluya los IDs de los detalles existentes para que no se eliminen.
-
             $this->handlePurchaseDetails($purchase, $purchaseDetailsData);
             $this->handlePaymentDetails($purchase, $purchasePaymentData);
 
@@ -84,14 +79,14 @@ class UpsertPurchaseAction
             $detailId = $detailData['id'] ?? null;
 
             // Remove non-fillable fields
-            $detailData = Arr::except($detailData, ['created_at', 'updated_at', 'deleted_at']);
+            $detailData = Arr::except($detailData, ['id', 'created_at', 'updated_at', 'deleted_at']);
 
             // Find existing detail or create a new one
             $detail = $detailId
                 ? $purchase->details()->withTrashed()->findOrFail($detailId)
-                : $purchase->make(['purchase_id' => $purchase->id]);
-
+                : $purchase->details()->make();
             $detail->fill($detailData);
+
             // Restore if previously soft deleted
             if ($detail->trashed()) {
                 $detail->restore();
