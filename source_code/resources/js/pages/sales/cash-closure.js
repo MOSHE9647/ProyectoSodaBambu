@@ -190,19 +190,37 @@ const saveClosure = async (registerId, payload) => {
     }
 };
 
-export function initializeCashClosure() {
+/**
+ * Event handler for the cash closure trigger button.
+ */
+function handleClosureClick(e, registerId) {
+    e.preventDefault();
+    
     const menuItem = document.getElementById('cash-closure-menu-item');
-    if (!menuItem) return;
+    const triggerBtn = document.getElementById('btn-trigger-cash-closure');
 
-    $(document).on('click', '#btn-trigger-cash-closure', function(e) {
-        e.preventDefault();
-        
-        const isActive = $('#cash-closure-menu-item').attr('data-is-active') === 'true';
-        if (!isActive) return;
+    const isActive = menuItem?.getAttribute('data-is-active') === 'true';
+    if (!isActive) return;
 
-        const id = $(this).data('register-id');
-        if (id) {
-            showClosureModal(id);
+    const id = registerId || triggerBtn?.getAttribute('data-register-id');
+    if (id) {
+        showClosureModal(id);
+    }
+}
+
+export function initializeCashClosure() {
+    // Escuchar el evento personalizado para re-vincular o asegurar que el botón funciona
+    window.addEventListener('cash-register-opened', function(event) {
+        const triggerBtn = document.getElementById('btn-trigger-cash-closure');
+        if (triggerBtn) {
+            // Removemos por si acaso ya existe para no duplicar listeners
+            triggerBtn.removeEventListener('click', handleClosureClick);
+            triggerBtn.addEventListener('click', (e) => handleClosureClick(e, event.detail.id));
         }
     });
+
+    const triggerBtn = document.getElementById('btn-trigger-cash-closure');
+    if (triggerBtn) {
+        triggerBtn.addEventListener('click', handleClosureClick);
+    }
 }

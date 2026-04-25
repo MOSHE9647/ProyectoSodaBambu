@@ -24,7 +24,7 @@ class CashRegisterController extends Controller
             'opening_balance.min' => 'El monto inicial no puede ser negativo.',
         ]);
 
-        CashRegister::create([
+        $cashRegister = CashRegister::create([
             'user_id' => auth()->id(),
             'opening_balance' => $validated['opening_balance'],
             'opened_at' => now(),
@@ -32,7 +32,10 @@ class CashRegisterController extends Controller
         ]);
 
         // Redirect to the sales page or wherever appropriate
-        return response()->json(['message' => 'La caja se abrió correctamente.']);
+        return response()->json([
+            'message' => 'La caja se abrió correctamente.',
+            'cash_register' => $cashRegister
+        ]);
     }
 
     public function getCloseData(CashRegister $cashRegister): JsonResponse

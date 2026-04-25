@@ -53,6 +53,16 @@ const saveInitialCashRegisterAmount = async (amount) => {
 			icon: SwalNotificationTypes.SUCCESS,
 			title: responseData.message || "Monto inicial guardado con éxito.",
 		});
+
+		// Despachar evento para actualizar el sidebar sin recargar la página
+		if (responseData.cash_register) {
+			const event = new CustomEvent('cash-register-opened', {
+				detail: {
+					id: responseData.cash_register.id
+				}
+			});
+			window.dispatchEvent(event);
+		}
 	} catch (error) {
 		// Show contextual feedback depending on error type.
 		console.error("Error saving initial cash register amount:", error);
