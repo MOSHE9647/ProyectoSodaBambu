@@ -183,8 +183,8 @@ const updatePaymentStatusUI = (saleData) => {
  * payload (for example, payment method, reference, or transaction metadata).
  * @param {string} [paymentStatus=PaymentStatus.PAID] - Payment status to assign to the sale
  * (e.g., `PaymentStatus.PAID` or `PaymentStatus.PENDING`).
- * @returns {Promise<boolean>} Resolves to `true` when the sale is successfully created;
- * otherwise resolves to `false`.
+ * @returns {Promise<{ success: boolean, data?: object, message?: string }>} Resolves with
+ * sale result information to let the UI render a custom success summary.
  *
  * @description
  * - Validates that an active cart exists and contains at least one sale item.
@@ -207,7 +207,7 @@ export const processSale = async (
 			icon: SwalNotificationTypes.ERROR,
 			title: "El carrito está vacío.",
 		});
-		return false;
+		return { success: false };
 	}
 
 	// Build request payload.
@@ -237,11 +237,10 @@ export const processSale = async (
 
 		if (response.ok) {
 			const responseData = await response.json();
-			console.log("Sale processed successfully:", responseData);
 
 			SwalToast.fire({
 				icon: SwalNotificationTypes.SUCCESS,
-				title: responseData.message || "Venta registrada con éxito.",
+				title: responseData.message || "Venta registrada con éxito."
 			});
 
 			// Clear active cart after successful sale.
@@ -277,7 +276,7 @@ export const processSale = async (
 			title: "Error de conexión con el servidor.",
 			timer: 15000, // Extend timer for error messages
 		});
-		return false;
+		return { success: false };
 	} finally {
 		setLoadingState("finalize-sale", false);
 		syncFinalizeSaleButtonState();

@@ -1,6 +1,8 @@
 @php
 
 	use App\Enums\UserRole;
+	use App\Models\CashRegister;
+	use App\Enums\CashRegisterStatus;
 
 @endphp
 
@@ -48,6 +50,25 @@
 				</div>
 			</a>
 			<ul class="dropdown-menu text-small shadow">
+
+				@php			
+					$activeCashRegister = CashRegister::where('status', CashRegisterStatus::OPEN)->first();
+					$activeCashRegisterClass = $activeCashRegister ? 'd-block' : 'd-none';
+					$isActiveValue = $activeCashRegister ? 'true' : 'false';
+				@endphp
+
+				<li class="list-item {{ $activeCashRegisterClass }}" id="cash-closure-menu-item" data-is-active="{{ $isActiveValue }}">
+					<button 
+						type="button"
+						class="dropdown-item" 
+						id="btn-trigger-cash-closure" 
+						data-register-id="{{ $activeCashRegister?->id }}" 
+					>
+						<i class="bi bi-lock-fill me-1 text-danger"></i>
+						Cierre de caja
+					</button>
+					<hr class="dropdown-divider">
+				</li>
 				
 				<li class="list-item">
 					<a 
@@ -86,3 +107,22 @@
 		<x-buttons.theme-toggle class="border rounded-circle"/>
 	</div>
 </div>
+
+@section('scripts')
+	
+	<script>
+		// listener para actualizar el sidebar cuando se abre la caja sin recargar la página
+		window.addEventListener('cash-register-opened', function (e) {
+			const menuItem = document.getElementById('cash-closure-menu-item');
+			const btnTrigger = document.getElementById('btn-trigger-cash-closure');
+
+			if (menuItem && btnTrigger) {
+				// Cambiamos visibilidad y seteamos ID en el dataset
+				menuItem.classList.remove('d-none');
+				menuItem.classList.add('d-block');
+				menuItem.setAttribute('data-is-active', 'true');
+				btnTrigger.setAttribute('data-register-id', e.detail.id);
+			}
+		});
+	</script>
+@endsection
