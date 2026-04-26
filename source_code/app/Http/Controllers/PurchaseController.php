@@ -198,7 +198,7 @@ class PurchaseController extends Controller
         ], HttpStatus::OK);
     }
 
-    public function getOffcanvasForm(string $type): JsonResponse | string
+    public function getOffcanvasForm(string $type): JsonResponse|string
     {
         return match ($type) {
             'supplier' => view('models.purchases.offcanvas._supplier')->render(),
@@ -209,7 +209,7 @@ class PurchaseController extends Controller
     /**
      * EIF-170: quickStoreProduct solo guarda minimum_stock.
      * current_stock se omite intencionalmente en la creación.
-     
+
     public function quickStoreProduct(Request $request): JsonResponse
     {
         $rules = [
@@ -269,8 +269,7 @@ class PurchaseController extends Controller
             ],
         ]);
     }
-        */
-
+     */
     public function destroy(Purchase $purchase)
     {
         $purchase->delete();
