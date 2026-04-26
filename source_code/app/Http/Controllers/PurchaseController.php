@@ -129,7 +129,7 @@ class PurchaseController extends Controller
     public function create()
     {
         $suppliers = Supplier::all(['id', 'name']);
-        $products = Product::where('type', ProductType::MERCHANDISE)
+        $products = Product::whereIn('type', [ProductType::MERCHANDISE, ProductType::PACKAGED])
             ->get(['id', 'name', 'sale_price', 'reference_cost', 'type']);
         $supplies = Supply::all(['id', 'name', 'measure_unit', 'unit_price']);
 
@@ -169,7 +169,7 @@ class PurchaseController extends Controller
     {
         $purchase->load('details.purchasable');
         $suppliers = Supplier::all(['id', 'name']);
-        $products = Product::where('type', ProductType::MERCHANDISE)
+        $products = Product::whereIn('type', [ProductType::MERCHANDISE, ProductType::PACKAGED])
             ->get(['id', 'name', 'sale_price', 'reference_cost', 'type']);
         $supplies = Supply::all(['id', 'name', 'measure_unit', 'unit_price']);
 
@@ -198,10 +198,18 @@ class PurchaseController extends Controller
         ], HttpStatus::OK);
     }
 
+    public function getOffcanvasForm(string $type): JsonResponse | string
+    {
+        return match ($type) {
+            'supplier' => view('models.purchases.offcanvas._supplier')->render(),
+            default => response()->json(['error' => 'Tipo de formulario no válido.'], HttpStatus::BAD_REQUEST)
+        };
+    }
+
     /**
      * EIF-170: quickStoreProduct solo guarda minimum_stock.
      * current_stock se omite intencionalmente en la creación.
-     */
+     
     public function quickStoreProduct(Request $request): JsonResponse
     {
         $rules = [
@@ -261,6 +269,7 @@ class PurchaseController extends Controller
             ],
         ]);
     }
+        */
 
     public function destroy(Purchase $purchase)
     {

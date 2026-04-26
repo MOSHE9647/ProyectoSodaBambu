@@ -90,7 +90,7 @@ const createItemRowHtml = (type) => {
                             ${optionsHTML}
                 		</select>
 
-					    <button type="button" class="new-product-btn btn btn-sm btn-outline-${typeClass} rounded-end-2" title="Crear nuevo ${typeLabel.toLowerCase()}">
+					    <button type="button" class="btn-offcanvas btn btn-sm btn-outline-${typeClass} rounded-end-2" title="Crear nuevo ${typeLabel.toLowerCase()}" data-type="${type}">
                             <i class="bi bi-plus-circle mx-1"></i>
                         </button>
 		

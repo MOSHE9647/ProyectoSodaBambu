@@ -2,6 +2,7 @@ import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../util
 import { setLoadingState } from "../../utils/utils";
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 import { bindPurchaseFormEvents } from "./items.js";
+import { bindOffcanvasEvents } from "./offcanvas.js";
 
 // ==================== Environment Checks ====================
 if (typeof $ === 'undefined') {
@@ -443,4 +444,5 @@ $(document).on('submit', `#${FORM_ID}`, async function(e) {
 $(() => {
 	bindRealTimeValidation();
 	bindPurchaseFormEvents();
+	bindOffcanvasEvents();
 });

@@ -44,11 +44,11 @@ class SupplierController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return RedirectResponse
+     * @return JsonResponse|RedirectResponse
      *
      * @throws Throwable
      */
-    public function store(SupplierRequest $request)
+    public function store(SupplierRequest $request): JsonResponse | RedirectResponse
     {
         $supplierData = $request->validated();
 
@@ -63,14 +63,11 @@ class SupplierController extends Controller
             $supplier = Supplier::create($supplierData);
         }
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'supplier' => [
-                    'id' => $supplier->id,
-                    'name' => $supplier->name,
-                ],
+                'supplier' => [ 'id' => $supplier->id, 'name' => $supplier->name],
             ]);
         }
 

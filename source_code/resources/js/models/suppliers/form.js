@@ -63,7 +63,7 @@ function validateSupplierForm(values, fieldValidators) {
  * Handles the form submission process.
  * @returns {boolean} True if the form is valid and can be submitted, false otherwise.
  */
-function submitSupplierForm() {
+export function submitSupplierForm() {
     clearAllFieldErrors(fieldValidators);
 
     // Cache DOM elements
@@ -83,39 +83,43 @@ function submitSupplierForm() {
 
 // ==================== Event Listeners ====================
 
+export const realTimeValidationHandler = (e) => {
+    const $target = $(e.target);
+	const fieldId = $target.attr("id");
+
+	// Skip if field is not in validators
+	if (!fieldValidators.hasOwnProperty(fieldId)) {
+		return;
+	}
+
+	let value = $target.val().trim();
+	const { validator, emptyMsg, invalidMsg } = fieldValidators[fieldId];
+
+	// Format phone number in real-time
+	if (fieldId === "phone") {
+		value = formatPhoneNumber(value);
+		$target.val(value);
+	}
+
+	if (!value) {
+		if (emptyMsg) {
+			showFieldError(fieldId, emptyMsg);
+		} else {
+			clearFieldError(fieldId);
+		}
+	} else if (!validator(value)) {
+		showFieldError(fieldId, invalidMsg);
+	} else {
+		clearFieldError(fieldId);
+	}
+};
+
 /**
  * Real-time validation and formatting for supplier form fields.
  * @param {Event} e The input or change event.
  */
 $(document).on('input change', `#${FORM_ID}`, function(e) {
-    const $target = $(e.target);
-    const fieldId = $target.attr('id');
-
-    // Skip if field is not in validators
-    if (!fieldValidators.hasOwnProperty(fieldId)) {
-        return;
-    }
-
-    let value = $target.val().trim();
-    const {validator, emptyMsg, invalidMsg} = fieldValidators[fieldId];
-
-    // Format phone number in real-time
-    if (fieldId === 'phone') {
-        value = formatPhoneNumber(value);
-        $target.val(value);
-    }
-
-    if (!value) {
-        if (emptyMsg) {
-            showFieldError(fieldId, emptyMsg);
-        } else {
-            clearFieldError(fieldId);
-        }
-    } else if (!validator(value)) {
-        showFieldError(fieldId, invalidMsg);
-    } else {
-        clearFieldError(fieldId);
-    }
+    realTimeValidationHandler(e);
 });
 
 /**

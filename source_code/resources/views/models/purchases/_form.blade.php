@@ -96,14 +96,21 @@
                     </x-slot:options>
 
                     <x-slot:buttonIconRight>
-                        <button 
-                            id="add-supplier-btn" 
+                        <button
+                            id="add-supplier-btn"
                             type="button"
-                            class="btn btn-sm btn-outline-primary rounded-end-2"
+                            class="btn btn-sm btn-offcanvas btn-outline-primary rounded-end-2"
                             title="Agregar nuevo proveedor"
+                            data-type="supplier"
                         >
-                            <i class="bi bi-plus-circle me-1"></i>
-                            <span>Nuevo</span>
+                            <div class="add-supplier-spinner d-none flex-row align-items-center justify-content-center mx-2">
+                                <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            </div>
+                            
+                            <div class="add-supplier-button-text d-flex flex-row align-items-center justify-content-center gap-1">
+                                <i class="bi bi-plus-circle me-1"></i>
+                                <span>Nuevo</span>
+                            </div>
                         </button>
                     </x-slot:buttonIconRight>
                 </x-form.select>
@@ -115,19 +122,19 @@
                     :class="'border-secondary w-auto'"
                     :inputClass="$errors->has('payment_status') ? 'is-invalid' : ''"
                     :placeholder="'Seleccione el estado de pago'"
-                    :value="old('payment_status', $purchase->payment_status ?? '')"
+                    :value="old('payment_status', $purchase->payment_status->value ?? '')"
                     :errorMessage="$errors->first('payment_status') ?? ''"
                     :iconLeft="'bi bi-credit-card'"
                     :required="true"
                 >
                     Estado de Pago <span class="text-danger">*</span>
-
+                    
                     <x-slot:options>
                         <option value="-1">Seleccione el estado de pago</option>
                         @foreach ($paymentStatuses as $paymentStatus)
-                            <option value="{{ $paymentStatus->value }}" {{ old('payment_status', $purchase->payment_status ?? '') == $paymentStatus->value ? 'selected' : '' }}>
-                                {{ $paymentStatus->label() }}
-                            </option>
+                        <option value="{{ $paymentStatus->value }}" {{ old('payment_status', $purchase->payment_status->value ?? '') == $paymentStatus->value ? 'selected' : '' }}>
+                            {{ $paymentStatus->label() }}
+                        </option>
                         @endforeach
                     </x-slot:options>
                 </x-form.select>
@@ -243,7 +250,7 @@
                                     </x-slot:options>
 
                                     <x-slot:buttonIconRight>
-                                        <button type="button" class="new-product-btn btn btn-sm btn-outline-{{ $itemTheme['color'] }} rounded-end-2" title="Crear nuevo {{ strtolower($itemTypeLabel) }}">
+                                        <button type="button" class="btn-offcanvas btn btn-sm btn-outline-{{ $itemTheme['color'] }} rounded-end-2" title="Crear nuevo {{ strtolower($itemTypeLabel) }}" data-type="{{ strtolower($itemTypeLabel) }}">
                                             <i class="bi bi-plus-circle mx-1"></i>
                                         </button>
                                     </x-slot:buttonIconRight>
@@ -353,6 +360,20 @@
     </section>
 
 </form>
+
+<div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="create-offcanvas" aria-labelledby="offcanvas-label">
+
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="offcanvas-title">Título del Offcanvas</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+
+    <div class="offcanvas-body" id="offcanvas-body">
+        <!-- Dynamic Content -->
+    </div>
+
+</div>
+
 
 @section('scripts')
     <script type="text/javascript">

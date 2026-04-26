@@ -10,15 +10,15 @@ export function handleApiError(error, customMessage = null) {
 	});
 }
 
-export async function fetchWithErrorHandling(url, options = {}) {
+export async function fetchWithErrorHandling(url, options = {}, customErrorMessage = null) {
 	try {
 		const response = await fetch(url, options);
 		if (!response.ok) {
-			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+			throw new Error(customErrorMessage || `${response.statusText}`, { status: response.status });
 		}
 		return response;
 	} catch (error) {
-		handleApiError(error);
+		handleApiError(error.message);
 		throw error; // Re-throw to allow further handling if needed
 	}
 }

@@ -39,7 +39,8 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::resource('sales', SaleController::class)->names('sales');
 
     // Purchase routes with an additional route for quick product creation during purchase entry
-    Route::post('purchases/quick-product', [PurchaseController::class, 'quickStoreProduct'])->name('purchases.quick-product');
+    // Route::post('purchases/quick-product', [PurchaseController::class, 'quickStoreProduct'])->name('purchases.quick-product');
+    Route::get('purchases/offcanvas-form/{type}', [PurchaseController::class, 'getOffcanvasForm'])->name('purchases.offcanvas-form');
     Route::resource('purchases', PurchaseController::class)->names('purchases');
 
     // Attendance routes with role-based access control defined in the controller
