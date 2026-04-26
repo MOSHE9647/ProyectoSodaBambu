@@ -160,36 +160,38 @@
             <div class="d-flex align-items-center gap-2">
                 <i class="bi bi-receipt text-muted"></i>
                 <span class="text-muted small">Última venta:</span>
-                <span id="last-sale-order-id" class="fw-semibold" style="color: var(--status-bar-text-color);">{{ $lastSale?->invoice_number ?? 'N/A' }}</span>
+                <span id="last-sale-order-id" class="fw-semibold" style="color: var(--status-bar-text-color);">{{ $lastSale?->invoice_number ?? 'No se ha realizado ninguna venta aún.' }}</span>
             </div>
 
-            <span class="text-muted">·</span>
+            @if($lastSale)
+                <span class="text-muted">·</span>
 
-            {{-- Payment Method --}}
-            <div class="d-flex align-items-center gap-2">
-                <span id="last-sale-payment-method" class="{{ $paymentStatusClass }} d-flex align-items-center gap-2" title="{{ $paymentText }}">
-					{!! $paymentIcon !!}
-					@if(!$paymentMethod) 
-						<span class="d-none d-sm-inline">Pago Pendiente</span> 
-						<span class="text-muted">·</span>
-					@endif
-                </span>
-                <span id="last-sale-payment-amount" class="text-success fw-bold">
-					₡ {{ number_format($lastSale?->total ?? 0, 2, ',', ' ') }}
-				</span>
-            </div>
+                {{-- Payment Method --}}
+                <div class="d-flex align-items-center gap-2">
+                    <span id="last-sale-payment-method" class="{{ $paymentStatusClass }} d-flex align-items-center gap-2" title="{{ $paymentText }}">
+                        {!! $paymentIcon !!}
+                        @if(!$paymentMethod) 
+                            <span class="d-none d-sm-inline">Pago Pendiente</span> 
+                            <span class="text-muted">·</span>
+                        @endif
+                    </span>
+                    <span id="last-sale-payment-amount" class="text-success fw-bold">
+                        ₡ {{ number_format($lastSale?->total ?? 0, 2, ',', ' ') }}
+                    </span>
+                </div>
 
-            <span class="text-muted">·</span>
+                <span class="text-muted">·</span>
 
-            {{-- Sale Details --}}
-            <div class="d-flex align-items-center gap-2 text-muted small">
-                <i class="bi bi-box-seam"></i>
-                <span id="last-sale-items">{{ $lastSale?->details?->count() ?? 0 }} ítem(s)</span>
-                <span>·</span>
-                <span id="last-sale-time" data-sale-time="{{ $lastSale?->date?->toIso8601String() ?? '' }}">
-                    {{ $lastSale?->date ? $lastSale->date->locale('es')->diffForHumans(null, true, true) : 'hace 0 min' }}
-				</span>
-            </div>
+                {{-- Sale Details --}}
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    <i class="bi bi-box-seam"></i>
+                    <span id="last-sale-items">{{ $lastSale?->details?->count() ?? 0 }} ítem(s)</span>
+                    <span>·</span>
+                    <span id="last-sale-time" data-sale-time="{{ $lastSale?->date?->toIso8601String() ?? '' }}">
+                        {{ $lastSale?->date ? $lastSale->date->locale('es')->diffForHumans(null, true, true) : 'hace 0 min' }}
+                    </span>
+                </div>
+            @endif
 
         </div>
 
