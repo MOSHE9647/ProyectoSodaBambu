@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -83,6 +84,16 @@ class Product extends Model
     public function purchaseDetails()
     {
         return $this->morphMany(PurchaseDetail::class, 'purchasable');
+    }
+
+    /**
+     * Get all sale details rows for the product.
+     *
+     * @return HasMany<SaleDetail, Product>
+     */
+    public function saleDetails(): HasMany
+    {
+        return $this->hasMany(SaleDetail::class);
     }
 
     /**

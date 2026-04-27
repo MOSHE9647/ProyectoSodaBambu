@@ -7,8 +7,10 @@ import ApexCharts from 'apexcharts';
 import * as bootstrap from 'bootstrap';
 import { applyTheme } from './utils/theme-toggler.js';
 import { SwalNotificationTypes, SwalToast } from "./utils/sweetalert.js";
+import { initializePageLoadingProgressBar } from './utils/progress-bar.js';
 import { scrollToItem, checkScrollbarVisibility } from './utils/scrollbar.js';
 import { checkConnectionStatus, updateConnectionStatus } from './utils/connection-status.js';
+import {initializeCashClosure} from './pages/sales/cash-closure.js';
 
 // ==================== Global Functions ====================
 
@@ -25,6 +27,9 @@ $(document).ready(function () {
 	// Enable theme toggler button functionality
 	applyTheme('#themeTogglerBtn');
 
+	// Initialize page loading progress bar
+	initializePageLoadingProgressBar();
+
 	// Enable Bootstrap Tooltips
 	$('[data-bs-toggle="tooltip"]')?.each(function () {
 		new bootstrap.Tooltip(this);
@@ -38,4 +43,7 @@ $(document).ready(function () {
 
 	// Start checking connection status
 	checkConnectionStatus();
+
+	//Initialize cash closure page scripts if on that page
+	initializeCashClosure(); 
 })
