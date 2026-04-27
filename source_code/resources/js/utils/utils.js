@@ -300,3 +300,16 @@ export function calcWorkedHours(startTime, endTime) {
     const e = parseTimeToMinutes(endTime);
     return (s === null || e === null || e <= s) ? 0 : Math.floor((e - s) / 60);
 }
+
+/**
+ * Enables Bootstrap tooltips for elements within a container.
+ * @param {HTMLElement} container - The container element.
+ */
+export const enableBootstrapTooltips = (container) => {
+	const tooltipTriggerList = container.querySelectorAll(
+		'[data-bs-toggle="tooltip"]',
+	);
+	tooltipTriggerList.forEach((tooltipTriggerEl) => {
+		new bootstrap.Tooltip(tooltipTriggerEl);
+	});
+};

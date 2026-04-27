@@ -7,7 +7,6 @@ use App\Actions\Inventory\UpsertPurchaseAction;
 use App\Enums\ProductType;
 use App\Http\Requests\PurchaseRequest;
 use App\Models\Product;
-use App\Models\ProductStock;
 use App\Models\Purchase;
 use App\Models\PurchaseDetail;
 use App\Models\Supplier;
@@ -15,8 +14,6 @@ use App\Models\Supply;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 
 class PurchaseController extends Controller
 {
@@ -202,6 +199,10 @@ class PurchaseController extends Controller
     {
         return match ($type) {
             'supplier' => view('models.purchases.offcanvas._supplier')->render(),
+            'product' => view('models.purchases.offcanvas._product', [
+                'categories' => \App\Models\Category::all(['id', 'name']),
+            ])->render(),
+            'category' => view('models.purchases.offcanvas.modals._category')->render(),
             default => response()->json(['error' => 'Tipo de formulario no válido.'], HttpStatus::BAD_REQUEST)
         };
     }

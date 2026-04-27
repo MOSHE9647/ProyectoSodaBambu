@@ -1,8 +1,8 @@
 import { fetchWithErrorHandling } from "../../utils/error-handling.js";
 import { SwalToast } from "../../utils/sweetalert.js";
-import { toggleLoadingState } from "../../utils/utils.js";
-import { initSupplierEvents } from "./suppliers.js";
-// import { initProductEvents } from "./products";
+import { enableBootstrapTooltips, toggleLoadingState } from "../../utils/utils.js";
+import { initProductEvents } from "./offcanvas/products.js";
+import { initSupplierEvents } from "./offcanvas/suppliers.js";
 // import { initSupplyEvents } from "./supplies"; 
 
 // ===================== Environment Checks =====================
@@ -60,7 +60,7 @@ const bindSpecificOffcanvasEvents = (type, offcanvasInstance) => {
             initSupplierEvents(offcanvasInstance);
             break;
         case 'product':
-            // initProductEvents(offcanvasInstance);
+            initProductEvents(offcanvasInstance);
             break;
         case 'supply':
             // initSupplyEvents(offcanvasInstance);
@@ -93,6 +93,7 @@ async function fetchOffcanvasContent(type, $body, offcanvasInstance, triggerElem
 
         $body.html(html);
         bindSpecificOffcanvasEvents(type, offcanvasInstance);
+        enableBootstrapTooltips($body[0]);
 
         offcanvasInstance.show();
     } catch (error) {

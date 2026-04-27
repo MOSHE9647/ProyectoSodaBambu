@@ -8,6 +8,7 @@
 	'textIconLeft' => false,
 	'iconRight' => null,
 	'textIconRight' => false,
+	'buttonIconRight' => null,
 	'inputClass' => '',
 	'inputStyle' => '',
 	'labelClass' => '',
@@ -75,6 +76,11 @@
 					<i class="{{ $iconRight }}"></i>
 				@endif
 			</span>
+		@endisset
+
+		{{-- Right Button --}}
+		@isset($buttonIconRight)
+		{!! $buttonIconRight !!}
 		@endisset
 
 		{{-- Error Message --}}

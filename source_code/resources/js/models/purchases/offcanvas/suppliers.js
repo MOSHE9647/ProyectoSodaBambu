@@ -1,7 +1,7 @@
-import { SwalToast } from "../../utils/sweetalert.js";
-import { setLoadingState } from "../../utils/utils.js";
-import { submitFormToApi } from "../../utils/httpClient.js";
-import { realTimeValidationHandler, submitSupplierForm } from "../suppliers/form.js";
+import { SwalToast } from "../../../utils/sweetalert.js";
+import { setLoadingState } from "../../../utils/utils.js";
+import { submitFormToApi } from "../../../utils/http-client.js";
+import { realTimeValidationHandler, submitSupplierForm } from "../../suppliers/form.js";
 
 
 /**

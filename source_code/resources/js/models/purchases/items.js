@@ -1,3 +1,5 @@
+import { enableBootstrapTooltips } from "../../utils/utils.js";
+
 // ===================== Environment Checks =====================
 if (typeof $ === "undefined") {
 	throw new Error("This script requires jQuery");
@@ -90,7 +92,7 @@ const createItemRowHtml = (type) => {
                             ${optionsHTML}
                 		</select>
 
-					    <button type="button" class="btn-offcanvas btn btn-sm btn-outline-${typeClass} rounded-end-2" title="Crear nuevo ${typeLabel.toLowerCase()}" data-type="${type}">
+					    <button type="button" class="btn-offcanvas btn btn-sm btn-outline-${typeClass} rounded-end-2" data-bs-toggle="tooltip" data-bs-title="Crear nuevo ${typeLabel.toLowerCase()}" data-type="${type}">
                             <i class="bi bi-plus-circle mx-1"></i>
                         </button>
 		
@@ -159,11 +161,13 @@ export function bindPurchaseFormEvents() {
 
 	elements.addProductBtn.on("click", () => {
 		elements.tableBody.append(createItemRowHtml("product"));
+		enableBootstrapTooltips(elements.tableBody[0]); // Re-enable tooltips for new buttons
 		calculateTotals();
 	});
 
 	elements.addSupplyBtn.on("click", () => {
 		elements.tableBody.append(createItemRowHtml("supply"));
+		enableBootstrapTooltips(elements.tableBody[0]); // Re-enable tooltips for new buttons
 		calculateTotals();
 	});
 

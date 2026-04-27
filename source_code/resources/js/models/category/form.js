@@ -24,6 +24,13 @@ const fieldValidators = {
         validator: validateName,
         emptyMsg: 'El nombre es obligatorio.',
         invalidMsg: 'El nombre no puede exceder 255 caracteres.'
+    },
+    description: {
+        validator: (value) => {
+            return value.length <= 255;
+        },
+        emptyMsg: '',
+        invalidMsg: 'La descripción no puede exceder 255 caracteres.'
     }
 };
 
@@ -49,14 +56,15 @@ function validateCategoryForm(values) {
  * Handles the form submission process.
  * @returns {boolean} True if form is valid and can be submitted, false otherwise.
  */
-function submitCategoryForm() {
+export function submitCategoryForm(customFieldId = null) {
     clearAllFieldErrors(fieldValidators);
+    delete fieldValidators.description; // Description is optional, so we remove it from validation
 
     // Cache DOM elements
-    const $name = $('#name');
+    const $name = $(`${customFieldId ? `#${customFieldId}` : "#name"}`);
 
     const values = {
-        name: $name.val().trim()
+        name: $name.val().trim(),
     };
 
     return validateCategoryForm(values);
@@ -68,30 +76,36 @@ function submitCategoryForm() {
  * Real-time validation for category form fields.
  * Validates fields on input and change events, providing immediate feedback to the user.
  * @param {Event} e - The event object triggered by user interaction.
+ * @param {string} customFieldId - The ID of the field being validated.
  */
-$(document).on('input change', `#${FORM_ID}`, function (e) {
+export const realTimeValidationHandler = (e, customFieldId = null) => {
     const $target = $(e.target);
-    const fieldId = $target.attr('id');
+	let fieldId = customFieldId || $target.attr("id");
 
-    // Skip if field is not in validators
-    if (!fieldValidators.hasOwnProperty(fieldId)) {
-        return;
-    }
+	// Skip if field is not in validators
+	if (!fieldValidators.hasOwnProperty(fieldId)) {
+		return;
+	}
 
-    let value = $target.val().trim();
-    const {validator, emptyMsg, invalidMsg} = fieldValidators[fieldId];
+	let value = $target.val().trim();
+	const { validator, emptyMsg, invalidMsg } = fieldValidators[fieldId];
 
-    if (!value) {
-        if (emptyMsg) {
-            showFieldError(fieldId, emptyMsg);
-        } else {
-            clearFieldError(fieldId);
-        }
-    } else if (!validator(value)) {
-        showFieldError(fieldId, invalidMsg);
-    } else {
-        clearFieldError(fieldId);
-    }
+    fieldId = $target.attr("id");
+	if (!value) {
+		if (emptyMsg) {
+			showFieldError(fieldId, emptyMsg);
+		} else {
+			clearFieldError(fieldId);
+		}
+	} else if (!validator(value)) {
+		showFieldError(fieldId, invalidMsg);
+	} else {
+		clearFieldError(fieldId);
+	}
+};
+
+$(document).on('input change', `#${FORM_ID}`, function (e) {
+    realTimeValidationHandler(e);
 });
 
 /**

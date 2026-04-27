@@ -100,7 +100,8 @@
                             id="add-supplier-btn"
                             type="button"
                             class="btn btn-sm btn-offcanvas btn-outline-primary rounded-end-2"
-                            title="Agregar nuevo proveedor"
+                            data-bs-toggle="tooltip"
+                            data-bs-title="Agregar nuevo proveedor"
                             data-type="supplier"
                         >
                             <div class="add-supplier-spinner d-none flex-row align-items-center justify-content-center mx-2">
@@ -183,11 +184,11 @@
 
         <div class="d-flex justify-content-between align-items-center gap-2 pb-3">
             <div class="d-flex justify-content-between align-items-center gap-2">
-                <button id="add-product-btn" type="button" class="btn btn-sm btn-outline-info" title="Agregar producto existente">
+                <button id="add-product-btn" type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" data-bs-title="Agregar producto existente">
                     <i class="bi bi-plus-circle me-1"></i>
                     Agregar Producto
                 </button>
-                <button id="add-supply-btn" type="button" class="btn btn-sm btn-outline-warning" title="Agregar insumo existente">
+                <button id="add-supply-btn" type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" data-bs-title="Agregar insumo existente">
                     <i class="bi bi-plus-circle me-1"></i>
                     Agregar Insumo
                 </button>
@@ -250,7 +251,8 @@
                                     </x-slot:options>
 
                                     <x-slot:buttonIconRight>
-                                        <button type="button" class="btn-offcanvas btn btn-sm btn-outline-{{ $itemTheme['color'] }} rounded-end-2" title="Crear nuevo {{ strtolower($itemTypeLabel) }}" data-type="{{ strtolower($itemTypeLabel) }}">
+                                        <button type="button" class="btn-offcanvas btn btn-sm btn-outline-{{ $itemTheme['color'] }} rounded-end-2" data-bs-toggle="tooltip" data-bs-title="Crear nuevo {{ strtolower($itemTypeLabel) }}" data-type="{{ strtolower($itemTypeLabel) }}">
+
                                             <i class="bi bi-plus-circle mx-1"></i>
                                         </button>
                                     </x-slot:buttonIconRight>
@@ -309,6 +311,7 @@
                                     {{ number_format($purchaseDetail->sub_total, 2, ',', ' ') }}
                                 </span>
                             </td>
+
                             {{-- Item Actions --}}
                             <td>
                                 <button type="button" class="action-btn btn btn-sm btn-outline-danger" data-action="remove" title="Eliminar Item de la Compra">

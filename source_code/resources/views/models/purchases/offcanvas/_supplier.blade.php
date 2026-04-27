@@ -64,7 +64,7 @@
             :loadingMessage="'Guardando...'"
         >
             <div id="create-supplier-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
-                <i class="bi bi-building me-2"></i>
+                <i class="bi bi-check-circle me-2"></i>
                 Guardar
             </div>
         </x-form.button>
