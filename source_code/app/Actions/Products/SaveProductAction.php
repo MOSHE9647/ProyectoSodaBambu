@@ -18,7 +18,7 @@ class SaveProductAction
     public function execute(array $payload, ?Product $product = null): array
     {
         $stockData = $this->extractStockData($payload);
-        $productData = $this->applyPricingRules($payload);
+        $productData = $this->prepareProductData($payload);
 
         $message = $product ? 'Producto actualizado exitosamente.' : 'Producto creado exitosamente.';
 
@@ -45,28 +45,29 @@ class SaveProductAction
         return [$product, $message];
     }
 
-    private function applyPricingRules(array $productData): array
+    private function prepareProductData(array $productData): array
     {
         $type = $productData['type'] ?? null;
 
         if ($type === ProductType::MERCHANDISE->value) {
             $productData['sale_price'] = Product::calculateSalePrice(
-                (float) $productData['reference_cost'],
-                (float) $productData['tax_percentage'],
-                (float) $productData['margin_percentage'],
+                (int) ($productData['reference_cost'] ?? 0),
+                (int) ($productData['tax_percentage'] ?? 0),
+                (int) ($productData['margin_percentage'] ?? 0),
             );
 
             return $productData;
         }
 
-        $productData['reference_cost'] = 0;
-        $productData['tax_percentage'] = 0;
-        $productData['margin_percentage'] = 0;
-        $productData['expiration_date'] = null;
-        $productData['expiration_alert_days'] = 7;
-        $productData['sale_price'] = (float) ($productData['sale_price'] ?? 0);
-
-        return $productData;
+        return array_merge($productData, [
+            'reference_cost' => 0,
+            'tax_percentage' => 0,
+            'margin_percentage' => 0,
+            'expiration_date' => null,
+            'expiration_alert_days' => 0,
+            'expiration_alert_date' => null,
+            'sale_price' => (int) ($productData['sale_price'] ?? 0),
+        ]);
     }
 
     private function extractStockData(array &$payload): array
@@ -98,6 +99,7 @@ class SaveProductAction
             'current_stock' => $stockData['current_stock'] ?? ($isNewStock ? 0 : (int) ($stock->current_stock ?? 0)),
             'minimum_stock' => $stockData['minimum_stock'] ?? ($isNewStock ? 15 : (int) ($stock->minimum_stock ?? 15)),
         ]);
+
         $stock->save();
 
         if ($wasTrashed) {

@@ -4,6 +4,5 @@
     @include('models.products.form', [
         'action' => route('products.store'),
         'product' => null,
-        'productStock' => $productStock ?? null,
     ])
 @endsection

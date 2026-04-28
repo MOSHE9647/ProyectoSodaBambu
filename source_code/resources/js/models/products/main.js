@@ -22,12 +22,18 @@ const PRODUCT_TYPE_LABELS = {
 	packaged: "Empaquetado",
 };
 
-const CURRENCY_FORMATTER = new Intl.NumberFormat("es-CR", {
-	style: "currency",
-	currency: "CRC",
-	minimumFractionDigits: 2,
-	maximumFractionDigits: 2,
-});
+const CURRENCY_FORMATTER = {
+	format(value) {
+		// Usar Intl.NumberFormat para obtener el formato base
+		const nf = new Intl.NumberFormat("es-CR", {
+			style: "currency",
+			currency: "CRC",
+			maximumFractionDigits: 0,
+		});
+		// Reemplazar '₡' seguido de número por '₡ ' (con espacio)
+		return nf.format(value).replace(/^([₡])(?=\d)/, "$1 ");
+	}
+};
 
 // ==================== State Management ====================
 // Centralized state object to manage filters and DataTable instance.
@@ -161,7 +167,11 @@ $(() => {
 			className: "dt-left",
 			render: formatStockValue,
 		},
-		{ data: "sale_price", name: "sale_price", render: formatCurrency },
+		{ 
+			data: "sale_price", 
+			name: "sale_price",
+			render: formatCurrency 
+		},
 		{
 			data: "expiration_days",
 			name: "expiration_date",

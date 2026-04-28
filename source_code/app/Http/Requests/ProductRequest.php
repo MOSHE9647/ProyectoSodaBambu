@@ -4,25 +4,15 @@ namespace App\Http\Requests;
 
 use App\Enums\ProductType;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
-
-/**
- * ProductRequest handles the validation and preparation of product data for creation and update operations.
- *
- * - Prepares and sanitizes input data before validation.
- * - Applies validation rules based on product type and inventory requirements.
- * - Converts percentage fields to decimal after validation.
- * - Provides custom validation logic for sale price vs. reference cost.
- *
- * UI-related validation messages are omitted from this documentation.
- */
 class ProductRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determines if the user is authorized to make this request.
      *
      * @return bool Always true, as authorization is handled elsewhere.
      */
@@ -32,9 +22,8 @@ class ProductRequest extends FormRequest
     }
 
     /**
-     * Prepare the data for validation.
+     * Prepares the data for validation.
      *
-     * This method sanitizes and normalizes input fields before validation rules are applied.
      * - Trims and nullifies blank fields.
      * - Sets default margin for merchandise products on creation.
      * - Handles conditional logic for sale price and inventory fields.
@@ -56,7 +45,6 @@ class ProductRequest extends FormRequest
             $marginInput = 35;
         }
 
-        // Sanitize and clean with blank()
         $this->merge([
             'barcode' => blank($this->input('barcode')) ? null : trim((string) $this->input('barcode')),
             'reference_cost' => blank($this->input('reference_cost')) ? null : $this->input('reference_cost'),
@@ -71,11 +59,11 @@ class ProductRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Returns the validation rules that apply to the request.
      *
-     * Validation rules are dynamically set based on product type and inventory requirements.
+     * Rules are dynamically set based on product type and inventory requirements.
      *
-     * @return array<string, ValidationRule|array|string> The validation rules for each field.
+     * @return array<string, ValidationRule|array<mixed>|string> Validation rules for each field.
      */
     public function rules(): array
     {
@@ -89,24 +77,8 @@ class ProductRequest extends FormRequest
 
         $hasInventory = $this->boolean('has_inventory');
 
-        // Monetary value rules (integer, multiples of 5)
-        $pricingRules = [
-            'nullable',
-            'integer',
-            'min:0',
-            'multiple_of:5',
-        ];
-
-        // Percentage rules (integer between 0 and 100)
-        $percentageRules = [
-            Rule::requiredIf($isMerchandise),
-            'nullable',
-            'integer',
-            'min:0',
-            'max:100',
-        ];
-
         return [
+            // General information
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'barcode' => [
                 'nullable',
@@ -118,39 +90,82 @@ class ProductRequest extends FormRequest
             ],
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', new Enum(ProductType::class)],
-            'expiration_date' => [Rule::requiredIf($isMerchandise), 'nullable', 'date', 'after_or_equal:today'],
-            'expiration_alert_days' => [Rule::requiredIf($isMerchandise), 'nullable', 'integer', 'min:0'],
             'has_inventory' => ['required', 'boolean'],
 
-            'reference_cost' => [Rule::requiredIf($isMerchandise), ...$pricingRules],
-            'sale_price' => [Rule::requiredIf($requiresManualSalePrice), ...$pricingRules],
+            // Expiration and alert dates
+            'expiration_date' => [
+                Rule::requiredIf($isMerchandise),
+                'nullable',
+                'date',
+                'after_or_equal:today',
+            ],
+            'expiration_alert_days' => [
+                Rule::requiredIf($isMerchandise),
+                'nullable',
+                'integer',
+                'min:0',
+            ],
 
-            'tax_percentage' => $percentageRules,
-            'margin_percentage' => $percentageRules,
+            // Pricing (must be integer and multiple of 5)
+            'reference_cost' => [
+                Rule::requiredIf($isMerchandise),
+                'nullable',
+                'integer',
+                'min:0',
+                'multiple_of:5',
+            ],
+            'sale_price' => [
+                Rule::requiredIf($requiresManualSalePrice),
+                'nullable',
+                'integer',
+                'min:0',
+                'multiple_of:5',
+            ],
 
-            'current_stock' => ['nullable', 'integer', 'min:0'],
-            'minimum_stock' => [Rule::requiredIf($hasInventory), 'nullable', 'integer', 'min:0'],
+            // Percentages (must be integer between 0 and 100)
+            'tax_percentage' => [
+                Rule::requiredIf($isMerchandise),
+                'nullable',
+                'integer',
+                'min:0',
+                'max:100',
+            ],
+            'margin_percentage' => [
+                Rule::requiredIf($isMerchandise),
+                'nullable',
+                'integer',
+                'min:0',
+                'max:100',
+            ],
+
+            // Inventory
+            'current_stock' => [
+                'nullable',
+                'integer',
+                'min:0',
+            ],
+            'minimum_stock' => [
+                Rule::requiredIf($hasInventory),
+                'nullable',
+                'integer',
+                'min:0',
+            ],
         ];
     }
 
     /**
-     * Configure the validator instance.
-     *
      * Adds custom validation logic after the main validation rules are applied.
      * Ensures that the sale price is greater than the reference cost if both are present.
-     *
-     * @param \Illuminate\Validation\Validator $validator
-     * @return void
      */
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
             $referenceCost = $this->input('reference_cost');
             $salePrice = $this->input('sale_price');
 
-            // Validate that sale price covers the reference cost if both values exist
+            // Ensure sale price is greater than reference cost
             if (! blank($referenceCost) && ! blank($salePrice)) {
-                if ((float) $salePrice <= (float) $referenceCost) {
+                if ((int) $salePrice <= (int) $referenceCost) {
                     $validator->errors()->add('sale_price', 'El precio de venta debe ser mayor al costo de referencia.');
                 }
             }
@@ -158,34 +173,8 @@ class ProductRequest extends FormRequest
     }
 
     /**
-     * Handle data format after validation passes.
-     *
-     * Converts integer percentage fields to decimals for database and controller usage.
-     *
-     * @return void
-     */
-    protected function passedValidation(): void
-    {
-        $merges = [];
-
-        // Convert integer percentage to decimal for DB and controller
-        if (! blank($this->input('tax_percentage'))) {
-            $merges['tax_percentage'] = $this->input('tax_percentage') / 100;
-        }
-
-        if (! blank($this->input('margin_percentage'))) {
-            $merges['margin_percentage'] = $this->input('margin_percentage') / 100;
-        }
-
-        if (! empty($merges)) {
-            $this->merge($merges);
-        }
-    }
-
-    /**
-     * Get custom validation messages.
-     *
-     * UI-related validation messages are omitted from this documentation.
+     * Returns custom validation messages.
+     * UI-related messages are omitted from this documentation.
      *
      * @return array<string, string>
      */
@@ -208,7 +197,7 @@ class ProductRequest extends FormRequest
             'has_inventory.required' => 'Debe indicar si el producto maneja inventario.',
             'has_inventory.boolean' => 'El valor de inventario no es válido.',
 
-            // Price and cost messages
+            // Mensajes de Precios
             'reference_cost.required' => 'El costo de referencia es obligatorio para mercadería.',
             'reference_cost.integer' => 'El costo de referencia no acepta decimales.',
             'reference_cost.min' => 'El costo de referencia no puede ser menor a 0.',
@@ -219,7 +208,7 @@ class ProductRequest extends FormRequest
             'sale_price.min' => 'El precio de venta no puede ser menor a 0.',
             'sale_price.multiple_of' => 'El precio de venta debe ser un múltiplo de 5.',
 
-            // Percentage messages
+            // Mensajes de Porcentajes
             'tax_percentage.required' => 'El impuesto es obligatorio para productos de mercadería.',
             'tax_percentage.integer' => 'El impuesto debe ser un número entero (Ej: 13).',
             'tax_percentage.min' => 'El impuesto no puede ser menor a 0.',
@@ -230,7 +219,7 @@ class ProductRequest extends FormRequest
             'margin_percentage.min' => 'El margen no puede ser menor a 0.',
             'margin_percentage.max' => 'El margen no puede ser mayor a 100.',
 
-            // Inventory messages
+            // Mensajes de Inventario
             'current_stock.integer' => 'El stock actual debe ser un número entero.',
             'current_stock.min' => 'El stock actual no puede ser menor a 0.',
             'minimum_stock.required' => 'El stock mínimo es obligatorio cuando el producto maneja inventario.',

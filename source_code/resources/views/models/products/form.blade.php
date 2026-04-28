@@ -388,6 +388,9 @@
                             ></i>
                         </x-slot:iconRight>
                     </x-form.input>
+
+                    {{-- Hidden Input --}}
+                    <input type="hidden" id="sale_price_hidden" name="sale_price">
                 </div>
             </div>
 

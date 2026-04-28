@@ -6,6 +6,7 @@ use App\Enums\ProductType;
 use Carbon\Carbon;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -49,10 +50,10 @@ class Product extends Model
         'expiration_date' => 'date',
         'expiration_alert_date' => 'date',
         'expiration_alert_days' => 'integer',
-        'reference_cost' => 'decimal:2',
-        'tax_percentage' => 'decimal:2',
-        'margin_percentage' => 'decimal:2',
-        'sale_price' => 'decimal:2',
+        'reference_cost' => 'integer',
+        'tax_percentage' => 'integer',
+        'margin_percentage' => 'integer',
+        'sale_price' => 'integer',
         'type' => ProductType::class,
     ];
 
@@ -70,6 +71,39 @@ class Product extends Model
                         ->toDateString()
                     : null;
         });
+    }
+
+    /**
+     * Get a human-readable label for the product's expiration status.
+     *
+     * Returns:
+     * - 'N/A' if the product does not have an expiration date.
+     * - 'Expired' if the expiration date is in the past.
+     * - 'Today' if the expiration date is today.
+     * - '{n} day(s)' if the expiration date is in the future.
+     *
+     * @return Attribute<string, never>
+     */
+    protected function expirationLabel(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if (! $this->expiration_date) {
+                    return 'N/A';
+                }
+
+                $expirationDate = Carbon::parse($this->expiration_date)->startOfDay();
+                $daysRemaining = (int) now()->startOfDay()->diffInDays($expirationDate, false);
+
+                if ($daysRemaining < 0) {
+                    return 'Vencido';
+                } elseif ($daysRemaining === 0) {
+                    return 'Hoy';
+                }
+
+                return "{$daysRemaining} día(s)";
+            }
+        );
     }
 
     /**
@@ -113,14 +147,15 @@ class Product extends Model
     }
 
     /**
-     * Calculate sale price using tax and margin percentages in decimal format.
+     * Calculate sale price using tax and margin percentages.
      */
     public static function calculateSalePrice(float $referenceCost, float $taxPercentage, float $marginPercentage): float
     {
-        $basePrice = $referenceCost + ($referenceCost * $taxPercentage);
-        $salePrice = $basePrice + ($basePrice * $marginPercentage);
+        $basePrice = $referenceCost + $referenceCost * ($taxPercentage / 100);
+        $salePrice = $basePrice + $basePrice * ($marginPercentage / 100);
 
-        return round($salePrice, 2);
+        // Round to nearest multiple of 5
+        return round($salePrice / 5) * 5;
     }
 
     /**
