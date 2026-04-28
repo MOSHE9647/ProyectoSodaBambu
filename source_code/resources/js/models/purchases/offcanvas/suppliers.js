@@ -3,7 +3,6 @@ import { setLoadingState } from "../../../utils/utils.js";
 import { submitFormToApi } from "../../../utils/http-client.js";
 import { realTimeValidationHandler, submitSupplierForm } from "../../suppliers/form.js";
 
-
 /**
  * Handles the submission of the supplier form.
  * Sends form data to the API, updates the supplier select dropdown if needed,
@@ -46,7 +45,6 @@ const submitSupplierFormHandler = async (e, offcanvasInstance) => {
 		setLoadingState("create-supplier-form", false);
 	}
 };
-
 
 /**
  * Initializes event listeners for the supplier form.

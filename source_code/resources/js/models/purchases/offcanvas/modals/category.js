@@ -80,7 +80,7 @@ export function openCategoryModal(triggerElement) {
     fetchModalContent('category', triggerElement).then(html => {
         if (html) {
             const modal = SwalModal.fire({
-				target: document.getElementById("create-offcanvas"),
+				target: document.getElementById("create-offcanvas") || document.body,
 				title: "Agregar Nueva Categoría",
                 showConfirmButton: false,
 				showCancelButton: false,

@@ -1,9 +1,8 @@
-import { fetchWithErrorHandling } from "../../utils/error-handling.js";
-import { SwalToast } from "../../utils/sweetalert.js";
-import { enableBootstrapTooltips, toggleLoadingState } from "../../utils/utils.js";
-import { initProductEvents } from "./offcanvas/products.js";
-import { initSupplierEvents } from "./offcanvas/suppliers.js";
-// import { initSupplyEvents } from "./supplies"; 
+import { fetchWithErrorHandling } from "./error-handling.js";
+import { SwalToast } from "./sweetalert.js";
+import { enableBootstrapTooltips, toggleLoadingState } from "./utils.js";
+import { initProductEvents } from "../models/purchases/offcanvas/products.js";
+import { initSupplierEvents } from "../models/purchases/offcanvas/suppliers.js";
 
 // ===================== Environment Checks =====================
 
@@ -41,7 +40,12 @@ const OFFCANVAS_CONFIG = {
         icon: 'bi bi-basket',
         title: 'Agregar nuevo insumo',
         description: 'Ingrese los datos del nuevo insumo',
-    }
+    },
+    category: {
+        icon: 'bi bi-tags',
+        title: 'Agregar nueva categoría',
+        description: 'Ingrese los datos de la nueva categoría',
+    },
 };
 
 // ====================== Helper Functions ======================
@@ -65,6 +69,11 @@ const bindSpecificOffcanvasEvents = (type, offcanvasInstance) => {
         case 'supply':
             // initSupplyEvents(offcanvasInstance);
             break;
+        case 'category':
+            // initCategoryEvents(offcanvasInstance);
+            break;
+        default:
+            console.warn(`No event initializer defined for offcanvas type: ${type}`);
     }
     
     initializedForms.add(type);
@@ -114,8 +123,8 @@ async function fetchOffcanvasContent(type, $body, offcanvasInstance, triggerElem
  * When triggered, loads the appropriate form into the offcanvas and displays it.
  * Ensures the offcanvas DOM element exists before binding events.
  */
-export function bindOffcanvasEvents() {
-    const offcanvasDOM = document.getElementById('create-offcanvas');
+export function bindOffcanvasEvents(offcanvasId) {
+    const offcanvasDOM = document.getElementById(offcanvasId);
     if (!offcanvasDOM) return; // Guard clause: exit if the modal does not exist in the current view
     
     const createOffcanvas = new bootstrap.Offcanvas(offcanvasDOM);

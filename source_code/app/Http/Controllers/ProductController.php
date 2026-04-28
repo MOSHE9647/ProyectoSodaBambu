@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Amp\Http\HttpStatus;
 use App\Actions\Products\SaveProductAction;
 use App\Enums\UserRole;
 use App\Http\Requests\ProductRequest;
@@ -98,7 +99,16 @@ class ProductController extends Controller implements HasMiddleware
     public function store(ProductRequest $request, SaveProductAction $action)
     {
         // Delegamos todo al Action. Extraemos el mensaje de la posición 1 del array devuelto.
-        [$product, $message] = $action->execute($request->validated());
+        $payload = $request->validated();
+        [$product, $message] = $action->execute($payload);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'product' => ['id' => $product->id, 'name' => $product->name],
+            ], HttpStatus::CREATED);
+        }
 
         return redirect()->route('products.index')->with('success', $message);
     }
@@ -114,17 +124,15 @@ class ProductController extends Controller implements HasMiddleware
     {
         $categories = Category::orderBy('name')->get();
         $product->load('stock');
-        $productStock = ProductStock::withTrashed()
-            ->where('product_id', $product->id)
-            ->first();
 
-        return view('models.products.edit', compact('product', 'categories', 'productStock'));
+        return view('models.products.edit', compact('product', 'categories'));
     }
 
     public function update(ProductRequest $request, Product $product, SaveProductAction $action)
     {
+        $payload = $request->validated();
         // Reutilizamos el Action enviándole el producto actual
-        [$product, $message] = $action->execute($request->validated(), $product);
+        [$product, $message] = $action->execute($payload, $product);
 
         return redirect()->route('products.index')->with('success', $message);
     }

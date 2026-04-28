@@ -6,6 +6,7 @@ use Amp\Http\HttpStatus;
 use App\Actions\Inventory\UpsertPurchaseAction;
 use App\Enums\ProductType;
 use App\Http\Requests\PurchaseRequest;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseDetail;
@@ -198,11 +199,13 @@ class PurchaseController extends Controller
     public function getOffcanvasForm(string $type): JsonResponse|string
     {
         return match ($type) {
-            'supplier' => view('models.purchases.offcanvas._supplier')->render(),
-            'product' => view('models.purchases.offcanvas._product', [
-                'categories' => \App\Models\Category::all(['id', 'name']),
-            ])->render(),
             'category' => view('models.purchases.offcanvas.modals._category')->render(),
+            'supplier' => view('models.purchases.offcanvas._supplier')->render(),
+            'product' => view('models.products.form', [
+                'categories' => Category::all(['id', 'name']),
+                'isOffcanvas' => true,
+                'product' => null,
+            ])->render(),
             default => response()->json(['error' => 'Tipo de formulario no válido.'], HttpStatus::BAD_REQUEST)
         };
     }

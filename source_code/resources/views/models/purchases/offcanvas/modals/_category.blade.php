@@ -14,7 +14,7 @@
                     :class="'border-secondary'"
                     :inputClass="$errors->has('name') ? 'is-invalid' : ''"
                     :placeholder="'Ej: Bebidas'"
-                    :iconLeft="'bi bi-tags'"
+                    :iconLeft="'bi bi-type'"
                     :required="true"
                 >
                     Nombre <span class="text-danger">*</span>

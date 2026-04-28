@@ -377,7 +377,6 @@
 
 </div>
 
-
 @section('scripts')
     <script type="text/javascript">
         // Global JS variables for the purchase form

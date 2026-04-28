@@ -313,3 +313,37 @@ export const enableBootstrapTooltips = (container) => {
 		new bootstrap.Tooltip(tooltipTriggerEl);
 	});
 };
+
+/**
+ * Generates a random valid EAN-13 barcode number.
+ *
+ * @param {number} length - The total length of the EAN code (default is 13).
+ * @param {HTMLElement} triggerElement - The element that triggered the barcode generation, used for loading state.
+ * @returns {string} The generated EAN-13 code as a string.
+ *
+ * The function generates a random EAN-13 code by:
+ * 1. Generating (length - 1) random digits.
+ * 2. Calculating the checksum digit according to the EAN-13 standard.
+ * 3. Appending the checksum digit to the end of the code.
+ * 4. Toggling the loading state on the trigger element during the process.
+ */
+export const generateEan13 = (length = 13, triggerElement) => {
+    const elementClass = `add-${triggerElement.dataset.type}`;
+    toggleLoadingState(triggerElement, elementClass, true);
+
+    let ean = "";
+    for (let i = 0; i < length - 1; i++) {
+        ean += Math.floor(Math.random() * 10).toString();
+    }
+
+    // Calculate checksum digit according to EAN-13 standard
+    let sum = 0;
+    for (let i = 0; i < ean.length; i++) {
+        sum += parseInt(ean[i]) * (i % 2 === 0 ? 1 : 3);
+    }
+    const checksum = (10 - (sum % 10)) % 10;
+    ean += checksum.toString();
+
+    toggleLoadingState(triggerElement, elementClass, false);
+    return ean;
+};
