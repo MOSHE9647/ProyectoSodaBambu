@@ -276,9 +276,11 @@
                             ></i>
                         </x-slot:iconRight>
                     </x-form.input>
-                    <small class="form-text text-muted d-none" id="expiration-alert-date-container">
+                    <small class="form-text text-muted {{ $product?->expiration_alert_date ? '' : 'd-none' }}" id="expiration-alert-date-container">
                         <span class="fw-bold">Fecha de alerta: </span>
-                        <span id="expiration-alert-date"></span>
+                        <span id="expiration-alert-date">
+                            {{ $product?->expiration_alert_date ? $product->expiration_alert_date->translatedFormat('j \d\e F \d\e Y') : '' }}
+                        </span>
                     </small>
                 </div>
             </div>
@@ -390,7 +392,7 @@
                     </x-form.input>
 
                     {{-- Hidden Input --}}
-                    <input type="hidden" id="sale_price_hidden" name="sale_price">
+                    <input type="hidden" id="sale_price_hidden" name="sale_price" value="{{ old('sale_price', $product?->sale_price ?? '') }}">
                 </div>
             </div>
 

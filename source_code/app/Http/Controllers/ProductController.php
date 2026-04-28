@@ -33,6 +33,8 @@ class ProductController extends Controller implements HasMiddleware
             $query = Product::query()
                 ->with('category')
                 ->withStockDetails()
+                ->leftJoin('product_stocks as ps', 'ps.product_id', '=', 'products.id')
+                ->addSelect('products.*', 'ps.current_stock', 'ps.minimum_stock')
                 ->when($request->boolean('low_stock') || $filter === 'low_stock', fn ($q) => $q->lowStock())
                 ->when($request->boolean('expiring_soon') || $filter === 'expiring_soon', fn ($q) => $q->expiringSoon());
 

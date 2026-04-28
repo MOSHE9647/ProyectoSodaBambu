@@ -211,13 +211,11 @@ export function syncProductUI() {
 	// Auto-calculate sale price for merchandise
 	const $salePrice = $("#sale_price");
     const $salePriceHidden = $("#sale_price_hidden");
-
-    $salePrice.val(""); // Clear the sale price when toggling to avoid confusion
     $salePrice.prop("required", !isMerchandise);
 	$salePrice.prop("readonly", isMerchandise);
     $salePrice.prop("disabled", isMerchandise);
     $salePrice.prop("placeholder", isMerchandise ? "Se calcula automáticamente" : "Ej: 4150");
-
+	
     // If it's merchandise, calculate the sale price based on the cost, tax, and margin
 	if (isMerchandise) {
 		const cost = parseFloat($("#reference_cost").val()) || 0;
@@ -229,8 +227,8 @@ export function syncProductUI() {
 
 		// Round to nearest 5 for currency purposes
 		const roundedToNearest5 = Math.round(finalPrice / 5) * 5;
-		$salePrice.val(roundedToNearest5);
 		$salePriceHidden.val(roundedToNearest5);
+		$salePrice.val(roundedToNearest5);
 		clearFieldError("sale_price");
 	}
 }
