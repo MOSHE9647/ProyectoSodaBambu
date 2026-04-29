@@ -10,7 +10,7 @@ import { SwalNotificationTypes, SwalToast } from "./utils/sweetalert.js";
 import { initializePageLoadingProgressBar } from './utils/progress-bar.js';
 import { scrollToItem, checkScrollbarVisibility } from './utils/scrollbar.js';
 import { checkConnectionStatus, updateConnectionStatus } from './utils/connection-status.js';
-import {initializeCashClosure} from './pages/sales/cash-closure.js';
+import { initializeCashClosure } from './pages/sales/cash-closure.js';
 
 // ==================== Global Functions ====================
 

@@ -43,7 +43,6 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::resource('sales', SaleController::class)->names('sales');
 
     // Purchase routes with an additional route for quick product creation during purchase entry
-    // Route::post('purchases/quick-product', [PurchaseController::class, 'quickStoreProduct'])->name('purchases.quick-product');
     Route::get('purchases/offcanvas-form/{type}', [PurchaseController::class, 'getOffcanvasForm'])->name('purchases.offcanvas-form');
     Route::resource('purchases', PurchaseController::class)->names('purchases');
 
@@ -62,5 +61,9 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
         Route::post('/{cashRegister}/close', [CashRegisterController::class, 'close'])->name('close');
         Route::post('/', [CashRegisterController::class, 'store'])->name('store');
     });
+
+    Route::get('payment-modal-test/{paymentTotal}', function ($paymentTotal) {
+        return view('components._payment-modal', ['paymentTotal' => $paymentTotal]);
+    })->name('payment-modal-test');
 
 });
