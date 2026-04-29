@@ -107,7 +107,7 @@ class SupplyController extends Controller implements HasMiddleware
             $supply = Supply::create($supplyData);
         }
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'message' => $message,
@@ -141,6 +141,7 @@ class SupplyController extends Controller implements HasMiddleware
      */
     public function edit(Supply $supply)
     {
+        $supply->expiration_date = $supply->expiration_date?->format('Y-m-d');
         return view('models.supplies.edit', compact('supply'));
     }
 

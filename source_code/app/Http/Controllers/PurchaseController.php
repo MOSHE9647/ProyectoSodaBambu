@@ -206,74 +206,14 @@ class PurchaseController extends Controller
                 'isOffcanvas' => true,
                 'product' => null,
             ])->render(),
+            'supply' => view('models.supplies._form', [
+                'isOffcanvas' => true,
+                'supply' => null,
+            ])->render(),
             default => response()->json(['error' => 'Tipo de formulario no válido.'], HttpStatus::BAD_REQUEST)
         };
     }
 
-    /**
-     * EIF-170: quickStoreProduct solo guarda minimum_stock.
-     * current_stock se omite intencionalmente en la creación.
-
-    public function quickStoreProduct(Request $request): JsonResponse
-    {
-        $rules = [
-            'category_id' => 'required|integer|exists:categories,id',
-            'barcode' => 'nullable|string',
-            'name' => 'required|string|max:255',
-            'type' => 'required|string|in:'.implode(',', array_column(ProductType::cases(), 'value')),
-            'has_inventory' => 'required|boolean',
-            'reference_cost' => 'required|numeric|min:0',
-            'tax_percentage' => 'required|numeric|min:0',
-            'margin_percentage' => 'required|numeric|min:0',
-            'sale_price' => 'required|numeric|min:0',
-        ];
-
-        // EIF-170: Solo se valida stock_minimo; stock_actual no se procesa en creación
-        if ($request->boolean('has_inventory')) {
-            $rules['stock_minimo'] = 'required|integer|min:0';
-        } else {
-            $rules['stock_minimo'] = 'nullable|integer|min:0';
-        }
-
-        $validator = Validator::make($request->all(), $rules);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $product = DB::transaction(function () use ($request, $validator) {
-            $product = Product::create($validator->validated());
-
-            // EIF-170: Al crear, current_stock arranca en 0 (se actualiza vía inventario)
-            if ($request->boolean('has_inventory')) {
-                ProductStock::create([
-                    'product_id' => $product->id,
-                    'current_stock' => 0,
-                    'minimum_stock' => (int) $request->input('stock_minimo', 0),
-                ]);
-            }
-
-            return $product;
-        });
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Producto creado exitosamente.',
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'sale_price' => $product->sale_price,
-                'reference_cost' => $product->reference_cost,
-                'type' => $product->type instanceof ProductType
-                    ? $product->type->value
-                    : $product->type,
-            ],
-        ]);
-    }
-     */
     public function destroy(Purchase $purchase)
     {
         $purchase->delete();

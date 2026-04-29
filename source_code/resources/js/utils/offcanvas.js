@@ -1,6 +1,7 @@
-import { fetchWithErrorHandling } from "./error-handling.js";
 import { SwalToast } from "./sweetalert.js";
+import { fetchWithErrorHandling } from "./error-handling.js";
 import { enableBootstrapTooltips, toggleLoadingState } from "./utils.js";
+import { initSupplyEvents } from "../models/purchases/offcanvas/supplies.js";
 import { initProductEvents } from "../models/purchases/offcanvas/products.js";
 import { initSupplierEvents } from "../models/purchases/offcanvas/suppliers.js";
 
@@ -67,10 +68,7 @@ const bindSpecificOffcanvasEvents = (type, offcanvasInstance) => {
             initProductEvents(offcanvasInstance);
             break;
         case 'supply':
-            // initSupplyEvents(offcanvasInstance);
-            break;
-        case 'category':
-            // initCategoryEvents(offcanvasInstance);
+            initSupplyEvents(offcanvasInstance);
             break;
         default:
             console.warn(`No event initializer defined for offcanvas type: ${type}`);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Database\Factories\SupplyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,12 +36,28 @@ class Supply extends Model
      */
     protected $casts = [
         'quantity' => 'integer',
-        'unit_price' => 'decimal:2',
+        'unit_price' => 'integer',
         'expiration_date' => 'date',
         'expiration_alert_date' => 'date',
         'expiration_alert_days' => 'integer',
-
     ];
+
+    /**
+     * Boot the model to hook into lyfecycle events.
+     * @return void
+     */
+    protected static function booted(): void
+    {
+        // Intercepts the saving event to calculate the expiration alert date based on the expiration date and alert days.
+        static::saving(function (Supply $supply) {
+            $supply->expiration_alert_date =
+                ($supply->expiration_date && $supply->expiration_alert_days !== null)
+                ? Carbon::parse($supply->expiration_date)
+                    ->subDays($supply->expiration_alert_days)
+                    ->toDateString()
+                : null;
+        });
+    }
 
     /**
      * Get all of the purchase details for the supply.

@@ -347,3 +347,37 @@ export const generateEan13 = (length = 13, triggerElement) => {
     toggleLoadingState(triggerElement, elementClass, false);
     return ean;
 };
+
+/**
+ * Calculates the alert date for product expiration based on the expiration date and alert days.
+ *
+ * This function retrieves the expiration date and the number of alert days from the UI,
+ * subtracts the alert days from the expiration date, and returns the resulting date formatted
+ * in Spanish (es-ES) in a human-readable way.
+ *
+ * The 'T00:00:00' is appended to the date string to force the local timezone and avoid JavaScript
+ * subtracting a day by default due to UTC conversion.
+ *
+ * @returns {string|null} The formatted alert date in Spanish, or null if no expiration date is set.
+ */
+export const calculateAlertDate = () => {
+	const dateString = $("#expiration_date").val();
+	const alertDays = parseInt($("#expiration_alert_days").val(), 10) || 0;
+
+	if (dateString) {
+		// 'T00:00:00' is added to force the local timezone and avoid JavaScript
+		// subtracting a day by default due to UTC conversion
+		const expiration = new Date(`${dateString}T00:00:00`);
+
+		// Subtract the alert days
+		expiration.setDate(expiration.getDate() - alertDays);
+
+		// Format the date in Spanish and in a human-readable way
+		const options = { year: 'numeric', month: 'long', day: 'numeric' };
+		const alertDateFormatted = expiration.toLocaleDateString('es-ES', options);
+
+		return alertDateFormatted;
+	}
+
+	return null;
+}

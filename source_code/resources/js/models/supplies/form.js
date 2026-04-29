@@ -5,7 +5,7 @@ import {
     validateAndDisplayField,
     validateName
 } from '../../utils/validation.js';
-import { setLoadingState } from '../../utils/utils.js';
+import { calculateAlertDate, setLoadingState } from '../../utils/utils.js';
 
 // Ensure jQuery is loaded
 if (typeof $ === 'undefined') {
@@ -59,7 +59,7 @@ function validateSupplyForm(values) {
 /**
  * Form Submission Handler.
  */
-function submitSupplyForm() {
+export function submitSupplyForm() {
     clearAllFieldErrors(fieldValidators);
 
     const $name = $('#name');
@@ -77,10 +77,18 @@ function submitSupplyForm() {
     return validateSupplyForm(values);
 }
 
-// Event Listeners
-$(document).on('input change', `#${FORM_ID} input, #${FORM_ID} select`, function (e) {
+export const realTimeValidationHandler = (e) => {
     const $target = $(e.target);
     const fieldId = $target.attr('id');
+
+    // Special handling for expiration date and alert days to calculate and display alert date
+    if (["expiration_date", "expiration_alert_days"].includes(fieldId)) {
+		const alertDate = calculateAlertDate();
+		$("#expiration-alert-date").text(alertDate || "");
+
+		const alertContainer = $("#expiration-alert-date-container");
+		alertContainer.toggleClass("d-none", !alertDate);
+	}
 
     if (!fieldValidators.hasOwnProperty(fieldId)) return;
 
@@ -95,6 +103,11 @@ $(document).on('input change', `#${FORM_ID} input, #${FORM_ID} select`, function
     } else {
         clearFieldError(fieldId);
     }
+};
+
+// Event Listeners
+$(document).on('input change', `#${FORM_ID}`, function (e) {
+    realTimeValidationHandler(e);
 });
 
 $(document).on('submit', `#${FORM_ID}`, (e) => {

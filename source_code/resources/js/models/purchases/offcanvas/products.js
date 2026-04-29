@@ -8,7 +8,6 @@ const PRODUCTS_LIST = window.purchaseFormData?.products || [];
 const submitProductFormHandler = async (e, offcanvasInstance) => {
     try {
         const form = e.currentTarget;
-        // Simulación de respuesta del backend para pruebas
         const responseData = await submitFormToApi(form.action, form);
 
         // Update all the selects that exist in the DOM with the new product
