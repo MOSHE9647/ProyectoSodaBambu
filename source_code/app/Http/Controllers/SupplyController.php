@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Requests\SupplyRequest;
 use App\Http\Resources\SupplyResource;
 use App\Models\Supply;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -141,8 +142,11 @@ class SupplyController extends Controller implements HasMiddleware
      */
     public function edit(Supply $supply)
     {
-        $supply->expiration_date = $supply->expiration_date?->format('Y-m-d');
-        return view('models.supplies.edit', compact('supply'));
+        $expirationDate = $supply->expiration_date ? Carbon::parse($supply->expiration_date)->format('Y-m-d') : null;
+        return view('models.supplies.edit', [
+            'supply' => $supply,
+            'expiration_date_formatted' => $expirationDate,
+        ]);
     }
 
     /**
