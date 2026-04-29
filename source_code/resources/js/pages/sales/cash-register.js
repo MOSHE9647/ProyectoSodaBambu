@@ -6,14 +6,38 @@ import { SwalModal, SwalToast, SwalNotificationTypes } from "../../utils/sweetal
  * consistent across the sales page dialogs.
  */
 const SweetAlertModalOptions = {
-	popup: 'swal-popup w-auto h-auto',
+	popup: 'swal-popup opening-cash-swal w-auto h-auto',
 	title: 'justify-content-center border-bottom pb-3 mb-3',
 	closeButton: 'swal-close-btn fs-3',
 	htmlContainer: 'w-auto h-auto p-1 overflow-x-hidden',
+	input: 'form-control bg-body text-body border-secondary',
 	confirmButton: 'btn btn-primary mx-1',
 	cancelButton: 'btn btn-danger mx-1',
 	icon: 'mb-4',
 }
+
+const openingCashStyles = `
+	.opening-cash-swal .swal2-input {
+		width: 100%;
+		max-width: 100%;
+		margin-left: 0;
+		margin-right: 0;
+		box-sizing: border-box;
+	}
+`;
+
+const ensureOpeningCashStyles = () => {
+	if (document.getElementById('opening-cash-modal-styles')) return;
+
+	const style = document.createElement('style');
+	style.id = 'opening-cash-modal-styles';
+	style.textContent = openingCashStyles;
+	document.head.appendChild(style);
+};
+
+const removeOpeningCashStyles = () => {
+	document.getElementById('opening-cash-modal-styles')?.remove();
+};
 
 /**
  * Persists the opening cash register amount on the server.
@@ -119,6 +143,9 @@ const showOpeningCashModal = async () => {
 	SwalModal.fire({
 		title: "Abriendo caja...",
 		text: "Por favor, ingresa el monto inicial de dinero en caja para comenzar a registrar ventas.",
+		customClass: SweetAlertModalOptions,
+		didOpen: ensureOpeningCashStyles,
+		didDestroy: removeOpeningCashStyles,
 		allowEscapeKey: false,
 		allowOutsideClick: false,
 		input: "number",
