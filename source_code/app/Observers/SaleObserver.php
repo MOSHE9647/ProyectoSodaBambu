@@ -2,10 +2,10 @@
 
 namespace App\Observers;
 
+use App\Actions\Products\GetTopSellingProductsAction;
 use App\Actions\Sale\CalculateDailySalesTrendAction;
 use App\Actions\Sale\GetDailySalesDataAction;
 use App\Actions\Sale\GetMonthlySalesDataAction;
-use App\Actions\Products\GetTopSellingProductsAction;
 use App\Models\Sale;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 use Illuminate\Support\Facades\Cache;

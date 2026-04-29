@@ -14,8 +14,7 @@ class GetTopSellingProductsAction
      * Retrieves the top 5 dishes with the highest accumulated sales quantity from paid orders.
      * Calculates the total sales volume and the total amount in colones per product.
      *
-     * @param int $limit Number of products to return (default 5)
-     * @return Collection
+     * @param  int  $limit  Number of products to return (default 5)
      */
     public function execute(int $limit = 5): Collection
     {
@@ -23,8 +22,8 @@ class GetTopSellingProductsAction
             ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
             ->join('products', 'sale_details.product_id', '=', 'products.id')
             ->where('sales.payment_status', PaymentStatus::PAID)
-            //Filter by product type: food and drinks
-            ->WhereIn('products.type',[
+            // Filter by product type: food and drinks
+            ->WhereIn('products.type', [
                 ProductType::DISH->value,
                 ProductType::DRINK->value,
             ])

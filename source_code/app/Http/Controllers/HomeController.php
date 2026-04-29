@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Actions\Inventory\GetLowStockProductsCount;
 use App\Actions\Inventory\GetProductsAboutToExpireCount;
 use App\Actions\Inventory\GetSuppliesAboutToExpireCount;
+use App\Actions\Products\GetTopSellingProductsAction;
 use App\Actions\Sale\CalculateDailySalesTrendAction;
 use App\Actions\Sale\GetDailySalesDataAction;
 use App\Actions\Sale\GetMonthlySalesDataAction;
-use App\Actions\Products\GetTopSellingProductsAction;
 use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
@@ -70,7 +70,7 @@ class HomeController extends Controller
             'aboutToExpireSupplies' => $aboutToExpireSupplies,
             'totalMinStockProducts' => $totalMinStockProducts,
             'aboutToExpireProducts' => $aboutToExpireProducts,
-            ...$salesStats, ...$monthlyStats, ...$dailyStats, 'topSellingProducts' => $topSellingProducts
+            ...$salesStats, ...$monthlyStats, ...$dailyStats, 'topSellingProducts' => $topSellingProducts,
         ]);
     }
 }
