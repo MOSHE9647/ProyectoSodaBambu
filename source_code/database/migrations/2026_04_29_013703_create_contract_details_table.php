@@ -25,7 +25,7 @@ return new class extends Migration
 
             // Ensure a product can only be associated with a contract once per meal time and serve date
             $table->unique(
-                ['contract_id', 'product_id', 'meal_time', 'serve_date'], 
+                ['contract_id', 'product_id', 'meal_time', 'serve_date'],
                 'unique_contract_product_meal_serve'
             );
         });

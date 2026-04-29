@@ -20,8 +20,6 @@ enum MealTime: string
 
     /**
      * Get the human-readable label for the meal time.
-     *
-     * @return string
      */
     public function label(): string
     {
