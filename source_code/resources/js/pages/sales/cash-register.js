@@ -151,6 +151,7 @@ const showOpeningCashModal = async () => {
 		input: "number",
 		inputAttributes: { min: 0, step: 1 },
 		showCancelButton: true,
+		reverseButtons: true,
 		confirmButtonText: "Aceptar",
 		cancelButtonText: "Cancelar",
 		inputValidator: (value) => {
