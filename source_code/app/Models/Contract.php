@@ -6,12 +6,14 @@ use Database\Factories\ContractFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contract extends Model
 {
     /** @use HasFactory<ContractFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -52,6 +54,17 @@ class Contract extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Relation: Contract Details.
+     * A contract can have multiple details (products, meal times, etc.).
+     *
+     * @return HasMany<ContractDetail>
+     */
+    public function details()
+    {
+        return $this->hasMany(ContractDetail::class);
     }
 
     /**
