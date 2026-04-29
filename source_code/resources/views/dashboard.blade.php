@@ -175,7 +175,11 @@
 			monthlySalesLabels: @json($monthlySalesLabels),
 			dailySalesValues: @json($dailySalesValues),
 			dailySalesLabels: @json($dailySalesLabels),
+
+			topSellingProducts: @json($topSellingProducts),
 		}
+
+		console.log('Top 5 ventas:', window.DashboardData.topSellingProducts);
     </script>
 	@vite(['resources/js/pages/dashboard.js'])
 @endsection

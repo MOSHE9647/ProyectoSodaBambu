@@ -8,6 +8,7 @@ use App\Actions\Inventory\GetSuppliesAboutToExpireCount;
 use App\Actions\Sale\CalculateDailySalesTrendAction;
 use App\Actions\Sale\GetDailySalesDataAction;
 use App\Actions\Sale\GetMonthlySalesDataAction;
+use App\Actions\Products\GetTopSellingProductsAction;
 use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
@@ -28,6 +29,7 @@ class HomeController extends Controller
         GetMonthlySalesDataAction $getMonthlySalesDataAction,
         GetDailySalesDataAction $getDailySalesDataAction,
         GetSuppliesAboutToExpireCount $getSuppliesAboutToExpireCount,
+        GetTopSellingProductsAction $getTopSellingProductsAction
     ) {
 
         /**
@@ -60,11 +62,15 @@ class HomeController extends Controller
             return $getDailySalesDataAction->execute();
         });
 
+        $topSellingProducts = Cache::remember('top_selling_products', now()->addMinutes(10), function () use ($getTopSellingProductsAction) {
+            return $getTopSellingProductsAction->execute();
+        });
+
         return view('dashboard', [
             'aboutToExpireSupplies' => $aboutToExpireSupplies,
             'totalMinStockProducts' => $totalMinStockProducts,
             'aboutToExpireProducts' => $aboutToExpireProducts,
-            ...$salesStats, ...$monthlyStats, ...$dailyStats,
+            ...$salesStats, ...$monthlyStats, ...$dailyStats, 'topSellingProducts' => $topSellingProducts
         ]);
     }
 }
