@@ -154,7 +154,7 @@ export function createIncomeAreaChart({
 }
 
 /**
- * Crea una gráfica de barras para los productos más vendidos.
+ * Creates a bar chart for the top selling products.
  */
 export function createTopProductsChart({ container, labels, values, theme }) {
     const options = {
@@ -178,8 +178,8 @@ export function createTopProductsChart({ container, labels, values, theme }) {
             }
         },
         dataLabels: {
-            enabled: false
-            //formatter: (val) => val.toLocaleString()
+            enabled: true,
+            formatter: (val) => val.toLocaleString()
         },
         colors: ['#198754', '#20c997', '#0dcaf0', '#0d6efd', '#6f42c1'],
         xaxis: {
