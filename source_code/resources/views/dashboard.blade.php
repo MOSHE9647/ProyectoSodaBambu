@@ -22,8 +22,8 @@
 				
 				<x-stat-card
 					title="Ventas de Hoy"
-					value=" ₡ {{ number_format($todaySalesTotal, 0, ',', '.') }} "
-					currency="true" 
+					value="{{ number_format($todaySalesTotal, 0, ',', '.') }} "
+					:currency="true" 
 					icon="cash"
 					color-theme="green"
 					trend="{{ $salesTrendText }}"

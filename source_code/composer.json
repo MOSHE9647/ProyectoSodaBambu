@@ -110,9 +110,9 @@
 			"pestphp/pest-plugin": true,
 			"php-http/discovery": true
 		},
-		"process-timeout": 900
+		"process-timeout": 1500
 	},
-	"process-timeout": 900,
+	"process-timeout": 1500,
 	"minimum-stability": "stable",
 	"prefer-stable": true
 
