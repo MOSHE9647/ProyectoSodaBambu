@@ -143,6 +143,7 @@ class SupplyController extends Controller implements HasMiddleware
     public function edit(Supply $supply)
     {
         $expirationDate = $supply->expiration_date ? Carbon::parse($supply->expiration_date)->format('Y-m-d') : null;
+
         return view('models.supplies.edit', [
             'supply' => $supply,
             'expiration_date_formatted' => $expirationDate,

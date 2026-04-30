@@ -44,7 +44,6 @@ class Supply extends Model
 
     /**
      * Boot the model to hook into lyfecycle events.
-     * @return void
      */
     protected static function booted(): void
     {
