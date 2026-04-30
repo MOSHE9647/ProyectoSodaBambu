@@ -4,14 +4,14 @@
     use App\Enums\PaymentMethod;
 @endphp
 
-<form id="create-payment-form" class="d-flex flex-column flex-grow-1" style="max-width: 46rem !important;">
+<div class="d-flex flex-column flex-grow-1" style="width: 46rem !important;">
 
     <div class="d-flex gap-3 justify-content-between">
         
         <section id="method-payment-section" class="table-container w-50 flex-column rounded-3 shadow-sm overflow-hidden p-2 pb-3">
             
             {{-- Total amount --}}
-            <div class="d-flex justify-content-between align-items-center gap-2 border-bottom px-3 pt-2 pb-2 mb-2">
+            <div class="d-flex justify-content-between align-items-center gap-2 border-bottom px-3 pt-2 pb-2">
                 <span class="fs-5 fw-bold">Total a Pagar:</span>
                 <span class="d-flex fw-bolder text-success align-items-center" style="font-size: 1.5rem;">
                     <x-icons.colon-icon class="me-1" />
@@ -22,7 +22,7 @@
             {{-- Payment Method --}}
             <x-form.input.radio-group :groupClass="'d-flex flex-column gap-2'">
                 <x-form.input.radio-button 
-                    :id="'payment_method_cash'"
+                    :id="'cash_payment'"
                     :name="'payment_method'"
                     :value="PaymentMethod::CASH->value"
                     :class="'d-flex align-items-center justify-content-between rounded-3 text-start'"
@@ -36,7 +36,7 @@
                 </x-form.input.radio-button>
 
                 <x-form.input.radio-button
-                    :id="'payment_method_card'"
+                    :id="'card_payment'"
                     :name="'payment_method'"
                     :value="PaymentMethod::CARD->value"
                     :class="'d-flex align-items-center justify-content-between rounded-3 text-start'"
@@ -49,7 +49,7 @@
                 </x-form.input.radio-button>
 
                 <x-form.input.radio-button
-                    :id="'payment_method_sinpe'"
+                    :id="'sinpe_payment'"
                     :name="'payment_method'"
                     :value="PaymentMethod::SINPE->value"
                 >
@@ -62,9 +62,9 @@
             </x-form.input.radio-group>
 
             <div class="d-flex flex-column align-items-start gap-2 border-top pt-2 mt-3">
-                {{-- Amount --}}
+                {{-- Amount To Pay --}}
                 <x-form.input
-                    :id="'amount-to-pay'"
+                    :id="'amount_to_pay'"
                     :type="'number'"
                     :step="'1'"
                     :min="'0'"
@@ -73,6 +73,7 @@
                     :placeholder="'Ej: 1000'"
                     :textIconLeft="true"
                     :required="true"
+                    focusOnShow
                 >
                     <x-slot:iconLeft>
                         <x-icons.colon-icon width="16" height="16" />
@@ -80,8 +81,9 @@
                     Monto a pagar: <span class="text-danger">*</span>
                 </x-form.input>
 
+                {{-- Reference Number --}}
                 <x-form.input
-                    :id="'reference-number'"
+                    :id="'reference_number'"
                     :type="'numeric'"
                     :class="'border-secondary w-100'"
                     :placeholder="'Ej: 1234567890123'" 
@@ -100,6 +102,7 @@
                 </x-form.input>
             </div>
 
+            {{-- Add Payment Button --}}
             <x-form.button 
                 :id="'add-payment-button'"
                 :class="'btn-warning px-4 py-2 mt-3 w-100'"
@@ -113,7 +116,7 @@
 
         </section>
 
-        <section id="details-section" class="table-container w-50 d-flex flex-column rounded-3 shadow-sm overflow-hidden p-2 pb-3">
+        <form id="payment-details-form" class="table-container w-50 d-flex flex-column rounded-3 shadow-sm overflow-hidden p-2 pb-3" style="margin-block-end: 0;">
 
             {{-- Details Header --}}
             <div class="d-flex justify-content-center align-items-center border-bottom px-3 py-2 mb-2" style="height: 55.2px;">
@@ -127,74 +130,75 @@
                     <p>No se han agregado pagos.<br> Agrega un pago para ver el resumen aquí.</p>
                 </div>
 
-                <div class="payment-item d-flex align-items-center justify-content-between text-start p-2">
+                <div class="payment-item d-flex align-items-center justify-content-between text-start p-2" data-payment-type="cash">
                     <div class="d-flex flex-column align-items-start">
                         <span class="fw-bold" style="font-size: 1rem;">Efectivo</span>
                     </div>
                     <div class="d-flex align-items-end justify-content-end gap-3">
                         <span class="d-flex fw-bolder text-success align-items-center" style="font-size: 1rem;">
                             <x-icons.colon-icon class="me-1" />
-                            15 000
+                            <span class="payment-item-amount">15 000</span>
                         </span>
                         <x-form.button 
-                            :id="'remove-payment-1'"
-                            :class="'btn-sm btn-outline-danger p-2'"
                             :type="'button'"
+                            :class="'remove-payment-btn btn-sm btn-outline-danger p-2'"
                             data-bs-toggle="tooltip"
                             data-bs-title="Eliminar este pago del resumen."
                             style="font-size: 0.75rem;"
                         >
-                            <div id="remove-payment-1-text" class="d-flex flex-row align-items-center justify-content-center">
+                            <div class="d-flex flex-row align-items-center justify-content-center">
                                 <i class="bi bi-trash"></i>
                             </div>
                         </x-form.button>
                     </div>
                 </div>
 
-                <div class="payment-item d-flex align-items-center justify-content-between text-start p-2">
+                <div class="payment-item d-flex align-items-center justify-content-between text-start p-2" data-payment-type="card">
                     <div class="d-flex flex-column align-items-start">
                         <span class="fw-bold" style="font-size: 1rem;">Tarjeta</span>
-                        <span class="text-muted" style="font-size: 0.75rem;">Referencia: 1234567890123</span>
+                        <span class="text-muted" style="font-size: 0.75rem;">
+                            Referencia: <span class="payment-item-reference">123456789012</span>
+                        </span>
                     </div>
                     <div class="d-flex align-items-end justify-content-end gap-3">
                         <span class="d-flex fw-bolder text-success align-items-center" style="font-size: 1rem;">
                             <x-icons.colon-icon class="me-1" />
-                            15 000
+                            <span class="payment-item-amount">15 000</span>
                         </span>
                         <x-form.button 
-                            :id="'remove-payment-1'"
-                            :class="'btn-sm btn-outline-danger p-2'"
                             :type="'button'"
+                            :class="'remove-payment-btn btn-sm btn-outline-danger p-2'"
                             data-bs-toggle="tooltip"
                             data-bs-title="Eliminar este pago del resumen."
                             style="font-size: 0.75rem;"
                         >
-                            <div id="remove-payment-1-text" class="d-flex flex-row align-items-center justify-content-center">
+                            <div class="d-flex flex-row align-items-center justify-content-center">
                                 <i class="bi bi-trash"></i>
                             </div>
                         </x-form.button>
                     </div>
                 </div>
 
-                <div class="payment-item d-flex align-items-center justify-content-between text-start p-2">
+                <div class="payment-item d-flex align-items-center justify-content-between text-start p-2" data-payment-type="sinpe">
                     <div class="d-flex flex-column align-items-start">
                         <span class="fw-bold" style="font-size: 1rem;">SINPE Móvil</span>
-                        <span class="text-muted" style="font-size: 0.75rem;">Comprobante: 1234567890123</span>
+                        <span class="text-muted" style="font-size: 0.75rem;">
+                            Comprobante: <span class="payment-item-reference">123456789012</span>
+                        </span>
                     </div>
                     <div class="d-flex align-items-end justify-content-end gap-3">
                         <span class="d-flex fw-bolder text-success align-items-center" style="font-size: 1rem;">
                             <x-icons.colon-icon class="me-1" />
-                            15 000
+                            <span class="payment-item-amount">15 000</span>
                         </span>
                         <x-form.button 
-                            :id="'remove-payment-1'"
-                            :class="'btn-sm btn-outline-danger p-2'"
                             :type="'button'"
+                            :class="'remove-payment-btn btn-sm btn-outline-danger p-2'"
                             data-bs-toggle="tooltip"
                             data-bs-title="Eliminar este pago del resumen."
                             style="font-size: 0.75rem;"
                         >
-                            <div id="remove-payment-1-text" class="d-flex flex-row align-items-center justify-content-center">
+                            <div class="d-flex flex-row align-items-center justify-content-center">
                                 <i class="bi bi-trash"></i>
                             </div>
                         </x-form.button>
@@ -208,7 +212,7 @@
                     <span class="fw-bold">Total Factura:</span>
                     <span class="d-flex fw-bolder align-items-center">
                         <x-icons.colon-icon class="me-1" />
-                        <span id="total-invoice" class="fs-6">{{ number_format($paymentTotal, 0, ',', ' ') }}</span>
+                        <span class="fs-6">{{ number_format($paymentTotal, 0, ',', ' ') }}</span>
                     </span>
                 </div>
                 
@@ -224,7 +228,7 @@
                     <span class="fw-bold">Vuelto:</span>
                     <span class="d-flex fw-bolder text-success align-items-center">
                         <x-icons.colon-icon class="me-1" />
-                        <span id="total-change" class="fs-6">0</span>
+                        <span id="change_amount" class="fs-6">0</span>
                     </span>
                 </div>
             </div>
@@ -257,7 +261,8 @@
                     </div>
                 </x-form.button>
             </div>
-        </section>
+            
+        </form>
     </div>
 
-</form>
+</div>

@@ -62,8 +62,9 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
         Route::post('/', [CashRegisterController::class, 'store'])->name('store');
     });
 
-    Route::get('payment-modal-test/{paymentTotal}', function ($paymentTotal) {
+    // Route for testing the payment modal component
+    Route::get('payment-modal/{paymentTotal}', function ($paymentTotal) {
         return view('components._payment-modal', ['paymentTotal' => $paymentTotal]);
-    })->name('payment-modal-test');
+    })->name('payment-modal');
 
 });

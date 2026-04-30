@@ -1,8 +1,9 @@
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation";
 import { setLoadingState } from "../../utils/utils";
-import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 import { bindPurchaseFormEvents } from "./items.js";
 import { bindOffcanvasEvents } from "../../utils/offcanvas.js";
+import { showPaymentDetailsFormModal } from "../payment/main.js";
 
 // ==================== Environment Checks ====================
 if (typeof $ === 'undefined') {
@@ -20,7 +21,7 @@ const PAYMENT_METHODS = { CASH: 'cash', CARD: 'card', SINPE: 'sinpe' };
 
 const parseFormattedNumber = (text) => {
 	if (!text) return 0;
-	return parseFloat(text.replace(/[^0-9,-]+/g, "").replace(",", ".")) || 0;
+	return parseInt(text.replace(/[^0-9,-]+/g, "").replace(",", ".")) || 0;
 };
 
 function showFieldErrorInAlert(fieldId, errorMessage) {
@@ -63,7 +64,7 @@ function getLaravelFirstError(errorData) {
 function getFormFields() {
     const purchase = {
 		invoice_number: $("#invoice_number").val()?.trim() || '',
-		supplier_id: $("#supplier_id").val(),
+		supplier_id: parseInt($("#supplier_id").val()) || null,
 		payment_status: $("#payment_status").val(),
 		date: $("#date").val(),
         total: parseFormattedNumber($("#total").text()),
@@ -76,34 +77,14 @@ function getFormFields() {
 			const $row = $(row);
 			return {
 				id: $row.data("id") || null,
-				quantity: $row.find('[name="quantity"]').val(),
-				unit_price: $row.find('[name="unit-price"]').val(),
+				quantity: parseInt($row.find('[name="quantity"]').val()) || 0,
+				unit_price: parseFormattedNumber($row.find('[name="unit-price"]').val()),
 				sub_total: parseFormattedNumber($row.find(".sub-total").text()),
-				purchasable_id: $row.find('[name="purchasable_id"]').val(),
+				purchasable_id: parseInt($row.find('[name="purchasable_id"]').val()) || null,
 				purchasable_type: $row.data("purchasable-type"),
 			};
 		})
 		.get();
-
-	if ($("#payment_status").val() === "paid") {
-		purchase.payment_details = [
-			{
-				method: PAYMENT_METHODS.CASH || "cash",
-				change_amount: 0,
-				amount: purchase.total / 3,
-			},
-			{
-				method: PAYMENT_METHODS.CARD || "card",
-				reference: Math.random().toString(36).substring(2, 10),
-				amount: purchase.total / 3,
-			},
-			{
-				method: PAYMENT_METHODS.SINPE || "sinpe",
-				reference: Math.random().toString(36).substring(2, 10),
-				amount: purchase.total / 3,
-			},
-		];
-	}
 
     return purchase;
 }
@@ -350,6 +331,64 @@ function bindRealTimeValidation() {
 
 // ==================== Form Submission Handler ====================
 
+async function submitPurchaseFormHandler(event, validationResult) {
+	const form = this;
+	const url = form.action;
+	const token = $(form).find('input[name="_token"]').val();
+	const method = $(form).find('input[name="_method"]').val();
+	const httpMethod = method ? method.toUpperCase() : 'POST';
+	const [__, fieldId, message, values] = validationResult;
+	
+	if (httpMethod === 'PUT') {
+		const purchaseId = httpMethod === 'PUT' ? url.split('/').pop() : null; // Extract ID from URL for editing
+		values.id = purchaseId; // Include ID in payload for updates
+	}
+
+	// Delete all null IDs from purchase_details 
+	if (Array.isArray(values.purchase_details)) {
+		values.purchase_details = values.purchase_details.map(detail => {
+			if (detail.id === null) {
+				const { id, ...rest } = detail;
+				return rest;
+			}
+			return detail;
+		});
+	}
+
+	console.log("Submitting form with values:", values);
+
+	try {
+		const response = await fetch(url, {
+			method: httpMethod,
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept': 'application/json',
+				'X-CSRF-TOKEN': token
+			},
+			body: JSON.stringify(values)
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			window.location.href = data.redirect || route('purchases.index');
+		} else {
+			const errorData = await response.json();
+			console.error('Error en la respuesta del servidor:', errorData);
+
+			const { field: firstField, message: firstMessage } = getLaravelFirstError(errorData);
+			showFieldError(firstField, firstMessage);
+			showFieldErrorInAlert(null, errorData.message || 'Error al enviar el formulario. Por favor, inténtelo de nuevo.');
+		}
+	} catch (error) {
+		SwalToast.fire({
+			icon: SwalNotificationTypes.ERROR,
+			title: "Error al enviar el formulario"
+		});
+	} finally {
+		setLoadingState(FORM_ID, false);
+	}
+}
+
 function submitPurchaseForm() {
     const fieldValidators = getActiveFieldValidators();
     const values = getFormFields();
@@ -375,69 +414,37 @@ $(document).on('submit', `#${FORM_ID}`, async function(e) {
     // Validate and submit form
     const [isValid, fieldId, message, values] = submitPurchaseForm();
 
-    // If valid, submit the form
-    if (isValid) {
+	// If valid, submit the form
+	if (isValid) {
 		// Hide any previous error alert
 		$("#form-error-alert").addClass("d-none");
 		
-        const form = this;
-        const url = form.action;
-        const token = $(form).find('input[name="_token"]').val();
-        const method = $(form).find('input[name="_method"]').val();
-        const httpMethod = method ? method.toUpperCase() : 'POST';
-        
-        if (httpMethod === 'PUT') {
-            const purchaseId = httpMethod === 'PUT' ? url.split('/').pop() : null; // Extract ID from URL for editing
-            values.id = purchaseId; // Include ID in payload for updates
-        }
+		let paymentDetails = null;
+		
+		// If payment status is 'paid', show the payment details form modal and get the payment details from the user before submitting the purchase form
+		const status = $('#payment_status').val();
+		if (status === 'paid') {
+			// Get the total amount from the form to pass to the payment details modal
+			const totalAmount = parseFormattedNumber($("#total").text());
+			paymentDetails = await showPaymentDetailsFormModal(totalAmount);
 
-		// Delete all null IDs from purchase_details 
-		if (Array.isArray(values.purchase_details)) {
-			values.purchase_details = values.purchase_details.map(detail => {
-				if (detail.id === null) {
-					const { id, ...rest } = detail;
-					return rest;
-				}
-				return detail;
-			});
+			if (!paymentDetails || paymentDetails.length === 0) {
+				setLoadingState(FORM_ID, false);
+				return;
+			}
 		}
 
-        try {
-            const response = await fetch(url, {
-                method: httpMethod,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': token
-                },
-                body: JSON.stringify(values)
-            });
-
-            if (response.ok) {
-				const data = await response.json();
-				window.location.href = data.redirect || route('purchases.index');
-			} else {
-				const errorData = await response.json();
-				console.error('Error en la respuesta del servidor:', errorData);
-
-                const { field: firstField, message: firstMessage } = getLaravelFirstError(errorData);
-				showFieldError(firstField, firstMessage);
-				showFieldErrorInAlert(null, errorData.message || 'Error al enviar el formulario. Por favor, inténtelo de nuevo.');
-			}
-        } catch (error) {
-			SwalToast.fire({
-                icon: SwalNotificationTypes.ERROR,
-                title: "Error al enviar el formulario"
-            });
-        } finally {
-            setLoadingState(FORM_ID, false);
-        }
+		if (paymentDetails) {
+			values.payment_details = paymentDetails;
+		}
+		
+		await submitPurchaseFormHandler.call(this, e, [isValid, fieldId, message, values]);
 	}
 	else {
-        // Show error message in alert and focus the first invalid field
-        setLoadingState(FORM_ID, false);
-        showFieldErrorInAlert(fieldId, message);
-    }
+		// Show error message in alert and focus the first invalid field
+		setLoadingState(FORM_ID, false);
+		showFieldErrorInAlert(fieldId, message);
+	}
 });
 
 // Initialize real-time validation when the document is ready
