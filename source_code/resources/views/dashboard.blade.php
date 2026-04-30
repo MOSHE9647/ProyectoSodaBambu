@@ -152,13 +152,21 @@
 			</div>
 		</div>
 
-		{{-- Recent Activities --}}
+		{{-- Top Selling Products --}}
 		<div class="row g-3 mt-2">
 			<div class="col-12">
 				<div class="card border-1 card-container shadow-sm rounded-4 mh-100 w-100">
 					<div class="card-body p-4">
-						<h5 class="fw-bold mb-3">Actividad Reciente</h5>
-						<p class="text-muted">Aquí se mostrarán las actividades recientes del sistema.</p>
+						<div class="d-flex justify-content-between align-items-center mb-4">
+							<h5 class="fw-bold m-0">Top 5 Platillos Más Vendidos</h5>
+							<i class="bi bi-graph-up-arrow fs-4 text-success"></i>
+						</div>
+						
+						<div 
+							id="chart-top-products" 
+							class="card-container bg-body-tertiary rounded-4 pt-3 shadow-sm" 
+							style="min-height: 300px;">
+						</div>
 					</div>
 				</div>
 			</div>

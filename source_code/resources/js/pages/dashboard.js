@@ -1,4 +1,4 @@
-import { createIncomeAreaChart, observeThemeChanges } from '../utils/charts.js';
+import { createIncomeAreaChart, createTopProductsChart, observeThemeChanges, getCurrentTheme } from '../utils/charts.js';
 
 $(document).ready(function () {
     const dashboardData = window.DashboardData || {};
@@ -27,6 +27,19 @@ $(document).ready(function () {
 
         if (dailyChart) {
             chartInstances.push(dailyChart);
+        }
+    }
+
+    if (dashboardData.topSellingProducts && dashboardData.topSellingProducts.length > 0) {
+        const topProductsChart = createTopProductsChart({
+            container: '#chart-top-products',
+            labels: dashboardData.topSellingProducts.map(p => p.name),
+            values: dashboardData.topSellingProducts.map(p => p.volume),
+            theme: getCurrentTheme()
+        });
+
+        if (topProductsChart) {
+            chartInstances.push(topProductsChart);
         }
     }
 
