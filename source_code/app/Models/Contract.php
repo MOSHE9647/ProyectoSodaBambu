@@ -62,6 +62,7 @@ class Contract extends Model
         if ($today->gt($this->end_date)) {
             return 'expired';
         }
+
         return 'active';
     }
 

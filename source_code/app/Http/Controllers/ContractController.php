@@ -30,7 +30,7 @@ class ContractController extends Controller
                 });
 
             return DataTables::of($query)
-                ->addColumn('status', fn(Contract $contract) => $contract->status)
+                ->addColumn('status', fn (Contract $contract) => $contract->status)
                 ->toJson();
         }
 
