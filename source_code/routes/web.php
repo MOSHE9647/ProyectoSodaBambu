@@ -4,6 +4,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ContractController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
@@ -36,6 +37,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('clients', ClientController::class)->names('clients');
     Route::resource('supplies', SupplyController::class)->names('supplies');
+    Route::resource('contracts', ContractController::class)->names('contracts');
 
     // Sales routes with role-based access control defined in the controller
     Route::get('sales/sell', [SaleController::class, 'sales'])->name('sales.sell');

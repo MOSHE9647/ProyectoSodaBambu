@@ -48,7 +48,7 @@ class SupplierController extends Controller
      *
      * @throws Throwable
      */
-    public function store(SupplierRequest $request)
+    public function store(SupplierRequest $request): JsonResponse|RedirectResponse
     {
         $supplierData = $request->validated();
 
