@@ -9,11 +9,12 @@
         <table id="contracts-table" class="table table-hover rounded-2">
             <thead>
                 <tr>
-                    <th scope="col">Nombre de la Empresa</th>
-                    <th scope="col">Fecha de Inicio</th>
-                    <th scope="col">Fecha de Finalización</th>
-                    <th scope="col">Porciones por Día</th>
-                    <th scope="col">Precio Acordado</th>
+                    <th scope="col">Empresa</th>
+                    <th scope="col">Inicio</th>
+                    <th scope="col">Fin</th>
+                    <th scope="col">Porciones / Día</th>
+                    <th scope="col">Valor Total</th>
+                    <th scope="col">Estado</th>
                     <th scope="col">Acciones</th>
                 </tr>
             </thead>

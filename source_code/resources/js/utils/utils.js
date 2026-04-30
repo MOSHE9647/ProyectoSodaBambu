@@ -96,7 +96,7 @@ export function escapeHtml(text) {
  * @param {string} dateString - Date in a format parseable by Date.
  * @returns {string} Formatted date or "Fecha inválida".
  */
-export function formatDate(dateString) {
+export function formatDate(dateString, formatOptions = { day: '2-digit', month: 'long', year: 'numeric' }) {
 	// Attempt to parse the date string
 	const date = new Date(dateString);
 
@@ -119,9 +119,7 @@ export function formatDate(dateString) {
 	// Format the date using Intl.DateTimeFormat with the determined timezone
 	const formatter = new Intl.DateTimeFormat("es-CR", {
 		timeZone: timezone,
-		day: "2-digit",
-		month: "long",
-		year: "numeric",
+		...formatOptions
 	});
 
 	const formattedDate = formatter.format(date);

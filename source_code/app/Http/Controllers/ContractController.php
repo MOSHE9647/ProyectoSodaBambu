@@ -14,7 +14,24 @@ class ContractController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            return DataTables::of(Contract::query())->toJson();
+            $today = now()->startOfDay()->toDateString(); // Only compare dates without time
+
+            $query = Contract::query()->withTrashed()
+                ->when($request->filled('status') && $request->status !== 'all', function ($q) use ($request, $today) {
+                    return match ($request->status) {
+                        'inactive' => $q->onlyTrashed(), // Show only soft-deleted contracts
+                        'upcoming' => $q->whereNull('deleted_at')->where('start_date', '>', $today),
+                        'expired' => $q->whereNull('deleted_at')->where('end_date', '<', $today),
+                        'active' => $q->whereNull('deleted_at')
+                            ->where('start_date', '<=', $today)
+                            ->where('end_date', '>=', $today),
+                        default => $q,
+                    };
+                });
+
+            return DataTables::of($query)
+                ->addColumn('status', fn(Contract $contract) => $contract->status)
+                ->toJson();
         }
 
         return view('models.contracts.index');
