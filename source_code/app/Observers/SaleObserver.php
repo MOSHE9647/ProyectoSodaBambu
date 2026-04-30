@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Actions\Products\GetTopSellingProductsAction;
 use App\Actions\Sale\CalculateDailySalesTrendAction;
 use App\Actions\Sale\GetDailySalesDataAction;
 use App\Actions\Sale\GetMonthlySalesDataAction;
@@ -70,6 +71,7 @@ class SaleObserver implements ShouldHandleEventsAfterCommit
         Cache::forget('today_sales_stats');
         Cache::forget('monthly_sales_stats');
         Cache::forget('daily_sales_stats');
+        Cache::forget('top_selling_products');
 
         // Get the latest sales stats and cache them for 10 minutes
         Cache::remember('today_sales_stats', now()->addMinutes(10), function () {
@@ -82,6 +84,10 @@ class SaleObserver implements ShouldHandleEventsAfterCommit
 
         Cache::remember('daily_sales_stats', now()->addMinutes(10), function () {
             return app(GetDailySalesDataAction::class)->execute();
+        });
+
+        Cache::remember('top_selling_products', now()->addMinutes(10), function () {
+            return app(GetTopSellingProductsAction::class)->execute();
         });
     }
 }
