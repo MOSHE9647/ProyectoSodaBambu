@@ -22,6 +22,7 @@ class Contract extends Model
      */
     protected $fillable = [
         'user_id',
+        'client_id',
         'business_name',
         'start_date',
         'end_date',
@@ -75,6 +76,17 @@ class Contract extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Relation: Associated Client.
+     * A contract belongs to a single client.
+     *
+     * @return BelongsTo<Client, Contract>
+     */
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
     }
 
     /**

@@ -1,6 +1,6 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
-import { capitalizeSentence, toggleLoadingState, formatDate } from "../../utils/utils.js";
+import { capitalizeSentence, toggleLoadingState, formatDate, escapeHtml } from "../../utils/utils.js";
 import { get } from 'jquery';
 
 // ==================== Constants ====================
@@ -124,6 +124,7 @@ $(() => {
 			data: "business_name",
 			name: "business_name",
 			// Contract's business name
+            render: (data) => `<span class="fw-bolder">${escapeHtml(data)}</span>`
 		},
 		{
 			data: "start_date",

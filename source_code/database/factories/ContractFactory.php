@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\UserRole;
 use App\Enums\WeekDay;
+use App\Models\Client;
 use App\Models\Contract;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -25,6 +26,7 @@ class ContractFactory extends Factory
 
         return [
             'user_id' => User::factory()->withRole(UserRole::ADMIN), // Create a new user for each contract
+            'client_id' => Client::factory(), // Create a new client for each contract
             'business_name' => $this->faker->company(),
             'start_date' => $startDate->format('Y-m-d'),
             'end_date' => $endDate->format('Y-m-d'),

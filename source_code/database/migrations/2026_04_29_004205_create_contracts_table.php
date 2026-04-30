@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('contracts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained();
+            $table->foreignId('client_id')->constrained();
 
             // Contract details
             $table->string('business_name');
