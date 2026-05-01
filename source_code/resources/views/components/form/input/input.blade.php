@@ -3,6 +3,7 @@
 	'name' => null,
 	'placeholder' => '',
 	'class' => '',
+	'inputSm' => false,
 	'iconLeft' => null,
 	'textIconLeft' => false,
 	'iconRight' => null,
@@ -29,7 +30,7 @@
 		{{ $slot ?? ucwords(str_replace('-', ' ', $name ?? $id)) }}
 	</label>
 
-	<div class="input-group has-validation">
+	<div class="input-group {{ $inputSm ? 'input-group-sm' : '' }} has-validation">
 		{{-- Left Icon --}}
 		@isset($iconLeft)
 		<span class="input-group-text" id="{{ $name ?? $id }}-icon-left">

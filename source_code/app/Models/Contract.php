@@ -32,19 +32,17 @@ class Contract extends Model
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'start_date' => 'date',
-            'end_date' => 'date',
-            'days_to_serve' => 'array', // Transform JSON to array and vice versa
-            'total_value' => 'integer',
-        ];
-    }
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'days_to_serve' => 'array',
+        'portions_per_day' => 'integer',
+        'total_value' => 'integer',
+    ];
 
     /**
      * Accesor for dynamic contract status based on dates and deletion state.

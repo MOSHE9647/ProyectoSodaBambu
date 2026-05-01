@@ -101,6 +101,10 @@
 	/* Anchor Product/Supply Status Links */
 	--anchor-status-link-color: var(--bambu-text);
 	--anchor-status-link-hover-color: var(--bambu-logo-bg);
+
+	/* Accordion */
+	--accordion-bg: #E8F9EF;
+	--accordion-color: #28A745;
 }
 
 /* Dark Theme */
@@ -167,6 +171,10 @@
 	/* Anchor Product/Supply Status Links */
 	--anchor-status-link-color: var(--bambu-text-light);
 	--anchor-status-link-hover-color: var(--bambu-logo-bg);
+
+	/* Accordion */
+	--accordion-bg: #232F28;
+	--accordion-color: #28A745;
 }
 
 /* Smooth Transitions */
@@ -353,6 +361,7 @@ body {
 	box-shadow: var(--bambu-focus-ring-success);
 }
 
+.check-button .btn-check:checked:focus-visible + .btn,
 .radio-button .btn-check:checked:focus-visible + .btn {
 	background: var(--radio-button-bg);
 	border: 1px solid var(--bambu-check-border);
@@ -438,21 +447,38 @@ body {
 }
 
 /* Radio Button */
+
+.check-button .btn,
 .radio-button .btn {
 	--bs-btn-bg: var(--radio-button-unselected-bg);
 	--bs-btn-border-color: var(--radio-button-unselected-border);
 	color: var(--bs-body-color);
 }
 
+.check-button .btn:hover,
 .radio-button .btn:hover {
 	--bs-btn-bg: var(--radio-button-hover-bg-color);
 	--bs-btn-border-color: var(--bambu-check-border);
 	color: var(--bs-body-color) !important;
 }
 
+.check-button .btn-check:focus-visible + .btn,
 .radio-button .btn-check:focus-visible + .btn {
 	border-color: var(--bambu-check-border);
 	box-shadow: var(--bambu-focus-ring-success);
+}
+
+.check-button .btn-check:checked + .btn {
+	background-color: var(--bambu-logo-bg);
+	border-color: var(--bambu-check-border);
+	color: var(--bambu-text-light) !important;
+}
+
+.check-button .btn:not(.active):active,
+.check-button .btn:not(.active):focus:active {
+	--bs-btn-bg: var(--bambu-logo-bg);
+	--bs-btn-border-color: var(--bambu-check-border);
+	color: var(--bambu-text-light) !important;
 }
 
 .radio-button .btn-check:checked + .btn {
@@ -461,10 +487,36 @@ body {
 	color: var(--bs-body-color) !important;
 }
 
+.check-button .btn-check:checked + .btn:hover {
+	background-color: var(--bambu-logo-bg);
+	border-color: var(--bambu-check-border);
+	color: var(--bs-body-color);
+}
+
 .radio-button .btn-check:checked + .btn:hover {
 	background-color: var(--radio-button-hover-bg-color);
 	border-color: var(--bambu-check-border);
 	color: var(--bs-body-color);
+}
+
+/* Accordion */
+.accordion-bambu .accordion-button {
+	background-color: transparent !important;
+	box-shadow: none !important;
+}
+
+/* Ligero brillo de fondo cuando el acordeón está abierto */
+.accordion-bambu .accordion-button:not(.collapsed) {
+	color: var(--accordion-color) !important;
+	background-color: var(--accordion-bg) !important;
+}
+
+.accordion-bambu .accordion-button::after {
+	filter: invert(65%) sepia(51%) saturate(489%) hue-rotate(94deg) brightness(96%) contrast(89%);
+}
+
+.accordion-bambu .accordion-body strong {
+	color: var(--accordion-color) !important;
 }
 
 /* SweetAlert2 */

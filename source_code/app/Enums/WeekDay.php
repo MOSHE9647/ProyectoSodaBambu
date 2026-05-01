@@ -37,4 +37,20 @@ enum WeekDay: string
             self::SUNDAY => 'Domingo',
         };
     }
+
+    /**
+     * Short label for showing the Week Day name in compact spaces
+     */
+    public function shortLabel(): string
+    {
+        return match ($this) {
+            self::MONDAY => 'Lun',
+            self::TUESDAY => 'Mar',
+            self::WEDNESDAY => 'Mié',
+            self::THURSDAY => 'Jue',
+            self::FRIDAY => 'Vie',
+            self::SATURDAY => 'Sáb',
+            self::SUNDAY => 'Dom',
+        };
+    }
 }

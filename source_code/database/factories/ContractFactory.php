@@ -30,10 +30,10 @@ class ContractFactory extends Factory
             'business_name' => $this->faker->company(),
             'start_date' => $startDate->format('Y-m-d'),
             'end_date' => $endDate->format('Y-m-d'),
-            'days_to_serve' => json_encode($this->faker->randomElements(
+            'days_to_serve' => $this->faker->randomElements(
                 WeekDay::names(),
                 rand(1, 7)
-            )),
+            ),
             'portions_per_day' => $this->faker->numberBetween(1, 100),
             'total_value' => $this->faker->randomFloat(0, 1000, 10000),
         ];

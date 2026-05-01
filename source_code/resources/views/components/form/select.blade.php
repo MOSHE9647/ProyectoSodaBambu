@@ -2,9 +2,11 @@
 	'id' => '',
 	'name' => null,
 	'class' => '',
+	'inputSm' => false,
 	'iconLeft' => null,
 	'textIconLeft' => false,
 	'iconRight' => null,
+	'buttonIconRight' => null,
 	'textIconRight' => false,
 	'selectClass' => '',
 	'labelClass' => '',
@@ -22,7 +24,7 @@
 		{{ $slot ?? ucwords(str_replace('-', ' ', $name ?? $id)) }}
 	</label>
 
-	<div class="input-group has-validation">
+	<div class="input-group {{ $inputSm ? 'input-group-sm' : '' }} has-validation">
 		{{-- Left Icon --}}
 		@isset($iconLeft)
 			<span class="input-group-text" id="{{ $name ?? $id }}-icon-left">
@@ -52,16 +54,20 @@
 		{{-- Right Icon --}}
 		@isset($iconRight)
 			<span class="input-group-text">
-			@if($textIconRight)
+				@if($textIconRight)
 					{!! $iconRight !!}
 				@else
 					<i class="{{ $iconRight }}"></i>
 				@endif
-		</span>
+			</span>
+		@endisset
+
+		@isset($buttonIconRight)
+			{!! $buttonIconRight !!}
 		@endisset
 
 		{{-- Error Message --}}
-		<div id="{{ $id ?? $name }}-error" class="invalid-feedback ps-4 ms-4" role="alert">
+		<div id="{{ $id ?? $name }}-error" class="invalid-feedback {{ $iconLeft ? 'ps-4 ms-4' : 'ps-2' }}" role="alert">
 			<strong>{{ $errorMessage ?? 'Error no especificado' }}</strong>
 		</div>
 	</div>
