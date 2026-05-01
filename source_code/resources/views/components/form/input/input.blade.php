@@ -3,13 +3,17 @@
 	'name' => null,
 	'placeholder' => '',
 	'class' => '',
+	'style' => '',
 	'inputSm' => false,
 	'iconLeft' => null,
 	'textIconLeft' => false,
 	'iconRight' => null,
 	'textIconRight' => false,
+	'buttonIconRight' => null,
 	'inputClass' => '',
+	'inputStyle' => '',
 	'labelClass' => '',
+	'attributes' => '',
 	'type' => null,
 	'value' => null,
 	'step' => null,
@@ -24,7 +28,7 @@
 	'errorMessage' => null,
 ])
 
-<div class="{{ $class }}">
+<div class="{{ $class }}" style="{{ $style }}">
 	{{-- Label --}}
 	<label for="{{ $id }}" class="form-label {{ $labelClass }}">
 		{{ $slot ?? ucwords(str_replace('-', ' ', $name ?? $id)) }}
@@ -48,6 +52,7 @@
 			name="{{ $name ?? $id }}"
 			type="{{ $type ?? 'text' }}"
 			class="form-control {{ $inputClass }}"
+			style="{{ $inputStyle }}"
 			placeholder="{{ $placeholder }}"
 			aria-describedby="{{ isset($iconLeft) ? ($name ?? $id).'-icon-left' : '' }} {{ $name ?? $id }}-error"
 			@isset($value) value="{{ $value }}" @endisset
@@ -60,6 +65,7 @@
 			{{ $disabled ? 'disabled' : '' }}
 			{{ $autocomplete ? "autocomplete=$autocomplete" : '' }}
 			{{ $autofocus ? 'autofocus' : '' }}
+			{{ $attributes }}
 		>
 
 		{{-- Right Icon --}}
@@ -71,6 +77,11 @@
 					<i class="{{ $iconRight }}"></i>
 				@endif
 			</span>
+		@endisset
+
+		{{-- Right Button --}}
+		@isset($buttonIconRight)
+		{!! $buttonIconRight !!}
 		@endisset
 
 		{{-- Error Message --}}

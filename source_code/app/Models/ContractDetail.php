@@ -37,6 +37,18 @@ class ContractDetail extends Model
     ];
 
     /**
+     * Get the number of contract details for the same contract and meal time.
+     *
+     * @return int
+     */
+    public function getMealTimeCountAttribute(): int
+    {
+        return self::where('contract_id', $this->contract_id)
+            ->where('meal_time', $this->meal_time)
+            ->count();
+    }
+
+    /**
      * Relation: Contract.
      * A contract detail belongs to a single contract.
      *

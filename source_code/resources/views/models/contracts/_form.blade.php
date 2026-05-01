@@ -8,6 +8,7 @@
 
     $formId = isset($contract) ? 'edit-contract-form' : 'create-contract-form';
     $actionUrl = isset($contract) ? route('contracts.update', $contract) : route('contracts.store');
+
     $paymentStatuses = [PaymentStatus::PENDING, PaymentStatus::PAID];
     $weekDays = WeekDay::cases();
     $mealTimes = MealTime::cases();
@@ -23,7 +24,7 @@
         @method('PUT')
     @endif
 
-    <div class="row g-4 align-items-start">
+    <div class="row g-3 align-items-start">
 
         {{-- Left Column --}}
         <section class="col-lg-8">
@@ -139,9 +140,18 @@
                             :value="old('portions_per_day', $contract?->portions_per_day ?? 1)"
                             :errorMessage="$errors->first('portions_per_day') ?? ''"
                             :iconLeft="'bi bi-people'"
+                            :textIconRight="true"
                             :required="true"
                         >
                             Porciones por Día <span class="text-danger">*</span>
+
+                            <x-slot:iconRight>
+                                <i 
+                                    class="bi bi-question-circle"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-title="Número de porciones que se servirán cada día. Esto ayuda a calcular el valor total del contrato basado en los detalles agregados."
+                                ></i>
+                            </x-slot:iconRight>
                         </x-form.input>
                     </div>
 
@@ -223,6 +233,17 @@
                             </x-slot:iconLeft>
 
                             Valor Total del Contrato <span class="text-danger">*</span>
+
+                            <x-slot:buttonIconRight>
+                                <button id="calculate-contract-value-btn" type="button" class="btn btn-sm btn-outline-primary rounded-end-2" data-bs-toggle="tooltip" title="Calcular automáticamente basado en los detalles agregados">
+                                    <div class="calculate-contract-value-spinner d-none mx-2">
+                                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                                    </div>
+                                    <div class="calculate-contract-value-button-text d-flex align-items-center gap-1">
+                                        <i class="bi bi-calculator mx-1"></i>
+                                    </div>
+                                </button>
+                            </x-slot:buttonIconRight>
                         </x-form.input>
                     </div>
                 </div>
@@ -244,12 +265,13 @@
                         </small>
                     </div>
 
+                    {{-- Added Items Badge & Add Row Button --}}
                     <div class="d-flex flex-column justify-content-between align-items-end gap-2">
                         <span class="badge border rounded-pill text-info-emphasis bg-info-subtle px-3 ms-2">
                             <span id="added-items-badge">{{ $contract?->details?->count() ?? 0 }}</span> item/s
                         </span>
 
-                        <button id="btn-add-row" class="btn btn-sm btn-outline-primary rounded-2" type="button">
+                        <button id="btn-add-row" class="btn btn-sm btn-outline-primary rounded-2" type="button" data-bs-toggle="tooltip" data-bs-title="Agregar nuevo detalle al contrato">
                             <i class="bi bi-plus-lg me-1"></i>
                             Agregar fila
                         </button>
@@ -274,6 +296,7 @@
                                     @php $productPrice = 0; @endphp
                                     <tr>
                                         <td>
+                                            {{-- Product Selection --}}
                                             <x-form.select
                                                 :name="'product_id'"
                                                 :class="'border-secondary w-auto text-start'"
@@ -299,6 +322,7 @@
                                             </x-form.select>
                                         </td>
                                         <td>
+                                            {{-- Meal Time Selection --}}
                                             <x-form.select
                                                 :name="'meal_time'"
                                                 :class="'border-secondary w-auto text-start'"
@@ -319,6 +343,7 @@
                                             </x-form.select>
                                         </td>
                                         <td>
+                                            {{-- Serve Date --}}
                                             <x-form.input 
                                                 :name="'serve_date'"
                                                 :type="'date'" 
@@ -332,6 +357,7 @@
                                             />
                                         </td>
                                         <td>
+                                            {{-- Unit Price --}}
                                             <x-form.input 
                                                 :name="'unit_price'"
                                                 :type="'number'"
@@ -354,7 +380,8 @@
                                             </x-form.input>
                                         </td>
                                         <td>
-                                            <button type="button" class="action-btn btn btn-sm btn-outline-danger rounded-2">
+                                            {{-- Delete Button --}}
+                                            <button type="button" class="action-btn btn btn-sm btn-outline-danger rounded-2" data-bs-toggle="tooltip" data-bs-title="Eliminar este detalle del contrato">
                                                 <i class="bi bi-trash3 pointer-events-none"></i>
                                             </button>
                                         </td>
@@ -397,6 +424,154 @@
 
         {{-- Right Column --}}
         <section class="col-lg-4">
+
+            <div id="contract-summary" class="card-container justify-content-start rounded-2 p-4">
+                {{-- Contract Summary Header --}}
+                <div class="d-flex justify-content-between align-items-center gap-2 pb-3 mb-3 border-bottom border-secondary">
+                    <div class="d-flex flex-column">
+                        <span class="d-flex align-items-center gap-3 fs-5 fw-bold">
+                            <i class="bi bi-clipboard-data"></i>
+                            Resúmen del Contrato
+                        </span>
+                        <small class="text-muted d-block">
+                            Resúmen de la información del contrato antes de guardar.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column gap-3">
+                    {{-- Contract Value --}}
+                    <div class="bg-success-subtle border border-success rounded-2 text-success" style="padding: .85rem 1rem;">
+                        <span class="text-uppercase fw-semibold" style="font-size: .72rem; letter-spacing: 0.06em;">
+                            Valor del Contrato
+                        </span>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <x-icons.colon-icon width="14" height="14" />
+                            <span id="contract-summary-value" class="fs-4 fw-semibold lh-sm">
+                                {{ isset($contract) ? number_format($contract->total_value, 0, ',', ' ') : 0 }}
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Active Days & Portions/day --}}
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="bg-success-subtle border border-success rounded-2 text-success" style="padding: .85rem 1rem;">
+                                <span class="text-uppercase fw-semibold" style="font-size: .72rem; letter-spacing: 0.06em;">
+                                    Días Activos
+                                </span>
+                                <div class="d-flex align-items-center gap-2 mt-1">
+                                    <span id="contract-summary-days" class="fs-5 fw-semibold lh-sm text">
+                                        {{ isset($contract) ? count($contract->days_to_serve) . ' días' : '—' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-success-subtle border border-success rounded-2 text-success" style="padding: .85rem 1rem;">
+                                <span class="text-uppercase fw-semibold" style="font-size: .72rem; letter-spacing: 0.06em;">
+                                    Porciones/Día
+                                </span>
+                                <div class="d-flex align-items-center gap-2 mt-1">
+                                    <span id="contract-summary-portions" class="fs-5 fw-semibold lh-sm">
+                                        {{ isset($contract) ? $contract->portions_per_day : '—' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Selected Client --}}
+                    <div>
+                        <p class="fw-semibold text-uppercase text-muted mb-2" style="font-size: .7rem; letter-spacing: .08em;">Cliente</p>
+                        <div class="d-flex align-items-center gap-2" style="font-size: .85rem;">
+                            <i class="bi bi-person text-muted"></i>
+                            @isset($contract->client)
+                                <span id="contract-summary-client" style="color: var(--bambu-logo-bg);">
+                                    {{ $contract->client->full_name }}
+                                </span>
+                            @else
+                                <span id="contract-summary-client">No seleccionado</span>
+                            @endisset
+                        </div>
+                    </div>
+
+                    {{-- Contract Period --}}
+                    <div>
+                        <p class="fw-semibold text-uppercase text-muted mb-2" style="font-size: .7rem; letter-spacing: .08em;">Per&iacute;odo</p>
+                        <div class="d-flex align-items-center gap-2" style="font-size: .85rem;">
+                            <i class="bi bi-calendar-range text-muted"></i>
+                            <span id="contract-summary-period" @isset($contract->period) class="text-muted" @endif>
+                                {{ isset($contract) ? $contract->period : 'No definido' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <hr class="my-1">
+
+                    {{-- Loaded Details --}}
+                    <div>
+                        <p class="fw-semibold text-uppercase text-muted mb-2" style="font-size: .7rem; letter-spacing: .08em;">Detalles Cargados</p>
+                        <div id="contract-summary-meals" class="d-flex flex-column gap-1">
+                            @if($contract?->details?->isNotEmpty())
+                                @foreach ($contract->details as $detail)
+                                    @php
+                                        $color = match ($detail->meal_time) {
+                                            MealTime::BREAKFAST => 'warning',
+                                            MealTime::LUNCH => 'success',
+                                            MealTime::DINNER => 'info',
+                                            default => 'secondary',
+                                        };
+                                    @endphp
+
+                                    <div class="d-flex justify-content-between align-items-center" style="font-size: .82rem;">
+                                        <span class="badge border rounded-pill text-{{ $color }}-emphasis bg-{{ $color }}-subtle px-3 py-2" style="font-size: .72rem;">
+                                            {{ $detail->meal_time ? MealTime::from($detail->meal_time->value)->label() : '—' }}
+                                        </span>
+                                        <span class="text-muted">{{ $detail->meal_time_count }} fila</span>
+                                    </div>
+                                @endforeach
+                            @else
+                                <span class="text-muted" style="font-size: .82rem;">Sin detalles aún.</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <hr class="my-1">
+
+                    {{-- Progress --}}
+                    <div>
+                        <div class="d-flex justify-content-between mb-1" style="font-size: .8rem;">
+                            <span class="text-muted">Completitud del formulario</span>
+                            <span id="contract-progress" class="fw-medium" style="color: var(--bambu-logo-bg);">0%</span>
+                        </div>
+                        <div class="progress rounded-3" style="height: 6px;">
+                            <div class="progress-bar rounded-3" id="contract-progress-bar" role="progressbar" style="width: 0%; background: var(--bambu-logo-bg);" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    {{-- Actions --}}
+                    <div class="d-grid gap-2 mt-1">
+                        {{-- Save Button --}}
+                        <x-form.button 
+                            :id="$formId . '-button'" 
+                            :class="'btn-primary px-4'" 
+                            :spinnerId="$formId . '-spinner'" 
+                            :loadingMessage="isset($contract) ? 'Actualizando...' : 'Guardando...'"
+                        >
+                            <div id="{{ $formId . '-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
+                                <i class="bi bi-check-circle me-2"></i>
+                                {{ isset($contract) ? 'Actualizar' : 'Guardar' }}
+                            </div>
+                        </x-form.button>
+
+                        {{-- Cancel Button --}}
+                        <a href="{{ route('contracts.index') }}" class="btn btn-outline-danger px-4">
+                            Cancelar
+                        </a>
+                    </div>
+                </div>
+            </div>
 
         </section>
     </div>
