@@ -7,7 +7,3 @@
         'products' => $products,
     ])
 @endsection
-
-@section('scripts')
-    {{-- @vite(['resources/js/models/contracts/form.js']) --}}
-@endsection

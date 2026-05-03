@@ -7,6 +7,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OffcanvasFormController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReportsController;
@@ -63,5 +64,8 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
         Route::post('/{cashRegister}/close', [CashRegisterController::class, 'close'])->name('close');
         Route::post('/', [CashRegisterController::class, 'store'])->name('store');
     });
+
+    // Shared offcanvas form endpoint used by purchases, contracts, and other modules.
+    Route::get('/offcanvas-form/{type}', OffcanvasFormController::class)->name('offcanvas-form');
 
 });
