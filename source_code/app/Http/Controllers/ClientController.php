@@ -50,11 +50,11 @@ class ClientController extends Controller
      *
      * Se eliminó DB::transaction, ya que solo se realiza una acción (crear).
      *
-     * @return RedirectResponse
+     * @return JsonResponse|RedirectResponse
      *
      * @throws Throwable
      */
-    public function store(ClientRequest $request)
+    public function store(ClientRequest $request): JsonResponse|RedirectResponse
     {
         $clientData = $request->validated();
         $client = Client::withTrashed()->where('email', $clientData['email'])->first();
@@ -65,7 +65,15 @@ class ClientController extends Controller
             $client->update($clientData);
             $message = 'Cliente restaurado y actualizado correctamente.';
         } else {
-            Client::create($clientData);
+            $client = Client::create($clientData);
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'client' => ['id' => $client->id, 'name' => $client->full_name],
+            ]);
         }
 
         return redirect()->route('clients.index')->with('success', $message);

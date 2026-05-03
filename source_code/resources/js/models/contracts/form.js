@@ -65,10 +65,7 @@ const rules = {
 
 const baseFieldValidators = {
     client_id: {
-        validate: (v) => 
-            rules.isNum(v) && 
-            rules.isValidId(parseInt(v)) && 
-            CONTRACTS_DATA.clients.some(client => client.id === parseInt(v)),
+        validate: (v) => rules.isNum(v) && rules.isValidId(parseInt(v)),
         message: "Debe seleccionar un cliente válido."
     },
     business_name: {
