@@ -73,7 +73,7 @@ class Contract extends Model
     public function getPeriodAttribute(): string
     {
         if ($this->start_date && $this->end_date) {
-            return $this->start_date->locale('es')->format('d M Y') . ' - ' . $this->end_date->locale('es')->format('d M Y');
+            return $this->start_date->locale('es')->format('d M Y').' - '.$this->end_date->locale('es')->format('d M Y');
         }
 
         return 'No definido';

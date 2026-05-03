@@ -38,8 +38,6 @@ class ContractDetail extends Model
 
     /**
      * Get the number of contract details for the same contract and meal time.
-     *
-     * @return int
      */
     public function getMealTimeCountAttribute(): int
     {
