@@ -26,7 +26,7 @@ const getFormFields = () => {
 		business_name: $("#business_name").val(),
 		start_date: $("#start_date").val(),
 		end_date: $("#end_date").val(),
-		days_to_serve: $('#days-to-serve input[type="checkbox"]:checked').map((_, el) => el.value).get(),
+		days_to_serve: $('#days_to_serve input[type="checkbox"]:checked').map((_, el) => el.value).get(),
 		portions_per_day: parseInt($("#portions_per_day").val()),
 		total_value: parseInt($("#total_value").val()),
 	};
@@ -47,20 +47,48 @@ const getFormFields = () => {
 	return CONTRACT;
 };
 
+const getFormElements = () => {
+    return {
+		client_id: $("#client_id"),
+		business_name: $("#business_name"),
+		start_date: $("#start_date"),
+		end_date: $("#end_date"),
+		days_to_serve: $('#days_to_serve input[type="checkbox"]'),
+		portions_per_day: $("#portions_per_day"),
+		total_value: $("#total_value"),
+		contract_details_table: $("#contract-details-table"),
+	};
+};
+
 // ==================== Validation Helpers ====================
 
+// Converts a "YYYY-MM-DD" string into a local date at 00:00:00
+const getLocalMidnight = (dateString) => {
+    if (!dateString) return new Date("Invalid");
+    // Separate the string to prevent JS from treating it as UTC
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
+};
+
+// Get today's date at local midnight (00:00:00)
+const getTodayMidnight = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+};
+
 const rules = {
-    isNum: (v) => v !== "" && !isNaN(v) && v !== null,
-    isString: (v) => typeof v === "string" && v.trim().length > 0,
-    isNotEmpty: (v) => v !== "" && v !== null,
-    isInList: (v, list, key = 'value') => list.some(item => String(item[key]) === String(v)),
-    isValidId: (v) => Number.isInteger(v) && v > 0,
-    isValidDate: (v) => !isNaN(Date.parse(v)),
-    isTodayOrFutureDate: (v) => new Date(v) >= new Date(),
-    isFutureDate: (v) => new Date(v) > new Date(),
-    isValidDay: (v) => WEEK_DAYS.some(day => day.value === v),
-    isValidMealTime: (v) => MEAL_TIMES.some(meal => meal.value === v),
-    hasAtLeastOneDay: (days) => Array.isArray(days) && days.length > 0,
+	isNum: (v) => v !== "" && !isNaN(v) && v !== null,
+	isString: (v) => typeof v === "string" && v.trim().length > 0,
+	isNotEmpty: (v) => v !== "" && v !== null,
+	isInList: (v, list, key = "value") => list.some((item) => String(item[key]) === String(v)),
+	isValidId: (v) => Number.isInteger(v) && v > 0,
+	isValidDate: (v) => !isNaN(Date.parse(v)),
+	isTodayOrFutureDate: (v) => getLocalMidnight(v) >= getTodayMidnight(),
+	isFutureDate: (v) => getLocalMidnight(v) > getTodayMidnight(),
+	isValidDay: (v) => WEEK_DAYS.some((day) => day.value === v),
+	isValidMealTime: (v) => MEAL_TIMES.some((meal) => meal.value === v),
+	hasAtLeastOneDay: (days) => Array.isArray(days) && days.length > 0,
 };
 
 const baseFieldValidators = {
@@ -77,7 +105,7 @@ const baseFieldValidators = {
         message: "La fecha de inicio debe ser una fecha válida y no puede ser en el pasado."
     },
     end_date: {
-        validate: (v, data) => rules.isValidDate(v) && rules.isFutureDate(v) && new Date(v) > new Date(data.start_date),
+        validate: (v, data) => rules.isValidDate(v) && rules.isFutureDate(v) && getLocalMidnight(v) > getLocalMidnight(data.start_date),
         message: "La fecha de fin debe ser una fecha válida, en el futuro y posterior a la fecha de inicio."
     },
     days_to_serve: {
@@ -104,14 +132,17 @@ const baseFieldValidators = {
 
 const contractDetailValidators = {
 	id: {
-		validate: (v) => (rules.isNum(v) && rules.isValidId(parseInt(v))) || v === null,
+		validate: (v) =>
+			(rules.isNum(v) && rules.isValidId(parseInt(v))) || v === null,
 		message: "ID de detalle de contrato no válido.",
 	},
 	product_id: {
 		validate: (v) =>
 			rules.isNum(v) &&
 			rules.isValidId(parseInt(v)) &&
-			CONTRACTS_DATA.products.some((product) => product.id === parseInt(v)),
+			CONTRACTS_DATA.products.some(
+				(product) => product.id === parseInt(v),
+			),
 		message: "Seleccione un producto válido.",
 	},
 	meal_time: {
@@ -122,7 +153,7 @@ const contractDetailValidators = {
 		validate: (v, data) =>
 			rules.isValidDate(v) &&
 			rules.isTodayOrFutureDate(v) &&
-			new Date(v) <= new Date(data.end_date),
+			getLocalMidnight(v) <= getLocalMidnight(data.end_date),
 		message:
 			"Fecha de servicio no válida. Debe ser una fecha válida, no puede ser en el pasado y debe estar dentro del rango del contrato.",
 	},
@@ -142,8 +173,6 @@ const paymentDetailValidators = {
         message: "El número de referencia debe tener entre 4 y 12 caracteres."
     }
 };
-
-// ==================== Validation Helpers ====================
 
 function getActiveFieldValidators() {
     const contractValidators = { ...baseFieldValidators };
@@ -263,6 +292,7 @@ function bindRealTimeValidation() {
 						.map((_, el) => el.value)
 						.get();
 					validateContractField(fieldId, selectedDays);
+                    updateSummary.progressBar(); // Update progress bar on days change
 				});
 			return;
 		}
@@ -271,11 +301,191 @@ function bindRealTimeValidation() {
 		$(`#${fieldId}`)
 			.on("change input focusout", function () {
 				validateContractField(fieldId, $(this).val());
+                updateSummary.progressBar(); // Update progress bar on field change
 			});
 	});
 }
 
+// ===================== Summary Updaters =====================
+
+// Helper extraído fuera de los eventos para no recrearlo en cada pulsación
+const formatLaravelDate = (dateValue) => {
+    if (!dateValue) return "";
+    // Ensure that the date is treated as local by appending a time component if it's not already present
+    const date = new Date(dateValue.includes('T') ? dateValue : `${dateValue}T00:00:00`);
+    const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${day} ${months[date.getMonth()]} ${date.getFullYear()}`;
+};
+
+const updateSummary = {
+	client: ($el) => {
+		const selectedOption = $el.find("option:selected");
+		const clientName =
+			selectedOption.val() !== "-1"
+				? selectedOption.text()
+				: "No seleccionado";
+		const $summary = $("#contract-summary-client");
+
+		if ($summary.length) {
+			$summary
+				.text(clientName)
+				.css(
+					"color",
+					clientName === "No seleccionado"
+						? "inherit"
+						: "var(--bambu-logo-bg)",
+				);
+		}
+	},
+	portions: ($el) => {
+		const value = $el.val();
+		const isValid = baseFieldValidators.portions_per_day.validate(value);
+		$("#contract-summary-portions").text(isValid ? value : "—");
+	},
+	totalValue: ($el) => {
+		const value = $el.val();
+		const isValid = baseFieldValidators.total_value.validate(value);
+		const formattedValue = isValid
+			? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+			: "0";
+		$("#contract-summary-value").text(formattedValue);
+	},
+	period: () => {
+		const start = $("#start_date").val();
+		const end = $("#end_date").val();
+		const isStartValid = baseFieldValidators.start_date.validate(start);
+		const isEndValid = baseFieldValidators.end_date.validate(end, {
+			start_date: start,
+		});
+
+		const $summary = $("#contract-summary-period");
+		if ($summary.length) {
+			$summary.text(
+				isStartValid && isEndValid
+					? `${formatLaravelDate(start)} - ${formatLaravelDate(end)}`
+					: "No definido",
+			);
+		}
+	},
+	daysToServe: () => {
+		const count = $('#days_to_serve input[type="checkbox"]:checked').length;
+		const $summary = $("#contract-summary-days");
+
+		if ($summary.length) {
+			if (count === 0) {
+				$summary.text("—");
+			} else if (count === 1) {
+				$summary.text(`${count} día`);
+			} else {
+				$summary.text(`${count} días`);
+			}
+		}
+	},
+	progressBar: () => {
+		const values = getFormFields();
+
+        // Defines which fields are mandatory for the 100% progress 
+        // (excluding details because they are dynamic)
+		const fieldsToTrack = [
+			"client_id",
+			"business_name",
+			"start_date",
+			"end_date",
+			"days_to_serve",
+			"portions_per_day",
+			"total_value",
+		];
+
+		let validCount = 0;
+
+		// Evaluates each field against its validator and counts how many are valid
+		fieldsToTrack.forEach((fieldId) => {
+			const validator = baseFieldValidators[fieldId];
+			if (validator && validator.validate(values[fieldId], values)) {
+				validCount++;
+			}
+		});
+
+		// Calcs the percentage of completion based on valid fields
+		const percentage = Math.round(
+			(validCount / fieldsToTrack.length) * 100,
+		);
+
+		// Updates the progress bar's width and aria-valuenow
+		const $bar = $("#contract-progress-bar");
+		if ($bar.length) {
+			$bar.css("width", `${percentage}%`).attr(
+				"aria-valuenow",
+				percentage,
+			);
+
+            const $progressIndicator = $("#contract-progress");
+            if ($progressIndicator.length) {
+                $progressIndicator.text(`${percentage}%`);
+            }
+
+			// Change the color of the progress bar based on completion percentage
+			$bar.removeClass("bg-danger bg-warning");
+
+			if (percentage < 40) {
+				$bar.addClass("bg-danger"); // Red for less than 40%
+			} else if (percentage < 100) {
+				$bar.addClass("bg-warning"); // Yellow for 40% to 99%
+			} else {
+				$bar.css("background", "var(--bambu-logo-bg)"); // Green for 100%
+			}
+		}
+	},
+};
+
+// ===================== Event Listeners ======================
+
+const bindEventListeners = () => {
+    const elements = getFormElements();
+
+    // Client Selection Event
+    elements.client_id
+        .off("change")
+        .on("change", function () { updateSummary.client($(this)); })
+        .trigger("change");
+
+    // Portions per day and Total value events
+    elements.portions_per_day
+        .off("input")
+        .on("input", function () { updateSummary.portions($(this)); })
+        .trigger("input");
+
+    elements.total_value
+        .off("input")
+        .on("input", function () { updateSummary.totalValue($(this)); })
+        .trigger("input");
+
+    // Contract Period Events (Start and End Dates)
+    const handleDatesChange = () => updateSummary.period();
+    elements.start_date.off("change").on("change", handleDatesChange).trigger("change");
+    elements.end_date.off("change").on("change", handleDatesChange).trigger("change");
+
+    // Days to Serve Event
+    elements.days_to_serve
+        .off("change")
+        .on("change", function () { updateSummary.daysToServe(); });
+    
+    // Triggers initial update in case there are pre-selected days (e.g., when editing)
+    updateSummary.daysToServe();
+
+    // Deselect All Days Button
+    $("#deselect-all-days")
+        .off("click")
+        .on("click", function () {
+            // Deselects all checkboxes and triggers change to update validation and summary
+            elements.days_to_serve.prop("checked", false).trigger("change");
+        });
+};
+
 $(() => {
+    bindEventListeners();
     bindRealTimeValidation();
     bindOffcanvasEvents("create-offcanvas");
+    updateSummary.progressBar(); // Initial progress bar update on page load
 });
