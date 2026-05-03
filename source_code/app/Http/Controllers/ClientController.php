@@ -50,7 +50,6 @@ class ClientController extends Controller
      *
      * Se eliminó DB::transaction, ya que solo se realiza una acción (crear).
      *
-     * @return JsonResponse|RedirectResponse
      *
      * @throws Throwable
      */
