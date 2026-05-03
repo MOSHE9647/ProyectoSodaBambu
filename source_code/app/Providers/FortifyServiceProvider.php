@@ -70,6 +70,10 @@ class FortifyServiceProvider extends ServiceProvider
 
         // Configure rate limiting for login and two-factor authentication attempts.
         RateLimiter::for('login', function (Request $request) {
+            if (app()->environment('local', 'testing')) {
+                return Limit::none();
+            }
+
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
             return Limit::perMinute(5)->by($throttleKey);

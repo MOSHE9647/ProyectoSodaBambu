@@ -1,17 +1,21 @@
 @php
     use App\Enums\MealTime;
+    use App\Enums\PaymentMethod;
     use App\Enums\PaymentStatus;
     use App\Enums\WeekDay;
 
-    $pageTitle = isset($contract) ? 'Editar Contrato' : 'Nuevo Contrato';
-    $pageSubtitle = isset($contract) ? 'Modifica la información del contrato existente' : 'Registra un nuevo contrato con un cliente';
+    $isEditing = isset($contract);
 
-    $formId = isset($contract) ? 'edit-contract-form' : 'create-contract-form';
-    $actionUrl = isset($contract) ? route('contracts.update', $contract) : route('contracts.store');
+    $pageTitle = $isEditing ? 'Editar Contrato' : 'Nuevo Contrato';
+    $pageSubtitle = $isEditing ? 'Modifica la información del contrato existente' : 'Registra un nuevo contrato con un cliente';
+
+    $formId = $isEditing ? 'edit-contract-form' : 'create-contract-form';
+    $actionUrl = $isEditing ? route('contracts.update', $contract) : route('contracts.store');
 
     $paymentStatuses = [PaymentStatus::PENDING, PaymentStatus::PAID];
-    $weekDays = WeekDay::cases();
+    $paymentMethods = PaymentMethod::cases();
     $mealTimes = MealTime::cases();
+    $weekDays = WeekDay::cases();
 @endphp
 
 <x-header title="{{ $pageTitle }}" subtitle="{{ $pageSubtitle }}" />
@@ -20,7 +24,7 @@
 
     @csrf
 
-    @if(isset($contract))
+    @if($isEditing)
         @method('PUT')
     @endif
 
@@ -163,7 +167,7 @@
                             :class="'border-secondary w-auto'"
                             :min="Carbon\Carbon::now()->timezone('America/Costa_Rica')->format('Y-m-d')"
                             :inputClass="$errors->has('start_date') ? 'is-invalid' : ''"
-                            :value="old('start_date', isset($contract) ? $contract->start_date->format('Y-m-d') : '')"
+                            :value="old('start_date', $isEditing ? $contract->start_date->format('Y-m-d') : '')"
                             :errorMessage="$errors->first('start_date') ?? ''"
                             :iconLeft="'bi bi-calendar-check'"
                             :required="true"
@@ -179,7 +183,7 @@
                             :type="'date'" 
                             :class="'border-secondary w-auto'"
                             :inputClass="$errors->has('end_date') ? 'is-invalid' : ''"
-                            :value="old('end_date', isset($contract) ? $contract->end_date->format('Y-m-d') : '')"
+                            :value="old('end_date', $isEditing ? $contract->end_date->format('Y-m-d') : '')"
                             :errorMessage="$errors->first('end_date') ?? ''"
                             :iconLeft="'bi bi-calendar-x'"
                             :required="true"
@@ -191,23 +195,43 @@
                     {{-- Days to Serve --}}
                     <div class="col-md-12">
                         <label class="form-label">Días de servicio</label>
-                        <div id="days-to-serve" class="check-button d-flex flex-wrap gap-2 mb-2">
-                            @foreach ($weekDays as $day)
-                                <input
-                                    id="day-{{ $day->value }}"
-                                    name="days_to_serve[]"
-                                    type="checkbox"
-                                    class="btn btn-check"
-                                    autocomplete="off"
-                                    value="{{ $day->value }}"
-                                    {{ in_array($day->value, old('days_to_serve', $contract?->days_to_serve ?? [])) ? 'checked' : '' }}
-                                >
-                                <label class="d-flex justify-content-between align-items-center btn btn-outline-secondary text-muted btn-sm" for="day-{{ $day->value }}">
-                                    <i class="bi bi-calendar3 me-2"></i>
-                                    {{ $day->shortLabel() }}
-                                </label>
-                            @endforeach
+                        <div class="d-flex justify-content-start align-items-baseline gap-2 flex-wrap">
+                            {{-- Days to Serve Checkboxes --}}
+                            <div id="days_to_serve" class="check-button d-flex flex-wrap gap-2 ps-0 mb-2 {{ $errors->has('days_to_serve') ? 'is-invalid' : '' }}">
+                                @foreach ($weekDays as $day)
+                                    <input
+                                        id="day-{{ $day->value }}"
+                                        name="days_to_serve[]"
+                                        type="checkbox"
+                                        class="btn btn-check"
+                                        autocomplete="off"
+                                        value="{{ $day->value }}"
+                                        {{ in_array($day->value, old('days_to_serve', $contract?->days_to_serve ?? [])) ? 'checked' : '' }}
+                                    >
+                                    <label class="d-flex justify-content-between align-items-center btn btn-outline-secondary text-muted btn-sm" for="day-{{ $day->value }}">
+                                        <i class="bi bi-calendar3 me-2"></i>
+                                        {{ $day->shortLabel() }}
+                                    </label>
+                                @endforeach
+                            </div>
+                            
+                            {{-- Deselect All Days --}}
+                            <button type="button" id="deselect-all-days" class="btn btn-outline-danger btn-sm rounded-2" style="padding: 0.375rem 0.75rem;">
+                                <i class="bi bi-x-lg me-1"></i>
+                                Limpiar
+                            </button>
                         </div>
+                        
+                        {{-- Error Message --}}
+                        <div id="days_to_serve-error" class="invalid-feedback d-block">
+                            <strong>
+                                @if ($errors->has('days_to_serve'))
+                                    {{ $errors->first('days_to_serve') }}
+                                @endif
+                            </strong>
+                        </div>
+
+                        {{-- Help Text --}}
                         <small class="text-muted d-block">
                             Los días seleccionados determinan qué detalles se pueden agregar.
                         </small>
@@ -216,15 +240,15 @@
                     {{-- Contract Value --}}
                     <div class="col-md-5">
                         <x-form.input 
-                            :id="'contract_value'"
+                            :id="'total_value'"
                             :type="'number'"
                             :min="0"
                             :step="1"
                             :class="'border-secondary w-auto'"
-                            :inputClass="$errors->has('contract_value') ? 'is-invalid' : ''"
+                            :inputClass="$errors->has('total_value') ? 'is-invalid' : ''"
                             :placeholder="'Ej: 1500.00'"
-                            :value="old('contract_value', $contract?->total_value ?? 0)"
-                            :errorMessage="$errors->first('contract_value') ?? ''"
+                            :value="old('total_value', $contract?->total_value ?? 0)"
+                            :errorMessage="$errors->first('total_value') ?? ''"
                             :textIconLeft="true"
                             :required="true"
                         >
@@ -245,6 +269,10 @@
                                 </button>
                             </x-slot:buttonIconRight>
                         </x-form.input>
+
+                        <small class="text-muted d-block mt-2">
+                            Se puede calcular o ingresar manualmente.
+                        </small>
                     </div>
                 </div>
 
@@ -294,7 +322,7 @@
                             @if($contract?->details?->isNotEmpty())
                                 @foreach ($contract->details as $contractDetail)
                                     @php $productPrice = 0; @endphp
-                                    <tr>
+                                    <tr data-contract-detail-id="{{ $contractDetail->id }}">
                                         <td>
                                             {{-- Product Selection --}}
                                             <x-form.select
@@ -448,7 +476,7 @@
                         <div class="d-flex align-items-center gap-2 mt-1">
                             <x-icons.colon-icon width="14" height="14" />
                             <span id="contract-summary-value" class="fs-4 fw-semibold lh-sm">
-                                {{ isset($contract) ? number_format($contract->total_value, 0, ',', ' ') : 0 }}
+                                {{ $isEditing ? number_format($contract->total_value, 0, ',', ' ') : 0 }}
                             </span>
                         </div>
                     </div>
@@ -462,7 +490,7 @@
                                 </span>
                                 <div class="d-flex align-items-center gap-2 mt-1">
                                     <span id="contract-summary-days" class="fs-5 fw-semibold lh-sm text">
-                                        {{ isset($contract) ? count($contract->days_to_serve) . ' días' : '—' }}
+                                        {{ $isEditing ? count($contract->days_to_serve) . ' días' : '—' }}
                                     </span>
                                 </div>
                             </div>
@@ -474,7 +502,7 @@
                                 </span>
                                 <div class="d-flex align-items-center gap-2 mt-1">
                                     <span id="contract-summary-portions" class="fs-5 fw-semibold lh-sm">
-                                        {{ isset($contract) ? $contract->portions_per_day : '—' }}
+                                        {{ $isEditing ? $contract->portions_per_day : '—' }}
                                     </span>
                                 </div>
                             </div>
@@ -502,7 +530,7 @@
                         <div class="d-flex align-items-center gap-2" style="font-size: .85rem;">
                             <i class="bi bi-calendar-range text-muted"></i>
                             <span id="contract-summary-period" @isset($contract->period) class="text-muted" @endif>
-                                {{ isset($contract) ? $contract->period : 'No definido' }}
+                                {{ $isEditing ? $contract->period : 'No definido' }}
                             </span>
                         </div>
                     </div>
@@ -557,11 +585,11 @@
                             :id="$formId . '-button'" 
                             :class="'btn-primary px-4'" 
                             :spinnerId="$formId . '-spinner'" 
-                            :loadingMessage="isset($contract) ? 'Actualizando...' : 'Guardando...'"
+                            :loadingMessage="$isEditing ? 'Actualizando...' : 'Guardando...'"
                         >
                             <div id="{{ $formId . '-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
                                 <i class="bi bi-check-circle me-2"></i>
-                                {{ isset($contract) ? 'Actualizar' : 'Guardar' }}
+                                {{ $isEditing ? 'Actualizar' : 'Guardar' }}
                             </div>
                         </x-form.button>
 
@@ -590,3 +618,43 @@
     </div>
 
 </div>
+
+@section('scripts')
+    <script type="text/javascript">
+        window.CONTRACT_FORM_DATA = {
+            formId: @json($formId),
+            isEditing: @json($isEditing),
+            paymentStatuses: @json(collect($paymentStatuses)
+                ->map(fn($status) => [
+                    'value' => $status->value, 'label' => $status->label()
+                ])
+            ),
+            paymentMethods: @json(collect($paymentMethods)
+                ->map(fn($method) => [
+                    'value' => $method->value, 'label' => $method->label()
+                ])
+            ),
+            mealTimes: @json(collect($mealTimes)
+                ->map(fn($mealTime) => [
+                    'value' => $mealTime->value, 'label' => $mealTime->label()
+                ])
+            ),
+            weekDays: @json(collect($weekDays)
+                ->map(fn($weekDay) => [
+                    'value' => $weekDay->value, 'label' => $weekDay->label()
+                ])
+            ),
+            products: @json($products->map(fn($product) => [
+                'id' => $product->id, 
+                'name' => $product->name,
+                'price' => $product->sale_price
+            ])),
+            clients: @json($clients->map(fn($client) => [
+                'id' => $client->id, 
+                'full_name' => $client->full_name
+            ])),
+        };
+    </script>
+
+    @vite(['resources/js/models/contracts/form.js'])
+@endsection

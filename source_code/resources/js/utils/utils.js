@@ -96,7 +96,7 @@ export function escapeHtml(text) {
  * @param {string} dateString - Date in a format parseable by Date.
  * @returns {string} Formatted date or "Fecha inválida".
  */
-export function formatDate(dateString, formatOptions = { day: '2-digit', month: 'long', year: 'numeric' }) {
+export function formatDate(dateString) {
 	// Attempt to parse the date string
 	const date = new Date(dateString);
 
@@ -119,7 +119,9 @@ export function formatDate(dateString, formatOptions = { day: '2-digit', month: 
 	// Format the date using Intl.DateTimeFormat with the determined timezone
 	const formatter = new Intl.DateTimeFormat("es-CR", {
 		timeZone: timezone,
-		...formatOptions
+		day: "2-digit",
+		month: "long",
+		year: "numeric",
 	});
 
 	const formattedDate = formatter.format(date);
@@ -297,4 +299,85 @@ export function calcWorkedHours(startTime, endTime) {
     const s = parseTimeToMinutes(startTime);
     const e = parseTimeToMinutes(endTime);
     return (s === null || e === null || e <= s) ? 0 : Math.floor((e - s) / 60);
+}
+
+/**
+ * Enables Bootstrap tooltips for elements within a container.
+ * @param {HTMLElement} container - The container element.
+ */
+export const enableBootstrapTooltips = (container) => {
+	const tooltipTriggerList = container.querySelectorAll(
+		'[data-bs-toggle="tooltip"]',
+	);
+	tooltipTriggerList.forEach((tooltipTriggerEl) => {
+		new bootstrap.Tooltip(tooltipTriggerEl);
+	});
+};
+
+/**
+ * Generates a random valid EAN-13 barcode number.
+ *
+ * @param {number} length - The total length of the EAN code (default is 13).
+ * @param {HTMLElement} triggerElement - The element that triggered the barcode generation, used for loading state.
+ * @returns {string} The generated EAN-13 code as a string.
+ *
+ * The function generates a random EAN-13 code by:
+ * 1. Generating (length - 1) random digits.
+ * 2. Calculating the checksum digit according to the EAN-13 standard.
+ * 3. Appending the checksum digit to the end of the code.
+ * 4. Toggling the loading state on the trigger element during the process.
+ */
+export const generateEan13 = (length = 13, triggerElement) => {
+    const elementClass = `add-${triggerElement.dataset.type}`;
+    toggleLoadingState(triggerElement, elementClass, true);
+
+    let ean = "";
+    for (let i = 0; i < length - 1; i++) {
+        ean += Math.floor(Math.random() * 10).toString();
+    }
+
+    // Calculate checksum digit according to EAN-13 standard
+    let sum = 0;
+    for (let i = 0; i < ean.length; i++) {
+        sum += parseInt(ean[i]) * (i % 2 === 0 ? 1 : 3);
+    }
+    const checksum = (10 - (sum % 10)) % 10;
+    ean += checksum.toString();
+
+    toggleLoadingState(triggerElement, elementClass, false);
+    return ean;
+};
+
+/**
+ * Calculates the alert date for product expiration based on the expiration date and alert days.
+ *
+ * This function retrieves the expiration date and the number of alert days from the UI,
+ * subtracts the alert days from the expiration date, and returns the resulting date formatted
+ * in Spanish (es-ES) in a human-readable way.
+ *
+ * The 'T00:00:00' is appended to the date string to force the local timezone and avoid JavaScript
+ * subtracting a day by default due to UTC conversion.
+ *
+ * @returns {string|null} The formatted alert date in Spanish, or null if no expiration date is set.
+ */
+export const calculateAlertDate = () => {
+	const dateString = $("#expiration_date").val();
+	const alertDays = parseInt($("#expiration_alert_days").val(), 10) || 0;
+
+	if (dateString) {
+		// 'T00:00:00' is added to force the local timezone and avoid JavaScript
+		// subtracting a day by default due to UTC conversion
+		const expiration = new Date(`${dateString}T00:00:00`);
+
+		// Subtract the alert days
+		expiration.setDate(expiration.getDate() - alertDays);
+
+		// Format the date in Spanish and in a human-readable way
+		const options = { year: 'numeric', month: 'long', day: 'numeric' };
+		const alertDateFormatted = expiration.toLocaleDateString('es-ES', options);
+
+		return alertDateFormatted;
+	}
+
+	return null;
 }
