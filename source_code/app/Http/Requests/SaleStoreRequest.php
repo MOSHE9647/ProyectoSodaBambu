@@ -44,23 +44,23 @@ class SaleStoreRequest extends FormRequest
             'id' => ['sometimes', 'integer', 'exists:sales,id'],
             'payment_status' => ['required', new Enum(PaymentStatus::class)],
             'date' => ['required', 'date', 'after_or_equal:today', 'before:tomorrow'],
-            'total' => ['required', 'numeric', 'min:0'],
+            'total' => ['required', 'integer', 'min:0'],
 
             // Sale details array
             'sale_details' => ['required', 'array', 'min:1'],
             'sale_details.*.id' => ['sometimes', 'integer', 'exists:sale_details,id'],
             'sale_details.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'sale_details.*.quantity' => ['required', 'integer', 'min:1'],
-            'sale_details.*.unit_price' => ['required', 'numeric', 'min:0'],
-            'sale_details.*.applied_tax' => ['required', 'numeric', 'min:0'],
-            'sale_details.*.sub_total' => ['required', 'numeric', 'min:0'],
+            'sale_details.*.unit_price' => ['required', 'integer', 'min:0'],
+            'sale_details.*.applied_tax' => ['required', 'integer', 'min:0'],
+            'sale_details.*.sub_total' => ['required', 'integer', 'min:0'],
 
             // Payment fields (optional, but if present must be valid)
             'payment_details' => ['sometimes', 'array'],
             'payment_details.*.id' => ['sometimes', 'integer', 'exists:payments,id'],
             'payment_details.*.method' => ['required', new Enum(PaymentMethod::class)],
-            'payment_details.*.amount' => ['required', 'numeric', 'min:0.01'],
-            'payment_details.*.change_amount' => ['numeric', 'min:0'],
+            'payment_details.*.amount' => ['required', 'integer', 'min:1'],
+            'payment_details.*.change_amount' => ['integer', 'min:0'],
             'payment_details.*.reference' => ['nullable', 'string'],
         ];
     }
@@ -156,12 +156,14 @@ class SaleStoreRequest extends FormRequest
      */
     private function validateTotalMatchesDetails(Validator $validator): void
     {
-        $total = round((float) $this->input('total', 0), 2);
-        $detailsTotalWithTax = round(collect($this->input('sale_details', []))
-            ->sum(fn ($d) => (float) ($d['sub_total'] ?? 0) + (($d['sub_total'] ?? 0) * ($d['applied_tax'] ?? 1))), 2);
+        $total = (int) $this->input('total', 0);
+    
+        // Sumamos los subtotales como enteros directamente
+        $detailsTotal = collect($this->input('sale_details', []))
+            ->sum(fn ($d) => (int) ($d['sub_total'] ?? 0));
 
-        if ($total !== $detailsTotalWithTax) {
-            $validator->errors()->add('total', "El total ($total) no coincide con la suma de los productos ($detailsTotalWithTax).");
+        if ($total !== $detailsTotal) {
+            $validator->errors()->add('total', "El total ($total) no coincide con la suma de los productos ($detailsTotal).");
         }
     }
 
@@ -188,16 +190,13 @@ class SaleStoreRequest extends FormRequest
     private function validatePaymentIntegrity(Validator $validator): void
     {
         $status = $this->input('payment_status');
-        $total = (float) $this->input('total', 0);
+        $total = (int) $this->input('total', 0);
         $payments = collect($this->input('payment_details', []));
-        $paidAmount = round($payments->sum('amount'), 2);
+        $paidAmount = (int) $payments->sum('amount'); 
 
-        // If the status is PAID, the total must be covered by the payments
         if ($status === PaymentStatus::PAID->value) {
-            if ($payments->isEmpty()) {
-                $validator->errors()->add('payment_details', 'Debe registrar al menos un pago para marcar la venta como Completa.');
-            } elseif ($paidAmount < $total) {
-                $validator->errors()->add('payment_details', "Monto insuficiente para completar la venta (Pagado: $paidAmount, Total: $total).");
+            if ($paidAmount < $total) {
+                $validator->errors()->add('payment_details', "Monto insuficiente (Pagado: ₡$paidAmount, Total: ₡$total).");
             }
         }
 
