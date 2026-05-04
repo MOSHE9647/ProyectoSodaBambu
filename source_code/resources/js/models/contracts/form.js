@@ -101,12 +101,18 @@ const baseFieldValidators = {
         message: "El nombre de la empresa es obligatorio (3-255 caracteres)."
     },
     start_date: {
-        validate: (v) => rules.isValidDate(v) && rules.isTodayOrFutureDate(v),
-        message: "La fecha de inicio debe ser una fecha válida y no puede ser en el pasado."
+        validate: (v) => IS_EDITING ? rules.isValidDate(v) : (rules.isValidDate(v) && rules.isTodayOrFutureDate(v)),
+        message: IS_EDITING
+			? "La fecha de inicio debe ser una fecha válida."
+			: "La fecha de inicio debe ser una fecha válida y no puede ser en el pasado."
     },
     end_date: {
-        validate: (v, data) => rules.isValidDate(v) && rules.isFutureDate(v) && getLocalMidnight(v) > getLocalMidnight(data.start_date),
-        message: "La fecha de fin debe ser una fecha válida, en el futuro y posterior a la fecha de inicio."
+        validate: (v, data) => IS_EDITING 
+			? rules.isValidDate(v) && getLocalMidnight(v) > getLocalMidnight(data.start_date) 
+			: rules.isValidDate(v) && rules.isFutureDate(v) && getLocalMidnight(v) > getLocalMidnight(data.start_date),
+        message: IS_EDITING
+			? "La fecha de fin debe ser una fecha válida y posterior a la fecha de inicio."
+			: "La fecha de fin debe ser una fecha válida, posterior a la fecha de inicio y no puede ser en el pasado."
     },
     days_to_serve: {
         validate: (v) => rules.hasAtLeastOneDay(v) && v.every(day => rules.isValidDay(day)),
@@ -150,12 +156,12 @@ const contractDetailValidators = {
 		message: "Seleccione un tiempo de comida válido.",
 	},
 	service_date: {
-		validate: (v, data) =>
-			rules.isValidDate(v) &&
-			rules.isTodayOrFutureDate(v) &&
-			getLocalMidnight(v) <= getLocalMidnight(data.end_date),
-		message:
-			"Fecha de servicio no válida. Debe ser una fecha válida, no puede ser en el pasado y debe estar dentro del rango del contrato.",
+		validate: (v, data) => IS_EDITING 
+		? rules.isValidDate(v) && getLocalMidnight(v) > getLocalMidnight(data.start_date) 
+		: rules.isValidDate(v) && rules.isTodayOrFutureDate(v) && getLocalMidnight(v) > getLocalMidnight(data.start_date),
+		message: IS_EDITING
+			? "La fecha de servicio debe ser una fecha válida y posterior a la fecha de inicio del contrato."
+			: "La fecha de servicio debe ser una fecha válida, no puede ser en el pasado y debe ser posterior a la fecha de inicio del contrato."
 	},
 };
 
@@ -313,7 +319,7 @@ const formatLaravelDate = (dateValue) => {
     if (!dateValue) return "";
     // Ensure that the date is treated as local by appending a time component if it's not already present
     const date = new Date(dateValue.includes('T') ? dateValue : `${dateValue}T00:00:00`);
-    const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    const months = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
     const day = String(date.getDate()).padStart(2, "0");
     return `${day} ${months[date.getMonth()]} ${date.getFullYear()}`;
 };
@@ -352,13 +358,6 @@ const updateSummary = {
 		$("#contract-summary-value").text(formattedValue);
 	},
 	period: () => {
-        // TODO: Verificar porqué, al editar un contrato, el formato de fecha no se reconoce como válido en la función validate, 
-        // aunque sí se muestra correctamente en el resumen. 
-        // Posible causa: el formato de fecha que se carga en el formulario al editar no es compatible con Date.parse() o con la 
-        // función getLocalMidnight, lo que hace que la validación falle pero la visualización funcione porque formatea la fecha 
-        // directamente desde el valor del input. 
-        // Solución potencial: Asegurarse de que las fechas cargadas en el formulario al editar estén en un formato compatible 
-        // (por ejemplo, "YYYY-MM-DD") y que se traten como locales para evitar problemas de zona horaria.
 		const start = $("#start_date").val();
 		const end = $("#end_date").val();
 		const isStartValid = baseFieldValidators.start_date.validate(start);
