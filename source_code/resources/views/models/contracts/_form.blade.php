@@ -16,6 +16,30 @@
     $paymentMethods = PaymentMethod::cases();
     $mealTimes = MealTime::cases();
     $weekDays = WeekDay::cases();
+
+    // Transform enum cases and arrays into key-value pairs for JavaScript
+    $paymentStatusesData = collect($paymentStatuses)->map(fn($s) => [
+        'value' => $s->value, 'label' => $s->label()
+    ]);
+    $paymentMethodsData = collect($paymentMethods)->map(fn($m) => [
+        'value' => $m->value, 'label' => $m->label()
+    ]);
+    $mealTimesData = collect($mealTimes)->map(fn($mt) => [
+        'value' => $mt->value, 'label' => $mt->label()
+    ]);
+    $weekDaysData = collect($weekDays)->map(fn($weekDay) => [
+        'value' => $weekDay->value, 'label' => $weekDay->label()
+    ]);
+    $productsData = collect($products)->map(fn($product) => [
+        'id' => $product->id,
+        'name' => $product->name,
+        'price' => $product->sale_price,
+        'type' => $product->type->value
+    ]);
+    $clientsData = collect($clients)->map(fn($client) => [
+        'id' => $client->id,
+        'full_name' => $client->full_name
+    ]);
 @endphp
 
 <x-header title="{{ $pageTitle }}" subtitle="{{ $pageSubtitle }}" />
@@ -294,18 +318,22 @@
                     </div>
 
                     {{-- Added Items Badge & Add Row Button --}}
-                    <div class="d-flex flex-column justify-content-between align-items-end gap-2">
-                        <span class="badge border rounded-pill text-info-emphasis bg-info-subtle px-3 ms-2">
-                            <span id="added-items-badge">{{ $contract?->details?->count() ?? 0 }}</span> item/s
-                        </span>
-
-                        <button id="btn-add-row" class="btn btn-sm btn-outline-primary rounded-2" type="button" data-bs-toggle="tooltip" data-bs-title="Agregar nuevo detalle al contrato">
-                            <i class="bi bi-plus-lg me-1"></i>
-                            Agregar fila
-                        </button>
-                    </div>
+                    <span class="badge border rounded-pill text-info-emphasis bg-info-subtle px-3 ms-2">
+                        <span id="added-items-badge">{{ $contract?->details?->count() ?? 0 }}</span> item/s
+                    </span>
                 </div>
-
+                
+                <div class="d-flex justify-content-end align-items-end gap-2 mb-2">
+                    <button id="btn-generate-menu" class="btn btn-sm btn-outline-warning rounded-2" type="button" data-bs-toggle="tooltip" data-bs-title="Generar detalles automáticamente basado en los días de servicio seleccionados y productos disponibles">
+                        <i class="bi bi-stars me-1"></i>
+                        Generar Menú
+                    </button>
+                    <button id="btn-add-row" class="btn btn-sm btn-outline-primary rounded-2" type="button" data-bs-toggle="tooltip" data-bs-title="Agregar nuevo detalle al contrato">
+                        <i class="bi bi-plus-lg me-1"></i>
+                        Agregar fila
+                    </button>
+                </div>
+                
                 <div class="table-responsive border border-1 border-bottom-0 rounded-2 rounded-bottom-0">
                     <table id="contract-details-table" class="table table-hover align-middle mb-0" style="min-width: 600px;">
 
@@ -409,7 +437,7 @@
                                         </td>
                                         <td>
                                             {{-- Delete Button --}}
-                                            <button type="button" class="action-btn btn btn-sm btn-outline-danger rounded-2" data-bs-toggle="tooltip" data-bs-title="Eliminar este detalle del contrato">
+                                            <button type="button" class="action-btn btn btn-sm btn-outline-danger rounded-2" data-bs-title="Eliminar este detalle del contrato">
                                                 <i class="bi bi-trash3 pointer-events-none"></i>
                                             </button>
                                         </td>
@@ -529,7 +557,7 @@
                         <p class="fw-semibold text-uppercase text-muted mb-2" style="font-size: .7rem; letter-spacing: .08em;">Per&iacute;odo</p>
                         <div class="d-flex align-items-center gap-2" style="font-size: .85rem;">
                             <i class="bi bi-calendar-range text-muted"></i>
-                            <span id="contract-summary-period" @isset($contract->period) class="text-muted" @endif>
+                            <span id="contract-summary-period" @isset($contract->period) class="text-muted" @endisset>
                                 {{ $isEditing ? $contract->period : 'No definido' }}
                             </span>
                         </div>
@@ -547,14 +575,13 @@
                                         $color = match ($detail->meal_time) {
                                             MealTime::BREAKFAST => 'warning',
                                             MealTime::LUNCH => 'success',
-                                            MealTime::DINNER => 'info',
                                             default => 'secondary',
                                         };
                                     @endphp
 
                                     <div class="d-flex justify-content-between align-items-center" style="font-size: .82rem;">
                                         <span class="badge border rounded-pill text-{{ $color }}-emphasis bg-{{ $color }}-subtle px-3 py-2" style="font-size: .72rem;">
-                                            {{ $detail->meal_time ? MealTime::from($detail->meal_time->value)->label() : '—' }}
+                                            {{ $detail->meal_time ? $detail->meal_time->label() : '—' }}
                                         </span>
                                         <span class="text-muted">{{ $detail->meal_time_count }} fila</span>
                                     </div>
@@ -624,35 +651,12 @@
         window.CONTRACT_FORM_DATA = {
             formId: @json($formId),
             isEditing: @json($isEditing),
-            paymentStatuses: @json(collect($paymentStatuses)
-                ->map(fn($status) => [
-                    'value' => $status->value, 'label' => $status->label()
-                ])
-            ),
-            paymentMethods: @json(collect($paymentMethods)
-                ->map(fn($method) => [
-                    'value' => $method->value, 'label' => $method->label()
-                ])
-            ),
-            mealTimes: @json(collect($mealTimes)
-                ->map(fn($mealTime) => [
-                    'value' => $mealTime->value, 'label' => $mealTime->label()
-                ])
-            ),
-            weekDays: @json(collect($weekDays)
-                ->map(fn($weekDay) => [
-                    'value' => $weekDay->value, 'label' => $weekDay->label()
-                ])
-            ),
-            products: @json($products->map(fn($product) => [
-                'id' => $product->id, 
-                'name' => $product->name,
-                'price' => $product->sale_price
-            ])),
-            clients: @json($clients->map(fn($client) => [
-                'id' => $client->id, 
-                'full_name' => $client->full_name
-            ])),
+            paymentStatuses: @json($paymentStatusesData),
+            paymentMethods: @json($paymentMethodsData),
+            mealTimes: @json($mealTimesData),
+            weekDays: @json($weekDaysData),
+            products: @json($productsData),
+            clients: @json($clientsData),
         };
     </script>
 

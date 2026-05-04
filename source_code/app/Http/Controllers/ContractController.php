@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProductType;
 use App\Models\Client;
 use App\Models\Contract;
 use App\Models\Product;
@@ -45,7 +46,8 @@ class ContractController extends Controller
     public function create()
     {
         $clients = Client::all(['id', 'first_name', 'last_name']);
-        $products = Product::all(['id', 'name', 'sale_price']);
+        $products = Product::whereIn('type', [ProductType::DISH, ProductType::DRINK])
+            ->get(['id', 'name', 'sale_price', 'type']);
 
         return view('models.contracts.create', compact('clients', 'products'));
     }
@@ -72,7 +74,8 @@ class ContractController extends Controller
     public function edit(Contract $contract)
     {
         $clients = Client::all(['id', 'first_name', 'last_name']);
-        $products = Product::all(['id', 'name', 'sale_price']);
+        $products = Product::whereIn('type', [ProductType::DISH, ProductType::DRINK])
+            ->get(['id', 'name', 'sale_price', 'type']);
 
         return view('models.contracts.edit', compact('contract', 'clients', 'products'));
     }

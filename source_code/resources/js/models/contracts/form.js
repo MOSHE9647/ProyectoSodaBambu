@@ -1,4 +1,5 @@
 import { bindOffcanvasEvents } from "../../utils/offcanvas.js";
+import { SwalToast } from "../../utils/sweetalert.js";
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation.js";
 
 // ==================== Environment Checks ====================
@@ -17,6 +18,8 @@ const PAYMENT_STATUSES = CONTRACTS_DATA.paymentStatuses || {};
 const PAYMENT_METHODS = CONTRACTS_DATA.paymentMethods || {};
 const MEAL_TIMES = CONTRACTS_DATA.mealTimes || {};
 const WEEK_DAYS = CONTRACTS_DATA.weekDays || {};
+const PRODUCTS = CONTRACTS_DATA.products || {};
+const CLIENTS = CONTRACTS_DATA.clients || {};
 
 // ========================= Helpers ==========================
 
@@ -56,8 +59,216 @@ const getFormElements = () => {
 		days_to_serve: $('#days_to_serve input[type="checkbox"]'),
 		portions_per_day: $("#portions_per_day"),
 		total_value: $("#total_value"),
+		btn_add_row: $("#btn-add-row"),
+		btn_generate_menu: $("#btn-generate-menu"),
 		contract_details_table: $("#contract-details-table"),
 	};
+};
+
+const appendContractDetailRow = (product, mealTimeValue, serveDate) => {
+	// Generate the options for the Product Select, marking the current product as selected
+	const productsOptions = PRODUCTS
+		.map(
+			(p) =>
+				`<option value="${p.id}" data-price="${p.price}" ${p.id === product.id ? "selected" : ""}>
+					${p.name}
+				</option>`,
+		)
+		.join("");
+
+	// Generate the options for the Meal Time Select, marking the current meal time as selected
+	const mealTimesOptions = MEAL_TIMES
+		.map(
+			(m) =>
+				`<option value="${m.value}" ${m.value == mealTimeValue ? "selected" : ""}>
+					${m.label}
+				</option>`,
+		)
+		.join("");
+
+	// Build the new row HTML, ensuring that the price input is populated with the product's price and is disabled/readonly
+	const newRow = `
+        <tr>
+            <td>
+				<div class="border-secondary w-auto text-start">
+					<div class="input-group input-group-sm has-validation">	
+						<select name="product_id" class="form-select " aria-describedby="product_id-error">
+							<option value="-1">Seleccione un producto</option>
+							${productsOptions}
+						</select>	
+						<div id="product_id-error" class="invalid-feedback ps-2" role="alert">
+							<strong></strong>
+						</div>
+					</div>
+				</div>
+            </td>
+            <td>
+				<div class="border-secondary w-auto text-start">
+					<div class="input-group input-group-sm has-validation">	
+						<select name="meal_time" class="form-select " aria-describedby="meal_time-error">
+							<option value="-1">Seleccione un tiempo de comida</option>
+							${mealTimesOptions}
+						</select>	
+						<div id="meal_time-error" class="invalid-feedback ps-2" role="alert">
+							<strong></strong>
+						</div>
+					</div>
+				</div>
+            </td>
+            <td>
+				<div class="border-secondary w-auto text-start">
+					<div class="input-group input-group-sm has-validation">
+						<input type="date" name="serve_date" class="form-control" aria-describedby="service_date-error"
+							min="${new Date().toISOString().split("T")[0]}" 
+							value="${serveDate}"
+						>
+						<div id="product_id-error" class="invalid-feedback ps-2" role="alert">
+							<strong></strong>
+						</div>
+					</div>
+				</div>
+            </td>
+            <td>
+				<div class="border-secondary w-auto text-start">
+					<div class="input-group input-group-sm has-validation">
+						<span class="input-group-text" id="unit_price-icon-left">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 7.010000228881836 31.639999389648438 40.98999786376953" width="12" height="12" fill="currentColor">
+								<path d="M31.64 33.91Q30.20 39.60 26.44 42.70Q22.58 45.92 16.82 45.87L16.31 45.87L15.70 48.00L12.18 48.00L12.89 45.51Q11.16 45.17 9.67 44.58L8.72 48.00L5.20 48.00L6.64 42.87Q0 37.99 0 27.10Q0 19.19 4.27 14.23Q8.67 9.11 16.21 8.86L16.75 7.01L20.26 7.01L19.68 9.06Q21.29 9.30 22.90 9.94L23.73 7.01L27.25 7.01L25.95 11.60Q29.59 14.31 31.03 19.29L26.37 20.39Q25.63 18.09 24.56 16.58L17.48 41.77Q25.07 41.16 26.90 32.71L31.64 33.91M21.75 14.04Q20.39 13.28 18.58 13.04L10.84 40.48Q12.28 41.28 13.99 41.60L21.75 14.04M15.06 13.01Q9.86 13.60 7.23 17.72Q4.88 21.36 4.88 27.08Q4.88 34.11 8.01 38.04L15.06 13.01Z"></path>
+							</svg>
+						</span>
+						<input type="number" name="unit_price" class="form-control quantity-input" aria-describedby="unit_price-error" placeholder="Ej: 5000" step="0.01" min="0" 
+							value="${product.price}"
+							disabled readonly
+						>
+						<div id="unit_price-error" class="invalid-feedback ps-2" role="alert">
+							<strong></strong>
+						</div>
+					</div>
+				</div>
+            </td>
+            <td>
+                <button type="button" class="action-btn btn btn-sm btn-outline-danger rounded-2 btn-delete-row" data-bs-title="Eliminar este detalle del contrato">
+                    <i class="bi bi-trash3 pointer-events-none"></i>
+                </button>
+            </td>
+        </tr>
+    `;
+
+	// Insert the new row into the table body
+	$("#contract-details-table tbody").append(newRow);
+
+	// Update Bootstrap tooltips for dynamically added elements
+	if (typeof bootstrap !== "undefined") {
+		const tooltipTriggerList = [].slice.call(
+			document.querySelectorAll('[data-bs-toggle="tooltip"]'),
+		);
+		tooltipTriggerList.map(function (tooltipTriggerEl) {
+			return new bootstrap.Tooltip(tooltipTriggerEl);
+		});
+	}
+
+	// Refresh the summary section to reflect the new details
+	updateSummary.details();
+};
+
+const generateRandomMenu = () => {
+	const formData = getFormFields();
+
+	// Validates that start_date, end_date and days_to_serve are defined before attempting to generate the menu.
+	if (
+		!formData.start_date ||
+		!formData.end_date ||
+		formData.days_to_serve.length === 0
+	) {
+		SwalToast.fire({
+			icon: "warning",
+			title: "Por favor, defina la fecha de inicio, fin y los días de servicio antes de generar el menú.",
+		});
+		return;
+	}
+
+	const startDate = getLocalMidnight(formData.start_date);
+	const endDate = getLocalMidnight(formData.end_date);
+	const products = PRODUCTS;
+	const mealTimes = MEAL_TIMES;
+
+	if (products.length === 0) {
+		SwalToast.fire({
+			icon: "warning",
+			title: "No hay productos disponibles para generar el menú.",
+		});
+		return;
+	}
+
+	let confirmation = confirm("¿Está seguro de que desea generar un menú aleatorio? Esto reemplazará cualquier detalle de contrato existente.");
+	if (!confirmation) {
+		return;
+	}
+
+	// Clear the table before generating to avoid massive duplicates
+	$("#contract-details-table tbody tr:not(#empty-row)").remove();
+
+	let currentDate = new Date(startDate);
+
+	// Iterate through each day in the date range, checking if it matches the selected service days and generating a menu item for each meal time if it does.
+	while (currentDate <= endDate) {
+		// Get the day name (Monday, Tuesday, etc...)
+		const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+		const dayOfWeek = dayNames[currentDate.getDay()];
+
+		// Verify if the current day of the week is included in the selected days to serve
+		if (formData.days_to_serve.includes(dayOfWeek)) {
+			// Filter all products by 'type'
+			const dishes = PRODUCTS.filter((p) => p.type === "dish");
+			const drinks = PRODUCTS.filter((p) => p.type === "drink");
+
+			// Generate a detail for each meal time, selecting a random product for each
+			mealTimes.forEach((meal) => {
+				// Format date to local YYYY-MM-DD
+				const year = currentDate.getFullYear();
+				const month = String(currentDate.getMonth() + 1).padStart(
+					2,
+					"0",
+				);
+				const day = String(currentDate.getDate()).padStart(2, "0");
+				const formattedDate = `${year}-${month}-${day}`;
+
+				// Random dish
+				if (dishes.length > 0) {
+					const randomDish = dishes[Math.floor(Math.random() * dishes.length)];
+					appendContractDetailRow(randomDish, meal.value, formattedDate);
+				}
+
+				// Random drink
+				if (drinks.length > 0) {
+					const randomDrink = drinks[Math.floor(Math.random() * drinks.length)];
+					appendContractDetailRow(randomDrink, meal.value, formattedDate);
+				}
+			});
+		}
+
+		currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+	}
+
+	// Hide the "empty" state and update the summary section to reflect the generated menu
+	$("#empty-row").addClass("d-none");
+	updateSummary.progressBar();
+
+	// Recalculate total value based on the generated menu
+	recalculateTotalValue();
+};
+
+const recalculateTotalValue = () => {
+	const tableEl = getFormElements().contract_details_table;
+	const toalValueInput = getFormElements().total_value;
+	let totalValue = 0;
+
+	$(tableEl).find("tbody tr:not(#empty-row)").each(function () {
+		const productPrice = parseFloat($(this).find('select[name="product_id"] option:selected').data("price")) || 0;
+		totalValue += productPrice;
+	});
+
+	$(toalValueInput).val(totalValue.toFixed(0)).trigger("input");
 };
 
 // ==================== Validation Helpers ====================
@@ -146,7 +357,7 @@ const contractDetailValidators = {
 		validate: (v) =>
 			rules.isNum(v) &&
 			rules.isValidId(parseInt(v)) &&
-			CONTRACTS_DATA.products.some(
+			PRODUCTS.some(
 				(product) => product.id === parseInt(v),
 			),
 		message: "Seleccione un producto válido.",
@@ -388,11 +599,70 @@ const updateSummary = {
 			}
 		}
 	},
+	details: () => {
+		const rows = $("#contract-details-table tbody tr:not(#empty-row)");
+		const badge = $("#added-items-badge");
+		const summaryContainer = $("#contract-summary-meals");
+
+		// Update badge items count
+		if (badge.length) {
+			badge.text(rows.length);
+		}
+
+		// Show/Hide "Sin detalles aún" message based on whether there are rows
+		if (rows.length === 0) {
+			$("#empty-row").removeClass("d-none");
+			summaryContainer.html('<span class="text-muted" style="font-size: .82rem;">Sin detalles aún.</span>');
+			return;
+		} else {
+			$("#empty-row").addClass("d-none");
+		}
+
+		// Group counts by meal_time value
+		const counts = {};
+		rows.each(function () {
+			const mealTimeVal = $(this).find('select[name="meal_time"]').val();
+			if (mealTimeVal && mealTimeVal !== "-1") {
+				counts[mealTimeVal] = (counts[mealTimeVal] || 0) + 1;
+			}
+		});
+
+		// Rebuild the "Loaded Details" HTML based on the counts, respecting the order of MEAL_TIMES
+		let summaryHtml = "";
+
+		// Iterates over MEAL_TIMES to respect the order and get the labels, while also assigning colors based on meal type
+		MEAL_TIMES.forEach((meal) => {
+			if (counts[meal.value]) {
+				// Assign colors similarly to the backend (match Blade)
+				let color = "secondary";
+				const valLower = String(meal.value).toLowerCase();
+				if (valLower.includes("breakfast")) color = "warning";
+				else if (valLower.includes("lunch")) color = "success";
+
+				summaryHtml += `
+                    <div class="d-flex justify-content-between align-items-center" style="font-size: .82rem;">
+                        <span class="badge border rounded-pill text-${color}-emphasis bg-${color}-subtle px-3 py-2" style="font-size: .72rem;">
+                            ${meal.label}
+                        </span>
+                        <span class="text-muted">${counts[meal.value]} fila${counts[meal.value] > 1 ? "s" : ""}</span>
+                    </div>
+                `;
+			}
+		});
+
+		// If there are rows but none have the meal time selected yet, show a specific message
+		if (summaryHtml === "") {
+			summaryHtml =
+				'<span class="text-muted" style="font-size: .82rem;">Faltan tiempos de comida por definir.</span>';
+		}
+
+		summaryContainer.html(summaryHtml);
+	},
 	progressBar: () => {
 		const values = getFormFields();
 
-        // Defines which fields are mandatory for the 100% progress 
-        // (excluding details because they are dynamic)
+		// Defines which fields are mandatory for the 100% progress
+		// (excluding details because they are dynamic)
 		const fieldsToTrack = [
 			"client_id",
 			"business_name",
@@ -426,10 +696,10 @@ const updateSummary = {
 				percentage,
 			);
 
-            const $progressIndicator = $("#contract-progress");
-            if ($progressIndicator.length) {
-                $progressIndicator.text(`${percentage}%`);
-            }
+			const $progressIndicator = $("#contract-progress");
+			if ($progressIndicator.length) {
+				$progressIndicator.text(`${percentage}%`);
+			}
 
 			// Change the color of the progress bar based on completion percentage
 			$bar.removeClass("bg-danger bg-warning");
@@ -448,50 +718,106 @@ const updateSummary = {
 // ===================== Event Listeners ======================
 
 const bindEventListeners = () => {
-    const elements = getFormElements();
+	const elements = getFormElements();
 
-    // Client Selection Event
-    elements.client_id
-        .off("change")
-        .on("change", function () { updateSummary.client($(this)); })
-        .trigger("change");
+	// Client Selection Event
+	elements.client_id
+		.off("change")
+		.on("change", function () {
+			updateSummary.client($(this));
+		})
+		.trigger("change");
 
-    // Portions per day and Total value events
-    elements.portions_per_day
-        .off("input")
-        .on("input", function () { updateSummary.portions($(this)); })
-        .trigger("input");
+	// Portions per day and Total value events
+	elements.portions_per_day
+		.off("input")
+		.on("input", function () {
+			updateSummary.portions($(this));
+		})
+		.trigger("input");
 
-    elements.total_value
-        .off("input")
-        .on("input", function () { updateSummary.totalValue($(this)); })
-        .trigger("input");
+	elements.total_value
+		.off("input")
+		.on("input", function () {
+			updateSummary.totalValue($(this));
+		})
+		.trigger("input");
 
-    // Contract Period Events (Start and End Dates)
-    const handleDatesChange = () => updateSummary.period();
-    elements.start_date.off("change").on("change", handleDatesChange).trigger("change");
-    elements.end_date.off("change").on("change", handleDatesChange).trigger("change");
+	// Contract Period Events (Start and End Dates)
+	const handleDatesChange = () => updateSummary.period();
+	elements.start_date
+		.off("change")
+		.on("change", handleDatesChange)
+		.trigger("change");
+	elements.end_date
+		.off("change")
+		.on("change", handleDatesChange)
+		.trigger("change");
 
-    // Days to Serve Event
-    elements.days_to_serve
-        .off("change")
-        .on("change", function () { updateSummary.daysToServe(); });
-    
-    // Triggers initial update in case there are pre-selected days (e.g., when editing)
-    updateSummary.daysToServe();
+	// Days to Serve Event
+	elements.days_to_serve.off("change").on("change", function () {
+		updateSummary.daysToServe();
+	});
 
-    // Deselect All Days Button
-    $("#deselect-all-days")
-        .off("click")
-        .on("click", function () {
-            // Deselects all checkboxes and triggers change to update validation and summary
-            elements.days_to_serve.prop("checked", false).trigger("change");
-        });
+	// Triggers initial update in case there are pre-selected days (e.g., when editing)
+	updateSummary.daysToServe();
+
+	// Deselect All Days Button
+	$("#deselect-all-days")
+		.off("click")
+		.on("click", function () {
+			// Deselects all checkboxes and triggers change to update validation and summary
+			elements.days_to_serve.prop("checked", false).trigger("change");
+		});
+
+	// Meal Time Selection Event within Contract Details (delegated)
+	elements.contract_details_table.on(
+		"change",
+		'select[name="meal_time"]',
+		function () {
+			updateSummary.details();
+		},
+	);
+
+	// Product Selection Event within Contract Details (delegated) - updates unit price based on selected product
+	elements.contract_details_table.on(
+		"change",
+		'select[name="product_id"]',
+		function () {
+			const selectedOption = $(this).find("option:selected");
+			const price = selectedOption.data("price") || 0;
+			$(this).closest("tr").find('input[name="unit_price"]').val(price);
+		},
+	);
+
+	// Delete Row Event within Contract Details (delegated) - removes the row and updates the summary accordingly
+	elements.contract_details_table.on(
+		"click",
+		".btn-delete-row, .action-btn.btn-outline-danger",
+		function () {
+			$(this).closest("tr").remove();
+			updateSummary.details(); // Recalc details summary after deletion
+			updateSummary.progressBar(); // Recalc progress bar
+		},
+	);
+
+	// Append Row Event - adds a new empty row to the contract details table and updates the summary accordingly
+	elements.btn_add_row.on("click", function () {
+		// Appends a new row with default values (id: -1 for new, price: 0) and triggers summary update
+		appendContractDetailRow({ id: -1, price: 0 }, "-1", "");
+	});
+
+	// Generate Random Menu Event - generates a random menu based on the contract period and selected days, 
+	// replacing existing details and updating the summary accordingly
+	elements.btn_generate_menu.on("click", function () {
+		generateRandomMenu();
+	});
 };
 
 $(() => {
     bindEventListeners();
     bindRealTimeValidation();
     bindOffcanvasEvents("create-offcanvas");
+	updateSummary.details(); // Initial details summary update on page load
     updateSummary.progressBar(); // Initial progress bar update on page load
 });

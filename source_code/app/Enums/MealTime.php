@@ -6,7 +6,6 @@ enum MealTime: string
 {
     case BREAKFAST = 'breakfast';
     case LUNCH = 'lunch';
-    case DINNER = 'dinner';
 
     /**
      * Get all meal time values as an array.
@@ -26,7 +25,6 @@ enum MealTime: string
         return match ($this) {
             self::BREAKFAST => 'Desayuno',
             self::LUNCH => 'Almuerzo',
-            self::DINNER => 'Cena',
         };
     }
 }
