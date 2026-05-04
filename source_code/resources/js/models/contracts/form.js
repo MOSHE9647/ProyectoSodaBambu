@@ -352,6 +352,13 @@ const updateSummary = {
 		$("#contract-summary-value").text(formattedValue);
 	},
 	period: () => {
+        // TODO: Verificar porqué, al editar un contrato, el formato de fecha no se reconoce como válido en la función validate, 
+        // aunque sí se muestra correctamente en el resumen. 
+        // Posible causa: el formato de fecha que se carga en el formulario al editar no es compatible con Date.parse() o con la 
+        // función getLocalMidnight, lo que hace que la validación falle pero la visualización funcione porque formatea la fecha 
+        // directamente desde el valor del input. 
+        // Solución potencial: Asegurarse de que las fechas cargadas en el formulario al editar estén en un formato compatible 
+        // (por ejemplo, "YYYY-MM-DD") y que se traten como locales para evitar problemas de zona horaria.
 		const start = $("#start_date").val();
 		const end = $("#end_date").val();
 		const isStartValid = baseFieldValidators.start_date.validate(start);

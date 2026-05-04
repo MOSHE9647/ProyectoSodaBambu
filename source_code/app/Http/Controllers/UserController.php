@@ -68,16 +68,17 @@ class UserController extends Controller implements HasMiddleware
      */
     public function index(Request $request)
     {
-        // Count the number of admin users
-        $adminCount = User::admins()->count();
-
         // Handle AJAX request for DataTables
         if ($request->ajax()) {
             // Use query builder to avoid loading all rows in memory for DataTables
-            $query = User::query()->with([$this->role, 'roles']);
+            $query = User::with([$this->role, 'roles'])
+                ->select(['id', 'name', 'email', 'created_at']);
 
             return DataTables::of($query)->toJson();
         }
+
+        // Count the number of admin users
+        $adminCount = User::admins()->count();
 
         // For non-AJAX requests, return the view
         return view('models.users.index', compact('adminCount'));

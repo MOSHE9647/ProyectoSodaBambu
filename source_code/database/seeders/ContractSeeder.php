@@ -18,7 +18,7 @@ class ContractSeeder extends Seeder
     public function run(): void
     {
         $users = User::whereNull('deleted_at')
-            ->whereRoles(UserRole::ADMIN->value)
+            ->role(UserRole::ADMIN->value)
             ->take(10)
             ->get();
         $clients = Client::whereNull('deleted_at')

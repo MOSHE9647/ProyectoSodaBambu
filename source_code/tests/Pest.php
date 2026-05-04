@@ -64,13 +64,15 @@ function actingAsEmployee(): void
  * @param  mixed  $password  The password for the user.
  * @return Webpage The webpage instance after logging in, allowing for further interactions in the test.
  */
-function loginAsUser($user, $password)
+function loginAsUser($user, $password, $seeText = 'Ventas de Hoy')
 {
     $page = visit(route('login'))
+        ->assertSee('Iniciar Sesión')
         ->fill('#email', $user->email)
         ->fill('#password', $password)
         ->click('#login-button')
-        ->assertSee('Ventas de Hoy');
+
+        ->assertSee($seeText);
 
     return $page;
 }
