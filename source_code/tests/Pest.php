@@ -18,7 +18,9 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature', 'Unit');
+    ->in('Feature', 'Unit', 'Browser');
+    
+pest()->browser()->timeout(10000);
 
 /*
 |--------------------------------------------------------------------------
@@ -54,4 +56,21 @@ function actingAsAdmin(): void
 function actingAsEmployee(): void
 {
     test()->actingAs(User::factory()->withRole(UserRole::EMPLOYEE)->create());
+}
+
+/**
+ * Helper function to log in as a specific user in browser tests.
+ * @param mixed $user The user instance to log in as.
+ * @param mixed $password The password for the user.
+ * @return Pest\Browser\Api\Webpage The webpage instance after logging in, allowing for further interactions in the test.
+ */
+function loginAsUser($user, $password)
+{
+    $page = visit(route('login'))
+        ->fill('#email', $user->email)
+        ->fill('#password', $password)
+        ->click('#login-button')
+        ->assertSee('Ventas de Hoy');
+
+    return $page;
 }
