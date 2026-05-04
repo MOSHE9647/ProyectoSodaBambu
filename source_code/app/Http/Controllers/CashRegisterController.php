@@ -59,6 +59,7 @@ class CashRegisterController extends Controller
 
         return response()->json([
             'total_orders' => $transactions->count(),
+            'opening_balance' => (float) $cashRegister->opening_balance,
             'system_cash' => (float) $systemCash,
             'system_card' => (float) $methodData->get(PaymentMethod::CARD->value, 0),
             'system_sinpe' => (float) $methodData->get(PaymentMethod::SINPE->value, 0),
