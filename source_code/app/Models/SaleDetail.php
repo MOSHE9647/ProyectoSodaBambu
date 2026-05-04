@@ -34,7 +34,7 @@ class SaleDetail extends Model
      */
     protected $casts = [
         'unit_price' => 'integer',
-        'applied_tax' => 'decimal:2',
+        'applied_tax' => 'integer',
         'sub_total' => 'integer',
     ];
 
