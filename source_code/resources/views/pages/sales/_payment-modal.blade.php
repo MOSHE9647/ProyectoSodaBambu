@@ -107,10 +107,11 @@
         display: flex;
         flex-direction: column;
         gap: 5px;
-        min-height: 84px;
-        max-height: 132px;
-        overflow-y: auto;
-        padding-right: 4px;
+        flex: 1 1 110px;
+        min-height: 110px;
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
         margin-bottom: 6px;
     }
 
@@ -135,6 +136,18 @@
         border-top: 1px solid var(--payment-border);
         padding-top: 6px;
         margin-top: 6px;
+    }
+
+    .payment-print-option {
+        border-top: 1px solid var(--payment-border);
+        padding-top: 8px;
+        margin-top: 8px;
+        margin-bottom: 34px;
+    }
+
+    .payment-print-option .form-check-input:checked {
+        background-color: var(--payment-primary);
+        border-color: var(--payment-primary);
     }
 
     .payment-label {
@@ -429,6 +442,15 @@
                 <div class="d-flex justify-content-between mt-1">
                     <span>Vuelto:</span>
                     <span id="payment-change" class="fw-semibold text-success">₡ 0</span>
+                </div>
+            </div>
+
+            <div class="payment-print-option">
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="print-receipt-checkbox" checked>
+                    <label class="form-check-label fw-semibold small" for="print-receipt-checkbox">
+                        Imprimir tiquete
+                    </label>
                 </div>
             </div>
 
