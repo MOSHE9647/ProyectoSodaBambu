@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
 use App\Enums\UserRole;
+use App\Models\User;
 
 test('CP-01_EIF-00 - An admin user can log in and successfully create a category', function () {
     // Given: An admin user exists and is logged into the system.
@@ -24,20 +24,20 @@ test('CP-01_EIF-00 - An admin user can log in and successfully create a category
 
     // And: The admin fills in the category details and submits the form.
     $categoryData = [
-        'name' => 'Bebidas Naturales ' . fake()->uuid(), // Unique to avoid conflicts
+        'name' => 'Bebidas Naturales '.fake()->uuid(), // Unique to avoid conflicts
         'description' => 'Refrescos hechos con frutas de temporada.',
     ];
 
     $page->fill('#name', $categoryData['name'])
-         ->fill('#description', $categoryData['description'])
-         ->click('#create-category-form-button');
+        ->fill('#description', $categoryData['description'])
+        ->click('#create-category-form-button');
 
     // Then: The category is successfully created and displayed in the list.
     $page->assertSee('Categoría creada correctamente.');
 
     $page->fill('#customSearchBox', $categoryData['name'])
-         ->waitForText($categoryData['name'])
-         ->assertSee($categoryData['name']);
+        ->waitForText($categoryData['name'])
+        ->assertSee($categoryData['name']);
 
     // And: The category exists in the database.
     $this->assertDatabaseHas('categories', [
@@ -49,7 +49,7 @@ test('CP-01_EIF-00 - An admin user can log in and successfully create a category
     $page->script("document.getElementById('logout-form').submit();");
 
     $page->assertPathIs('/login')
-         ->assertSee('Iniciar Sesión');
+        ->assertSee('Iniciar Sesión');
 
     $this->assertGuest();
 });
