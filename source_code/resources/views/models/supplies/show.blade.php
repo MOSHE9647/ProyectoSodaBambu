@@ -46,7 +46,7 @@
                 :id="'unit_price'"
                 :type="'text'"
                 :readonly="true"
-                :value="'₡ ' . number_format($supply->unit_price, 0, ',', '.')"
+                :value="'₡ ' . number_format($supply->unit_price, 0, '.', ' ')"
                 :placeholder="'Precio Unitario'"
                 :iconLeft="'bi bi-cash-stack'"
             >
