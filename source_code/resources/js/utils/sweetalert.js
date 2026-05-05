@@ -23,6 +23,22 @@ export const SwalModal = Swal.mixin({
 	}
 });
 
+export const SwalConfirmation = Swal.mixin({
+	theme: "bootstrap-5",
+	focusConfirm: false,
+	showCancelButton: true,
+	showConfirmButton: true,
+	customClass: {
+		popup: "swal-popup h-auto",
+		title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
+		closeButton: "swal-close-btn fs-3",
+		htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
+		confirmButton: "btn btn-primary mx-1",
+		cancelButton: "btn btn-danger mx-1",
+		icon: "mb-4",
+	},
+});
+
 export const SwalToast = Swal.mixin({
 	toast: true,
 	position: 'top-end',

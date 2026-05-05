@@ -177,7 +177,7 @@
                                 <i 
                                     class="bi bi-question-circle"
                                     data-bs-toggle="tooltip"
-                                    data-bs-title="Número de porciones que se servirán cada día. Esto ayuda a calcular el valor total del contrato basado en los detalles agregados."
+                                    data-bs-title="Cantidad de personas a las que se les servirá cada día. Esto ayuda a calcular el valor total del contrato basado en los detalles agregados."
                                 ></i>
                             </x-slot:iconRight>
                         </x-form.input>
@@ -275,6 +275,7 @@
                             :errorMessage="$errors->first('total_value') ?? ''"
                             :textIconLeft="true"
                             :required="true"
+                            {{-- :disabled="!($contract?->details?->isNotEmpty() ?? false)" --}}
                         >
                             <x-slot:iconLeft>
                                 <x-icons.colon-icon width="14" height="14" />
@@ -323,15 +324,22 @@
                     </span>
                 </div>
                 
-                <div class="d-flex justify-content-end align-items-end gap-2 mb-2">
-                    <button id="btn-generate-menu" class="btn btn-sm btn-outline-warning rounded-2" type="button" data-bs-toggle="tooltip" data-bs-title="Generar detalles automáticamente basado en los días de servicio seleccionados y productos disponibles">
-                        <i class="bi bi-stars me-1"></i>
-                        Generar Menú
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                    <button id="btn-clear-details" class="btn btn-sm btn-outline-danger rounded-2" type="button" data-bs-toggle="tooltip" data-bs-title="Limpiar todos los detalles del contrato. Esta acción no se puede deshacer.">
+                        <i class="bi bi-x-lg me-1"></i>
+                        Limpiar Detalles
                     </button>
-                    <button id="btn-add-row" class="btn btn-sm btn-outline-primary rounded-2" type="button" data-bs-toggle="tooltip" data-bs-title="Agregar nuevo detalle al contrato">
-                        <i class="bi bi-plus-lg me-1"></i>
-                        Agregar fila
-                    </button>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button id="btn-generate-menu" class="btn btn-sm btn-outline-warning rounded-2" type="button" data-bs-toggle="tooltip" data-bs-title="Generar detalles automáticamente basado en los días de servicio seleccionados y productos disponibles">
+                            <i class="bi bi-stars me-1"></i>
+                            Generar Menú
+                        </button>
+                        <button id="btn-add-row" class="btn btn-sm btn-outline-primary rounded-2" type="button" data-bs-toggle="tooltip" data-bs-title="Agregar nuevo detalle al contrato">
+                            <i class="bi bi-plus-lg me-1"></i>
+                            Agregar fila
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="table-responsive border border-1 border-bottom-0 rounded-2 rounded-bottom-0">
