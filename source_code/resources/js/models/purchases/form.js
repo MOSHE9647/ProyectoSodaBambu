@@ -51,7 +51,7 @@ function recalcTotal() {
     $('#details-container .detail-row').each(function () {
         total += parseFloat($(this).find('.subtotal-input').val()) || 0;
     });
-    $('#total').val(total.toFixed(2));
+    $('#total').val(total);
     $('#total-display').text(formatCRC(total));
 }
 
@@ -138,7 +138,7 @@ function addDetailRowForNewItem(type, item) {
             <td>
                 <input type="number" name="details[${index}][quantity]"
                        class="form-control form-control-sm quantity-input"
-                       value="1" min="0.0001" step="0.0001" required>
+                       value="1" min="0.0001" step="1" required>
             </td>
             <td>
                 <div class="input-group input-group-sm">
@@ -146,7 +146,7 @@ function addDetailRowForNewItem(type, item) {
                     <input type="number" name="details[${index}][unit_price]"
                            class="form-control form-control-sm unit-price-input"
                            value="${item.unit_price ? item.unit_price : '0'}"
-                           min="0" step="0.01" required>
+                           min="0" step="1" required>
                 </div>
             </td>
             <td class="align-middle">
@@ -254,12 +254,18 @@ $(document).on('input change', '.quantity-input, .unit-price-input', function ()
 // ─────────────────────────────────────────────
 
 function calcSalePrice() {
-    const cost   = parseFloat($('#quick-product-reference-cost').val()) || 0;
-    const tax    = parseFloat($('#quick-product-tax-percentage').val())  || 0;
-    const margin = parseFloat($('#quick-product-margin-percentage').val()) || 0;
+    const cost   = parseInt($('#quick-product-reference-cost').val()) || 0;
+    const tax    = parseInt($('#quick-product-tax-percentage').val())  || 0;
+    const margin = parseInt($('#quick-product-margin-percentage').val()) || 0;
+    
     if (cost > 0) {
-        // tax y margin vienen como decimales (ej: 0.13), no como porcentaje
-        $('#quick-product-sale-price').val((cost * (1 + tax) * (1 + margin)).toFixed(2));
+        const taxFactor = tax / 100;
+        const marginFactor = margin / 100;
+        const basePrice = cost + (cost * taxFactor);
+        const salePrice = basePrice + (basePrice * marginFactor);
+        
+        // IMPORTANTE: Redondear para eliminar decimales
+        $('#quick-product-sale-price').val(Math.round(salePrice));
     }
 }
 
