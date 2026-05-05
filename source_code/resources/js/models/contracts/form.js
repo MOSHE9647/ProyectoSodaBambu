@@ -22,6 +22,8 @@ const WEEK_DAYS = CONTRACTS_DATA.weekDays || {};
 const PRODUCTS = CONTRACTS_DATA.products || {};
 const CLIENTS = CONTRACTS_DATA.clients || {};
 
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
 // ========================= Helpers ==========================
 
 const getFormFields = () => {
@@ -174,7 +176,51 @@ const appendContractDetailRow = (product, mealTimeValue, serveDate) => {
 	updateSummary.details();
 };
 
-const generateRandomMenu = () => {
+const askForMenuGenerationOptions = async () => {
+	const { mode, daysCount } = await SwalConfirmation.fire({
+		title: "Generador de Menú",
+		html: `
+            <p class="text-muted text-start" style="font-size: 0.9rem;">Seleccione cómo desea generar los detalles:</p>
+            <div class="d-flex flex-column gap-2 mt-3 text-start">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="gen_mode" id="mode_all" value="all" checked onchange="document.getElementById('days_input_container').classList.add('d-none')">
+                    <label class="form-check-label" for="mode_all">
+                        <strong>Todo el contrato</strong> (Sobreescribir tabla)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="gen_mode" id="mode_partial" value="partial" onchange="document.getElementById('days_input_container').classList.remove('d-none')">
+                    <label class="form-check-label" for="mode_partial">
+                        <strong>Cantidad de días</strong> (Completar faltantes)
+                    </label>
+                </div>
+            </div>
+            <div id="days_input_container" class="mt-3 d-none text-start p-3 border rounded-2">
+                <label for="swal_days_count" class="form-label mb-1" style="font-size: 0.85rem;">¿Cuántos días de servicio desea planificar?</label>
+                <input type="number" id="swal_days_count" class="form-control" placeholder="Ej: 5" min="1">
+            </div>
+        `,
+		confirmButtonText: "Generar",
+		cancelButtonText: "Cancelar",
+		preConfirm: () => {
+            const mode = document.querySelector('input[name="gen_mode"]:checked').value;
+            const daysInput = document.getElementById('swal_days_count').value;
+            
+            if (mode === 'partial' && (!daysInput || parseInt(daysInput) <= 0)) {
+                if (typeof Swal !== 'undefined') Swal.showValidationMessage('Ingrese una cantidad válida de días.');
+                return false;
+            }
+            return { mode, daysCount: mode === 'partial' ? parseInt(daysInput) : Infinity };
+        }
+	}).then((result) => {
+		if (!result.isConfirmed) return { mode: null, daysCount: null }; // User cancelled the menu generation
+		return result.value;
+	});
+
+	return { genMode: mode, daysCount };
+};
+
+const generateRandomMenu = async () => {
 	const formData = getFormFields();
 
 	// Validates that start_date, end_date and days_to_serve are defined before attempting to generate the menu.
@@ -185,9 +231,6 @@ const generateRandomMenu = () => {
 		});
 		return;
 	}
-
-	const startDate = getLocalMidnight(formData.start_date);
-	const endDate = getLocalMidnight(formData.end_date);
 
 	// Clasify products by type 
 	const dishes = PRODUCTS.filter((p) => p.type === "dish");
@@ -200,79 +243,107 @@ const generateRandomMenu = () => {
 		});
 	}
 
-	SwalConfirmation.fire({
-		icon: "question",
-		title: "¿Está seguro de que desea generar un menú aleatorio?",
-		text: "Esto reemplazará cualquier detalle de contrato existente.",
-		confirmButtonText: "Sí, generar",
-		cancelButtonText: "Cancelar",
-	}).then((result) => {
-		if (!result.isConfirmed) return;
+	const { genMode, daysCount } = await askForMenuGenerationOptions();
+	if (!genMode) return; // User cancelled the menu generation
 
+	const detailsTable = getFormElements().contract_details_table || $("#contract-details-table");
+	if (genMode === "all") {
 		// Clear the table before generating to avoid massive duplicates
-		$("#contract-details-table tbody tr:not(#empty-row)").remove();
-		
-		let currentDate = new Date(startDate);
-		const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-		let usedThisWeek = new Set(); // To track used products for the current week and avoid repetition
-
-		// Helper: Extracts a random product of a given type that hasn't been used in the current week, if possible
-		const drawRandomProduct = (catalog) => {
-			if (catalog.length === 0) return null;
-
-			let available = catalog.filter(p => !usedThisWeek.has(p.id));
-			if (available.length === 0) {
-				available = catalog; // If all products have been used, reset the available list to allow repetition
+		detailsTable.find("tbody tr:not(#empty-row)").remove();
+	} else {
+		detailsTable.find("tbody tr:not(#empty-row)").each(function () {
+			const pId = $(this).find('select[name="product_id"]').val();
+			const mT = $(this).find('select[name="meal_time"]').val();
+			const sD = $(this).find('input[name="serve_date"]').val();
+			if (pId === "-1" || mT === "-1" || !sD) {
+				$(this).remove();
 			}
+		});
+	}
 
-			const product = available[Math.floor(Math.random() * available.length)];
-			usedThisWeek.add(product.id);
-			return product;
-		};
+	const dayCoverage = {};
+	if (genMode === "partial") {
+		detailsTable.find("tbody tr:not(#empty-row)").each(function () {
+			const pId = parseInt($(this).find('select[name="product_id"]').val());
+			const mT = $(this).find('select[name="meal_time"]').val();
+			const sD = $(this).find('input[name="serve_date"]').val();
 
-		// Iterate through each day in the date range, checking if it matches the selected service days and generating a menu item for each meal time if it does.
-		while (currentDate <= endDate) {
-			// Clear history of used products at the start of each week (Monday = 1)
-			if (currentDate.getDay() === 1) usedThisWeek.clear();
-			
-			// Get the day name (Monday, Tuesday, etc...)
-			const dayOfWeek = dayNames[currentDate.getDay()];
+			const prod = PRODUCTS.find((p) => p.id === pId);
+			if (prod && sD && mT !== "-1") {
+				if (!dayCoverage[sD]) dayCoverage[sD] = {};
+				if (!dayCoverage[sD][mT]) dayCoverage[sD][mT] = { dishes: 0, drinks: 0 };
 
-			// Verify if the current day of the week is included in the selected days to serve
-			if (formData.days_to_serve.includes(dayOfWeek)) {
-				MEAL_TIMES.forEach((meal) => {
-					// Format date to local YYYY-MM-DD
-					const year = currentDate.getFullYear();
-					const month = String(currentDate.getMonth() + 1).padStart(2, "0",);
-					const day = String(currentDate.getDate()).padStart(2, "0");
-					const formattedDate = `${year}-${month}-${day}`;
-
-					// Get and insert 1 Dish and 1 Drink for each meal time, if available
-					const dish = drawRandomProduct(dishes);
-					if (dish) appendContractDetailRow(dish, meal.value, formattedDate);
-
-					const drink = drawRandomProduct(drinks);
-					if (drink) appendContractDetailRow(drink, meal.value, formattedDate);
-				});
+				if (prod.type === "dish") dayCoverage[sD][mT].dishes ++;
+				if (prod.type === "drink") dayCoverage[sD][mT].drinks ++;
 			}
+		});
+	}
 
-			currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+	const startDate = getLocalMidnight(formData.start_date);
+	const endDate = getLocalMidnight(formData.end_date);
+	let currentDate = new Date(startDate);
+
+	let usedThisWeek = new Set(); // To track used products for the current week and avoid repetition
+	let serviceDaysProcessed = 0; // To track how many service days have been processed for partial generation
+
+	// Helper: Extracts a random product of a given type that hasn't been used in the current week, if possible
+	const drawRandomProduct = (catalog) => {
+		if (catalog.length === 0) return null;
+
+		let available = catalog.filter(p => !usedThisWeek.has(p.id));
+		if (available.length === 0) {
+			available = catalog; // If all products have been used, reset the available list to allow repetition
 		}
 
-		// Hide the "empty" state and update the summary section to reflect the generated menu
-		$("#empty-row").addClass("d-none");
-		updateSummary.progressBar();
+		const product = available[Math.floor(Math.random() * available.length)];
+		usedThisWeek.add(product.id);
+		return product;
+	};
 
-		// Recalculate total value based on the generated menu
-		recalculateTotalValue();
+	while (currentDate <= endDate) {
+		if (serviceDaysProcessed >= daysCount) break; // Stop if we've processed the desired number of service days (for partial generation)
+		if (currentDate.getDay() === 1) usedThisWeek.clear(); // Clear history of used products at the start of each week (Monday = 1)
 
-		// Execute uniqueness validation
-		validateTableUniqueness();
-	});
+		const dayOfWeek = DAY_NAMES[currentDate.getDay()];
+
+		if (formData.days_to_serve.includes(dayOfWeek)) {
+			const year = currentDate.getFullYear();
+			const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+			const day = String(currentDate.getDate()).padStart(2, "0");
+			const formattedDate = `${year}-${month}-${day}`;
+
+			MEAL_TIMES.forEach((meal) => {
+				const coverage = dayCoverage[formattedDate]?.[meal.value] || { dishes: 0, drinks: 0 };
+				
+				if (coverage.dishes < 1) {
+					const dish = drawRandomProduct(dishes);
+					if (dish) appendContractDetailRow(dish, meal.value, formattedDate);
+				}
+
+				if (coverage.drinks < 1) {
+					const drink = drawRandomProduct(drinks);
+					if (drink) appendContractDetailRow(drink, meal.value, formattedDate);
+				}
+
+				serviceDaysProcessed ++; // Increment the count of processed service days
+			});
+		}
+
+		currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+	}
+
+	// Hide the "empty" state and update the summary section to reflect the generated menu
+	$("#empty-row").addClass("d-none");
+	updateSummary.progressBar();
+
+	// Recalculate total value based on the generated menu
+	recalculateTotalValue();
+
+	// Execute uniqueness validation
+	validateTableUniqueness();
 };
 
-const recalculateTotalValue = () => {
+const recalculateTotalValue = (initialRecalc = false) => {
 	const tableEl = getFormElements().contract_details_table;
 	const totalValueInput = getFormElements().total_value;
 
@@ -286,7 +357,8 @@ const recalculateTotalValue = () => {
 		contractValue += (productPrice * portionsPerDay);
 	});
 
-	$(totalValueInput).val(contractValue.toFixed(0)).trigger("input");
+	if (initialRecalc) $(totalValueInput).val(contractValue.toFixed(0));
+	else $(totalValueInput).val(contractValue.toFixed(0)).trigger("input");
 };
 
 const clearDetailsTable = () => {
@@ -323,11 +395,10 @@ const getMissingDatesCount = () => {
     if (formData.start_date && formData.end_date && formData.days_to_serve.length > 0) {
         const startDate = getLocalMidnight(formData.start_date);
         const endDate = getLocalMidnight(formData.end_date);
-        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         
         let currentDate = new Date(startDate);
         while (currentDate <= endDate) {
-            const dayOfWeek = dayNames[currentDate.getDay()];
+            const dayOfWeek = DAY_NAMES[currentDate.getDay()];
             if (formData.days_to_serve.includes(dayOfWeek)) {
                 const year = currentDate.getFullYear();
                 const month = String(currentDate.getMonth() + 1).padStart(2, "0");
@@ -471,8 +542,7 @@ const contractDetailValidators = {
 
 			// Check if the day of the week of the service date corresponds to one of the selected days to serve in the contract
             const dateObj = getLocalMidnight(v);
-            const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            const dayName = dayNames[dateObj.getDay()];
+            const dayName = DAY_NAMES[dateObj.getDay()];
 
             return data.days_to_serve.includes(dayName);
         },
@@ -738,7 +808,7 @@ const updateSummary = {
 			}
 		}
 	},
-	details: () => {
+	details: (initialRecalc = false) => {
 		const rows = $("#contract-details-table tbody tr:not(#empty-row)");
 		const badge = $("#added-items-badge");
 		const summaryContainer = $("#contract-summary-meals");
@@ -752,7 +822,7 @@ const updateSummary = {
 		if (rows.length === 0) {
 			$("#empty-row").removeClass("d-none");
 			summaryContainer.html('<span class="text-muted" style="font-size: .82rem;">Sin detalles aún.</span>');
-			recalculateTotalValue(); // Ensure total value is recalculated when details change
+			recalculateTotalValue(initialRecalc); // Ensure total value is recalculated when details change
 			return;
 		} else {
 			$("#empty-row").addClass("d-none");
@@ -797,9 +867,9 @@ const updateSummary = {
 		}
 
 		summaryContainer.html(summaryHtml);
-		recalculateTotalValue(); // Recalculate total value whenever details change
+		recalculateTotalValue(initialRecalc); // Recalculate total value whenever details change
 	},
-	progressBar: () => {
+	progressBar: (initialLoad = false) => {
 		const values = getFormFields();
 
 		// Defines which fields are mandatory for the 100% progress
@@ -818,6 +888,8 @@ const updateSummary = {
 
 		// Evaluates each field against its validator and counts how many are valid
 		fieldsToTrack.forEach((fieldId) => {
+			if (fieldId === "total_value" && initialLoad) return;
+
 			const validator = baseFieldValidators[fieldId];
 			if (validator && validator.validate(values[fieldId], values)) {
 				validCount++;
@@ -941,7 +1013,7 @@ const bindEventListeners = () => {
 		"change",
 		'select[name="meal_time"]',
 		function () {
-			updateSummary.details();
+			updateSummary.details(); // Recalculate details summary after meal time change
 		},
 	);
 
@@ -994,8 +1066,8 @@ const bindEventListeners = () => {
 
 	// Generate Random Menu Event - generates a random menu based on the contract period and selected days, 
 	// replacing existing details and updating the summary accordingly
-	elements.btn_generate_menu.on("click", function () {
-		generateRandomMenu();
+	elements.btn_generate_menu.on("click", async function () {
+		await generateRandomMenu();
 	});
 
 	// Clear Details Event - removes all rows from the contract details table after confirmation and updates the summary accordingly
@@ -1059,6 +1131,6 @@ $(() => {
     bindEventListeners();
     bindRealTimeValidation();
     bindOffcanvasEvents("create-offcanvas");
-	updateSummary.details(); // Initial details summary update on page load
+	updateSummary.details(true); // Initial details summary update on page load
     updateSummary.progressBar(); // Initial progress bar update on page load
 });
