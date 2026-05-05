@@ -33,12 +33,9 @@ class ProductRequest extends FormRequest
         $marginInput = $this->input('margin_percentage');
         $barcode = $this->input('barcode');
 
-        if (
-            $this->isMethod('post')
-            && $isMerchandise
-            && ($marginInput === null || $marginInput === '')
-        ) {
-            $marginInput = 0.35;
+        if ($this->isMethod('post') && $isMerchandise && ($marginInput === null || $marginInput === '')) 
+        {
+            $marginInput = 35; // Valor entero nuevo (35%)
         }
 
         $taxInput = $this->input('tax_percentage');
@@ -55,8 +52,8 @@ class ProductRequest extends FormRequest
             'expiration_alert_days' => $isMerchandise
                 ? $expirationAlertDays
                 : null,
-            'tax_percentage' => $isMerchandise ? $this->normalizePercentage($taxInput) : null,
-            'margin_percentage' => $isMerchandise ? $this->normalizePercentage($marginInput) : null,
+            'tax_percentage' => $isMerchandise ? ($taxInput === '' ? null : $taxInput) : null,
+            'margin_percentage' => $isMerchandise ? ($marginInput === '' ? null : $marginInput) : null,
             'current_stock' => $this->input('current_stock') === '' ? null : $this->input('current_stock'),
             'minimum_stock' => $this->input('minimum_stock') === '' ? null : $this->input('minimum_stock'),
         ]);
@@ -109,11 +106,11 @@ class ProductRequest extends FormRequest
             'reference_cost' => $pricingRules,
             'tax_percentage' => [
                 ...$pricingRules,
-                'max:1',
+                'max:100',
             ],
             'margin_percentage' => [
                 ...$pricingRules,
-                'max:1',
+                'max:100',
             ],
             'sale_price' => $saleRules,
             'current_stock' => [
@@ -201,18 +198,18 @@ class ProductRequest extends FormRequest
     /**
      * Converts percentages greater than 1 (13, 35) into decimal values (0.13, 0.35).
      */
-    private function normalizePercentage(mixed $value): ?float
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
+    // private function normalizePercentage(mixed $value): ?float
+    // {
+    //     if ($value === null || $value === '') {
+    //         return null;
+    //     }
 
-        $number = (float) $value;
+    //     $number = (float) $value;
 
-        if ($number > 1) {
-            $number /= 100;
-        }
+    //     if ($number > 1) {
+    //         $number /= 100;
+    //     }
 
-        return round($number, 4);
-    }
+    //     return round($number, 4);
+    // }
 }

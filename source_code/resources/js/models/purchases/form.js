@@ -25,7 +25,7 @@ const TYPE_LABELS = {
 function formatCRC(value) {
     return '₡' + parseFloat(value || 0).toLocaleString('es-CR', {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 0,
     });
 }
 
@@ -39,7 +39,7 @@ function recalcRowSubtotal($row) {
     const subtotal  = qty * unitPrice;
 
     $row.find('.subtotal-display').text(formatCRC(subtotal));
-    $row.find('.subtotal-input').val(subtotal.toFixed(2));
+    $row.find('.subtotal-input').val(Math.round(subtotal) ); 
 }
 
 /**
@@ -145,12 +145,12 @@ function addDetailRowForNewItem(type, item) {
                     <span class="input-group-text">₡</span>
                     <input type="number" name="details[${index}][unit_price]"
                            class="form-control form-control-sm unit-price-input"
-                           value="${item.unit_price ? item.unit_price.toFixed(2) : '0.00'}"
+                           value="${item.unit_price ? item.unit_price : '0'}"
                            min="0" step="0.01" required>
                 </div>
             </td>
             <td class="align-middle">
-                <span class="subtotal-display fw-semibold text-success">₡0.00</span>
+                <span class="subtotal-display fw-semibold text-success">₡0</span>
                 <input type="hidden" name="details[${index}][subtotal]" class="subtotal-input" value="0">
             </td>
             <td>
@@ -198,11 +198,11 @@ $('#add-detail').on('click', function () {
                     <span class="input-group-text">₡</span>
                     <input type="number" name="details[${index}][unit_price]"
                            class="form-control form-control-sm unit-price-input"
-                           value="0.00" min="0" step="0.01" required>
+                           value="0" min="0" step="1" required>
                 </div>
             </td>
             <td class="align-middle">
-                <span class="subtotal-display fw-semibold text-success">₡0.00</span>
+                <span class="subtotal-display fw-semibold text-success">₡0</span>
                 <input type="hidden" name="details[${index}][subtotal]" class="subtotal-input" value="0">
             </td>
             <td>

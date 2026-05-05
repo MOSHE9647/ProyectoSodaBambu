@@ -54,23 +54,24 @@ function validateDateValue(value) {
 }
 
 function validateDecimalPercentage(value) {
-    const amount = parseFloat(value);
-    return !isNaN(amount) && amount >= 0 && amount <= 1;
+    const amount = parseInt(value);
+    return !isNaN(amount) && Number.isInteger(amount) && amount >= 0 && amount <= 100;
 }
 
 function normalizePercentage(value) {
-    const amount = parseFloat(value);
-
-    if (isNaN(amount) || amount < 0) {
-        return NaN;
-    }
-
-    return amount > 1 ? amount / 100 : amount;
+    const amount = parseInt(value);
+    return isNaN(amount) ? NaN : amount;
 }
 
 function calculateSalePrice(referenceCost, taxPercentage, marginPercentage) {
-    const priceWithTax = referenceCost + (referenceCost * taxPercentage);
-    return priceWithTax + (priceWithTax * marginPercentage);
+    const taxFactor = taxPercentage / 100;
+    const marginFactor = marginPercentage / 100;
+
+    const basePrice = referenceCost + (referenceCost * taxFactor);
+    const salePrice = basePrice + (basePrice * marginFactor);
+    
+    // Retornamos el entero redondeado
+    return Math.round(salePrice);
 }
 
 function isMerchandiseSelected() {
@@ -172,7 +173,7 @@ function syncPricingFieldBehavior() {
     }
 
     const salePrice = calculateSalePrice(referenceCost, taxPercentage, marginPercentage);
-    $salePrice.val(salePrice.toFixed(2));
+    $salePrice.val(salePrice);
 }
 
 function toggleConditionalRequiredMarker(elementId, isVisible) {
@@ -236,7 +237,7 @@ function validateMarginWarning() {
 
     const $marginWarning = $('#margin-warning');
 
-    if (marginPercentage < 0.10) {
+    if (marginPercentage < 10) {
         if (!$marginWarning.length) {
             $('#margin_percentage').after(
                 '<small id="margin-warning" class="text-warning d-block mt-1">Margen bajo menor al 10%. Considere aumentarlo.</small>'
@@ -418,7 +419,7 @@ const fieldValidators = {
     tax_percentage: {
         validator: validateDecimalPercentage,
         emptyMsg: 'El impuesto es obligatorio.',
-        invalidMsg: 'Ingrese un impuesto válido entre 0 y 1. Ej: 0.13'
+        invalidMsg: 'Ingrese un impuesto válido entre 0 y 100. Ej: 13' 
     },
     reference_cost: {
         validator: validateNonNegativeAmount,
@@ -428,7 +429,7 @@ const fieldValidators = {
     margin_percentage: {
         validator: validateDecimalPercentage,
         emptyMsg: 'El margen es obligatorio.',
-        invalidMsg: 'Ingrese un margen válido entre 0 y 1. Ej: 0.35'
+        invalidMsg: 'Ingrese un margen válido entre 0 y 100. Ej: 35' 
     },
     current_stock: {
         validator: (value) => Number.isInteger(Number(value)) && Number(value) >= 0,
