@@ -154,6 +154,53 @@ export function createIncomeAreaChart({
 }
 
 /**
+ * Creates a bar chart for the top selling products.
+ */
+export function createTopProductsChart({ container, labels, values, theme }) {
+    const options = {
+        series: [{
+            name: '',
+            data: values
+        }],
+        chart: {
+            type: 'bar',
+            height: 300,
+            fontFamily: 'inherit',
+            background: 'transparent',
+            toolbar: { show: false }
+        },
+		grid: { show: false },
+        plotOptions: {
+            bar: {
+                borderRadius: 4,
+                horizontal: true,
+                distributed: true,
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            formatter: (val) => val.toLocaleString()
+        },
+        colors: ['#198754', '#20c997', '#0dcaf0', '#0d6efd', '#6f42c1'],
+        xaxis: {
+            categories: labels,
+        },
+        theme: { mode: theme },
+        tooltip: {
+            theme,
+            y: {
+                formatter: (val, { dataPointIndex }) => {
+                    const revenue = window.DashboardData.topSellingProducts[dataPointIndex].revenue;
+                    return `Vendidos: ${val} | Ingresos: ₡ ${revenue.toLocaleString()}`;
+                }
+            }
+        }
+    };
+
+    return createApexChart({ container, options });
+}
+
+/**
  * Observes theme changes and updates chart theme/tooltip mode.
  * @param {ApexCharts[]} charts
  * @param {Object} [params]

@@ -19,7 +19,7 @@ export const CustomLanguage = {
 
 // Set global defaults for all DataTables
 $.extend($.fn.dataTable.defaults, {
-    pageLength: 5, 				// Default number of rows per page
+    pageLength: 10, 				// Default number of rows per page
     processing: true, 			// Show processing indicator
     responsive: true, 			// Enable responsive design
     autoWidth: true, 			// Automatically adjust column widths
