@@ -116,8 +116,12 @@ const normalizeCartItemAmounts = (item) => {
 	};
 };
 
-const calculateItemTax = (item) =>
-	toIntegerAmount(Math.round(toIntegerAmount(item.sub_total) * (Number(item.applied_tax) || 0)));
+const calculateItemTax = (item) => {
+    // Dividimos por 100 porque applied_tax viene como entero (ej: 13) 
+    // y lo necesitamos como decimal (0.13)
+    const taxRate = (Number(item.applied_tax) || 0) / 100;
+    return toIntegerAmount(Math.round(toIntegerAmount(item.sub_total) * taxRate));
+};
 
 // --- VALIDATIONS ---
 
@@ -205,11 +209,15 @@ export const syncFinalizeSaleButtonState = () => {
  * }} item
  * @returns {string}
  */
-const createCartItemHTML = (item) => `
+const createCartItemHTML = (item) => {
+	const taxRate = (Number(item.applied_tax) || 0) / 100;
+	const priceWithoutTax = Math.round(item.unit_price / (1 + taxRate));
+
+	return `
     <div class="d-flex flex-row justify-content-between align-items-center gap-2 w-100" data-cart-item-id="${item.product_id}">
         <div class="d-flex flex-column text-start overflow-hidden flex-grow-1">
             <span class="fw-bold text-truncate text-body" style="font-size: 0.95rem;" title="${item.name}">${item.name}</span>
-            <span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">${formatCurrency(item.unit_price)} c/u</span>
+            <span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">${formatCurrency(priceWithoutTax)} c/u</span>
         </div>
         <div class="d-flex flex-row align-items-center justify-content-end gap-2 flex-shrink-0">
             <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" data-product-id="${item.product_id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
@@ -231,7 +239,8 @@ const createCartItemHTML = (item) => `
             </button>
         </div>
     </div>
-`;
+	`;
+};
 
 /**
  * Renders all active cart items and recalculates subtotal, tax, and total.
@@ -257,21 +266,28 @@ const renderCartItems = () => {
 		return;
 	}
 
-	let subtotal = 0;
-	let taxAmount = 0;
+	let subtotalWithoutTax = 0;
+	let totalTaxAmount = 0;
 
 	const html = currentCart
 		.map((item) => {
-			subtotal += item.sub_total;
-			taxAmount += calculateItemTax(item);
+			const taxRate = (Number(item.applied_tax) || 0) / 100;
+			// El sub_total guardado es (unit_price * quantity), osea TOTAL
+			const itemTotal = item.sub_total;
+			const itemBasePrice = Math.round(itemTotal / (1 + taxRate));
+			const itemTax = itemTotal - itemBasePrice;
+
+			subtotalWithoutTax += itemBasePrice;
+			totalTaxAmount += itemTax;
+
 			return createCartItemHTML(item);
 		})
 		.join("");
 
 	elements.saleDetailsContainer.innerHTML = html;
-	elements.saleSubtotal.textContent = formatCurrency(subtotal);
-	elements.saleTax.textContent = formatCurrency(taxAmount);
-	elements.saleTotal.textContent = formatCurrency(subtotal + taxAmount);
+	elements.saleSubtotal.textContent = formatCurrency(subtotalWithoutTax);
+	elements.saleTax.textContent = formatCurrency(totalTaxAmount);
+	elements.saleTotal.textContent = formatCurrency(subtotalWithoutTax + totalTaxAmount);
 
 	syncFinalizeSaleButtonState();
 };
