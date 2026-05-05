@@ -10,6 +10,7 @@
     $pageSubtitle = $isEditing ? 'Modifica la información del contrato existente' : 'Registra un nuevo contrato con un cliente';
 
     $formId = $isEditing ? 'edit-contract-form' : 'create-contract-form';
+    $formMethod = $isEditing ? 'PUT' : 'POST';
     $actionUrl = $isEditing ? route('contracts.update', $contract) : route('contracts.store');
 
     $paymentStatuses = [PaymentStatus::PENDING, PaymentStatus::PAID];
@@ -44,7 +45,7 @@
 
 <x-header title="{{ $pageTitle }}" subtitle="{{ $pageSubtitle }}" />
 
-<form id="{{ $formId }}" action="{{ $actionUrl }}" method="POST" class="container-fluid px-0 pb-0">
+<form id="{{ $formId }}" action="{{ $actionUrl }}" method="{{ $formMethod }}" class="container-fluid px-0 pb-0">
 
     @csrf
 

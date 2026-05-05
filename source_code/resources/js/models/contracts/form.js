@@ -1,5 +1,6 @@
 import { bindOffcanvasEvents } from "../../utils/offcanvas.js";
 import { SwalConfirmation, SwalToast } from "../../utils/sweetalert.js";
+import { setLoadingState } from "../../utils/utils.js";
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation.js";
 
 // ==================== Environment Checks ====================
@@ -42,7 +43,7 @@ const getFormFields = () => {
                 id: $row.data('contract-detail-id') || null,
                 product_id: parseInt($row.find('select[name="product_id"]').val()),
                 meal_time: $row.find('select[name="meal_time"]').val(),
-                service_date: $row.find('input[name="service_date"]').val()
+                service_date: $row.find('input[name="serve_date"]').val()
             };
         })
         .get();
@@ -121,7 +122,7 @@ const appendContractDetailRow = (product, mealTimeValue, serveDate) => {
 				<div class="border-secondary w-auto text-start">
 					<div class="input-group input-group-sm has-validation">
 						<input type="date" name="serve_date" class="form-control" aria-describedby="service_date-error"
-							min="${new Date().toISOString().split("T")[0]}" 
+							min="${getTodayMidnight().toISOString().split('T')[0]}"
 							value="${serveDate}"
 						>
 						<div id="product_id-error" class="invalid-feedback ps-2" role="alert">
@@ -314,6 +315,56 @@ const clearDetailsTable = () => {
 	});
 };
 
+const getMissingDatesCount = () => {
+    const formData = getFormFields();
+    const expectedDates = new Set();
+    
+    // Calculate expected service dates based on start_date, end_date and days_to_serve
+    if (formData.start_date && formData.end_date && formData.days_to_serve.length > 0) {
+        const startDate = getLocalMidnight(formData.start_date);
+        const endDate = getLocalMidnight(formData.end_date);
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const dayOfWeek = dayNames[currentDate.getDay()];
+            if (formData.days_to_serve.includes(dayOfWeek)) {
+                const year = currentDate.getFullYear();
+                const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+                const day = String(currentDate.getDate()).padStart(2, "0");
+                expectedDates.add(`${year}-${month}-${day}`);
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+    }
+
+    // Calculate provided service dates from the contract details table
+    const providedDates = new Set();
+    $(getFormElements().contract_details_table).find('tbody tr:not(#empty-row)').each(function () {
+        const serveDate = $(this).find('input[name="serve_date"]').val();
+        if (serveDate) {
+            providedDates.add(serveDate);
+        }
+    });
+
+    // Return the count of expected dates that are missing from the provided dates
+    return [...expectedDates].filter(expectedDate => !providedDates.has(expectedDate)).length;
+};
+
+const confirmIncompleteContract = async (missingCount) => {
+    const confirmation = await SwalConfirmation.fire({
+        icon: "question",
+        title: "Contrato Incompleto",
+        text: `Faltan ${missingCount} día(s) por asignar en este período. ¿Desea guardar el contrato de todos modos y completar el menú después?`,
+        confirmButtonText: "Sí, guardar",
+        cancelButtonText: "Revisar menú",
+    }).then((result) => {
+        return result.isConfirmed;
+    });
+
+	return confirmation;
+};
+
 // ==================== Validation Helpers ====================
 
 // Converts a "YYYY-MM-DD" string into a local date at 00:00:00
@@ -384,10 +435,10 @@ const baseFieldValidators = {
         validate: (details) => Array.isArray(details) && details.length > 0,
         message: "Algunos de los detalles del contrato no son válidos."
     },
-    payment_details: {
-        validate: (details) => Array.isArray(details) && details.length > 0,
-        message: "Algunos de los detalles de pago no son válidos."
-    }
+    // payment_details: {
+    //     validate: (details) => Array.isArray(details) && details.length > 0,
+    //     message: "Algunos de los detalles de pago no son válidos."
+    // }
 };
 
 const contractDetailValidators = {
@@ -805,11 +856,36 @@ const updateSummary = {
 	},
 };
 
+// ==================== Submission Handler ====================
+
+const handleFormSubmission = async (event, validationResult) => {
+	const form = event.target;
+	const url = form.action;
+	const method = form.method.toUpperCase();
+	const [message, values] = validationResult;
+
+	if (method === "PUT") {
+		const contractId = url.split("/").pop();
+		values.id = contractId; // Include contract ID in the payload for updates
+	}
+
+	values.contract_details = values.contract_details.map(detail => {
+		// Convert empty strings to null for optional fields
+		if (detail.id === null || detail.id === '-1') {
+			const { id, ...rest } = detail; // Exclude id from the payload if it's null or -1
+			return rest;
+		}
+		return detail;
+	});
+
+	console.log("Payload to submit:", values);
+};
+
 // ===================== Event Listeners ======================
 
 const bindEventListeners = () => {
 	const elements = getFormElements();
-
+	
 	// Client Selection Event
 	elements.client_id
 		.off("change")
@@ -938,7 +1014,46 @@ const bindEventListeners = () => {
 		}
 		recalculateTotalValue();
 	});
+
+	// Interceptar el envío del formulario
+    $(`#${FORM_ID}`).on("submit", async function (e) {
+        e.preventDefault();
+
+        // 1. Validaciones Fuertes (Bloqueantes)
+        const [isValid, fieldId, message, values] = validateContractForm();
+        if (!isValid) {
+            SwalToast.fire({
+                icon: "error",
+                title: message || "Por favor, corrija los errores en el formulario antes de enviar.",
+            });
+            return;
+        }
+
+        if (!validateTableUniqueness()) {
+            return; 
+        }
+
+        // 2. Comprobar si faltan días
+        const missingDatesCount = getMissingDatesCount();
+		let proceedWithSubmission = true;
+
+		if (missingDatesCount > 0) {
+			proceedWithSubmission = await confirmIncompleteContract(missingDatesCount);
+		}
+
+		if (!proceedWithSubmission) {
+			SwalToast.fire({
+				icon: "info",
+				title: "Revise el menú para completar los días faltantes.",
+			});
+			return;
+		}
+
+		handleFormSubmission(e, [message, values]);
+    });
 };
+
+// ====================== Initialization ======================
 
 $(() => {
     bindEventListeners();
