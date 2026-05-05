@@ -162,8 +162,8 @@ class SaleStoreRequest extends FormRequest
         $total = (int) $this->input('total', 0);
         $detailsTotalWithTax = collect($this->input('sale_details', []))
             ->sum(fn ($d) => (int) ($d['sub_total'] ?? 0) + (int) round((int) ($d['sub_total'] ?? 0) * ((float) ($d['applied_tax'] ?? 0) / 100)));
-        
-            if ($total !== $detailsTotalWithTax) {
+
+        if ($total !== $detailsTotalWithTax) {
             $validator->errors()->add('total', "El total ($total) no coincide con la suma de los productos ($detailsTotalWithTax).");
         }
     }
