@@ -20,7 +20,7 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         $referenceCost = $this->faker->numberBetween(500, 12000);
-        $marginPercentage = $this->faker->numberBetween(20, 60) ;
+        $marginPercentage = $this->faker->numberBetween(20, 60);
         $taxPercentage = 13; // 13% tax
 
         return [

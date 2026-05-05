@@ -160,7 +160,7 @@ class SaleStoreRequest extends FormRequest
     private function validateTotalMatchesDetails(Validator $validator): void
     {
         $total = (int) $this->input('total', 0);
-    
+
         // Sumamos los subtotales como enteros directamente
         $detailsTotal = collect($this->input('sale_details', []))
             ->sum(fn ($d) => (int) ($d['sub_total'] ?? 0));
@@ -195,7 +195,7 @@ class SaleStoreRequest extends FormRequest
         $status = $this->input('payment_status');
         $total = (int) $this->input('total', 0);
         $payments = collect($this->input('payment_details', []));
-        $paidAmount = (int) $payments->sum('amount'); 
+        $paidAmount = (int) $payments->sum('amount');
 
         if ($status === PaymentStatus::PAID->value) {
             if ($paidAmount < $total) {
