@@ -33,8 +33,7 @@ class ProductRequest extends FormRequest
         $marginInput = $this->input('margin_percentage');
         $barcode = $this->input('barcode');
 
-        if ($this->isMethod('post') && $isMerchandise && ($marginInput === null || $marginInput === '')) 
-        {
+        if ($this->isMethod('post') && $isMerchandise && ($marginInput === null || $marginInput === '')) {
             $marginInput = 35; // Valor entero nuevo (35%)
         }
 
@@ -171,7 +170,7 @@ class ProductRequest extends FormRequest
             'reference_cost.required' => 'El costo de referencia es obligatorio para productos de mercadería.',
             'reference_cost.numeric' => 'El costo de referencia debe ser un número válido.',
             'reference_cost.min' => 'El costo de referencia no puede ser menor a 0.',
-            //'reference_cost.regex' => 'El costo de referencia debe tener máximo 2 decimales.',
+            // 'reference_cost.regex' => 'El costo de referencia debe tener máximo 2 decimales.',
             'tax_percentage.required' => 'El impuesto es obligatorio para productos de mercadería.',
             'tax_percentage.numeric' => 'El impuesto debe ser un número válido.',
             'tax_percentage.min' => 'El impuesto no puede ser menor a 0.',
@@ -184,7 +183,7 @@ class ProductRequest extends FormRequest
             'margin_percentage.regex' => 'El margen debe tener máximo 2 decimales.',
             'sale_price.numeric' => 'El precio de venta debe ser un número válido.',
             'sale_price.min' => 'El precio de venta no puede ser menor a 0.',
-            //'sale_price.regex' => 'El precio de venta debe tener máximo 2 decimales.',
+            // 'sale_price.regex' => 'El precio de venta debe tener máximo 2 decimales.',
             'sale_price.required' => 'El precio de venta es obligatorio para Platillo, Bebida y Empaquetado.',
             'sale_price.gt' => 'El precio de venta debe ser mayor al costo de referencia.',
             'current_stock.integer' => 'El stock actual debe ser un número entero.',

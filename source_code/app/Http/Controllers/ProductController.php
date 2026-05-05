@@ -66,7 +66,7 @@ class ProductController extends Controller implements HasMiddleware
 
                     return $daysRemaining.' día(s)';
                 })
-                
+
                 ->toJson();
         }
 
