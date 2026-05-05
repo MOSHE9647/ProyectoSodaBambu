@@ -16,6 +16,12 @@ class CashRegisterReport extends Model
         'notes',
     ];
 
+    protected $casts = [
+        'total_system_amount' => 'integer',
+        'total_physical_amount' => 'integer',
+        'total_difference' => 'integer',
+    ];
+
     /**
      * The cash register session to which this report belongs.
      */

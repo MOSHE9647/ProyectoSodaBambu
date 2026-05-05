@@ -30,25 +30,20 @@ const escapeHtml = (value) =>
 		.replace(/\"/g, "&quot;")
 		.replace(/'/g, "&#039;");
 
-const roundToTwo = (value) => Math.round((Number(value) || 0) * 100) / 100;
+const toIntegerAmount = (value) => Math.round(Number(value) || 0);
 
-const formatAmountInputValue = (value) => roundToTwo(value).toFixed(2);
+const formatAmountInputValue = (value) => String(toIntegerAmount(value));
 
 const parseAmountInputValue = (value) => {
 	const normalizedValue = String(value || "")
 		.replace(/\s+/g, "")
-		.replace(",", ".");
-	const parsedValue = Number.parseFloat(normalizedValue);
-	return Number.isFinite(parsedValue) ? roundToTwo(parsedValue) : 0;
+		.replace(/[^\d]/g, "");
+	const parsedValue = Number.parseInt(normalizedValue, 10);
+	return Number.isFinite(parsedValue) ? parsedValue : 0;
 };
 
 const sanitizeAmountInputValue = (value) => {
-	const sanitized = String(value || "")
-		.replace(/[^0-9.,]/g, "")
-		.replace(/[,\.]/g, (match, index, str) => {
-			return str.indexOf(match) === index ? "." : "";
-		});
-	return sanitized;
+	return String(value || "").replace(/[^\d]/g, "");
 };
 
 const appendKeyboardValue = (currentValue, appendedValue) => {
@@ -167,7 +162,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 		return;
 	}
 
-	const saleTotal = Number(saleData.total || 0);
+	const saleTotal = toIntegerAmount(saleData.total || 0);
 	const payments = [];
 	let selectedMethod = PaymentMethods.CASH;
 
@@ -282,12 +277,12 @@ const initializePaymentModalUI = (popup, saleData) => {
 		}
 
 		const paidTotal = payments.reduce(
-			(sum, payment) => roundToTwo(sum + Number(payment.amount || 0)),
+			(sum, payment) => toIntegerAmount(sum + Number(payment.amount || 0)),
 			0,
 		);
-		const remainingBeforeCurrent = roundToTwo(Math.max(0, saleTotal - paidTotal));
+		const remainingBeforeCurrent = toIntegerAmount(Math.max(0, saleTotal - paidTotal));
 		const receivedAmount = parseAmountInputValue(amountInput.value);
-		const estimatedChange = roundToTwo(Math.max(0, receivedAmount - remainingBeforeCurrent));
+		const estimatedChange = toIntegerAmount(Math.max(0, receivedAmount - remainingBeforeCurrent));
 
 		paymentChangePreview.textContent = `Vuelto estimado: ${formatCurrency(estimatedChange)}`;
 		paymentChangePreview.classList.remove("d-none");
@@ -295,11 +290,11 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 	const refreshTotals = () => {
 		const paidTotal = payments.reduce(
-			(sum, payment) => roundToTwo(sum + Number(payment.amount || 0)),
+			(sum, payment) => toIntegerAmount(sum + Number(payment.amount || 0)),
 			0,
 		);
-		const remaining = roundToTwo(Math.max(0, saleTotal - paidTotal));
-		const change = roundToTwo(Math.max(0, paidTotal - saleTotal));
+		const remaining = toIntegerAmount(Math.max(0, saleTotal - paidTotal));
+		const change = toIntegerAmount(Math.max(0, paidTotal - saleTotal));
 
 		paymentTotalElement.textContent = formatCurrency(saleTotal);
 		paymentPaidElement.textContent = formatCurrency(paidTotal);
@@ -369,8 +364,6 @@ const initializePaymentModalUI = (popup, saleData) => {
 			"Home",
 			"End",
 			"Enter",
-			".",
-			",",
 		];
 
 		if (allowedKeys.includes(event.key)) {
@@ -427,7 +420,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 				case "500":
 				case "1000":
 					amountInput.value = formatAmountInputValue(
-						roundToTwo(currentAmount + Number(key)),
+						toIntegerAmount(currentAmount + Number(key)),
 					);
 					break;
 
@@ -465,10 +458,10 @@ const initializePaymentModalUI = (popup, saleData) => {
 		}
 
 		const paidTotal = payments.reduce(
-			(sum, payment) => roundToTwo(sum + Number(payment.amount || 0)),
+			(sum, payment) => toIntegerAmount(sum + Number(payment.amount || 0)),
 			0,
 		);
-		const remaining = roundToTwo(Math.max(0, saleTotal - paidTotal));
+		const remaining = toIntegerAmount(Math.max(0, saleTotal - paidTotal));
 
 		if (remaining === 0) {
 			SwalToast.fire({
@@ -494,7 +487,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 			);
 
 			if (existingCashPayment) {
-				existingCashPayment.amount = roundToTwo(existingCashPayment.amount + amount);
+				existingCashPayment.amount = toIntegerAmount(existingCashPayment.amount + amount);
 				referenceInput.value = "";
 				refreshTotals();
 				return;
@@ -503,7 +496,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 		payments.push({
 			method: selectedMethod,
-			amount: roundToTwo(amount),
+			amount: toIntegerAmount(amount),
 			reference:
 				selectedMethod === PaymentMethods.CASH || reference.length === 0
 					? null
@@ -537,7 +530,7 @@ const paymentFormEventListener = async (event, saleData) => {
 
 	const paymentDetails = [];
 	let totalTendered = 0;
-	const saleTotal = Number(saleData.total || 0);
+	const saleTotal = toIntegerAmount(saleData.total || 0);
 
 	const paymentRows = paymentForm.querySelectorAll(".payment-row");
 	paymentRows.forEach((row) => {
@@ -546,7 +539,7 @@ const paymentFormEventListener = async (event, saleData) => {
 		const referenceElement = row.querySelector(".payment-reference");
 
 		const method = methodElement?.value;
-		const amount = parseFloat(amountElement?.value || "0") || 0;
+		const amount = parseAmountInputValue(amountElement?.value || "0");
 		const reference = referenceElement?.value || null;
 
 		if (!method) {
@@ -580,13 +573,13 @@ const paymentFormEventListener = async (event, saleData) => {
 	}
 
 	const changeAmount = Math.max(0, totalTendered - saleTotal);
-		const roundedChangeAmount = roundToTwo(changeAmount);
+	const roundedChangeAmount = toIntegerAmount(changeAmount);
 	const cashPaymentIndex = paymentDetails.findIndex(
 		(payment) => payment.method === PaymentMethods.CASH,
 	);
 
 	if (cashPaymentIndex >= 0) {
-			paymentDetails[cashPaymentIndex].change_amount = roundedChangeAmount;
+		paymentDetails[cashPaymentIndex].change_amount = roundedChangeAmount;
 	}
 
 	SwalModal.showLoading();

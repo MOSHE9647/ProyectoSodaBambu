@@ -18,9 +18,9 @@ class CashRegisterDetail extends Model
 
     protected $casts = [
         'payment_method' => PaymentMethod::class,
-        'system_amount' => 'decimal:2',
-        'physical_amount' => 'decimal:2',
-        'difference' => 'decimal:2',
+        'system_amount' => 'integer',
+        'physical_amount' => 'integer',
+        'difference' => 'integer',
     ];
 
     public function report(): BelongsTo

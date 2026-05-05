@@ -29,8 +29,7 @@ class BuildSalesReportSpreadsheetAction
         $sheet->setCellValue('A5', 'Generado el: '.$currentDate->format('d/m/Y H:i'));
 
         if ($activeSection === 'products') {
-            $productsIncomeOriginal = collect($reportData['topProducts'] ?? [])->sum('income');
-            $productsIncomeTotal = (int) ($productsIncomeOriginal / 1000);
+            $productsIncomeTotal = (int) collect($reportData['topProducts'] ?? [])->sum('income');
             $sheet->setCellValue('A6', 'Ingresos totales (según tabla): ₡ '.number_format($productsIncomeTotal, 0, ',', '.'));
 
             $headers = ['Producto', 'Categoría', 'Tipo', 'Cantidad Vendida', 'Ingresos', '% del Total'];
@@ -46,7 +45,7 @@ class BuildSalesReportSpreadsheetAction
                 $sheet->setCellValue('B'.$row, $product['category_name'] ?? '');
                 $sheet->setCellValue('C'.$row, $product['product_type_label'] ?? '');
                 $sheet->setCellValue('D'.$row, (int) ($product['sold_quantity'] ?? 0));
-                $incomeAdjusted = (int) (($product['income'] ?? 0) / 1000);
+                $incomeAdjusted = (int) ($product['income'] ?? 0);
                 $sheet->setCellValue('E'.$row, $incomeAdjusted);
                 $sheet->setCellValue('F'.$row, (float) ($product['total_percent'] ?? 0));
                 $row++;
@@ -76,12 +75,12 @@ class BuildSalesReportSpreadsheetAction
         $totalSalesIncome = 0;
         $row = 8;
         foreach (($reportData['dailyReports'] ?? []) as $report) {
-            $income = (int) ($report['income'] ?? 0 / 1000);
+            $income = (int) ($report['income'] ?? 0);
             $totalSalesIncome += $income;
             $sheet->setCellValue('A'.$row, $report['date'] ?? '');
             $sheet->setCellValue('B'.$row, (int) ($report['orders'] ?? 0));
             $sheet->setCellValue('C'.$row, $income);
-            $avgTicket = (int) (($report['avg_ticket'] ?? 0) / 1000);
+            $avgTicket = (int) ($report['avg_ticket'] ?? 0);
             $sheet->setCellValue('D'.$row, $avgTicket);
             $row++;
         }

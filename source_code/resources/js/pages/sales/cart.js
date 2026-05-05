@@ -33,9 +33,18 @@ const loadFromStorage = () => {
 	if (savedOrders) {
 		state.orders = JSON.parse(savedOrders);
 	}
+
+	state.orders = Object.fromEntries(
+		Object.entries(state.orders).map(([orderId, cart]) => [
+			orderId,
+			Array.isArray(cart) ? cart.map(normalizeCartItemAmounts) : [],
+		]),
+	);
+
 	if (!state.orders[state.activeOrderId]) {
 		state.orders[state.activeOrderId] = [];
 	}
+	saveToStorage();
 };
 
 const getActiveCart = () => state.orders[state.activeOrderId] || [];
@@ -61,8 +70,8 @@ const showError = (errorMessage, consoleErrorMessage) => {
 const currencyFormatter = new Intl.NumberFormat("es-CR", {
 	style: "currency",
 	currency: "CRC",
-	minimumFractionDigits: 2,
-	maximumFractionDigits: 2,
+	minimumFractionDigits: 0,
+	maximumFractionDigits: 0,
 });
 
 export const formatCurrency = (amount) => {
@@ -90,7 +99,25 @@ export const formatCurrency = (amount) => {
  * @param {string|undefined} value
  * @returns {number}
  */
-const parsePrice = (value) => parseFloat(value?.replace(/,/g, ".") || 0);
+const parsePrice = (value) => Math.round(Number.parseFloat(value?.replace(/,/g, ".") || 0));
+const parseRate = (value) => Number.parseFloat(value?.replace(/,/g, ".") || 0);
+const toIntegerAmount = (value) => Math.round(Number(value) || 0);
+
+const normalizeCartItemAmounts = (item) => {
+	const quantity = parseInt(item.quantity, 10) || 1;
+	const unitPrice = toIntegerAmount(item.unit_price);
+
+	return {
+		...item,
+		quantity,
+		unit_price: unitPrice,
+		applied_tax: Number(item.applied_tax) || 0,
+		sub_total: toIntegerAmount(unitPrice * quantity),
+	};
+};
+
+const calculateItemTax = (item) =>
+	toIntegerAmount(Math.round(toIntegerAmount(item.sub_total) * (Number(item.applied_tax) || 0)));
 
 // --- VALIDATIONS ---
 
@@ -223,9 +250,9 @@ const renderCartItems = () => {
                 <p>Selecciona un producto para agregarlo a la orden</p>
             </div>
         `;
-		elements.saleTax.textContent = "₡ 0,00";
-		elements.saleSubtotal.textContent = "₡ 0,00";
-		elements.saleTotal.textContent = "₡ 0,00";
+		elements.saleTax.textContent = "₡ 0";
+		elements.saleSubtotal.textContent = "₡ 0";
+		elements.saleTotal.textContent = "₡ 0";
 		syncFinalizeSaleButtonState();
 		return;
 	}
@@ -236,7 +263,7 @@ const renderCartItems = () => {
 	const html = currentCart
 		.map((item) => {
 			subtotal += item.sub_total;
-			taxAmount += item.sub_total * item.applied_tax;
+			taxAmount += calculateItemTax(item);
 			return createCartItemHTML(item);
 		})
 		.join("");
@@ -261,8 +288,8 @@ const renderCartItems = () => {
  */
 const addToCart = (productId, productCard) => {
 	const name = productCard.dataset.productName;
-	const price = parsePrice(productCard.dataset.productPrice);
-	const tax = parsePrice(productCard.dataset.productTaxPercentage);
+	const price = toIntegerAmount(parsePrice(productCard.dataset.productPrice));
+	const tax = parseRate(productCard.dataset.productTaxPercentage);
 	const hasInventory = productCard.dataset.productHasInventory === "1";
 	const availableStock = parseInt(productCard.dataset.productStock, 10) || 0;
 
@@ -475,7 +502,7 @@ export const deleteOrderCart = (orderId) => {
 export const getActiveSaleData = () => {
 	const currentCart = getActiveCart();
 	const total = currentCart.reduce(
-		(sum, item) => sum + item.sub_total + item.sub_total * item.applied_tax,
+		(sum, item) => sum + toIntegerAmount(item.sub_total) + calculateItemTax(item),
 		0,
 	);
 
@@ -484,12 +511,12 @@ export const getActiveSaleData = () => {
 			({ product_id, quantity, unit_price, applied_tax, sub_total }) => ({
 				product_id,
 				quantity,
-				unit_price,
+				unit_price: toIntegerAmount(unit_price),
 				applied_tax,
-				sub_total,
+				sub_total: toIntegerAmount(sub_total),
 			}),
 		),
-		total: (Number(total) || 0).toFixed(2),
+		total: Math.round(Number(total) || 0),
 	};
 };
 

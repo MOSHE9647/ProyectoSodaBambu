@@ -157,6 +157,7 @@ const showOpeningCashModal = async () => {
 		inputValidator: (value) => {
 			if (!value) return "Por favor, ingresa un monto válido.";
 			if (isNaN(value)) return "El monto debe ser un número.";
+			if (!Number.isInteger(Number(value))) return "El monto debe ser un número entero.";
 			if (Number(value) < 0) return "El monto no puede ser negativo.";
 		}
 	}).then((result) => {

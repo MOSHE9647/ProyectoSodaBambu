@@ -258,7 +258,7 @@ export const processSale = async (
 				}),
 			);
 
-			return true; // Indicate successful completion to caller.
+			return { success: true, data: responseData.data };
 		} else {
 			const errorData = await response.json();
 			SwalToast.fire({
