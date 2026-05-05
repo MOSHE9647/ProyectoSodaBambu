@@ -66,18 +66,7 @@ class ProductController extends Controller implements HasMiddleware
 
                     return $daysRemaining.' día(s)';
                 })
-            ->editColumn('reference_cost', function ($product) {
-                return '₡' . number_format($product->reference_cost, 0, ',', '.');
-            })
-            ->editColumn('sale_price', function ($product) {
-                return '₡' . number_format($product->sale_price, 0, ',', '.');
-            })
-            ->editColumn('tax_percentage', function ($product) {
-                return $product->tax_percentage . '%';
-            })
-            ->editColumn('margin_percentage', function ($product) {
-                return $product->margin_percentage . '%';
-            })
+                
                 ->toJson();
         }
 

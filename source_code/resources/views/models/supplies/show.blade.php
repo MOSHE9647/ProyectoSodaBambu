@@ -34,7 +34,7 @@
                 :id="'stock'"
                 :type="'text'"
                 :readonly="true"
-                :value="$supply->stock"
+                :value="$supply->quantity"
                 :placeholder="'Cantidad Disponible'"
                 :iconLeft="'bi bi-boxes'"
             >
@@ -46,7 +46,7 @@
                 :id="'unit_price'"
                 :type="'text'"
                 :readonly="true"
-                :value="'₡ ' . number_format($supply->unit_price, 2, ',', '.')"
+                :value="'₡ ' . number_format($supply->unit_price, 0, ',', '.')"
                 :placeholder="'Precio Unitario'"
                 :iconLeft="'bi bi-cash-stack'"
             >

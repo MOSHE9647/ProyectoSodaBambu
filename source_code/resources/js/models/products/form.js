@@ -422,7 +422,7 @@ const fieldValidators = {
         invalidMsg: 'Ingrese un impuesto válido entre 0 y 100. Ej: 13' 
     },
     reference_cost: {
-        validator: validateNonNegativeAmount,
+        validator: validateNonNegativeInteger,
         emptyMsg: 'El costo de referencia es obligatorio.',
         invalidMsg: 'Ingrese un costo de referencia válido mayor o igual a 0.'
     },
