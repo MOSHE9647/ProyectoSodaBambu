@@ -82,14 +82,14 @@ class SaleController extends Controller implements HasMiddleware
         //
     }
 
-    public function showPaymentModal(string $paymentTotal): string
+    public function showPaymentModal(int $paymentTotal): string
     {
         $validatedData = Validator::make(
             ['total' => $paymentTotal],
             ['total' => ['required', 'integer', 'min:0']],
             [
                 'total.required' => 'El total de la venta es requerido para procesar el pago.',
-                'total.integer' => 'El total de la venta debe ser un número entero.',
+                'total.integer' => 'El total de la venta debe ser un número válido.',
                 'total.min' => 'El total de la venta no puede ser negativo.',
             ]
         )->validate();
