@@ -29,7 +29,7 @@
                 {{ $product->name }}
             </h6>
             <span class="fw-bold text-success flex-shrink-0 product-price">
-                ₡ {{ number_format($product->sale_price ?? 0, 0, ',', '.') }}
+                ₡ {{ number_format($product->sale_price ?? 0, 0, '.', ' ') }}
             </span>
         </div>
 
