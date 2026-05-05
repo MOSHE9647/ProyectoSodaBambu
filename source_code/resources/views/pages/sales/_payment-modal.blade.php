@@ -91,7 +91,7 @@
     .payment-method-option.is-active {
         border-color: var(--payment-primary);
         background: var(--payment-primary-soft);
-        box-shadow: 0 0 0 1px rgba(122, 193, 67, .25);
+        box-shadow: 0 0 0 1px rgba(43, 168, 70, 0.25);
     }
 
     .payment-method-option .method-check {
@@ -137,7 +137,7 @@
         padding-top: 6px;
         margin-top: 6px;
     }
-
+    
     .payment-print-option {
         border-top: 1px solid var(--payment-border);
         padding-top: 8px;
