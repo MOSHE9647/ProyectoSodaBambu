@@ -18,6 +18,11 @@
     $mealTimes = MealTime::cases();
     $weekDays = WeekDay::cases();
 
+    $amountPaid = 0;
+    if ($isEditing && $contract->payments) {
+        $amountPaid = $contract->payments->sum(fn ($payment) => $payment->amount - $payment->change_amount);
+    }
+
     // Transform enum cases and arrays into key-value pairs for JavaScript
     $paymentStatusesData = collect($paymentStatuses)->map(fn($s) => [
         'value' => $s->value, 'label' => $s->label()
@@ -666,6 +671,7 @@
             weekDays: @json($weekDaysData),
             products: @json($productsData),
             clients: @json($clientsData),
+            amountPaid: @json($amountPaid),
         };
     </script>
 

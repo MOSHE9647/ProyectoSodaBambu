@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProductType;
+use App\Http\Requests\ContractRequest;
 use App\Models\Client;
 use App\Models\Contract;
 use App\Models\Product;
@@ -55,9 +56,15 @@ class ContractController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ContractRequest $contractRequest)
     {
-        //
+        // The validated data is automatically retrieved from the ContractRequest
+        $validatedData = $contractRequest->validated();
+
+        // Here you would typically call a service or action to handle the creation logic
+        // For example: CreateContractAction::execute($validatedData);
+
+        return response()->json(['message' => 'Contract created successfully']);
     }
 
     /**

@@ -101,9 +101,11 @@ $(() => {
 								icon: "mb-4",
 							},
 						});
-					} else {
-						SwalModal.hideLoading();
+						return true;
 					}
+
+					SwalModal.hideLoading();
+					return false;
 				}
 			});
 		});

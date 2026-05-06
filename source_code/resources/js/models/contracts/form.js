@@ -1,8 +1,10 @@
 import Swal from "sweetalert2";
 import { bindOffcanvasEvents } from "../../utils/offcanvas.js";
-import { SwalConfirmation, SwalToast } from "../../utils/sweetalert.js";
-import { enableBootstrapTooltips, setLoadingState } from "../../utils/utils.js";
+import { SwalConfirmation, SwalModal, SwalToast } from "../../utils/sweetalert.js";
+import { enableBootstrapTooltips, getLaravelFirstError, setLoadingState } from "../../utils/utils.js";
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation.js";
+import { openPaymentModal } from "../../pages/sales/payment.js";
+import { PaymentStatus } from "../../pages/sales/api.js";
 
 // ==================== Environment Checks ====================
 
@@ -46,7 +48,7 @@ const getFormFields = () => {
                 id: $row.data('contract-detail-id') || null,
                 product_id: parseInt($row.find('select[name="product_id"]').val()),
                 meal_time: $row.find('select[name="meal_time"]').val(),
-                service_date: $row.find('input[name="serve_date"]').val()
+                serve_date: $row.find('input[name="serve_date"]').val()
             };
         })
         .get();
@@ -124,11 +126,11 @@ const appendContractDetailRow = (product, mealTimeValue, serveDate) => {
             <td>
 				<div class="border-secondary w-auto text-start">
 					<div class="input-group input-group-sm has-validation">
-						<input type="date" name="serve_date" class="form-control" aria-describedby="service_date-error"
+						<input type="date" name="serve_date" class="form-control" aria-describedby="serve_date-error"
 							min="${getTodayMidnight().toISOString().split('T')[0]}"
 							value="${serveDate}"
 						>
-						<div id="product_id-error" class="invalid-feedback ps-2" role="alert">
+						<div id="serve_date-error" class="invalid-feedback ps-2" role="alert">
 							<strong></strong>
 						</div>
 					</div>
@@ -203,7 +205,7 @@ const askForMenuGenerationOptions = async (values) => {
     const totalServiceDays = calculateTotalServiceDays(start_date, end_date, days_to_serve);
     
 	// Get details that already exist in the table (to subtract them from the estimate)
-    const existingDetails = getFormFields().contract_details.filter(d => d.product_id !== -1 && d.meal_time !== "-1" && d.service_date);
+    const existingDetails = getFormFields().contract_details.filter(d => d.product_id !== -1 && d.meal_time !== "-1" && d.serve_date);
 
 	// Build service day badges dynamically
 	const serviceDayBadges = WEEK_DAYS.map((d) => {
@@ -769,10 +771,6 @@ const baseFieldValidators = {
         validate: (details) => Array.isArray(details) && details.length > 0,
         message: "Algunos de los detalles del contrato no son válidos."
     },
-    // payment_details: {
-    //     validate: (details) => Array.isArray(details) && details.length > 0,
-    //     message: "Algunos de los detalles de pago no son válidos."
-    // }
 };
 
 const contractDetailValidators = {
@@ -794,7 +792,7 @@ const contractDetailValidators = {
 		validate: (v) => rules.isString(v) && rules.isValidMealTime(v),
 		message: "Seleccione un tiempo de comida válido.",
 	},
-	service_date: {
+	serve_date: {
 		validate: (v, data) => {
 			// If we're editing, the service date can be today or in the past, but if we're creating a new contract, it must be today or in the future.
 			// In both cases, it must also be on or after the contract's start date and correspond to one of the selected days to serve.
@@ -857,6 +855,27 @@ function validateContractField(fieldId, value) {
     return true; // No validator means the field is considered valid
 }
 
+function validatePaymentDetails(payment_details = []) {
+	if (!Array.isArray(payment_details) && payment_details.length > 0) {
+		// SwalToast.fire({ icon: "error", title: "Algunos de los detalles de pago no son válidos." });
+		return { isValid: false, message: "Algunos de los detalles de pago no son válidos." };
+	}
+	
+	// Validate payment details
+	payment_details.forEach((detail, index) => {
+		for (const [fieldId, validator] of Object.entries(
+			paymentDetailValidators,
+		)) {
+			const value = detail[fieldId];
+			if (!validator.validate(value)) {
+				return { isValid: false, message: `Pago ${index + 1}: ${validator.message}` };
+			}
+		}
+	});
+
+	return { isValid: true, message: null };
+}
+
 function validateContractForm(payment_details = []) {
     // Get current form values and active validators
 	const values = getFormFields();
@@ -890,22 +909,6 @@ function validateContractForm(payment_details = []) {
 					false,
 					fieldId,
 					`Fila ${index + 1}: ${validator.message}`,
-				]);
-			}
-		}
-	});
-
-	// Validate payment details
-	payment_details.forEach((detail, index) => {
-		for (const [fieldId, validator] of Object.entries(
-			paymentDetailValidators,
-		)) {
-			const value = detail[fieldId];
-			if (!validator.validate(value, values)) {
-				errors.push([
-					false,
-					fieldId,
-					`Pago ${index + 1}: ${validator.message}`,
 				]);
 			}
 		}
@@ -1213,7 +1216,76 @@ const handleFormSubmission = async (event, validationResult) => {
 		return detail;
 	});
 
-	console.log("Payload to submit:", values);
+	values.payment_status = PaymentStatus.PAID; // Assume paid by default, will be updated if payment details are provided
+
+	const amountPaid = Number(CONTRACTS_DATA.amountPaid) || 0;
+	const newTotal = Number(values.total_value) || 0;
+	const pendingBalance = newTotal - amountPaid;
+
+	if (pendingBalance > 0) {
+		let isPaymentCompleted = false; // Flag to track if payment was completed successfully
+
+		await openPaymentModal({
+			total: pendingBalance,
+			title: IS_EDITING ? "Cobrar Diferencia del Contrato" : "Procesar Pago del Contrato",
+			loadingId: FORM_ID,
+			onComplete: async (paymentDetails, totalTendered) => {
+				const { isValid, message } = validatePaymentDetails(paymentDetails);
+				if (!isValid) {
+					Swal.showValidationMessage(message || "Algunos de los detalles de pago no son válidos.");
+					setTimeout(() => Swal.resetValidationMessage(), 3000);
+					return false;
+				}
+				values.payment_details = paymentDetails;
+				isPaymentCompleted = true; // Mark payment as completed
+				return true;
+			}
+		});
+
+		if (!isPaymentCompleted) {
+			setLoadingState(FORM_ID, false);
+			return;
+		}
+	} else {
+		values.payment_details = []; // Ensure payment details is an empty array if no payment is needed
+	}
+
+	console.log("Final payload with payment details (if applicable):", values);
+	setLoadingState(FORM_ID, true);
+
+	try {
+		const response = await fetch(url, {
+			method: method,
+			headers: {
+				"Content-Type": "application/json",
+				'Accept': "application/json",
+				"X-CSRF-TOKEN": typeof csrfToken !== "undefined" 
+					? csrfToken
+					: document.querySelector('meta[name="csrf-token"]')?.content 
+					|| "",
+			},
+			body: JSON.stringify(values),
+		}); 
+
+		if (response.ok) {
+			const data = await response.json();
+			// window.location.href = data.redirect || route('contracts.index');
+			console.log("Respuesta del servidor:", data);
+		} else {
+			const errorData = await response.json();
+			console.error('Error en la respuesta del servidor:', errorData);
+
+			const { field: firstField, message: firstMessage } = getLaravelFirstError(errorData);
+			showFieldError(firstField, firstMessage);
+		}
+	} catch (error) {
+		SwalToast.fire({
+			icon: SwalNotificationTypes.ERROR,
+			title: "Error al enviar el formulario",
+		});
+	} finally {
+		setLoadingState(FORM_ID, false);
+	}
 };
 
 // ===================== Event Listeners ======================
@@ -1298,10 +1370,10 @@ const bindEventListeners = () => {
 		
 		// If date is changed manually, validate it immediately to provide real-time feedback
 		if (fieldName === 'serve_date') {
-			const isValid = contractDetailValidators.service_date.validate($(this).val(), getFormFields());
+			const isValid = contractDetailValidators.serve_date.validate($(this).val(), getFormFields());
 			if (!isValid) {
 				$(this).addClass('is-invalid');
-				$(this).siblings('.invalid-feedback').find('strong').text(contractDetailValidators.service_date.message);
+				$(this).siblings('.invalid-feedback').find('strong').text(contractDetailValidators.serve_date.message);
 			} else {
 				$(this).removeClass('is-invalid');
 			}
