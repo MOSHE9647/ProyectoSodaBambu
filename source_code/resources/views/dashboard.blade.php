@@ -18,8 +18,7 @@
 				Stat Card Component - Today's Sales
 				Displays a statistical card showing today's sales with a random value for demonstration.
 			--}}
-			<div class="col">
-				
+			<div class="col-3">
 				<x-stat-card
 					title="Ventas de Hoy"
 					value="{{ number_format($todaySalesTotal, 0, ',', '.') }} "
@@ -29,12 +28,22 @@
 					trend="{{ $salesTrendText }}"
 					trend-context="vs ayer"
 					trend-direction="{{ $trendDirection }}"
-					{{-- :url="route('Sale.index', ['filter' => 'low_stock'])" --}}
+				/>
+			</div>
+
+			<div class="col-3">
+				<x-stat-card
+					title="Contratos Activos"
+					value="{{ $activeContractsCount }} Contratos"
+					currency="false"
+					icon="calendar2-check"
+					color-theme="blue"
+					:url="route('contracts.index', ['filter' => 'active'])"
 				/>
 			</div>
 			
-			@for ($i = 0; $i < 2; $i++)
-				<div class="col">
+			{{-- @for ($i = 0; $i < 2; $i++)
+				<div class="col-3">
 					<x-stat-card
 						title="Stat Card {{ $i + 1 }}"
 						value="{{ number_format(rand(1000, 15000000), 0, ',', '.') }}"
@@ -45,19 +54,19 @@
 						color-theme="{{ $i == 0 ? 'green' : ($i == 1 ? 'yellow' : ($i == 2 ? 'red' : 'blue')) }}"
 					/>
 				</div>
-			@endfor
+			@endfor --}}
 
 			{{-- 
 				Stat Card Component - Minimum Stock Products
 				Displays a statistical card showing the count of products that are at minimum stock levels.	
 			--}}
-			<div class="col">
+			<div class="col-3">
 				<x-stat-card
-					title="Stock minimo"
+					title="Stock Bajo"
 					value="{{ $totalMinStockProducts }} Productos"
 					currency="false"
 					icon="boxes"
-					color-theme="blue"
+					color-theme="yellow"
 					:url="route('products.index', ['filter' => 'low_stock'])"
 				/>
 			</div>
@@ -66,7 +75,7 @@
 				Stat Card Component - About to Expire supplies
 				Displays a statistical card showing the count of supplies that are nearing expiration.	
 			--}}
-			<div class="col">
+			<div class="col-3">
 				<x-stat-card
 					title="Próximos a Vencer"
 					currency="false"

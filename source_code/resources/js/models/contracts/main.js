@@ -10,6 +10,14 @@ const MODEL_NAME = 'contrato';
 
 // String Constants
 const BTN_CLASS_PRIMARY = 'btn-primary';
+const STATUS_FILTER_QUERY_PARAM = 'filter';
+const STATUS_FILTER_VALUES = new Set(['active', 'inactive', 'expired', 'upcoming']);
+
+const urlParams = new URLSearchParams(window.location.search);
+const requestedStatusFilter = urlParams.get(STATUS_FILTER_QUERY_PARAM);
+const initialStatusFilter = STATUS_FILTER_VALUES.has(requestedStatusFilter)
+	? requestedStatusFilter
+	: null;
 
 // Routes Configuration
 const MODEL_ROUTES = {
@@ -211,11 +219,11 @@ $(() => {
 
 	// Status filter options for the custom dropdown button
 	const STATUS_OPTIONS = [
-		{ value: "all", text: "Todos", selected: true },
-		{ value: "active", text: "Activo" },
-		{ value: "inactive", text: "Inactivo" },
-		{ value: "expired", text: "Vencido" },
-		{ value: "upcoming", text: "Próximo" },
+		{ value: "all", text: "Todos", selected: initialStatusFilter === null },
+		{ value: "active", text: "Activo", selected: initialStatusFilter === "active" },
+		{ value: "inactive", text: "Inactivo", selected: initialStatusFilter === "inactive" },
+		{ value: "expired", text: "Vencido", selected: initialStatusFilter === "expired" },
+		{ value: "upcoming", text: "Próximo", selected: initialStatusFilter === "upcoming" },
 	];
 
 	/**
@@ -234,7 +242,7 @@ $(() => {
 			labelIcon: "bi-funnel me-2",
 			class: "contract-status-filter",
 			wrapperClass: "mb-2 w-auto",
-			placeholderSelected: true,
+			placeholderSelected: initialStatusFilter === null,
 			placeholder: "Seleccione un estado",
 			options: STATUS_OPTIONS,
 		},
@@ -280,7 +288,13 @@ $(() => {
 	);
 
 	// Add event listener to the status filter dropdown to reload the DataTable when the filter changes
-	document.getElementById("status-filter")?.addEventListener("change", () => {
+	const statusFilterSelect = document.getElementById("status-filter");
+	statusFilterSelect?.addEventListener("change", () => {
 		dataTable.ajax.reload();
 	});
+
+	if (statusFilterSelect && initialStatusFilter !== null) {
+		statusFilterSelect.value = initialStatusFilter;
+		statusFilterSelect.dispatchEvent(new Event("change", { bubbles: true }));
+	}
 });
