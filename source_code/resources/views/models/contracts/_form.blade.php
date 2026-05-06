@@ -48,6 +48,8 @@
     ]);
 @endphp
 
+<div id="show-opening-cash-modal" data-show-modal="{{ $showOpeningCashModal ?? false }}" class="d-none"></div>
+
 <x-header title="{{ $pageTitle }}" subtitle="{{ $pageSubtitle }}" />
 
 <form id="{{ $formId }}" action="{{ $actionUrl }}" method="{{ $formMethod }}" class="container-fluid px-0 pb-0">
@@ -405,7 +407,7 @@
                                                 <x-slot:options>
                                                     <option value="-1">Seleccione un tiempo de comida</option>
                                                     @foreach ($mealTimes as $mealTime)
-                                                        <option value="{{ $mealTime->value }}" {{ old('meal_time', $contractDetail->meal_time) == $mealTime->value ? 'selected' : '' }}>
+                                                        <option value="{{ $mealTime->value }}" {{ old('meal_time', $contractDetail->meal_time) == $mealTime ? 'selected' : '' }}>
                                                             {{ $mealTime->label() }}
                                                         </option>
                                                     @endforeach
@@ -584,9 +586,17 @@
                         <p class="fw-semibold text-uppercase text-muted mb-2" style="font-size: .7rem; letter-spacing: .08em;">Detalles Cargados</p>
                         <div id="contract-summary-meals" class="d-flex flex-column gap-1">
                             @if($contract?->details?->isNotEmpty())
-                                @foreach ($contract->details as $detail)
+                                @php
+                                    $groupedDetails = $contract->details->groupBy(fn ($detail) => $detail->meal_time?->value);
+                                @endphp
+
+                                @foreach ($groupedDetails as $mealTimeValue => $group)
                                     @php
-                                        $color = match ($detail->meal_time) {
+                                        $firstDetail = $group->first();
+                                        $mealTime = $firstDetail->meal_time;
+                                        $count = $group->count();
+                                        
+                                        $color = match ($mealTime) {
                                             MealTime::BREAKFAST => 'warning',
                                             MealTime::LUNCH => 'success',
                                             default => 'secondary',
@@ -595,9 +605,9 @@
 
                                     <div class="d-flex justify-content-between align-items-center" style="font-size: .82rem;">
                                         <span class="badge border rounded-pill text-{{ $color }}-emphasis bg-{{ $color }}-subtle px-3 py-2" style="font-size: .72rem;">
-                                            {{ $detail->meal_time ? $detail->meal_time->label() : '—' }}
+                                            {{ $mealTime ? $mealTime->label() : '—' }}
                                         </span>
-                                        <span class="text-muted">{{ $detail->meal_time_count }} fila</span>
+                                        <span class="text-muted">{{ $count }} fila{{ $count != 1 ? 's' : '' }}</span>
                                     </div>
                                 @endforeach
                             @else

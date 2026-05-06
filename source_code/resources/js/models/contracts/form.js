@@ -5,6 +5,7 @@ import { enableBootstrapTooltips, getLaravelFirstError, setLoadingState } from "
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation.js";
 import { openPaymentModal } from "../../pages/sales/payment.js";
 import { PaymentStatus } from "../../pages/sales/api.js";
+import { initializeCashRegister } from "../../pages/sales/cash-register.js";
 
 // ==================== Environment Checks ====================
 
@@ -1199,12 +1200,12 @@ const updateSummary = {
 const handleFormSubmission = async (event, validationResult) => {
 	const form = event.target;
 	const url = form.action;
-	const method = form.method.toUpperCase();
+	const method = IS_EDITING ? "PUT" : "POST";
 	const [message, values] = validationResult;
 
 	if (method === "PUT") {
 		const contractId = url.split("/").pop();
-		values.id = contractId; // Include contract ID in the payload for updates
+		values.id = parseInt(contractId); // Include contract ID in the payload for updates
 	}
 
 	values.contract_details = values.contract_details.map(detail => {
@@ -1250,7 +1251,7 @@ const handleFormSubmission = async (event, validationResult) => {
 		values.payment_details = []; // Ensure payment details is an empty array if no payment is needed
 	}
 
-	console.log("Final payload with payment details (if applicable):", values);
+	console.log("Enviando datos del contrato:", values);
 	setLoadingState(FORM_ID, true);
 
 	try {
@@ -1269,8 +1270,7 @@ const handleFormSubmission = async (event, validationResult) => {
 
 		if (response.ok) {
 			const data = await response.json();
-			// window.location.href = data.redirect || route('contracts.index');
-			console.log("Respuesta del servidor:", data);
+			window.location.href = data.redirect || route('contracts.index');
 		} else {
 			const errorData = await response.json();
 			console.error('Error en la respuesta del servidor:', errorData);
@@ -1279,6 +1279,7 @@ const handleFormSubmission = async (event, validationResult) => {
 			showFieldError(firstField, firstMessage);
 		}
 	} catch (error) {
+		console.error('Error al enviar el formulario:', error);
 		SwalToast.fire({
 			icon: SwalNotificationTypes.ERROR,
 			title: "Error al enviar el formulario",
@@ -1464,9 +1465,10 @@ const bindEventListeners = () => {
 // ====================== Initialization ======================
 
 $(() => {
-    bindEventListeners();
-    bindRealTimeValidation();
-    bindOffcanvasEvents("create-offcanvas");
+	initializeCashRegister(); // Ensure cash register is initialized before any interactions
+    bindEventListeners(); // Bind all event listeners for form fields and buttons
+    bindRealTimeValidation(); // Bind real-time validation for form fields
+    bindOffcanvasEvents("create-offcanvas"); // Bind events related to the offcanvas component for creating contract details
 	updateSummary.details(true); // Initial details summary update on page load
     updateSummary.progressBar(); // Initial progress bar update on page load
 });

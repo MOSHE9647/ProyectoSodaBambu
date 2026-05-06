@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Amp\Http\HttpStatus;
+use App\Actions\Contract\UpsertContractAction;
 use App\Enums\ProductType;
 use App\Http\Requests\ContractRequest;
 use App\Models\Client;
@@ -10,6 +12,7 @@ use App\Models\Product;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Yajra\DataTables\Facades\DataTables;
 
 class ContractController extends Controller
@@ -56,15 +59,30 @@ class ContractController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(ContractRequest $contractRequest)
+    public function store(ContractRequest $contractRequest, UpsertContractAction $upsertContractAction): JsonResponse
     {
         // The validated data is automatically retrieved from the ContractRequest
         $validatedData = $contractRequest->validated();
 
-        // Here you would typically call a service or action to handle the creation logic
-        // For example: CreateContractAction::execute($validatedData);
+        // Separate the main contract data from the details and payment data
+        $contractData = Arr::except($validatedData, ['contract_details', 'payment_details']);
+        $contractDetailsData = $validatedData['contract_details'] ?? [];
+        $paymentDetailsData = $validatedData['payment_details'] ?? null;
 
-        return response()->json(['message' => 'Contract created successfully']);
+        // Execute the upsert action to create the contract along with its details and payment
+        $upsertContractAction->execute(
+            $contractData,
+            $contractDetailsData,
+            $paymentDetailsData
+        );
+
+        // Flash a success message to the session
+        session()->flash('success', 'Contrato creado exitosamente.');
+
+        return response()->json([
+            'redirect' => route('contracts.index'),
+            'message' => 'Datos del contrato guardados exitosamente.',
+        ], HttpStatus::CREATED);
     }
 
     /**
@@ -90,9 +108,30 @@ class ContractController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Contract $contract)
+    public function update(ContractRequest $contractRequest, UpsertContractAction $upsertContractAction): JsonResponse
     {
-        //
+        // The validated data is automatically retrieved from the ContractRequest
+        $validatedData = $contractRequest->validated();
+
+        // Separate the main contract data from the details and payment data
+        $contractData = Arr::except($validatedData, ['contract_details', 'payment_details']);
+        $contractDetailsData = $validatedData['contract_details'] ?? [];
+        $paymentDetailsData = $validatedData['payment_details'] ?? null;
+
+        // Execute the upsert action to create the contract along with its details and payment
+        $upsertContractAction->execute(
+            $contractData,
+            $contractDetailsData,
+            $paymentDetailsData
+        );
+
+        // Flash a success message to the session
+        session()->flash('success', 'Contrato actualizado exitosamente.');
+
+        return response()->json([
+            'redirect' => route('contracts.index'),
+            'message' => 'Datos del contrato actualizados exitosamente.',
+        ], HttpStatus::OK);
     }
 
     /**

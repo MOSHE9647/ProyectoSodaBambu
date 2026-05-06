@@ -7,6 +7,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Enums\WeekDay;
+use App\Models\Contract;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -241,9 +242,10 @@ class ContractRequest extends FormRequest
         $newPayments = collect($this->input('payment_details', []));
         $newPaidAmount = round($newPayments->sum('amount') - $newPayments->sum('change_amount'), 2);
 
-        $contract = $this->route('contract');
-        $historicalPaidAmount = 0;
+        $contractId = $this->route('contract');
+        $contract = $contractId ? Contract::with('payments')->find($contractId) : null;
 
+        $historicalPaidAmount = 0;
         if ($contract?->payments) {
             $historicalPaidAmount = round($contract->payments->sum(fn ($p) => $p->amount - $p->change_amount), 2);
         }
