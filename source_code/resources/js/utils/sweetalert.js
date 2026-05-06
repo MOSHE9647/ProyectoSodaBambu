@@ -32,7 +32,7 @@ export const SwalConfirmation = Swal.mixin({
 		popup: "swal-popup h-auto",
 		title: "d-flex justify-content-center align-items-center border-bottom pb-3 mb-3",
 		closeButton: "swal-close-btn fs-3",
-		htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
+		htmlContainer: "swal-container w-auto h-auto p-1 overflow-x-hidden",
 		confirmButton: "btn btn-primary mx-1",
 		cancelButton: "btn btn-danger mx-1",
 		icon: "mb-4",

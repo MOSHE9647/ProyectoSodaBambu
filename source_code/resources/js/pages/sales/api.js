@@ -221,6 +221,7 @@ export const processSale = async (
 
 	// Enable loading state while processing sale.
 	setLoadingState("finalize-sale", true);
+	console.log("Processing sale with payload:", payload);
 
 	try {
 		const url = route("sales.store");

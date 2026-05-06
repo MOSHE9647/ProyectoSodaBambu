@@ -5,7 +5,7 @@ import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
 import { initializeHotkeys } from "./hotkeys.js";
-import { showPaymentModal } from "./payment.js";
+import { openPaymentModal } from "./payment.js";
 import { SwalModal } from "../../utils/sweetalert.js";
 
 /**
@@ -52,8 +52,8 @@ const updateLastSaleTime = () => {
 $(() => {
 	// Initialize all sales-related components
 	initializeCashRegister();
-  initializeSalesProducts();
-  initializeSalesCart();
+  	initializeSalesProducts();
+  	initializeSalesCart();
 	initializeSalesOrderTabs();
 	initializeHotkeys();
 
@@ -68,7 +68,44 @@ $(() => {
     const finalizeSaleButton = $("#finalize-sale-button");
     if (finalizeSaleButton.length) {
         finalizeSaleButton.on("click", async () => {
-			showPaymentModal();
+			const saleData = getActiveSaleData();
+
+			openPaymentModal({
+				total: saleData.total,
+				title: "Procesar Venta",
+				loadingId: "finalize-sale",
+				onComplete: async (paymentDetails, totalTendered) => {
+					SwalModal.showLoading();
+					const saleResult = await processSale(paymentDetails);
+					if (saleResult?.success) {
+						SwalModal.close();
+				
+						await SwalModal.fire({
+							title: "",
+							html: getSaleSuccessSummaryHtml(saleResult),
+							width: 760,
+							background: "#ffffff",
+							color: "#1f1f1f",
+							showConfirmButton: true,
+							showCancelButton: false,
+							confirmButtonText: "Cerrar",
+							allowEscapeKey: true,
+							allowOutsideClick: true,
+							customClass: {
+								popup: "swal-popup w-auto h-auto",
+								title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
+								closeButton: "swal-close-btn fs-3",
+								htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
+								confirmButton: "btn btn-success mx-1",
+								cancelButton: "btn btn-outline-secondary mx-1",
+								icon: "mb-4",
+							},
+						});
+					} else {
+						SwalModal.hideLoading();
+					}
+				}
+			});
 		});
     }
 

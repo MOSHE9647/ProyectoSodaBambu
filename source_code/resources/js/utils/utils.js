@@ -381,3 +381,17 @@ export const calculateAlertDate = () => {
 
 	return null;
 }
+
+export const currencyFormatter = (minFractionDigits = 2, maxFractionDigits = 2) => { 
+	return new Intl.NumberFormat("es-CR", {
+		style: "currency",
+		currency: "CRC",
+		minimumFractionDigits: minFractionDigits,
+		maximumFractionDigits: maxFractionDigits,
+	});
+};
+
+export const formatCurrency = (amount, minFractionDigits = 2, maxFractionDigits = 2) => {
+	const formatter = currencyFormatter(minFractionDigits, maxFractionDigits);
+	return formatter.format(amount || 0);
+};

@@ -4,7 +4,7 @@ import {
 	SwalNotificationTypes,
 	SwalToast,
 } from "../../utils/sweetalert.js";
-import { setLoadingState } from "../../utils/utils.js";
+import { escapeHtml, setLoadingState } from "../../utils/utils.js";
 import { PaymentMethods, processSale } from "./api.js";
 import { getActiveSaleData } from "./cart.js";
 
@@ -21,14 +21,6 @@ const formatCurrency = (amount) => {
 		maximumFractionDigits: 0,
 	})}`;
 };
-
-const escapeHtml = (value) =>
-	String(value ?? "")
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/\"/g, "&quot;")
-		.replace(/'/g, "&#039;");
 
 const roundToTwo = (value) => Math.round((Number(value) || 0) * 100) / 100;
 
@@ -519,168 +511,95 @@ const initializePaymentModalUI = (popup, saleData) => {
 };
 
 /**
- * Handles the payment form submission flow for a sale.
- *
- * @async
- * @function paymentFormEventListener
- * @param {SubmitEvent} event - The form submission event.
- * @param {{ total: number|string }} saleData - Sale information used for payment validation and change calculation.
- * @returns {Promise<void>} Resolves when the payment submission flow completes.
+ * Muestra el modal de pago de forma genérica.
+ * @param {Object} config
+ * @param {number} config.total - Monto total a cobrar.
+ * @param {string} config.title - Título del modal (ej: "Pago de Contrato").
+ * @param {Function} config.onComplete - Callback que recibe (paymentDetails, totalTendered).
+ * @param {string} [config.loadingId] - ID del botón para el estado de carga.
  */
-const paymentFormEventListener = async (event, saleData) => {
-	event.preventDefault();
+export async function openPaymentModal({ total, title, onComplete, loadingId = "finalize-action" }) {
+    if (!total || total <= 0) {
+        SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: "El monto debe ser mayor a 0." });
+        return;
+    }
 
-	const paymentForm = event.currentTarget;
-	if (!paymentForm) {
-		return;
-	}
+    setLoadingState(loadingId, true);
 
-	const paymentDetails = [];
-	let totalTendered = 0;
-	const saleTotal = Number(saleData.total || 0);
+    try {
+        // El endpoint ahora podría ser más genérico en el backend
+        const url = route("sales.payment-modal", { paymentTotal: total }); 
+        const response = await fetch(url);
+        const modalHtml = await response.text();
 
-	const paymentRows = paymentForm.querySelectorAll(".payment-row");
-	paymentRows.forEach((row) => {
-		const methodElement = row.querySelector(".payment-method");
-		const amountElement = row.querySelector(".payment-amount");
-		const referenceElement = row.querySelector(".payment-reference");
+        setLoadingState(loadingId, false);
 
-		const method = methodElement?.value;
-		const amount = parseFloat(amountElement?.value || "0") || 0;
-		const reference = referenceElement?.value || null;
+        if (modalHtml) {
+            SwalModal.fire({
+                title: `${title}: ${formatCurrency(total)}`,
+                html: modalHtml,
+                showConfirmButton: false,
+                didOpen: () => {
+                    const popup = SwalModal.getPopup();
+                    const paymentData = { total, payments: [] };
 
-		if (!method) {
-			return;
-		}
+                    // Inicializar la UI pasando el callback de completado
+                    initializePaymentModalUI(popup, paymentData);
 
-		totalTendered += amount;
+                    const paymentForm = popup.querySelector("#payment-form");
+                    paymentForm.addEventListener("submit", async (e) => {
+                        e.preventDefault();
+                        const { details, tendered } = extractPaymentDetails(paymentForm, total);
+                        
+                        if (details.length > 0) {
+                            await onComplete(details, tendered);
+                        }
+                    });
+                },
+            });
+        }
+    } catch (error) {
+        console.error("Error loading payment modal:", error);
+        setLoadingState(loadingId, false);
+        SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: "Error al abrir la pantalla de pago." });
+    }
+}
 
-		paymentDetails.push({
-			method,
-			amount,
-			reference: method !== PaymentMethods.CASH ? reference : null,
-			change_amount: 0,
-		});
-	});
+// Función auxiliar para extraer datos sin procesar la lógica de negocio
+const extractPaymentDetails = (form, saleTotal) => {
+    const paymentDetails = [];
+    let totalTendered = 0;
 
-	if (paymentDetails.length === 0) {
-		SwalToast.fire({
-			icon: SwalNotificationTypes.WARNING,
-			title: "Debes agregar al menos un método de pago.",
-		});
-		return;
-	}
+    form.querySelectorAll(".payment-row").forEach((row) => {
+        const amount = parseFloat(row.querySelector(".payment-amount").value) || 0;
+        const method = row.querySelector(".payment-method").value;
+        totalTendered += amount;
 
-	if (totalTendered < saleTotal) {
-		SwalToast.fire({
-			icon: SwalNotificationTypes.WARNING,
-			title: `El monto ingresado (${formatCurrency(totalTendered)}) es menor al total de la venta (${formatCurrency(saleTotal)}).`,
-		});
-		return;
-	}
+        paymentDetails.push({
+            method,
+            amount,
+            reference: method !== PaymentMethods.CASH ? row.querySelector(".payment-reference").value : null,
+        });
+    });
+
+    // Validar que el monto cubra el total
+    if (totalTendered < saleTotal) {
+        SwalToast.fire({ 
+            icon: SwalNotificationTypes.WARNING, 
+            title: `Monto insuficiente (${formatCurrency(totalTendered)} de ${formatCurrency(saleTotal)})` 
+        });
+        return { details: [], tendered: 0 };
+    }
 
 	const changeAmount = Math.max(0, totalTendered - saleTotal);
-		const roundedChangeAmount = roundToTwo(changeAmount);
+	const roundedChangeAmount = roundToTwo(changeAmount);
 	const cashPaymentIndex = paymentDetails.findIndex(
 		(payment) => payment.method === PaymentMethods.CASH,
 	);
 
 	if (cashPaymentIndex >= 0) {
-			paymentDetails[cashPaymentIndex].change_amount = roundedChangeAmount;
+		paymentDetails[cashPaymentIndex].change_amount = roundedChangeAmount;
 	}
 
-	SwalModal.showLoading();
-
-	const saleResult = await processSale(paymentDetails);
-	if (saleResult?.success) {
-		SwalModal.close();
-
-		await SwalModal.fire({
-			title: "",
-			html: getSaleSuccessSummaryHtml(saleResult),
-			width: 760,
-			background: "#ffffff",
-			color: "#1f1f1f",
-			showConfirmButton: true,
-			showCancelButton: false,
-			confirmButtonText: "Cerrar",
-			allowEscapeKey: true,
-			allowOutsideClick: true,
-			customClass: {
-				popup: "swal-popup w-auto h-auto",
-				title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
-				closeButton: "swal-close-btn fs-3",
-				htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
-				confirmButton: "btn btn-success mx-1",
-				cancelButton: "btn btn-outline-secondary mx-1",
-				icon: "mb-4",
-			},
-		});
-	} else {
-		SwalModal.hideLoading();
-	}
+    return { details: paymentDetails, tendered: totalTendered };
 };
-
-/**
- * Opens and renders the payment modal for the current sale flow.
- *
- * @async
- * @function showPaymentModal
- * @returns {Promise<void>} Resolves when the modal flow has been handled.
- */
-export async function showPaymentModal() {
-	const saleData = getActiveSaleData();
-	if (!saleData || saleData.sale_details.length === 0) {
-		SwalToast.fire({
-			icon: SwalNotificationTypes.ERROR,
-			title: "El carrito está vacío. Agrega productos antes de cobrar.",
-		});
-		return;
-	}
-
-	setLoadingState("finalize-sale", true);
-
-	try {
-		const url = route("sales.payment-modal", {
-			paymentTotal: saleData.total,
-		});
-		const response = await fetchWithErrorHandling(url);
-		const modalHtml = await response.text();
-
-		setLoadingState("finalize-sale", false);
-
-		if (modalHtml) {
-			SwalModal.fire({
-				title: `Procesar pago: ${formatCurrency(saleData.total)}`,
-				showConfirmButton: false,
-				showCancelButton: false,
-				showCloseButton: true,
-				allowEscapeKey: false,
-				allowOutsideClick: false,
-				html: `${modalHtml}`,
-				didOpen: () => {
-					const popup = SwalModal.getPopup();
-					if (!popup) {
-						return;
-					}
-
-					initializePaymentModalUI(popup, saleData);
-
-					const paymentForm = popup?.querySelector("#payment-form");
-					if (paymentForm) {
-						paymentForm.addEventListener("submit", (event) =>
-							paymentFormEventListener(event, saleData),
-						);
-					}
-				},
-			});
-		}
-	} catch (error) {
-		console.error("Error loading payment modal:", error);
-		setLoadingState("finalize-sale", false);
-		SwalToast.fire({
-			icon: SwalNotificationTypes.ERROR,
-			title: "Ocurrió un problema al abrir la pantalla de pago.",
-		});
-	}
-}

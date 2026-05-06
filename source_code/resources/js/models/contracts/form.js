@@ -1,7 +1,7 @@
 import Swal from "sweetalert2";
 import { bindOffcanvasEvents } from "../../utils/offcanvas.js";
 import { SwalConfirmation, SwalToast } from "../../utils/sweetalert.js";
-import { setLoadingState } from "../../utils/utils.js";
+import { enableBootstrapTooltips, setLoadingState } from "../../utils/utils.js";
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation.js";
 
 // ==================== Environment Checks ====================
@@ -460,10 +460,8 @@ const askForMenuGenerationOptions = async (values) => {
 
 			// Enable Bootstrap tooltips for dynamically added elements
 			if (typeof bootstrap !== "undefined") {
-				const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-				tooltipTriggerList.map(function (tooltipTriggerEl) {
-					return new bootstrap.Tooltip(tooltipTriggerEl);
-				});
+				const container = document.querySelector(".swal-container");
+				enableBootstrapTooltips(container);
 			}
 		},
 		preConfirm: () => {
