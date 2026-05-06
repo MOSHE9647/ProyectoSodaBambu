@@ -114,6 +114,18 @@ const getStatusBadge = (status) => {
     }
 };
 
+function shouldDisableContractDelete(row) {
+	const status = row.status;
+	return status === 'inactive';
+}
+
+function getDeleteDisabledTooltip(row) {
+	const status = row.status;
+	if (status === 'inactive') {
+		return `Este ${MODEL_NAME} ya está inactivo y no se puede eliminar.`;
+	}
+}
+
 // ==================== DataTable Initialization ====================
 
 // Ensure the DOM is fully loaded before initializing the DataTable
@@ -189,6 +201,8 @@ $(() => {
 		},
 		delete: {
 			route: MODEL_ROUTES.delete,
+			disabledIf: (row) => shouldDisableContractDelete(row),
+			disabledIfTooltip: (row) => getDeleteDisabledTooltip(row),
 			tooltip: `Eliminar ${MODEL_NAME}`,
 			func: window.deleteContract,
 			funcName: "deleteContract",
