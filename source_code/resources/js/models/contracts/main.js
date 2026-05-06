@@ -142,13 +142,13 @@ $(() => {
 			data: "start_date",
 			name: "start_date",
 			// Contract's start date formatted as 'DD of Month of YYYY'
-			render: (data) => formatDate(data),
+			render: (data) => formatDate(data.slice(0, 10)),
 		},
 		{
 			data: "end_date",
 			name: "end_date",
 			// Contract's end date formatted as 'DD of Month of YYYY'
-			render: (data) => formatDate(data),
+			render: (data) => formatDate(data.slice(0, 10)),
 		},
 		{
 			data: "portions_per_day",

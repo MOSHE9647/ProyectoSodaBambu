@@ -88,16 +88,20 @@ class ContractController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Contract $contract)
+    public function show(int $id): View
     {
-        //
+        $contract = Contract::withTrashed()->findOrFail($id);
+        $contract->load(['client', 'details.product', 'payments']);
+
+        return view('models.contracts.show', compact('contract'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Contract $contract)
+    public function edit(int $id): View
     {
+        $contract = Contract::withTrashed()->findOrFail($id);
         $clients = Client::all(['id', 'first_name', 'last_name']);
         $products = Product::whereIn('type', [ProductType::DISH, ProductType::DRINK])
             ->get(['id', 'name', 'sale_price', 'type']);
