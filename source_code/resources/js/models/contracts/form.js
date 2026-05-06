@@ -177,53 +177,35 @@ const appendContractDetailRow = (product, mealTimeValue, serveDate) => {
 	updateSummary.details();
 };
 
-// const askForMenuGenerationOptions = async () => {
-// 	const { mode, daysCount } = await SwalConfirmation.fire({
-// 		title: "Generador de Menú",
-// 		html: `
-//             <p class="text-muted text-start" style="font-size: 0.9rem;">Seleccione cómo desea generar los detalles:</p>
-//             <div class="d-flex flex-column gap-2 mt-3 text-start">
-//                 <div class="form-check">
-//                     <input class="form-check-input" type="radio" name="gen_mode" id="mode_all" value="all" checked onchange="document.getElementById('days_input_container').classList.add('d-none')">
-//                     <label class="form-check-label" for="mode_all">
-//                         <strong>Todo el contrato</strong> (Sobreescribir tabla)
-//                     </label>
-//                 </div>
-//                 <div class="form-check">
-//                     <input class="form-check-input" type="radio" name="gen_mode" id="mode_partial" value="partial" onchange="document.getElementById('days_input_container').classList.remove('d-none')">
-//                     <label class="form-check-label" for="mode_partial">
-//                         <strong>Cantidad de días</strong> (Completar faltantes)
-//                     </label>
-//                 </div>
-//             </div>
-//             <div id="days_input_container" class="mt-3 d-none text-start p-3 border rounded-2">
-//                 <label for="swal_days_count" class="form-label mb-1" style="font-size: 0.85rem;">¿Cuántos días de servicio desea planificar?</label>
-//                 <input type="number" id="swal_days_count" class="form-control" placeholder="Ej: 5" min="1">
-//             </div>
-//         `,
-// 		confirmButtonText: "Generar",
-// 		cancelButtonText: "Cancelar",
-// 		preConfirm: () => {
-//             const mode = document.querySelector('input[name="gen_mode"]:checked').value;
-//             const daysInput = document.getElementById('swal_days_count').value;
-            
-//             if (mode === 'partial' && (!daysInput || parseInt(daysInput) <= 0)) {
-//                 if (typeof Swal !== 'undefined') Swal.showValidationMessage('Ingrese una cantidad válida de días.');
-//                 return false;
-//             }
-//             return { mode, daysCount: mode === 'partial' ? parseInt(daysInput) : Infinity };
-//         }
-// 	}).then((result) => {
-// 		if (!result.isConfirmed) return { mode: null, daysCount: null }; // User cancelled the menu generation
-// 		return result.value;
-// 	});
+// Calculates the real total number of service days in the calendar
+const calculateTotalServiceDays = (startDateStr, endDateStr, daysToServeArray) => {
+    if (!startDateStr || !endDateStr || !daysToServeArray || daysToServeArray.length === 0) return 0;
+    
+    const startDate = getLocalMidnight(startDateStr);
+    const endDate = getLocalMidnight(endDateStr);
+    let totalDays = 0;
+    
+    let currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+        const dayOfWeek = DAY_NAMES[currentDate.getDay()];
+        if (daysToServeArray.includes(dayOfWeek)) {
+            totalDays++;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return totalDays;
+};
 
-// 	return { genMode: mode, daysCount };
-// };
 const askForMenuGenerationOptions = async (values) => {
 	const { start_date, end_date, days_to_serve } = values;
 
-	// Generar los badges de días de servicio dinámicamente
+    // Calculate the real total service days in the calendar
+    const totalServiceDays = calculateTotalServiceDays(start_date, end_date, days_to_serve);
+    
+	// Get details that already exist in the table (to subtract them from the estimate)
+    const existingDetails = getFormFields().contract_details.filter(d => d.product_id !== -1 && d.meal_time !== "-1" && d.service_date);
+
+	// Build service day badges dynamically
 	const serviceDayBadges = WEEK_DAYS.map((d) => {
 		const isActive = days_to_serve.includes(d.value);
 		const colorClass = isActive ? "info" : "secondary";
@@ -234,7 +216,7 @@ const askForMenuGenerationOptions = async (values) => {
 		`;
 	}).join('');
 
-    // Generar los checkboxes de tiempos de comida dinámicamente
+	// Build meal-time checkboxes dynamically
     const mealCheckboxes = MEAL_TIMES.map((m) => {
 		const colorClass = m.value === "breakfast" ? "warning" : m.value === "lunch" ? "success" : "secondary";
 		const iconClass = m.value === "breakfast" ? "bi-sunrise" : m.value === "lunch" ? "bi-sun" : "bi-cup-straw";
@@ -255,13 +237,6 @@ const askForMenuGenerationOptions = async (values) => {
             </div>
 		`;
 	}).join('');
-
-	// Estimación de filas a generar (días de servicio * tiempos de comida seleccionados - los que ya estén completos, si se elige conservar)
-	const estimate = days_to_serve.length * MEAL_TIMES.length - Object.values(CONTRACTS_DATA.existingCoverage || {}).reduce((acc, day) => {
-		return acc + Object.values(day).reduce((dayAcc, meal) => {
-			return dayAcc + (meal.dishes >= 1 ? 1 : 0) + (meal.drinks >= 1 ? 1 : 0);
-		}, 0);
-	}, 0);
 
     const result = await SwalConfirmation.fire({
 		title: "Generador de Menú",
@@ -285,7 +260,7 @@ const askForMenuGenerationOptions = async (values) => {
 					</div>
 					<div class="d-flex align-items-center bg-success-subtle border border-success rounded-3 gap-2 ms-auto px-3 py-2" style="font-size:.83rem;">
 						<i class="bi bi-grid-3x3-gap text-success"></i>
-						<span class="fw-bold text-success">${days_to_serve.length}</span>
+						<span class="fw-bold text-success">${totalServiceDays}</span>
 						<span class="text-muted">días hábiles</span>
 					</div>
 				</div>
@@ -308,7 +283,7 @@ const askForMenuGenerationOptions = async (values) => {
 
 				<div class="d-flex justify-content-between gap-2">
 					<label for="conflictReplace" class="conflict-card d-flex flex-column flex-1 border border-2 border-success bg-success-subtle rounded-4 w-100 gap-1 p-3" id="conflictReplaceWrap" style="cursor: pointer; transition: .15s;">
-						<input class="d-none" type="radio" name="conflictMode" id="conflictReplace" value="replace" checked onchange="updateConflictStyles(this)">
+						<input class="d-none" type="radio" name="conflictMode" id="conflictReplace" value="replace" checked>
 						<div class="d-flex align-items-center justify-content-between">
 							<div class="d-flex align-items-center justify-content-center flex-shrink-0 rounded-3 bg-success conflict-icon" style="width: 32px; height:32px;">
 								<i class="bi bi-arrow-repeat text-white fs-6"></i>
@@ -320,7 +295,7 @@ const askForMenuGenerationOptions = async (values) => {
 					</label>
 
 					<label for="conflictKeep" class="conflict-card d-flex flex-column flex-1 border border-2 border-secondary bg-secondary-subtle rounded-4 w-100 gap-1 p-3" id="conflictKeepWrap" style="cursor: pointer; transition: .15s;">
-						<input class="d-none" type="radio" name="conflictMode" id="conflictKeep" value="keep" onchange="updateConflictStyles(this)">
+						<input class="d-none" type="radio" name="conflictMode" id="conflictKeep" value="keep">
 						<div class="d-flex align-items-center justify-content-between">
 							<div class="d-flex align-items-center justify-content-center flex-shrink-0 rounded-3 bg-secondary conflict-icon" style="width: 32px; height:32px;">
 								<i class="bi bi-shield-check text-white fs-6"></i>
@@ -337,7 +312,7 @@ const askForMenuGenerationOptions = async (values) => {
 				<div class="col-6 d-none" id="days-input-container">
 					<div class="text-start border-secondary w-auto">
 						<label for="days-to-generate" class="form-label fw-semibold text-uppercase text-muted mb-2" style="font-size: .7rem; letter-spacing: .08em;">
-							D&iacute;as a generar <span class="text-danger">*</span>
+							Días a generar <span class="text-danger">*</span>
 						</label>
 						
 						<div class="input-group has-validation">				
@@ -345,9 +320,14 @@ const askForMenuGenerationOptions = async (values) => {
 								<i class="bi bi-calendar"></i>
 							</span>
 						
-							<input id="days-to-generate" name="days-to-generate" type="number" class="form-control" aria-describedby="days-to-generate-icon-left days-to-generate-error" value="${days_to_serve.length}" min="1" max="${days_to_serve.length}">
-				
-							<div id="days-to-generate-error" class="invalid-feedback ps-4 ms-4" role="alert">
+							<input id="days-to-generate" name="days-to-generate" type="number" class="form-control" aria-describedby="days-to-generate-icon-left days-to-generate-error" value="${totalServiceDays}" min="1" max="${totalServiceDays}" step="1">
+
+							<span class="input-group-text">
+								<i class="bi bi-question-circle" data-bs-toggle="tooltip" data-bs-title="Cantidad de días a los que se les generará el menú dentro del periodo establecido."></i>
+							</span>
+
+							<!-- AÑADE ESTO PARA ARREGLAR EL ESTILO -->
+							<div id="days-to-generate-error" class="invalid-feedback" role="alert">
 								<strong></strong>
 							</div>
 						</div>
@@ -359,7 +339,7 @@ const askForMenuGenerationOptions = async (values) => {
 							<i class="bi bi-calculator text-info fs-6"></i>
 							<span class="text-info-emphasis">Filas estimadas a generar</span>
 						</div>
-						<span id="genEstimate" class="fs-6 fw-bold text-info-emphasis">${estimate}</span>
+						<span id="genEstimate" class="fs-6 fw-bold text-info-emphasis">0</span>
 					</div>
 				</div>
 			</div>
@@ -368,9 +348,31 @@ const askForMenuGenerationOptions = async (values) => {
 		confirmButtonText: "Generar Menú",
 		cancelButtonText: "Cancelar",
 		didOpen: () => {
-			// Script interno para cambiar los colores de las tarjetas al seleccionarlas
-			window.updateConflictStyles = (radio) => {
-				const isReplace = radio.value === "replace";
+			// --- Real-Time Estimation Function ---
+			const updateEstimate = () => {
+				const checkedMeals = Array.from(document.querySelectorAll(".gen-meal-checkbox:checked")).map((cb) => cb.value);
+				const isReplace = document.getElementById("conflictReplace").checked;
+				const daysInput = parseInt(document.getElementById("days-to-generate").value) || 0;
+
+				let daysToCalculate = isReplace ? totalServiceDays : daysInput;
+				if (daysToCalculate > totalServiceDays) daysToCalculate = totalServiceDays;
+				if (daysToCalculate < 0) daysToCalculate = 0;
+
+				// Calculate 2 rows (dish + drink) per meal time, multiplied by days
+				let estimatedRows = daysToCalculate * checkedMeals.length * 2;
+
+				// If user chooses "Keep", subtract rows that already exist in the table from the estimate
+				if (!isReplace) {
+					const existingCount = existingDetails.filter((d) => checkedMeals.includes(d.meal_time)).length;
+					estimatedRows = Math.max(0, estimatedRows - existingCount);
+				}
+
+				document.getElementById("genEstimate").textContent = estimatedRows;
+			};
+
+			// --- Visual Logic for "Replace" vs "Keep" ---
+			window.updateConflictStyles = () => {
+				const isReplace = document.getElementById("conflictReplace").checked;
 				const $replaceWrap = $("#conflictReplaceWrap");
 				const $keepWrap = $("#conflictKeepWrap");
 
@@ -381,14 +383,14 @@ const askForMenuGenerationOptions = async (values) => {
 					$replaceWrap.find(".desc-text").removeClass("text-secondary-emphasis").addClass("text-success-emphasis");
 					$("#conflictReplaceIcon").removeClass("bi-circle text-secondary").addClass("bi-record-circle-fill text-success");
 
-                    $keepWrap.removeClass("border-success bg-success-subtle").addClass("border-secondary bg-secondary-subtle");
+					$keepWrap.removeClass("border-success bg-success-subtle").addClass("border-secondary bg-secondary-subtle");
 					$keepWrap.find(".conflict-icon").removeClass("bg-success").addClass("bg-secondary");
 					$keepWrap.find(".title-text").removeClass("text-success").addClass("text-secondary");
 					$keepWrap.find(".desc-text").removeClass("text-success-emphasis").addClass("text-secondary-emphasis");
 					$("#conflictKeepIcon").removeClass("bi-record-circle-fill text-success").addClass("bi-circle text-secondary");
 
 					$("#days-input-container").addClass("d-none");
-                    $("#estimate-container").removeClass("col-6").addClass("col-12");
+					$("#estimate-container").removeClass("col-6").addClass("col-12");
 				} else {
 					$replaceWrap.removeClass("border-success bg-success-subtle").addClass("border-secondary bg-secondary-subtle");
 					$replaceWrap.find(".conflict-icon").removeClass("bg-success").addClass("bg-secondary");
@@ -403,23 +405,28 @@ const askForMenuGenerationOptions = async (values) => {
 					$("#conflictKeepIcon").removeClass("bi-circle text-secondary").addClass("bi-record-circle-fill text-success");
 
 					$("#days-input-container").removeClass("d-none");
-                    $("#estimate-container").removeClass("col-12").addClass("col-6");
+					$("#estimate-container").removeClass("col-12").addClass("col-6");
 				}
+				updateEstimate(); // Update estimate when mode changes
 			};
 
-			window.updateConflictStyles(document.getElementById('conflictReplace'));
+			// Conflict card event listeners
+			document.querySelectorAll('input[name="conflictMode"]').forEach((radio) => {
+				radio.addEventListener("change", window.updateConflictStyles);
+			});
+			window.updateConflictStyles();
 
-			// Agregar evento a los checkboxes de tiempos de comida para mostrar/ocultar el icono de check
+			// Meal checkbox event listeners
 			document.querySelectorAll(".gen-meal-checkbox").forEach((checkbox) => {
 				checkbox.addEventListener("change", (e) => {
 					const checkedBoxes = document.querySelectorAll(".gen-meal-checkbox:checked");
 
 					if (checkedBoxes.length === 0) {
-                        e.target.checked = true; // Forzar que siga encendido
-                        Swal.showValidationMessage('Debe mantener al menos un tiempo de comida seleccionado.');
-                        setTimeout(() => Swal.resetValidationMessage(), 3000);
-                        return; 
-                    }
+						e.target.checked = true; // Keep at least one option selected
+						Swal.showValidationMessage("Debe mantener al menos un tiempo de comida seleccionado.");
+						setTimeout(() => Swal.resetValidationMessage(), 3000);
+						return;
+					}
 
 					const card = e.target.nextElementSibling;
 					const colorClass = card.getAttribute("data-color");
@@ -429,46 +436,50 @@ const askForMenuGenerationOptions = async (values) => {
 
 					if (e.target.checked) {
 						card.classList.add(`border-${colorClass}`, `bg-${colorClass}-subtle`);
-                        card.classList.remove("border-secondary", "bg-secondary-subtle");
-                        
-                        title.classList.add(`text-${colorClass}`);
-                        title.classList.remove("fw-semibold", "text-body"); // Ajuste por si Bootstrap sobrescribe
-                        title.classList.add("fw-semibold"); 
-                        
-                        desc.classList.add(`text-${colorClass}-emphasis`);
-                        desc.classList.remove("text-muted");
-                        
-                        checkIcon.classList.replace("bi-circle", "bi-check-circle-fill");
-                        checkIcon.classList.replace("text-muted", `text-${colorClass}`);
+						card.classList.remove("border-secondary", "bg-secondary-subtle");
+						title.classList.add(`text-${colorClass}`, "fw-semibold");
+						desc.classList.add(`text-${colorClass}-emphasis`);
+						desc.classList.remove("text-muted");
+						checkIcon.classList.replace("bi-circle", "bi-check-circle-fill");
+						checkIcon.classList.replace("text-muted", `text-${colorClass}`);
 					} else {
 						card.classList.remove(`border-${colorClass}`, `bg-${colorClass}-subtle`);
-                        card.classList.add("border-secondary", "bg-secondary-subtle");
-                        
-                        title.classList.remove(`text-${colorClass}`);
-
+						card.classList.add("border-secondary", "bg-secondary-subtle");
+						title.classList.remove(`text-${colorClass}`);
 						desc.classList.remove(`text-${colorClass}-emphasis`);
-                        desc.classList.add("text-muted");
-                        
-                        checkIcon.classList.replace("bi-check-circle-fill", "bi-circle");
-                        checkIcon.classList.replace(`text-${colorClass}`, "text-muted");
+						desc.classList.add("text-muted");
+						checkIcon.classList.replace("bi-check-circle-fill", "bi-circle");
+						checkIcon.classList.replace(`text-${colorClass}`, "text-muted");
 					}
+					updateEstimate(); // Update estimate when meal selection changes
 				});
 			});
+
+			// Days input event listener
+			document.getElementById("days-to-generate").addEventListener("input", updateEstimate);
+
+			// Enable Bootstrap tooltips for dynamically added elements
+			if (typeof bootstrap !== "undefined") {
+				const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+				tooltipTriggerList.map(function (tooltipTriggerEl) {
+					return new bootstrap.Tooltip(tooltipTriggerEl);
+				});
+			}
 		},
 		preConfirm: () => {
 			const selectedMeals = Array.from(document.querySelectorAll(".gen-meal-checkbox:checked")).map((cb) => cb.value);
 			const conflictMode = document.querySelector('input[name="conflictMode"]:checked').value;
-            let daysCount = days_to_serve.length; // Por defecto generará todos
+			let daysCount = totalServiceDays;
 
-            // Validar Input de Días si está en modo "Conservar"
-            if (conflictMode === "keep") {
-                const inputVal = document.getElementById("days-to-generate").value;
-                if (!inputVal || parseInt(inputVal) < 1 || parseInt(inputVal) > days_to_serve.length) {
-                    Swal.showValidationMessage(`Ingrese una cantidad válida de días (1 - ${days_to_serve.length}).`);
-                    return false;
-                }
-                daysCount = parseInt(inputVal);
-            }
+			// Validate days input when "Keep" mode is selected
+			if (conflictMode === "keep") {
+				const inputVal = document.getElementById("days-to-generate").value;
+				if (!inputVal || parseInt(inputVal) < 1 || parseInt(inputVal) > totalServiceDays) {
+					Swal.showValidationMessage(`Ingrese una cantidad válida de días (1 - ${totalServiceDays}).`);
+					return false;
+				}
+				daysCount = parseInt(inputVal);
+			}
 
 			return { selectedMeals, conflictMode, daysCount };
 		},
@@ -477,128 +488,6 @@ const askForMenuGenerationOptions = async (values) => {
     return result.isConfirmed ? result.value : null;
 };
 
-// const generateRandomMenu = async () => {
-// 	const formData = getFormFields();
-
-// 	// Validates that start_date, end_date and days_to_serve are defined before attempting to generate the menu.
-// 	if (!formData.start_date || !formData.end_date || formData.days_to_serve.length === 0) {
-// 		SwalToast.fire({
-// 			icon: "warning",
-// 			title: "Por favor, defina la fecha de inicio, fin y los días de servicio antes de generar el menú.",
-// 		});
-// 		return;
-// 	}
-
-// 	// Clasify products by type 
-// 	const dishes = PRODUCTS.filter((p) => p.type === "dish");
-// 	const drinks = PRODUCTS.filter((p) => p.type === "drink");
-
-// 	if (dishes.length === 0 && drinks.length === 0) {
-// 		SwalToast.fire({
-// 			icon: "warning",
-// 			title: "No hay productos disponibles para generar el menú.",
-// 		});
-// 	}
-
-// 	const { genMode, daysCount } = await askForMenuGenerationOptions();
-// 	if (!genMode) return; // User cancelled the menu generation
-
-// 	const detailsTable = getFormElements().contract_details_table || $("#contract-details-table");
-// 	if (genMode === "all") {
-// 		// Clear the table before generating to avoid massive duplicates
-// 		detailsTable.find("tbody tr:not(#empty-row)").remove();
-// 	} else {
-// 		detailsTable.find("tbody tr:not(#empty-row)").each(function () {
-// 			const pId = $(this).find('select[name="product_id"]').val();
-// 			const mT = $(this).find('select[name="meal_time"]').val();
-// 			const sD = $(this).find('input[name="serve_date"]').val();
-// 			if (pId === "-1" || mT === "-1" || !sD) {
-// 				$(this).remove();
-// 			}
-// 		});
-// 	}
-
-// 	const dayCoverage = {};
-// 	if (genMode === "partial") {
-// 		detailsTable.find("tbody tr:not(#empty-row)").each(function () {
-// 			const pId = parseInt($(this).find('select[name="product_id"]').val());
-// 			const mT = $(this).find('select[name="meal_time"]').val();
-// 			const sD = $(this).find('input[name="serve_date"]').val();
-
-// 			const prod = PRODUCTS.find((p) => p.id === pId);
-// 			if (prod && sD && mT !== "-1") {
-// 				if (!dayCoverage[sD]) dayCoverage[sD] = {};
-// 				if (!dayCoverage[sD][mT]) dayCoverage[sD][mT] = { dishes: 0, drinks: 0 };
-
-// 				if (prod.type === "dish") dayCoverage[sD][mT].dishes ++;
-// 				if (prod.type === "drink") dayCoverage[sD][mT].drinks ++;
-// 			}
-// 		});
-// 	}
-
-// 	const startDate = getLocalMidnight(formData.start_date);
-// 	const endDate = getLocalMidnight(formData.end_date);
-// 	let currentDate = new Date(startDate);
-
-// 	let usedThisWeek = new Set(); // To track used products for the current week and avoid repetition
-// 	let serviceDaysProcessed = 0; // To track how many service days have been processed for partial generation
-
-// 	// Helper: Extracts a random product of a given type that hasn't been used in the current week, if possible
-// 	const drawRandomProduct = (catalog) => {
-// 		if (catalog.length === 0) return null;
-
-// 		let available = catalog.filter(p => !usedThisWeek.has(p.id));
-// 		if (available.length === 0) {
-// 			available = catalog; // If all products have been used, reset the available list to allow repetition
-// 		}
-
-// 		const product = available[Math.floor(Math.random() * available.length)];
-// 		usedThisWeek.add(product.id);
-// 		return product;
-// 	};
-
-// 	while (currentDate <= endDate) {
-// 		if (serviceDaysProcessed >= daysCount) break; // Stop if we've processed the desired number of service days (for partial generation)
-// 		if (currentDate.getDay() === 1) usedThisWeek.clear(); // Clear history of used products at the start of each week (Monday = 1)
-
-// 		const dayOfWeek = DAY_NAMES[currentDate.getDay()];
-
-// 		if (formData.days_to_serve.includes(dayOfWeek)) {
-// 			const year = currentDate.getFullYear();
-// 			const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-// 			const day = String(currentDate.getDate()).padStart(2, "0");
-// 			const formattedDate = `${year}-${month}-${day}`;
-
-// 			MEAL_TIMES.forEach((meal) => {
-// 				const coverage = dayCoverage[formattedDate]?.[meal.value] || { dishes: 0, drinks: 0 };
-				
-// 				if (coverage.dishes < 1) {
-// 					const dish = drawRandomProduct(dishes);
-// 					if (dish) appendContractDetailRow(dish, meal.value, formattedDate);
-// 				}
-
-// 				if (coverage.drinks < 1) {
-// 					const drink = drawRandomProduct(drinks);
-// 					if (drink) appendContractDetailRow(drink, meal.value, formattedDate);
-// 				}
-
-// 				serviceDaysProcessed ++; // Increment the count of processed service days
-// 			});
-// 		}
-
-// 		currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
-// 	}
-
-// 	// Hide the "empty" state and update the summary section to reflect the generated menu
-// 	$("#empty-row").addClass("d-none");
-// 	updateSummary.progressBar();
-
-// 	// Recalculate total value based on the generated menu
-// 	recalculateTotalValue();
-
-// 	// Execute uniqueness validation
-// 	validateTableUniqueness();
-// };
 const generateRandomMenu = async () => {
 	const formData = getFormFields();
 
@@ -619,22 +508,22 @@ const generateRandomMenu = async () => {
 	const endDate = getLocalMidnight(formData.end_date);
 	const daysToServe = formData.days_to_serve;
 
-    // 1. Llamar al Modal
+	// Open the modal
 	const options = await askForMenuGenerationOptions({
 		start_date: formData.start_date,
 		end_date: formData.end_date,
 		days_to_serve: formData.days_to_serve
 	});
-	if (!options) return; // El usuario canceló
+	if (!options) return; // User canceled
     
     const { selectedMeals, conflictMode, daysCount } = options;
 	const detailsTable = getFormElements().contract_details_table || $("#contract-details-table");
 
-    // 2. Manejar el modo de conflicto
+    // Handle conflict mode
 	if (conflictMode === "replace") {
 		detailsTable.find("tbody tr:not(#empty-row)").remove();
 	} else {
-        // Modo "Conservar": Borramos solo las filas a medio llenar (con errores o en blanco)
+        // "Keep" mode: remove only partially filled rows (invalid or empty)
 		detailsTable.find("tbody tr:not(#empty-row)").each(function () {
 			const pId = $(this).find('select[name="product_id"]').val();
 			const mT = $(this).find('select[name="meal_time"]').val();
@@ -645,7 +534,7 @@ const generateRandomMenu = async () => {
 		});
 	}
 
-    // 3. Mapear lo existente (Solo necesario en modo Conservar)
+	// Map existing rows (needed only in "Keep" mode)
 	const dayCoverage = {};
 	if (conflictMode === "keep") {
 		detailsTable.find("tbody tr:not(#empty-row)").each(function () {
@@ -664,7 +553,7 @@ const generateRandomMenu = async () => {
 		});
 	}
 
-    // 4. Iniciar Generación
+	// Start generation
 	let currentDate = new Date(startDate);
 	let usedThisWeek = new Set(); 
 	let serviceDaysProcessed = 0;
@@ -690,7 +579,7 @@ const generateRandomMenu = async () => {
 			const day = String(currentDate.getDate()).padStart(2, "0");
 			const formattedDate = `${year}-${month}-${day}`;
 
-            // 5. Generar solo para los tiempos de comida seleccionados en el modal
+			// 5. Generate only for meal times selected in the modal
 			selectedMeals.forEach((mealValue) => {
 				const coverage = dayCoverage[formattedDate]?.[mealValue] || { dishes: 0, drinks: 0 };
 				
@@ -710,7 +599,7 @@ const generateRandomMenu = async () => {
 		currentDate.setDate(currentDate.getDate() + 1); 
 	}
 
-    // 6. Actualizar UI
+    // Refresh UI
 	$("#empty-row").addClass("d-none");
 	updateSummary.progressBar();
 	recalculateTotalValue();
@@ -1110,7 +999,7 @@ function bindRealTimeValidation() {
 
 // ===================== Summary Updaters =====================
 
-// Helper extraído fuera de los eventos para no recrearlo en cada pulsación
+// Helper extracted outside event handlers to avoid recreating it on each keystroke
 const formatLaravelDate = (dateValue) => {
     if (!dateValue) return "";
     // Ensure that the date is treated as local by appending a time component if it's not already present
@@ -1194,7 +1083,7 @@ const updateSummary = {
 			badge.text(rows.length);
 		}
 
-		// Show/Hide "Sin detalles aún" message based on whether there are rows
+		// Show/hide the empty-state message based on whether there are rows
 		if (rows.length === 0) {
 			$("#empty-row").removeClass("d-none");
 			summaryContainer.html('<span class="text-muted" style="font-size: .82rem;">Sin detalles aún.</span>');
@@ -1347,6 +1236,7 @@ const bindEventListeners = () => {
 		.off("input")
 		.on("input", function () {
 			updateSummary.portions($(this));
+			recalculateTotalValue(); // Recalculate total value in real-time as portions change
 		})
 		.trigger("input");
 
@@ -1373,14 +1263,14 @@ const bindEventListeners = () => {
 		updateSummary.daysToServe();
 	});
 
-	// Triggers initial update in case there are pre-selected days (e.g., when editing)
+	// Trigger initial update in case there are pre-selected days (e.g., when editing)
 	updateSummary.daysToServe();
 
 	// Deselect All Days Button
 	$("#deselect-all-days")
 		.off("click")
 		.on("click", function () {
-			// Deselects all checkboxes and triggers change to update validation and summary
+			// Deselect all checkboxes and trigger change to refresh validation and summary
 			elements.days_to_serve.prop("checked", false).trigger("change");
 		});
 
@@ -1463,11 +1353,11 @@ const bindEventListeners = () => {
 		recalculateTotalValue();
 	});
 
-	// Interceptar el envío del formulario
+	// Intercept form submission
     $(`#${FORM_ID}`).on("submit", async function (e) {
         e.preventDefault();
 
-        // 1. Validaciones Fuertes (Bloqueantes)
+		// 1. Strong (blocking) validations
         const [isValid, fieldId, message, values] = validateContractForm();
         if (!isValid) {
             SwalToast.fire({
@@ -1481,7 +1371,7 @@ const bindEventListeners = () => {
             return; 
         }
 
-        // 2. Comprobar si faltan días
+		// 2. Check for missing service days
         const missingDatesCount = getMissingDatesCount();
 		let proceedWithSubmission = true;
 
