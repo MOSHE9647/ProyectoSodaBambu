@@ -13,15 +13,24 @@ return new class extends Migration
         DB::table('products')
             ->orderBy('id')
             ->chunkById(100, function ($products): void {
+                $updates = [];
+
                 foreach ($products as $product) {
-                    DB::table('products')
-                        ->where('id', $product->id)
-                        ->update([
-                            'reference_cost' => $this->normalizeInteger($product->reference_cost ?? 0),
-                            'sale_price' => $this->normalizeInteger($product->sale_price ?? 0),
-                            'tax_percentage' => $this->normalizePercentage($product->tax_percentage ?? 0),
-                            'margin_percentage' => $this->normalizePercentage($product->margin_percentage ?? 0),
-                        ]);
+                    $updates[] = [
+                        'id' => $product->id,
+                        'reference_cost' => $this->normalizeInteger($product->reference_cost ?? 0),
+                        'sale_price' => $this->normalizeInteger($product->sale_price ?? 0),
+                        'tax_percentage' => $this->normalizePercentage($product->tax_percentage ?? 0),
+                        'margin_percentage' => $this->normalizePercentage($product->margin_percentage ?? 0),
+                    ];
+                }
+
+                if (! empty($updates)) {
+                    DB::table('products')->upsert(
+                        $updates,
+                        ['id'],
+                        ['reference_cost', 'sale_price', 'tax_percentage', 'margin_percentage']
+                    );
                 }
             });
     }
@@ -31,7 +40,29 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Values were normalized to integers; original decimal precision cannot be restored safely.
+        DB::table('products')
+            ->orderBy('id')
+            ->chunkById(100, function ($products): void {
+                $updates = [];
+
+                foreach ($products as $product) {
+                    $updates[] = [
+                        'id' => $product->id,
+                        'reference_cost' => round((float) ($product->reference_cost ?? 0), 2),
+                        'sale_price' => round((float) ($product->sale_price ?? 0), 2),
+                        'tax_percentage' => round(((float) ($product->tax_percentage ?? 0)) / 100, 2),
+                        'margin_percentage' => round(((float) ($product->margin_percentage ?? 0)) / 100, 2),
+                    ];
+                }
+
+                if (! empty($updates)) {
+                    DB::table('products')->upsert(
+                        $updates,
+                        ['id'],
+                        ['reference_cost', 'sale_price', 'tax_percentage', 'margin_percentage']
+                    );
+                }
+            });
     }
 
     private function normalizeInteger(mixed $value): int
@@ -43,7 +74,7 @@ return new class extends Migration
     {
         $numericValue = (float) $value;
 
-        if ($numericValue > 0 && $numericValue <= 1) {
+        if (abs($numericValue) < 1) {
             $numericValue *= 100;
         }
 
