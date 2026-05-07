@@ -3,13 +3,17 @@
 namespace App\Observers;
 
 use App\Actions\Contract\GetActiveContractsCountAction;
+use App\Actions\Contract\GetDailyMealServiceAction;
 use App\Models\Contract;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 use Illuminate\Support\Facades\Cache;
 
 class ContractObserver implements ShouldHandleEventsAfterCommit
 {
-    public function __construct(protected GetActiveContractsCountAction $getActiveContractsCount) {}
+    public function __construct(
+        protected GetActiveContractsCountAction $getActiveContractsCount,
+        protected GetDailyMealServiceAction $getDailyMealServiceAction
+    ) {}
 
     /**
      * Handle the Contract "created" event.
@@ -53,12 +57,18 @@ class ContractObserver implements ShouldHandleEventsAfterCommit
 
     private function refreshContractsCache(): void
     {
-        // Clear the cache for active contracts count when a contract is created, updated, or deleted.
+        // Clear the cache when a contract is created, updated, or deleted.
         Cache::forget('active_contracts_count');
+        Cache::forget('todays_meals');
 
         Cache::remember('active_contracts_count',
             now()->addMinutes(10),
             $this->getActiveContractsCount->execute(...)
+        );
+
+        Cache::remember('todays_meals',
+            now()->addMinutes(10),
+            $this->getDailyMealServiceAction->execute(...)
         );
     }
 }
