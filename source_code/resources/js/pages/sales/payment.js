@@ -887,20 +887,21 @@ const paymentFormEventListener = async (event, saleData) => {
 
 	const shouldPrintReceipt =
 		paymentForm.querySelector("#print-receipt-checkbox")?.checked === true;
-	const receiptHtml = shouldPrintReceipt
-		? buildReceiptHtml({
-				saleResultData: null,
-				saleSnapshot: saleData,
-				paymentDetails,
-				totalTendered,
-				changeAmount: roundedChangeAmount,
-			})
-		: null;
+	let receiptHtml = null;
 
 	SwalModal.showLoading();
 
 	const saleResult = await processSale(paymentDetails);
 	if (saleResult?.success) {
+		if (shouldPrintReceipt) {
+			receiptHtml = buildReceiptHtml({
+				saleResultData: saleResult,
+				saleSnapshot: saleData,
+				paymentDetails,
+				totalTendered,
+				changeAmount: roundedChangeAmount,
+			});
+		}
 		SwalModal.close();
 
 		if (shouldPrintReceipt && receiptHtml) {
