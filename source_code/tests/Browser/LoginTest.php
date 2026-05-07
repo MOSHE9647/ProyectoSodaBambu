@@ -22,7 +22,7 @@ test('CP-01_EIF-02 - creates a user logs in uses a feature and logs out', functi
     // Cuando: el usuario abre la pantalla de login, digita sus credenciales y presiona ingresar.
     $page = visit(route('login'));
 
-    $page->assertSee('Iniciar sesión')
+    $page->assertSee('Iniciar Sesión')
         ->fill('#email', $user->email)
         ->fill('#password', $password)
         ->click('#login-button');
@@ -44,7 +44,7 @@ test('CP-01_EIF-02 - creates a user logs in uses a feature and logs out', functi
         ->click('#logoutBtn');
 
     $page->assertPathIs(route('login', absolute: false))
-        ->assertSee('Iniciar sesión');
+        ->assertSee('Iniciar Sesión');
 
     $this->assertGuest();
 });
