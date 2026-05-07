@@ -283,7 +283,7 @@ const buildReceiptHtml = ({
 					<div class="receipt-line"></div>
 
 					<section>
-						<div class="receipt-item-name">Metodos de pago</div>
+						<div class="receipt-item-name">Métodos de pago</div>
 						${paymentsHtml}
 						<div class="receipt-row">
 							<span>Total recibido</span>
