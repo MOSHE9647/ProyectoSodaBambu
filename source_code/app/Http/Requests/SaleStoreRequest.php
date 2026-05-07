@@ -108,8 +108,8 @@ class SaleStoreRequest extends FormRequest
             'sale_details.*.unit_price.min' => 'El precio unitario no puede ser negativo.',
 
             'sale_details.*.applied_tax.required' => 'El impuesto aplicado es obligatorio en cada detalle.',
-            'sale_details.*.applied_tax.numeric' => 'El impuesto aplicado debe ser un número.',
-            'sale_details.*.applied_tax.min' => 'El impuesto aplicado no puede ser negativo.',
+            'sale_details.*.applied_tax.integer' => 'El impuesto aplicado debe ser un número entero.',
+            'sale_details.*.applied_tax.between' => 'El impuesto aplicado debe estar entre 0 y 100.',
 
             'sale_details.*.sub_total.required' => 'El subtotal es obligatorio en cada detalle.',
             'sale_details.*.sub_total.integer' => 'El subtotal debe ser un número entero.',

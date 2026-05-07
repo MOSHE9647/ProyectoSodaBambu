@@ -90,11 +90,11 @@ test('sale store request matches frontend line-level tax rounding', function () 
     $payload = saleStorePayload(12);
     $payload['sale_details'][0]['quantity'] = 1;
     $payload['sale_details'][0]['unit_price'] = 5;
-    $payload['sale_details'][0]['applied_tax'] = 0.10;
+    $payload['sale_details'][0]['applied_tax'] = 10;
     $payload['sale_details'][0]['sub_total'] = 5;
     $payload['sale_details'][1]['quantity'] = 1;
     $payload['sale_details'][1]['unit_price'] = 5;
-    $payload['sale_details'][1]['applied_tax'] = 0.10;
+    $payload['sale_details'][1]['applied_tax'] = 10;
     $payload['sale_details'][1]['sub_total'] = 5;
 
     $validator = validateSaleStoreRequest($payload);
