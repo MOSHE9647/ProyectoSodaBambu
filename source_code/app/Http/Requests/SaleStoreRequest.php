@@ -52,7 +52,7 @@ class SaleStoreRequest extends FormRequest
             'sale_details.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'sale_details.*.quantity' => ['required', 'integer', 'min:1'],
             'sale_details.*.unit_price' => ['required', 'integer', 'min:0'],
-            'sale_details.*.applied_tax' => ['required', 'numeric', 'min:0'],
+            'sale_details.*.applied_tax' => ['required', 'integer', 'between:0,100'],
             'sale_details.*.sub_total' => ['required', 'integer', 'min:0'],
 
             // Payment fields (optional, but if present must be valid)
