@@ -1219,13 +1219,41 @@ const handleFormSubmission = async (event, validationResult) => {
 
 	values.payment_status = PaymentStatus.PAID; // Assume paid by default, will be updated if payment details are provided
 
+	const submitToServer = async () => {
+		setLoadingState(FORM_ID, true);
+
+		try {
+			const response = await fetch(url, {
+				method: method,
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "application/json",
+					"X-CSRF-TOKEN": typeof csrfToken !== "undefined" ? csrfToken : document.querySelector('meta[name="csrf-token"]')?.content || "",
+				},
+				body: JSON.stringify(values),
+			});
+
+			const result = await response.json();
+			if (!response.ok) throw result;
+
+			return { success: true, data: result.data, redirect: result.redirect, message: result.message };
+		} catch (error) {
+			console.error("Error al guardar:", error);
+			const errorMsg = error.errors
+				? getLaravelFirstError(error.errors)
+				: error.message || "Error al procesar el contrato";
+			SwalToast.fire({ icon: "error", title: errorMsg });
+			return { success: false };
+		} finally {
+			setLoadingState(FORM_ID, false);
+		}
+	};
+
 	const amountPaid = Number(CONTRACTS_DATA.amountPaid) || 0;
 	const newTotal = Number(values.total_value) || 0;
 	const pendingBalance = newTotal - amountPaid;
 
 	if (pendingBalance > 0) {
-		let isPaymentCompleted = false; // Flag to track if payment was completed successfully
-
 		await openPaymentModal({
 			total: pendingBalance,
 			title: IS_EDITING ? "Cobrar Diferencia del Contrato" : "Procesar Pago del Contrato",
@@ -1238,74 +1266,49 @@ const handleFormSubmission = async (event, validationResult) => {
 					return false;
 				}
 				values.payment_details = paymentDetails;
-				isPaymentCompleted = true; // Mark payment as completed
-				return true;
+				const result = await submitToServer();
+
+				if (result.success && result.redirect) {
+					setTimeout(() => window.location.href = result.redirect, 1500);
+				}
+				return result;
 			}
 		});
-
-		if (!isPaymentCompleted) {
-			setLoadingState(FORM_ID, false);
-			return;
-		}
 	} else {
 		values.payment_details = []; // Ensure payment details is an empty array if no payment is needed
-		const amountToReturn = Math.abs(pendingBalance).toLocaleString('es-CR', { 
-			style: 'currency', 
-			currency: 'CRC' 
-		});
-
-		const confirmation = await SwalConfirmation.fire({
-			icon: "info",
-			title: "Confirmar Devolución",
-			html: `
-				El cliente tiene un pago previo que excede el nuevo total del contrato. 
-				Se deberá procesar una devolución por un monto de <strong>${amountToReturn}</strong>.
-				<br><br>¿Deseas continuar con el registro?
-			`,
-			confirmButtonText: "Sí, confirmar y enviar",
-			cancelButtonText: "No, revisar contrato",
-		}).then((result) => result.isConfirmed);
-
-		if (!confirmation) {
-			setLoadingState(FORM_ID, false);
-			return;
+		
+		if (pendingBalance < 0) {
+			const amountToReturn = Math.abs(pendingBalance).toLocaleString('es-CR', { 
+				style: 'currency', 
+				currency: 'CRC' 
+			});
+	
+			const confirmation = await SwalConfirmation.fire({
+				icon: "info",
+				title: "Confirmar Devolución",
+				html: `
+					El cliente tiene un pago previo que excede el nuevo total del contrato. 
+					Se deberá procesar una devolución por un monto de <strong>${amountToReturn}</strong>.
+					<br><br>¿Deseas continuar con el registro?
+				`,
+				confirmButtonText: "Sí, confirmar y enviar",
+				cancelButtonText: "No, revisar contrato",
+			}).then((result) => result.isConfirmed);
+	
+			if (!confirmation) {
+				setLoadingState(FORM_ID, false);
+				return;
+			}
 		}
-	}
 
-	setLoadingState(FORM_ID, true);
+		const result = await submitToServer();
 
-	try {
-		const response = await fetch(url, {
-			method: method,
-			headers: {
-				"Content-Type": "application/json",
-				'Accept': "application/json",
-				"X-CSRF-TOKEN": typeof csrfToken !== "undefined" 
-					? csrfToken
-					: document.querySelector('meta[name="csrf-token"]')?.content 
-					|| "",
-			},
-			body: JSON.stringify(values),
-		}); 
-
-		if (response.ok) {
-			const data = await response.json();
-			window.location.href = data.redirect || route('contracts.index');
-		} else {
-			const errorData = await response.json();
-			console.error('Error en la respuesta del servidor:', errorData);
-
-			const { field: firstField, message: firstMessage } = getLaravelFirstError(errorData);
-			showFieldError(firstField, firstMessage);
+		if (result.success) {
+			SwalToast.fire({ icon: "success", title: result.message || "Contrato guardado exitosamente." });
+			if (result.redirect) {
+				window.location.href = result.redirect;
+			}
 		}
-	} catch (error) {
-		console.error('Error al enviar el formulario:', error);
-		SwalToast.fire({
-			icon: SwalNotificationTypes.ERROR,
-			title: "Error al enviar el formulario",
-		});
-	} finally {
-		setLoadingState(FORM_ID, false);
 	}
 };
 

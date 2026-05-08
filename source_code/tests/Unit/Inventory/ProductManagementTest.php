@@ -11,15 +11,15 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 test('CP-01_EIF-32 - calculateSalePrice applies tax and margin correctly', function () {
     // Given: a reference cost with decimal tax and margin percentages.
-    $referenceCost = 10000.0;
-    $taxPercentage = 0.13;
-    $marginPercentage = 0.35;
+    $referenceCost = 10000;
+    $taxPercentage = 13;
+    $marginPercentage = 35;
 
     // When: the sale price is calculated.
     $salePrice = Product::calculateSalePrice($referenceCost, $taxPercentage, $marginPercentage);
 
     // Then: the expected final value is returned.
-    expect($salePrice)->toBe(15255.0);
+    expect($salePrice)->toBe(15255);
 });
 
 /**

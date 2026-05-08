@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Contracts\Receipable;
 use App\Enums\ContractState;
+use Carbon\Carbon;
 use Database\Factories\ContractFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Contract extends Model
+class Contract extends Model implements Receipable
 {
     /** @use HasFactory<ContractFactory> */
     use HasFactory, SoftDeletes;
@@ -125,5 +127,83 @@ class Contract extends Model
     public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'origin');
+    }
+
+    // ===== Receipable Interface Implementation =====
+
+    /**
+     * Get the receipt/invoice number for this contract.
+     */
+    public function getReceiptNumber(): string
+    {
+        return "CONTRATO-{$this->id}";
+    }
+
+    /**
+     * Get the date when this contract was created (for receipt purposes).
+     */
+    public function getReceiptDate(): Carbon
+    {
+        return $this->created_at ?? now();
+    }
+
+    /**
+     * Get the total value of this contract.
+     */
+    public function getReceiptTotal(): int
+    {
+        return $this->total_value ?? 0;
+    }
+
+    /**
+     * Get the contract details as receipt items.
+     */
+    public function getReceiptItems(): array
+    {
+        return $this->details->map(function ($detail) {
+            return [
+                'name' => $detail->product?->name ?? "Producto #{$detail->product_id}",
+                'quantity' => $detail->quantity ?? 1,
+                'unit_price' => $detail->unit_price ?? 0,
+                'sub_total' => $detail->subtotal ?? 0,
+                'applied_tax' => $detail->applied_tax ?? 0,
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Get the contract subtotal (sum of all details before tax).
+     */
+    public function getReceiptSubtotal(): int
+    {
+        return $this->details->sum('subtotal') ?? 0;
+    }
+
+    /**
+     * Get the total tax amount for all contract details.
+     */
+    public function getReceiptTaxTotal(): int
+    {
+        return collect($this->getReceiptItems())->reduce(function ($carry, $item) {
+            $taxAmount = (int) round($item['sub_total'] * ($item['applied_tax'] / 100));
+
+            return $carry + $taxAmount;
+        }, 0);
+    }
+
+    /**
+     * Get the receipt type label.
+     */
+    public function getReceiptType(): string
+    {
+        return 'Comprobante de contrato';
+    }
+
+    /**
+     * Check if this contract can generate a receipt.
+     */
+    public function canGenerateReceipt(): bool
+    {
+        return $this->id && $this->total_value > 0 && $this->details->count() > 0;
     }
 }

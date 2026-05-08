@@ -70,7 +70,7 @@ class SaleController extends Controller implements HasMiddleware
 
         return response()->json([
             'message' => 'Venta registrada exitosamente.',
-            'data' => $sale->load('saleDetails', 'payments'),
+            'data' => $sale->load('saleDetails.product', 'payments'),
         ], 201);
     }
 

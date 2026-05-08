@@ -76,14 +76,14 @@ test('CP-04_EIF-35 - purchase casts payment status and date correctly', function
     $purchase = Purchase::factory()->create([
         'date' => '2026-03-15 10:30:00',
         'payment_status' => PaymentStatus::PENDING,
-        'total' => 1234.5,
+        'total' => 1234,
     ]);
 
     // When: reading the model attributes.
     // Then: payment status is cast to enum and date is a date instance.
     expect($purchase->payment_status)->toBe(PaymentStatus::PENDING);
     expect($purchase->date)->toBeInstanceOf(Carbon::class);
-    expect((string) $purchase->total)->toBe('1234.50');
+    expect((string) $purchase->total)->toBe('1234');
 });
 
 /**
@@ -99,11 +99,11 @@ test('CP-05_EIF-35 - purchase model is mass-assignable for fillable attributes',
         'invoice_number' => 'INV-10001',
         'payment_status' => PaymentStatus::PENDING,
         'date' => '2026-03-20 12:00:00',
-        'total' => 2500.75,
+        'total' => 2500,
     ]);
 
     // Then: the attributes are persisted correctly.
     expect($purchase->invoice_number)->toBe('INV-10001');
     expect($purchase->payment_status)->toBe(PaymentStatus::PENDING);
-    expect((string) $purchase->total)->toBe('2500.75');
+    expect((string) $purchase->total)->toBe('2500');
 });
