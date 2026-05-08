@@ -214,7 +214,7 @@ export const processSale = async (
 	const payload = {
 		payment_status: paymentStatus,
 		date: new Date().toISOString(),
-		total: cartData.total,
+		total: parseInt(cartData.total),
 		sale_details: cartData.sale_details,
 		payment_details: paymentDetails,
 	};
@@ -259,7 +259,11 @@ export const processSale = async (
 				}),
 			);
 
-			return true; // Indicate successful completion to caller.
+			return {
+				success: true,
+				data: responseData.data,
+				message: responseData.message,
+			};
 		} else {
 			const errorData = await response.json();
 			SwalToast.fire({

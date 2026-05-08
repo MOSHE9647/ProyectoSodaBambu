@@ -63,7 +63,7 @@ class SupplyController extends Controller implements HasMiddleware
                     return $supply->quantity ?? 0;
                 })
                 ->editColumn('unit_price', function ($supply) {
-                    return $supply->unit_price ? '₡'.number_format($supply->unit_price, 2) : '₡0.00';
+                    return $supply->unit_price ? '₡'.number_format($supply->unit_price, 0, '.', ' ') : '₡0';
                 })
                 ->editColumn('expiration_date', function ($supply) {
                     return $supply->expiration_date
@@ -114,7 +114,7 @@ class SupplyController extends Controller implements HasMiddleware
                 'supply' => [
                     'id' => $supply->id,
                     'name' => $supply->name,
-                    'unit_price' => (float) ($supply->unit_price ?? 0),
+                    'unit_price' => (int) ($supply->unit_price ?? 0),
                 ],
             ]);
         }

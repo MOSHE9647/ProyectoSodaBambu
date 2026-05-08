@@ -25,8 +25,8 @@ const PRODUCT_TYPE_LABELS = {
 const CURRENCY_FORMATTER = new Intl.NumberFormat("es-CR", {
 	style: "currency",
 	currency: "CRC",
-	minimumFractionDigits: 2,
-	maximumFractionDigits: 2,
+	minimumFractionDigits: 0,
+	maximumFractionDigits: 0,
 });
 
 // ==================== State Management ====================

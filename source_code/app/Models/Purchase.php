@@ -37,7 +37,7 @@ class Purchase extends Model
      */
     protected $casts = [
         'date' => 'datetime',
-        'total' => 'decimal:2',
+        'total' => 'integer',
         'payment_status' => PaymentStatus::class,
         // 'created_at' => CostaRicaDatetime::class,
         // 'updated_at' => CostaRicaDatetime::class,

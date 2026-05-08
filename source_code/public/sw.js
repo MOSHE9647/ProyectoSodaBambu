@@ -16,6 +16,15 @@ const shouldCache = function (url) {
 };
 
 /**
+ * Check if a request can be stored in Cache Storage.
+ * @param { Request } request
+ * @returns { boolean }
+ */
+const isCacheableRequest = function (request) {
+	return request.method === "GET" && shouldCache(request.url);
+};
+
+/**
  * Preloads the necessary files for offline use.
  * @returns { Promise<void> }
  */
@@ -36,6 +45,11 @@ const preLoad = async function () {
  */
 self.addEventListener("install", function (event) {
 	event.waitUntil(preLoad());
+	self.skipWaiting();
+});
+
+self.addEventListener("activate", function (event) {
+	event.waitUntil(self.clients.claim());
 });
 
 /**
@@ -54,14 +68,14 @@ const checkResponse = function (request) {
  * @returns { Promise<void> }
  */
 const addToCache = async function (request) {
-	// Only cache http(s) requests
-	if (!shouldCache(request.url)) {
+	if (!isCacheableRequest(request)) {
 		return Promise.resolve();
 	}
 	const cache = await caches.open("offline");
-	const response = await fetch(request);
+	const cacheRequest = request.clone();
+	const response = await fetch(request.clone());
 	if (response.ok) {
-		return cache.put(request, response.clone());
+		return cache.put(cacheRequest, response.clone());
 	}
 	return response;
 };
@@ -86,12 +100,14 @@ const returnFromCache = async function (request) {
  */
 self.addEventListener("fetch", function (event) {
 	event.respondWith(
-		checkResponse(event.request).catch(function () {
+		checkResponse(event.request.clone()).catch(function () {
 			// Solo si hay error de red (network error), intenta devolver del cache o offline.html
 			return returnFromCache(event.request);
 		})
 	);
-	if (shouldCache(event.request.url)) {
-		event.waitUntil(addToCache(event.request));
+	if (isCacheableRequest(event.request)) {
+		event.waitUntil(addToCache(event.request.clone()).catch(function (error) {
+			console.error("Error caching request:", error);
+		}));
 	}
 });

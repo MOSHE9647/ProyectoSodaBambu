@@ -20,6 +20,8 @@ class SupplyResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'measure_unit' => $this->measure_unit,
+            'unit_price' => $this->unit_price,
+            'quantity' => $this->quantity,
             'created_at' => $createdAt instanceof \DateTimeInterface
                 ? $createdAt->format('Y-m-d H:i:s')
                 : (is_string($createdAt) ? $createdAt : null),

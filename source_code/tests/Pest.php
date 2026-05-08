@@ -71,7 +71,6 @@ function loginAsUser($user, $password, $seeText = 'Ventas de Hoy')
         ->fill('#email', $user->email)
         ->fill('#password', $password)
         ->click('#login-button')
-
         ->assertSee($seeText);
 
     return $page;

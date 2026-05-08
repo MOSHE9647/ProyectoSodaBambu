@@ -173,9 +173,9 @@ test('CP-05_EIF-32 - updates existing product data successfully', function () {
         'type' => ProductType::MERCHANDISE->value,
         'has_inventory' => true,
         'reference_cost' => 1000,
-        'tax_percentage' => 0.13,
-        'margin_percentage' => 0.35,
-        'sale_price' => 1525.5,
+        'tax_percentage' => 13,
+        'margin_percentage' => 35,
+        'sale_price' => 1526,
     ]);
 
     ProductStock::factory()->create([

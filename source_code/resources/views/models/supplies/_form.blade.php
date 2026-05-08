@@ -53,7 +53,7 @@
                 </div>
 
                 <div class="col-6">
-                    <x-form.input :id="'unit_price'" :type="'number'" :class="'border-secondary'" :inputClass="$errors->has('unit_price') ? 'is-invalid' : ''" :placeholder="'0.00'" :value="old('unit_price', $supply->unit_price ?? '0')" :errorMessage="$errors->first('unit_price') ?? ''" :iconLeft="'bi bi-currency-dollar'" :required="true" step="0.01">
+                    <x-form.input :id="'unit_price'" :type="'number'" :class="'border-secondary'" :inputClass="$errors->has('unit_price') ? 'is-invalid' : ''" :placeholder="'0'" :value="old('unit_price', $supply->unit_price ?? '0')" :errorMessage="$errors->first('unit_price') ?? ''" :iconLeft="'bi bi-cash-stack'" :required="true" step="0.01">
                         Precio Unitario <span class="text-danger">*</span>
                     </x-form.input>
                 </div>
