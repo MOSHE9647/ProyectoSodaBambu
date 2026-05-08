@@ -116,13 +116,6 @@ const normalizeCartItemAmounts = (item) => {
 	};
 };
 
-const calculateItemTax = (item) => {
-    // Dividimos por 100 porque applied_tax viene como entero (ej: 13) 
-    // y lo necesitamos como decimal (0.13)
-    const taxRate = (Number(item.applied_tax) || 0) / 100;
-    return toIntegerAmount(Math.round(toIntegerAmount(item.sub_total) * taxRate));
-};
-
 // --- VALIDATIONS ---
 
 /**
@@ -517,34 +510,50 @@ export const deleteOrderCart = (orderId) => {
  */
 export const getActiveSaleData = () => {
 	const currentCart = getActiveCart();
-	const total = currentCart.reduce(
-		(sum, item) => sum + toIntegerAmount(item.sub_total) + calculateItemTax(item),
-		0,
-	);
+	let saleTotal = 0;
+
+	const sale_details = currentCart.map((item) => {
+		const { product_id, quantity, unit_price, applied_tax, sub_total } = item;
+		const taxRate = (Number(applied_tax) || 0) / 100;
+
+		const itemBaseSubtotal = Math.round(sub_total / (1 + taxRate));
+		const itemBasePrice = Math.round(unit_price / (1 + taxRate));
+
+		saleTotal += toIntegerAmount(sub_total);
+
+		return {
+			product_id,
+			quantity,
+			unit_price: itemBasePrice,
+			applied_tax,
+			sub_total: itemBaseSubtotal,
+		};
+	});
+
+	const receipt_details = currentCart.map((item) => {
+		const { product_id, name, quantity, unit_price, applied_tax, sub_total } = item;
+		const taxRate = (Number(applied_tax) || 0) / 100;
+
+		const itemTotal = sub_total;
+		const itemBasePrice = Math.round(itemTotal / (1 + taxRate));
+		const itemTax = itemTotal - itemBasePrice;
+
+		return {
+			product_id,
+			name,
+			quantity,
+			unit_price,
+			applied_tax,
+			sub_total: itemBasePrice,
+			tax_amount: itemTax,
+			total: itemTotal,
+		};
+	});
 
 	return {
-		sale_details: currentCart.map(
-			({ product_id, quantity, unit_price, applied_tax, sub_total }) => ({
-				product_id,
-				quantity,
-				unit_price: toIntegerAmount(unit_price),
-				applied_tax,
-				sub_total: toIntegerAmount(sub_total),
-			}),
-		),
-		receipt_details: currentCart.map(
-			({ product_id, name, quantity, unit_price, applied_tax, sub_total }) => ({
-				product_id,
-				name,
-				quantity,
-				unit_price,
-				applied_tax,
-				sub_total,
-				tax_amount: sub_total * applied_tax,
-				total: sub_total + sub_total * applied_tax,
-			}),
-		),
-		total: (Number(total) || 0).toFixed(2),
+		sale_details,
+		receipt_details,
+		total: (Number(saleTotal) || 0).toFixed(2),
 	};
 };
 

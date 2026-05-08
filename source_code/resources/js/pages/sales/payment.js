@@ -39,14 +39,20 @@ const getReceiptItems = (saleResultData, saleSnapshot) => {
 		return snapshotItems;
 	}
 
-	return resultItems.map((item) => ({
-		...item,
-		name: item.product?.name || `Producto #${item.product_id || "N/A"}`,
-		tax_amount: Number(item.sub_total || 0) * Number(item.applied_tax || 0),
-		total:
-			Number(item.sub_total || 0) +
-			Number(item.sub_total || 0) * Number(item.applied_tax || 0),
-	}));
+	return resultItems.map((item) => {
+		const taxRate = (Number(item.applied_tax) || 0) / 100;
+		const itemTotal = Number(item.sub_total || 0); // Assuming API returns total as sub_total
+		const itemBasePrice = Math.round(itemTotal / (1 + taxRate));
+		const itemTax = itemTotal - itemBasePrice;
+
+		return {
+			...item,
+			name: item.product?.name || `Producto #${item.product_id || "N/A"}`,
+			tax_amount: itemTax,
+			total: itemTotal,
+			sub_total: itemBasePrice,
+		};
+	});
 };
 
 const getReceiptStyles = () => `
