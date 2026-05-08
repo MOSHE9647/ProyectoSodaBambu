@@ -187,12 +187,12 @@ const buildReceiptHtml = ({
 }) => {
 	const items = getReceiptItems(saleResultData, saleSnapshot);
 	const subtotal = items.reduce(
-		(sum, item) => roundToTwo(sum + Number(item.sub_total || 0)),
+		(sum, item) => toIntegerAmount(sum + Number(item.sub_total || 0)),
 		0,
 	);
 	const taxTotal = items.reduce(
 		(sum, item) =>
-			roundToTwo(
+			toIntegerAmount(
 				sum +
 					(Number(item.tax_amount) ||
 						Number(item.sub_total || 0) * Number(item.applied_tax || 0)),
@@ -339,10 +339,9 @@ const printReceipt = async (receiptHtml) => {
 	}, 250);
 };
 
-const roundToTwo = (value) => Math.round((Number(value) || 0) * 100) / 100;
 const toIntegerAmount = (value) => Math.round(Number(value) || 0);
 
-const formatAmountInputValue = (value) => String(toIntegerAmount(value));
+const formatAmountInputValue = (value) => parseInt(toIntegerAmount(value));
 
 const parseAmountInputValue = (value) => {
 	const normalizedValue = String(value || "")

@@ -214,7 +214,7 @@ export const processSale = async (
 	const payload = {
 		payment_status: paymentStatus,
 		date: new Date().toISOString(),
-		total: cartData.total,
+		total: parseInt(cartData.total),
 		sale_details: cartData.sale_details,
 		payment_details: paymentDetails,
 	};
