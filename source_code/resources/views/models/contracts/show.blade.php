@@ -1,7 +1,6 @@
-@vite(['resources/css/app.css', 'resources/js/app.js'])
-
 @php
     use App\Enums\WeekDay;
+    use App\Enums\ContractState;
 @endphp
 
 <div class="d-flex flex-column text-start" style="max-width: 600px; margin: 0 auto;">
@@ -117,23 +116,11 @@
 
         {{-- Contract State --}}
         <div class="col-md-6">
-            @php
-                // Map contract status to badge types
-                $statusLabels = [
-                    'active' => 'Activo',
-                    'inactive' => 'Inactivo',
-                    'expired' => 'Vencido',
-                    'upcoming' => 'Próximo',
-                ];
-
-                $statusLabel = $statusLabels[$contract->status] ?? 'Indefinido';
-            @endphp
-
             <x-form.input.floating-label
                 :id="'contract_state'"
                 :type="'text'"
                 :readonly="true"
-                :value="$statusLabel"
+                :value="ContractState::from($contract->status)->label()"
                 :iconLeft="'bi bi-info-circle'"
                 :placeholder="'Estado del Contrato'"
             >

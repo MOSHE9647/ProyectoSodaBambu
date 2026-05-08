@@ -70,7 +70,7 @@ class ContractController extends Controller
         $paymentDetailsData = $validatedData['payment_details'] ?? null;
 
         // Execute the upsert action to create the contract along with its details and payment
-        $upsertContractAction->execute(
+        $contract = $upsertContractAction->execute(
             $contractData,
             $contractDetailsData,
             $paymentDetailsData
@@ -82,6 +82,7 @@ class ContractController extends Controller
         return response()->json([
             'redirect' => route('contracts.index'),
             'message' => 'Datos del contrato guardados exitosamente.',
+            'data' => $contract->load('details.product', 'payments'),
         ], HttpStatus::CREATED);
     }
 
@@ -101,7 +102,7 @@ class ContractController extends Controller
      */
     public function edit(int $id): View
     {
-        $contract = Contract::withTrashed()->findOrFail($id);
+        $contract = Contract::withTrashed()->with('payments')->findOrFail($id);
         $clients = Client::all(['id', 'first_name', 'last_name']);
         $products = Product::whereIn('type', [ProductType::DISH, ProductType::DRINK])
             ->get(['id', 'name', 'sale_price', 'type']);
@@ -123,7 +124,7 @@ class ContractController extends Controller
         $paymentDetailsData = $validatedData['payment_details'] ?? null;
 
         // Execute the upsert action to create the contract along with its details and payment
-        $upsertContractAction->execute(
+        $contract = $upsertContractAction->execute(
             $contractData,
             $contractDetailsData,
             $paymentDetailsData
@@ -135,6 +136,7 @@ class ContractController extends Controller
         return response()->json([
             'redirect' => route('contracts.index'),
             'message' => 'Datos del contrato actualizados exitosamente.',
+            'data' => $contract->load('details.product', 'payments'),
         ], HttpStatus::OK);
     }
 

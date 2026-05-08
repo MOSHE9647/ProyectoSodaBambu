@@ -18,4 +18,14 @@ enum ContractState: string
             self::EXPIRED => 'Expirado',
         };
     }
+
+    public function color(): string
+    {
+        return match ($this) {
+            self::ACTIVE => 'success',
+            self::INACTIVE => 'warning',
+            self::UPCOMING => 'info',
+            self::EXPIRED => 'danger',
+        };
+    }
 }

@@ -57,6 +57,7 @@
 			"@php artisan key:generate",
 			"@php -r \"is_dir('database') || mkdir('database', 0777, true); file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
 			"npm ci",
+			"npx playwright install --with-deps",
 			"npm run build"
 		],
 		"workspace:setup": "@php scripts/setup-workspace.php --no-db",
@@ -115,7 +116,4 @@
 	"process-timeout": 1500,
 	"minimum-stability": "stable",
 	"prefer-stable": true
-
-	
-
 }

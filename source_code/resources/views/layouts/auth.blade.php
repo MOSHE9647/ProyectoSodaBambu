@@ -36,7 +36,7 @@
 	@yield('js')
 
 	{{-- PWA Scripts --}}
-	<script src="{{ asset('sw.js') }}"></script>
-	<script src="{{ asset('scripts/registerServiceWorker.js') }}"></script>
-</body>
-</html>
+	@if(!app()->environment('testing', 'local', 'dusk'))
+		<script src="{{ asset('sw.js') }}"></script>
+		<script src="{{ asset('scripts/registerServiceWorker.js') }}"></script>
+	@endif

@@ -18,6 +18,7 @@ test('CP-FUN-03 - an administrator with an active session can create a user', fu
     // And: the administrator user can access the user creation page.
     $page->navigate(route('users.index'));
     $page->assertSee('Gestión de Usuarios')
+        ->wait(10) // Wait for the page to load and the create button to be visible
         ->click('.create-button')
         ->assertSee('Crear Usuario');
 

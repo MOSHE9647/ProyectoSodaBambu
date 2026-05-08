@@ -28,7 +28,7 @@ test('CP-01_EIF-49 - registers a supply with valid data and redirects with succe
         'name' => 'Harina de trigo',
         'measure_unit' => 'kg',
         'quantity' => 8,
-        'unit_price' => 1200.50,
+        'unit_price' => 1200,
     ]);
 
     // Then: the system stores the supply and redirects with a success flash message.
@@ -40,7 +40,7 @@ test('CP-01_EIF-49 - registers a supply with valid data and redirects with succe
         'name' => 'Harina de trigo',
         'measure_unit' => 'kg',
         'quantity' => 8,
-        'unit_price' => 1200.50,
+        'unit_price' => 1200,
         'deleted_at' => null,
     ]);
 });
@@ -373,7 +373,7 @@ test('CP-13_EIF-49 - returns default datatable column values when supply has no 
         ->assertJsonFragment([
             'id' => $supply->id,
             'quantity' => 0,
-            'unit_price' => '₡0.00',
+            'unit_price' => '₡0',
             'expiration_date' => 'N/A',
         ]);
 });
@@ -409,7 +409,7 @@ test('CP-14_EIF-49 - datatable computed columns use supply current values', func
         ->assertJsonFragment([
             'id' => $supply->id,
             'quantity' => 4,
-            'unit_price' => '₡1,200.00',
+            'unit_price' => '₡1 200',
             'expiration_date' => '05/04/2026',
         ]);
 });

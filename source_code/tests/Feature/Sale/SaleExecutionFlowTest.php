@@ -1,8 +1,10 @@
 <?php
 
+use App\Enums\CashRegisterStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\TransactionType;
+use App\Models\CashRegister;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductStock;
@@ -64,6 +66,13 @@ function assertSaleMathIntegrity(Sale $sale): void
         ->and(round($paymentsTotal, 2))->toBe(round((float) $sale->total, 2))
         ->and(round($transactionsTotal, 2))->toBe(round((float) $sale->total, 2));
 }
+
+beforeEach(function () {
+    CashRegister::factory()->create([
+        'status' => CashRegisterStatus::OPEN,
+        'opened_at' => now(),
+    ]);
+});
 
 /**
  * User Story: EIF-29 - Registro y cobro de ventas.
