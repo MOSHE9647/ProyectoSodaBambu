@@ -18,13 +18,22 @@ const ClosureModalOptions = {
 };
 
 const formatCR = (val) => Number(val || 0).toLocaleString('es-CR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
 });
 
 const currency = (val) => `\u20A1 ${formatCR(val)}`;
-const numericValue = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
-const inputValue = (id) => parseFloat(document.getElementById(id)?.value);
+const numericValue = (value) => Number.isFinite(Number(value)) ? Math.round(Number(value)) : 0;
+const inputValue = (id) => {
+    const rawValue = document.getElementById(id)?.value ?? '';
+    if (!/^\d+$/.test(rawValue)) return NaN;
+
+    const parsed = Number.parseInt(rawValue, 10);
+    return Number.isFinite(parsed) ? parsed : NaN;
+};
+const sanitizeIntegerInput = (input) => {
+    input.value = String(input.value || '').replace(/\D/g, '');
+};
 
 const getClosureStyles = () => `
     .cash-closure-swal {
@@ -334,7 +343,7 @@ const setFeedback = (item, diff) => {
         return;
     }
 
-    if (Math.abs(diff) < 0.01) {
+    if (diff === 0) {
         item.feedback.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Coincide con sistema';
         item.feedback.className = 'cash-closure-feedback is-visible is-ok';
         return;
@@ -346,7 +355,7 @@ const setFeedback = (item, diff) => {
 };
 
 const renderDifference = (diff) => {
-    const isBalanced = Math.abs(diff) < 0.01;
+    const isBalanced = diff === 0;
     const label = diff < 0 ? 'Faltante' : 'Sobrante';
     const sign = diff < 0 ? '-' : '+';
 
@@ -401,7 +410,7 @@ const buildClosureHtml = (data, theme) => {
                         </div>
                         <label class="cash-closure-money-field" for="physical-cash">
                             <span>&#8353;</span>
-                            <input type="number" id="physical-cash" class="${theme.input}" min="0" step="0.01" value="${systemCash.toFixed(2)}" placeholder="0.00">
+                            <input type="number" id="physical-cash" class="${theme.input}" min="0" step="1" value="${systemCash}" placeholder="0">
                         </label>
                         <div id="cash-feedback" class="cash-closure-feedback"></div>
                     </article>
@@ -413,7 +422,7 @@ const buildClosureHtml = (data, theme) => {
                         </div>
                         <label class="cash-closure-money-field" for="physical-card">
                             <span>&#8353;</span>
-                            <input type="number" id="physical-card" class="${theme.input}" min="0" step="0.01" value="${systemCard.toFixed(2)}" placeholder="0.00">
+                            <input type="number" id="physical-card" class="${theme.input}" min="0" step="1" value="${systemCard}" placeholder="0">
                         </label>
                         <div id="card-feedback" class="cash-closure-feedback"></div>
                     </article>
@@ -425,7 +434,7 @@ const buildClosureHtml = (data, theme) => {
                         </div>
                         <label class="cash-closure-money-field" for="physical-sinpe">
                             <span>&#8353;</span>
-                            <input type="number" id="physical-sinpe" class="${theme.input}" min="0" step="0.01" value="${systemSinpe.toFixed(2)}" placeholder="0.00">
+                            <input type="number" id="physical-sinpe" class="${theme.input}" min="0" step="1" value="${systemSinpe}" placeholder="0">
                         </label>
                         <div id="sinpe-feedback" class="cash-closure-feedback"></div>
                     </article>
@@ -476,10 +485,13 @@ const bindClosureModalEvents = (data) => {
 
         const grandDiff = totalPhysical - numericValue(data.system_total);
         diffDisplay.innerHTML = renderDifference(grandDiff);
-        diffDisplay.className = `cash-closure-difference__amount ${Math.abs(grandDiff) < 0.01 ? 'text-success' : 'text-danger'}`;
+        diffDisplay.className = `cash-closure-difference__amount ${grandDiff === 0 ? 'text-success' : 'text-danger'}`;
     };
 
-    Object.values(elements).forEach(item => item.input.addEventListener('input', updateBalance));
+    Object.values(elements).forEach(item => item.input.addEventListener('input', () => {
+        sanitizeIntegerInput(item.input);
+        updateBalance();
+    }));
     updateBalance();
 
     document.getElementById('cash-closure-submit').addEventListener('click', () => SwalModal.clickConfirm());

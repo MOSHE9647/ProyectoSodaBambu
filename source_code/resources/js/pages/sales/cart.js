@@ -33,9 +33,18 @@ const loadFromStorage = () => {
 	if (savedOrders) {
 		state.orders = JSON.parse(savedOrders);
 	}
+
+	state.orders = Object.fromEntries(
+		Object.entries(state.orders).map(([orderId, cart]) => [
+			orderId,
+			Array.isArray(cart) ? cart.map(normalizeCartItemAmounts) : [],
+		]),
+	);
+
 	if (!state.orders[state.activeOrderId]) {
 		state.orders[state.activeOrderId] = [];
 	}
+	saveToStorage();
 };
 
 const getActiveCart = () => state.orders[state.activeOrderId] || [];
@@ -61,8 +70,8 @@ const showError = (errorMessage, consoleErrorMessage) => {
 const currencyFormatter = new Intl.NumberFormat("es-CR", {
 	style: "currency",
 	currency: "CRC",
-	minimumFractionDigits: 2,
-	maximumFractionDigits: 2,
+	minimumFractionDigits: 0,
+	maximumFractionDigits: 0,
 });
 
 export const formatCurrency = (amount) => {
@@ -90,7 +99,22 @@ export const formatCurrency = (amount) => {
  * @param {string|undefined} value
  * @returns {number}
  */
-const parsePrice = (value) => parseFloat(value?.replace(/,/g, ".") || 0);
+const parsePrice = (value) => Math.round(Number.parseFloat(value?.replace(/,/g, ".") || 0));
+const parseRate = (value) => Number.parseFloat(value?.replace(/,/g, ".") || 0);
+const toIntegerAmount = (value) => Math.round(Number(value) || 0);
+
+const normalizeCartItemAmounts = (item) => {
+	const quantity = parseInt(item.quantity, 10) || 1;
+	const unitPrice = toIntegerAmount(item.unit_price);
+
+	return {
+		...item,
+		quantity,
+		unit_price: unitPrice,
+		applied_tax: Number(item.applied_tax) || 0,
+		sub_total: toIntegerAmount(unitPrice * quantity),
+	};
+};
 
 // --- VALIDATIONS ---
 
@@ -178,11 +202,15 @@ export const syncFinalizeSaleButtonState = () => {
  * }} item
  * @returns {string}
  */
-const createCartItemHTML = (item) => `
+const createCartItemHTML = (item) => {
+	const taxRate = (Number(item.applied_tax) || 0) / 100;
+	const priceWithoutTax = Math.round(item.unit_price / (1 + taxRate));
+
+	return `
     <div class="d-flex flex-row justify-content-between align-items-center gap-2 w-100" data-cart-item-id="${item.product_id}">
         <div class="d-flex flex-column text-start overflow-hidden flex-grow-1">
             <span class="fw-bold text-truncate text-body" style="font-size: 0.95rem;" title="${item.name}">${item.name}</span>
-            <span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">${formatCurrency(item.unit_price)} c/u</span>
+            <span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">${formatCurrency(priceWithoutTax)} c/u</span>
         </div>
         <div class="d-flex flex-row align-items-center justify-content-end gap-2 flex-shrink-0">
             <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" data-product-id="${item.product_id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
@@ -204,7 +232,8 @@ const createCartItemHTML = (item) => `
             </button>
         </div>
     </div>
-`;
+	`;
+};
 
 /**
  * Renders all active cart items and recalculates subtotal, tax, and total.
@@ -223,28 +252,35 @@ const renderCartItems = () => {
                 <p>Selecciona un producto para agregarlo a la orden</p>
             </div>
         `;
-		elements.saleTax.textContent = "₡ 0,00";
-		elements.saleSubtotal.textContent = "₡ 0,00";
-		elements.saleTotal.textContent = "₡ 0,00";
+		elements.saleTax.textContent = "₡ 0";
+		elements.saleSubtotal.textContent = "₡ 0";
+		elements.saleTotal.textContent = "₡ 0";
 		syncFinalizeSaleButtonState();
 		return;
 	}
 
-	let subtotal = 0;
-	let taxAmount = 0;
+	let subtotalWithoutTax = 0;
+	let totalTaxAmount = 0;
 
 	const html = currentCart
 		.map((item) => {
-			subtotal += item.sub_total;
-			taxAmount += item.sub_total * item.applied_tax;
+			const taxRate = (Number(item.applied_tax) || 0) / 100;
+			// El sub_total guardado es (unit_price * quantity), osea TOTAL
+			const itemTotal = item.sub_total;
+			const itemBasePrice = Math.round(itemTotal / (1 + taxRate));
+			const itemTax = itemTotal - itemBasePrice;
+
+			subtotalWithoutTax += itemBasePrice;
+			totalTaxAmount += itemTax;
+
 			return createCartItemHTML(item);
 		})
 		.join("");
 
 	elements.saleDetailsContainer.innerHTML = html;
-	elements.saleSubtotal.textContent = formatCurrency(subtotal);
-	elements.saleTax.textContent = formatCurrency(taxAmount);
-	elements.saleTotal.textContent = formatCurrency(subtotal + taxAmount);
+	elements.saleSubtotal.textContent = formatCurrency(subtotalWithoutTax);
+	elements.saleTax.textContent = formatCurrency(totalTaxAmount);
+	elements.saleTotal.textContent = formatCurrency(subtotalWithoutTax + totalTaxAmount);
 
 	syncFinalizeSaleButtonState();
 };
@@ -261,8 +297,8 @@ const renderCartItems = () => {
  */
 const addToCart = (productId, productCard) => {
 	const name = productCard.dataset.productName;
-	const price = parsePrice(productCard.dataset.productPrice);
-	const tax = parsePrice(productCard.dataset.productTaxPercentage);
+	const price = toIntegerAmount(parsePrice(productCard.dataset.productPrice));
+	const tax = parseRate(productCard.dataset.productTaxPercentage);
 	const hasInventory = productCard.dataset.productHasInventory === "1";
 	const availableStock = parseInt(productCard.dataset.productStock, 10) || 0;
 
@@ -474,22 +510,50 @@ export const deleteOrderCart = (orderId) => {
  */
 export const getActiveSaleData = () => {
 	const currentCart = getActiveCart();
-	const total = currentCart.reduce(
-		(sum, item) => sum + item.sub_total + item.sub_total * item.applied_tax,
-		0,
-	);
+	let saleTotal = 0;
+
+	const sale_details = currentCart.map((item) => {
+		const { product_id, quantity, unit_price, applied_tax, sub_total } = item;
+		const taxRate = (Number(applied_tax) || 0) / 100;
+
+		const itemBaseSubtotal = Math.round(sub_total / (1 + taxRate));
+		const itemBasePrice = Math.round(unit_price / (1 + taxRate));
+
+		saleTotal += toIntegerAmount(sub_total);
+
+		return {
+			product_id,
+			quantity,
+			unit_price: itemBasePrice,
+			applied_tax,
+			sub_total: itemBaseSubtotal,
+		};
+	});
+
+	const receipt_details = currentCart.map((item) => {
+		const { product_id, name, quantity, unit_price, applied_tax, sub_total } = item;
+		const taxRate = (Number(applied_tax) || 0) / 100;
+
+		const itemTotal = sub_total;
+		const itemBasePrice = Math.round(itemTotal / (1 + taxRate));
+		const itemTax = itemTotal - itemBasePrice;
+
+		return {
+			product_id,
+			name,
+			quantity,
+			unit_price,
+			applied_tax,
+			sub_total: itemBasePrice,
+			tax_amount: itemTax,
+			total: itemTotal,
+		};
+	});
 
 	return {
-		sale_details: currentCart.map(
-			({ product_id, quantity, unit_price, applied_tax, sub_total }) => ({
-				product_id,
-				quantity,
-				unit_price,
-				applied_tax,
-				sub_total,
-			}),
-		),
-		total: (Number(total) || 0).toFixed(2),
+		sale_details,
+		receipt_details,
+		total: (Number(saleTotal) || 0).toFixed(2),
 	};
 };
 

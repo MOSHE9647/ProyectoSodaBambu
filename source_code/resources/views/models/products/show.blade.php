@@ -129,7 +129,7 @@
                     :id="'reference_cost'"
                     :type="'text'"
                     :readonly="true"
-                    :value="'₡ ' . number_format((float) $product->reference_cost, 2, '.', ',')"
+                    :value="'₡ ' . number_format((int) $product->reference_cost, 0, '.', ' ')"
                     :iconLeft="'bi bi-cash-coin'"
                     :placeholder="'Costo de Referencia'"
                 >
@@ -142,7 +142,7 @@
                     :id="'tax_percentage'"
                     :type="'text'"
                     :readonly="true"
-                    :value="number_format((float) $product->tax_percentage, 2, '.', ',') . ' %'"
+                    :value="number_format((int) $product->tax_percentage, 0, '.', ' ') . ' %'"
                     :iconLeft="'bi bi-percent'"
                     :placeholder="'Impuesto (%)'"
                 >
@@ -155,7 +155,7 @@
                     :id="'margin_percentage'"
                     :type="'text'"
                     :readonly="true"
-                    :value="number_format((float) $product->margin_percentage, 2, '.', ',') . ' %'"
+                    :value="number_format((int) $product->margin_percentage, 0, '.', ' ') . ' %'"
                     :iconLeft="'bi bi-graph-up-arrow'"
                     :placeholder="'Margen (%)'"
                 >
@@ -169,7 +169,7 @@
                 :id="'sale_price'"
                 :type="'text'"
                 :readonly="true"
-                :value="'₡ ' . number_format((float) $product->sale_price, 2, '.', ',')"
+                :value="'₡ ' . number_format((int) $product->sale_price, 0, '.', ' ')"
                 :iconLeft="'bi bi-cash-stack'"
                 :placeholder="'Precio de Venta'"
             >

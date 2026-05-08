@@ -46,10 +46,10 @@ class Product extends Model
         'has_inventory' => 'boolean',
         'expiration_date' => 'date',
         'expiration_alert_days' => 'integer',
-        'reference_cost' => 'decimal:2',
-        'tax_percentage' => 'decimal:2',
-        'margin_percentage' => 'decimal:2',
-        'sale_price' => 'decimal:2',
+        'reference_cost' => 'integer',
+        'tax_percentage' => 'integer',
+        'margin_percentage' => 'integer',
+        'sale_price' => 'integer',
         'type' => ProductType::class,
     ];
 
@@ -96,12 +96,17 @@ class Product extends Model
     /**
      * Calculate sale price using tax and margin percentages in decimal format.
      */
-    public static function calculateSalePrice(float $referenceCost, float $taxPercentage, float $marginPercentage): float
+    public static function calculateSalePrice(int $referenceCost, int $taxPercentage, int $marginPercentage): int
     {
-        $basePrice = $referenceCost + ($referenceCost * $taxPercentage);
-        $salePrice = $basePrice + ($basePrice * $marginPercentage);
+        // Convertimos los porcentajes enteros a factor decimal para el cálculo interno
+        $taxFactor = $taxPercentage / 100;
+        $marginFactor = $marginPercentage / 100;
 
-        return round($salePrice, 2);
+        $basePrice = $referenceCost + ($referenceCost * $taxFactor);
+        $salePrice = $basePrice + ($basePrice * $marginFactor);
+
+        // Retornamos un entero redondeado (Eliminamos los decimales por completo)
+        return (int) round($salePrice);
     }
 
     /**

@@ -22,16 +22,332 @@ const formatCurrency = (amount) => {
 	})}`;
 };
 
-const roundToTwo = (value) => Math.round((Number(value) || 0) * 100) / 100;
+const BUSINESS_NAME = document.title?.trim() || "Soda El Bambu";
 
-const formatAmountInputValue = (value) => roundToTwo(value).toFixed(2);
+const getReceiptDate = (saleData) => {
+	const dateValue = saleData?.date ? new Date(saleData.date) : new Date();
+	return Number.isNaN(dateValue.getTime())
+		? new Date().toLocaleString("es-CR")
+		: dateValue.toLocaleString("es-CR");
+};
+
+const getReceiptItems = (saleResultData, saleSnapshot) => {
+	const snapshotItems = saleSnapshot?.receipt_details || [];
+	const resultItems = saleResultData?.sale_details || [];
+
+	if (snapshotItems.length > 0) {
+		return snapshotItems;
+	}
+
+	return resultItems.map((item) => {
+		const taxRate = (Number(item.applied_tax) || 0) / 100;
+		const itemTotal = Number(item.sub_total || 0); // Assuming API returns total as sub_total
+		const itemBasePrice = Math.round(itemTotal / (1 + taxRate));
+		const itemTax = itemTotal - itemBasePrice;
+
+		return {
+			...item,
+			name: item.product?.name || `Producto #${item.product_id || "N/A"}`,
+			tax_amount: itemTax,
+			total: itemTotal,
+			sub_total: itemBasePrice,
+		};
+	});
+};
+
+const getReceiptStyles = () => `
+	<style>
+		@page {
+			size: 80mm auto;
+			margin: 0;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			background: #f4f4f4;
+			color: #111;
+			font-family: Consolas, "Courier New", monospace;
+			font-size: 11px;
+			line-height: 1.25;
+		}
+
+		.receipt-shell {
+			width: min(80mm, 100vw);
+			min-height: 100vh;
+			margin: 0 auto;
+			background: #fff;
+			padding: 18px;
+		}
+
+		.receipt {
+			width: min(80mm, 100%);
+			margin: 0 auto;
+		}
+
+		.receipt-header,
+		.receipt-footer {
+			text-align: center;
+		}
+
+		.business-name {
+			font-size: 20px;
+			font-weight: 700;
+			text-transform: uppercase;
+			margin-bottom: 8px;
+		}
+
+		.receipt-line {
+			border-top: 1px dashed #111;
+			margin: 10px 0;
+		}
+
+		.receipt-row {
+			display: flex;
+			justify-content: space-between;
+			gap: 4px;
+		}
+
+		.receipt-label {
+			white-space: nowrap;
+		}
+
+		.receipt-value {
+			text-align: right;
+			word-break: break-word;
+		}
+
+		.receipt-item {
+			margin-bottom: 10px;
+		}
+
+		.receipt-item-name {
+			font-weight: 700;
+			word-break: break-word;
+		}
+
+		.receipt-total {
+			font-size: 18px;
+			font-weight: 700;
+		}
+
+		@media print {
+			@page {
+				size: 80mm auto;
+				margin: 0;
+			}
+
+			body {
+				background: #fff;
+				font-size: 11px;
+			}
+
+			.receipt-shell {
+				width: 80mm;
+				min-height: auto;
+				margin: 0;
+				padding: 3mm;
+			}
+
+			.receipt {
+				width: 72mm;
+			}
+
+			.business-name {
+				font-size: 15px;
+				margin-bottom: 2mm;
+			}
+
+			.receipt-line {
+				margin: 2mm 0;
+			}
+
+			.receipt-item {
+				margin-bottom: 2mm;
+			}
+
+			.receipt-total {
+				font-size: 13px;
+			}
+		}
+	</style>
+`;
+
+const buildReceiptHtml = ({
+	saleResultData,
+	saleSnapshot,
+	paymentDetails,
+	totalTendered,
+	changeAmount,
+}) => {
+	const items = getReceiptItems(saleResultData, saleSnapshot);
+	const subtotal = items.reduce(
+		(sum, item) => toIntegerAmount(sum + Number(item.sub_total || 0)),
+		0,
+	);
+	const taxTotal = items.reduce(
+		(sum, item) =>
+			toIntegerAmount(
+				sum +
+					(Number(item.tax_amount) ||
+						Number(item.sub_total || 0) *
+							Number(item.applied_tax || 0)),
+			),
+		0,
+	);
+	const total = Number(saleResultData?.total || saleSnapshot?.total || 0);
+	const invoiceNumber = saleResultData?.invoice_number || "N/A";
+
+	const itemsHtml = items
+		.map((item) => {
+			const quantity = Number(item.quantity || 0);
+			const unitPrice = Number(item.unit_price || 0);
+			const lineTotal =
+				Number(item.total) ||
+				Number(item.sub_total || 0) +
+					Number(item.sub_total || 0) * Number(item.applied_tax || 0);
+
+			return `
+				<div class="receipt-item">
+					<div class="receipt-item-name">${escapeHtml(item.name || `Producto #${item.product_id || "N/A"}`)}</div>
+					<div class="receipt-row">
+						<span>${escapeHtml(quantity)} x ${formatCurrency(unitPrice)}</span>
+						<span>${formatCurrency(lineTotal)}</span>
+					</div>
+				</div>
+			`;
+		})
+		.join("");
+
+	const paymentsHtml = paymentDetails
+		.map(
+			(payment) => `
+				<div class="receipt-row">
+					<span>${escapeHtml(METHOD_LABELS[payment.method] || payment.method)}</span>
+					<span>${formatCurrency(payment.amount)}</span>
+				</div>
+				${
+					payment.reference
+						? `<div class="receipt-row"><span>Ref.</span><span>${escapeHtml(payment.reference)}</span></div>`
+						: ""
+				}
+			`,
+		)
+		.join("");
+
+	return `
+		<!doctype html>
+		<html lang="es">
+		<head>
+			<meta charset="utf-8">
+			<title>Tiquete ${escapeHtml(invoiceNumber)}</title>
+			${getReceiptStyles()}
+		</head>
+		<body>
+			<div class="receipt-shell">
+				<main class="receipt">
+					<header class="receipt-header">
+						<div class="business-name">${escapeHtml(BUSINESS_NAME)}</div>
+						<div>Comprobante de venta</div>
+						<div>${escapeHtml(getReceiptDate(saleResultData))}</div>
+						<div>Factura: ${escapeHtml(invoiceNumber)}</div>
+					</header>
+
+					<div class="receipt-line"></div>
+
+					<section>
+						${itemsHtml}
+					</section>
+
+					<div class="receipt-line"></div>
+
+					<section>
+						<div class="receipt-row">
+							<span>Subtotal</span>
+							<span>${formatCurrency(subtotal)}</span>
+						</div>
+						<div class="receipt-row">
+							<span>Impuestos</span>
+							<span>${formatCurrency(taxTotal)}</span>
+						</div>
+						<div class="receipt-row receipt-total">
+							<span>Total</span>
+							<span>${formatCurrency(total)}</span>
+						</div>
+					</section>
+
+					<div class="receipt-line"></div>
+
+					<section>
+						<div class="receipt-item-name">Métodos de pago</div>
+						${paymentsHtml}
+						<div class="receipt-row">
+							<span>Total recibido</span>
+							<span>${formatCurrency(totalTendered)}</span>
+						</div>
+						<div class="receipt-row">
+							<span>Vuelto</span>
+							<span>${formatCurrency(changeAmount)}</span>
+						</div>
+					</section>
+
+					<div class="receipt-line"></div>
+
+					<footer class="receipt-footer">
+						Gracias por su compra
+					</footer>
+				</main>
+			</div>
+		</body>
+		</html>
+	`;
+};
+
+const showReceiptPreview = async (receiptHtml) => {
+	await SwalModal.fire({
+		title: "Tiquete",
+		html: `<iframe title="Vista previa del tiquete" style="width: 86mm; height: 70vh; border: 1px solid #ddd; background: #fff;" srcdoc="${escapeHtml(receiptHtml)}"></iframe>`,
+		width: 420,
+		showConfirmButton: true,
+		confirmButtonText: "Cerrar",
+		customClass: {
+			confirmButton: "btn btn-success mx-1",
+			htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
+		},
+	});
+};
+
+const printReceipt = async (receiptHtml) => {
+	const printWindow = window.open("", "_blank", "width=520,height=760");
+
+	if (!printWindow) {
+		await showReceiptPreview(receiptHtml);
+		return;
+	}
+
+	printWindow.document.open();
+	printWindow.document.write(receiptHtml);
+	printWindow.document.close();
+
+	window.setTimeout(() => {
+		printWindow.focus();
+		printWindow.print();
+	}, 250);
+};
+
+const toIntegerAmount = (value) => Math.round(Number(value) || 0);
+
+const formatAmountInputValue = (value) => parseInt(toIntegerAmount(value));
 
 const parseAmountInputValue = (value) => {
 	const normalizedValue = String(value || "")
 		.replace(/\s+/g, "")
-		.replace(",", ".");
-	const parsedValue = Number.parseFloat(normalizedValue);
-	return Number.isFinite(parsedValue) ? roundToTwo(parsedValue) : 0;
+		.replace(/[^\d]/g, "");
+	const parsedValue = Number.parseInt(normalizedValue, 10);
+	return Number.isFinite(parsedValue) ? parsedValue : 0;
 };
 
 const sanitizeAmountInputValue = (value) => {
@@ -49,47 +365,6 @@ const appendKeyboardValue = (currentValue, appendedValue) => {
 	}
 
 	return `${currentValue}${appendedValue}`;
-};
-
-const getSaleSuccessSummaryHtml = (saleResult) => {
-	const saleData = saleResult?.data || {};
-	const invoiceNumber = saleData.invoice_number || "N/A";
-	const paymentStatusRaw = String(saleData.payment_status || "").toLowerCase();
-	const paymentStatus =
-		paymentStatusRaw === "paid"
-			? "Pagada"
-			: paymentStatusRaw === "pending"
-				? "Pendiente"
-				: "N/A";
-	const total = Number(saleData.total || 0);
-	const dateValue = saleData.date ? new Date(saleData.date) : null;
-	const formattedDate = dateValue && !Number.isNaN(dateValue.getTime())
-		? dateValue.toLocaleString("es-CR")
-		: "N/A";
-
-	return `
-		<div style="text-align: left; color: #1f1f1f;">
-			<div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: #198754;">Venta exitosa</div>
-			<div style="border: 1px solid #e9ecef; border-radius: 10px; background: #ffffff; padding: 14px; font-size: 1rem;">
-				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-					<span>Factura:</span>
-					<span style="font-weight: 600;">${escapeHtml(invoiceNumber)}</span>
-				</div>
-				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-					<span>Estado del pago:</span>
-					<span style="font-weight: 600;">${escapeHtml(paymentStatus)}</span>
-				</div>
-				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-					<span>Total:</span>
-					<span style="font-weight: 700; color: #198754;">${formatCurrency(total)}</span>
-				</div>
-				<div style="display: flex; justify-content: space-between;">
-					<span>Fecha:</span>
-					<span style="font-weight: 600;">${escapeHtml(formattedDate)}</span>
-				</div>
-			</div>
-		</div>
-	`;
 };
 
 const renderHiddenPaymentRows = (rowsContainer, payments) => {
@@ -125,7 +400,9 @@ const renderHiddenPaymentRows = (rowsContainer, payments) => {
 const initializePaymentModalUI = (popup, saleData) => {
 	const methodButtons = popup.querySelectorAll("[data-payment-method]");
 	const amountInput = popup.querySelector("#payment-amount-input");
-	const clearPaymentAmountButton = popup.querySelector("#clear-payment-amount-button");
+	const clearPaymentAmountButton = popup.querySelector(
+		"#clear-payment-amount-button",
+	);
 	const paymentChangePreview = popup.querySelector("#payment-change-preview");
 	const referenceInput = popup.querySelector("#payment-reference-input");
 	const referenceGroup = popup.querySelector("#payment-reference-group");
@@ -159,9 +436,10 @@ const initializePaymentModalUI = (popup, saleData) => {
 		return;
 	}
 
-	const saleTotal = Number(saleData.total || 0);
+	const saleTotal = toIntegerAmount(saleData.total || 0);
 	const payments = [];
 	let selectedMethod = PaymentMethods.CASH;
+	let keyboardTarget = "amount";
 
 	const showReferenceRequiredAlert = () => {
 		showPaymentInlineAlert(
@@ -200,7 +478,9 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 		popup.appendChild(alertBackdrop);
 
-		const acceptButton = alertBackdrop.querySelector("#payment-inline-alert-accept");
+		const acceptButton = alertBackdrop.querySelector(
+			"#payment-inline-alert-accept",
+		);
 		if (acceptButton) {
 			acceptButton.addEventListener("click", () => {
 				alertBackdrop.remove();
@@ -243,7 +523,10 @@ const initializePaymentModalUI = (popup, saleData) => {
 			.forEach((button) => {
 				button.addEventListener("click", () => {
 					const removeIndex = Number(button.dataset.removeIndex);
-					if (Number.isInteger(removeIndex) && payments[removeIndex]) {
+					if (
+						Number.isInteger(removeIndex) &&
+						payments[removeIndex]
+					) {
 						payments.splice(removeIndex, 1);
 						refreshTotals();
 					}
@@ -263,6 +546,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 		referenceGroup.classList.toggle("d-none", !requiresReference);
 		if (!requiresReference) {
 			referenceInput.value = "";
+			keyboardTarget = "amount";
 		}
 	};
 
@@ -274,12 +558,17 @@ const initializePaymentModalUI = (popup, saleData) => {
 		}
 
 		const paidTotal = payments.reduce(
-			(sum, payment) => roundToTwo(sum + Number(payment.amount || 0)),
+			(sum, payment) =>
+				toIntegerAmount(sum + Number(payment.amount || 0)),
 			0,
 		);
-		const remainingBeforeCurrent = roundToTwo(Math.max(0, saleTotal - paidTotal));
+		const remainingBeforeCurrent = toIntegerAmount(
+			Math.max(0, saleTotal - paidTotal),
+		);
 		const receivedAmount = parseAmountInputValue(amountInput.value);
-		const estimatedChange = roundToTwo(Math.max(0, receivedAmount - remainingBeforeCurrent));
+		const estimatedChange = toIntegerAmount(
+			Math.max(0, receivedAmount - remainingBeforeCurrent),
+		);
 
 		paymentChangePreview.textContent = `Vuelto estimado: ${formatCurrency(estimatedChange)}`;
 		paymentChangePreview.classList.remove("d-none");
@@ -287,11 +576,12 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 	const refreshTotals = () => {
 		const paidTotal = payments.reduce(
-			(sum, payment) => roundToTwo(sum + Number(payment.amount || 0)),
+			(sum, payment) =>
+				toIntegerAmount(sum + Number(payment.amount || 0)),
 			0,
 		);
-		const remaining = roundToTwo(Math.max(0, saleTotal - paidTotal));
-		const change = roundToTwo(Math.max(0, paidTotal - saleTotal));
+		const remaining = toIntegerAmount(Math.max(0, saleTotal - paidTotal));
+		const change = toIntegerAmount(Math.max(0, paidTotal - saleTotal));
 
 		paymentTotalElement.textContent = formatCurrency(saleTotal);
 		paymentPaidElement.textContent = formatCurrency(paidTotal);
@@ -324,8 +614,16 @@ const initializePaymentModalUI = (popup, saleData) => {
 		updateCashChangePreview();
 	});
 
+	amountInput.addEventListener("focus", () => {
+		keyboardTarget = "amount";
+	});
+
 	referenceInput.addEventListener("input", () => {
 		referenceInput.value = referenceInput.value.replace(/\D/g, "");
+	});
+
+	referenceInput.addEventListener("focus", () => {
+		keyboardTarget = "reference";
 	});
 
 	referenceInput.addEventListener("keydown", (event) => {
@@ -361,8 +659,6 @@ const initializePaymentModalUI = (popup, saleData) => {
 			"Home",
 			"End",
 			"Enter",
-			".",
-			",",
 		];
 
 		if (allowedKeys.includes(event.key)) {
@@ -378,6 +674,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 	clearPaymentAmountButton.addEventListener("click", () => {
 		amountInput.value = "";
+		keyboardTarget = "amount";
 		amountInput.focus();
 		updateCashChangePreview();
 	});
@@ -385,6 +682,23 @@ const initializePaymentModalUI = (popup, saleData) => {
 	keyboardBtns.forEach((btn) => {
 		btn.addEventListener("click", () => {
 			const key = btn.dataset.keyboardKey;
+			const isReferenceTarget =
+				keyboardTarget === "reference" &&
+				selectedMethod !== PaymentMethods.CASH &&
+				!referenceGroup.classList.contains("d-none");
+
+			if (isReferenceTarget) {
+				if (/^\d+$/.test(key)) {
+					referenceInput.value =
+						`${referenceInput.value}${key}`.replace(/\D/g, "");
+				} else if (key === "delete") {
+					referenceInput.value = referenceInput.value.slice(0, -1);
+				}
+
+				referenceInput.focus();
+				return;
+			}
+
 			let currentValue = amountInput.value || "0";
 			const currentAmount = parseAmountInputValue(currentValue);
 
@@ -419,7 +733,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 				case "500":
 				case "1000":
 					amountInput.value = formatAmountInputValue(
-						roundToTwo(currentAmount + Number(key)),
+						toIntegerAmount(currentAmount + Number(key)),
 					);
 					break;
 
@@ -428,6 +742,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 			}
 
 			updateCashChangePreview();
+			amountInput.focus();
 		});
 	});
 
@@ -457,10 +772,11 @@ const initializePaymentModalUI = (popup, saleData) => {
 		}
 
 		const paidTotal = payments.reduce(
-			(sum, payment) => roundToTwo(sum + Number(payment.amount || 0)),
+			(sum, payment) =>
+				toIntegerAmount(sum + Number(payment.amount || 0)),
 			0,
 		);
-		const remaining = roundToTwo(Math.max(0, saleTotal - paidTotal));
+		const remaining = toIntegerAmount(Math.max(0, saleTotal - paidTotal));
 
 		if (remaining === 0) {
 			SwalToast.fire({
@@ -486,7 +802,9 @@ const initializePaymentModalUI = (popup, saleData) => {
 			);
 
 			if (existingCashPayment) {
-				existingCashPayment.amount = roundToTwo(existingCashPayment.amount + amount);
+				existingCashPayment.amount = toIntegerAmount(
+					existingCashPayment.amount + amount,
+				);
 				referenceInput.value = "";
 				refreshTotals();
 				return;
@@ -495,7 +813,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 		payments.push({
 			method: selectedMethod,
-			amount: roundToTwo(amount),
+			amount: toIntegerAmount(amount),
 			reference:
 				selectedMethod === PaymentMethods.CASH || reference.length === 0
 					? null
@@ -570,19 +888,33 @@ export async function openPaymentModal({ total, title, onComplete, loadingId = "
 
 					paymentForm.addEventListener("submit", async (e) => {
 						e.preventDefault();
-						const { details, tendered } = extractPaymentDetails(paymentForm, total);
+						const { details, tendered, shouldPrint } = extractPaymentDetails(paymentForm, total);
 
 						if (details.length === 0) {
 							return;
 						}
 
+						// Capturamos el estado actual del carrito antes de que onComplete lo limpie
+						const saleSnapshot = getActiveSaleData();
+
 						try {
-							const completionResult = await onComplete(details, tendered);
-							if (completionResult === false) {
+							const saleResult = await onComplete(details, tendered);
+							if (!saleResult || saleResult.success === false) {
 								return;
 							}
 
-							resolveOnce({ completed: true, details, tendered });
+							if (shouldPrint) {
+								const receiptHtml = buildReceiptHtml({
+									saleResultData: saleResult.data,
+									saleSnapshot: saleSnapshot,
+									paymentDetails: details,
+									totalTendered: tendered,
+									changeAmount: Math.max(0, tendered - total),
+								});
+								await printReceipt(receiptHtml);
+							}
+
+							resolveOnce({ completed: true, details, tendered, printed: shouldPrint });
 							SwalModal.close();
 						} catch (submissionError) {
 							console.error("Error while completing payment modal:", submissionError);
@@ -610,6 +942,7 @@ export async function openPaymentModal({ total, title, onComplete, loadingId = "
 const extractPaymentDetails = (form, saleTotal) => {
     const paymentDetails = [];
     let totalTendered = 0;
+	const shouldPrint = form.querySelector("#print-receipt-checkbox")?.checked === true;
 
     form.querySelectorAll(".payment-row").forEach((row) => {
         const amount = parseFloat(row.querySelector(".payment-amount").value) || 0;
@@ -629,11 +962,11 @@ const extractPaymentDetails = (form, saleTotal) => {
             icon: SwalNotificationTypes.WARNING, 
             title: `Monto insuficiente (${formatCurrency(totalTendered)} de ${formatCurrency(saleTotal)})` 
         });
-        return { details: [], tendered: 0 };
+        return { details: [], tendered: 0, shouldPrint: false };
     }
 
 	const changeAmount = Math.max(0, totalTendered - saleTotal);
-	const roundedChangeAmount = roundToTwo(changeAmount);
+	const roundedChangeAmount = toIntegerAmount(changeAmount);
 	const cashPaymentIndex = paymentDetails.findIndex(
 		(payment) => payment.method === PaymentMethods.CASH,
 	);
@@ -642,5 +975,5 @@ const extractPaymentDetails = (form, saleTotal) => {
 		paymentDetails[cashPaymentIndex].change_amount = roundedChangeAmount;
 	}
 
-    return { details: paymentDetails, tendered: totalTendered };
+    return { details: paymentDetails, tendered: totalTendered, shouldPrint };
 };

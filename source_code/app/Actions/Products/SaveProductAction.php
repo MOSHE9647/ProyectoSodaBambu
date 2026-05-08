@@ -51,9 +51,9 @@ class SaveProductAction
 
         if ($type === ProductType::MERCHANDISE->value) {
             $productData['sale_price'] = Product::calculateSalePrice(
-                (float) $productData['reference_cost'],
-                (float) $productData['tax_percentage'],
-                (float) $productData['margin_percentage'],
+                (int) $productData['reference_cost'],
+                (int) $productData['tax_percentage'],
+                (int) $productData['margin_percentage'],
             );
 
             return $productData;
@@ -64,7 +64,7 @@ class SaveProductAction
         $productData['margin_percentage'] = 0;
         $productData['expiration_date'] = null;
         $productData['expiration_alert_days'] = 7;
-        $productData['sale_price'] = (float) ($productData['sale_price'] ?? 0);
+        $productData['sale_price'] = (int) ($productData['sale_price'] ?? 0);
 
         return $productData;
     }

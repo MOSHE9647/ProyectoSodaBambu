@@ -34,7 +34,7 @@ class Supply extends Model
      */
     protected $casts = [
         'quantity' => 'integer',
-        'unit_price' => 'decimal:2',
+        'unit_price' => 'integer',
         'expiration_date' => 'date',
         'expiration_alert_days' => 'integer',
 

@@ -77,7 +77,7 @@ class GetSalesReportDataAction
         foreach ($period as $date) {
             $dateKey = $date->format('Y-m-d');
             $salesForDay = $salesByDate->get($dateKey, collect());
-            $income = (float) $salesForDay->sum('total');
+            $income = (int) $salesForDay->sum('total');
             $orders = $salesForDay->count();
 
             $dailyReports[] = [
@@ -85,7 +85,7 @@ class GetSalesReportDataAction
                 'date' => $date->format('d/m/Y'),
                 'orders' => $orders,
                 'income' => $income,
-                'avg_ticket' => $orders > 0 ? $income / $orders : 0,
+                'avg_ticket' => $orders > 0 ? (int) round($income / $orders) : 0,
             ];
         }
 
@@ -110,7 +110,7 @@ class GetSalesReportDataAction
             $activeCategoryId
         );
 
-        $totalIncome = (float) collect($topProducts)->sum('income');
+        $totalIncome = (int) collect($topProducts)->sum('income');
         $totalSoldUnits = (int) collect($topProducts)->sum('sold_quantity');
         $totalOrders = $sales->count();
         $daysInPeriod = max($startLocal->copy()->startOfDay()->diffInDays($endLocal->copy()->startOfDay()) + 1, 1);
@@ -157,7 +157,7 @@ class GetSalesReportDataAction
             'direction' => $direction,
             'totalIncome' => $totalIncome,
             'totalOrders' => $totalOrders,
-            'dailyAverage' => $daysInPeriod > 0 ? $totalIncome / $daysInPeriod : 0,
+            'dailyAverage' => $daysInPeriod > 0 ? (int) round($totalIncome / $daysInPeriod) : 0,
             'totalSoldUnits' => $totalSoldUnits,
             'productsInRanking' => $productsInRanking,
             'averageUnitsPerDay' => $averageUnitsPerDay,
@@ -260,7 +260,7 @@ class GetSalesReportDataAction
         return $products
             ->map(function (object $product) use ($totalSoldQuantity): array {
                 $quantity = (int) $product->sold_quantity;
-                $income = (float) $product->income;
+                $income = (int) $product->income;
                 $productType = ProductType::tryFrom((string) $product->product_type);
 
                 return [
@@ -268,7 +268,7 @@ class GetSalesReportDataAction
                     'category_name' => (string) ($product->category_name ?? 'Sin categoría'),
                     'product_type_label' => $productType?->label() ?? (string) $product->product_type,
                     'sold_quantity' => $quantity,
-                    'income' => round($income, 2),
+                    'income' => $income,
                     'total_percent' => round(($quantity / $totalSoldQuantity) * 100, 1),
                 ];
             })

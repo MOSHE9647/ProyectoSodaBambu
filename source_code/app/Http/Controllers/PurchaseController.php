@@ -141,11 +141,11 @@ class PurchaseController extends Controller
             'invoice_number' => 'required|string|max:255|unique:purchases,invoice_number',
             'date' => 'required|date',
             'payment_status' => 'required|string|in:'.$paymentValues,
-            'total' => 'required|numeric|min:0',
+            'total' => 'required|integer|min:0',
             'details' => 'required|array|min:1',
             'details.*.purchasable_type' => 'required|in:product,supply',
             'details.*.purchasable_id' => 'required|integer',
-            'details.*.subtotal' => 'required|numeric|min:0',
+            'details.*.subtotal' => 'required|integer|min:0',
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -256,10 +256,10 @@ class PurchaseController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|string|in:'.implode(',', array_column(ProductType::cases(), 'value')),
             'has_inventory' => 'required|boolean',
-            'reference_cost' => 'required|numeric|min:0',
-            'tax_percentage' => 'required|numeric|min:0',
-            'margin_percentage' => 'required|numeric|min:0',
-            'sale_price' => 'required|numeric|min:0',
+            'reference_cost' => 'required|integer|min:0',
+            'tax_percentage' => 'required|integer|min:0',
+            'margin_percentage' => 'required|integer|min:0',
+            'sale_price' => 'required|integer|min:0',
         ];
 
         // EIF-170: Solo se valida stock_minimo; stock_actual no se procesa en creación
