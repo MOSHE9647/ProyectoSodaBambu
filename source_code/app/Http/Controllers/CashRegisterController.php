@@ -17,10 +17,10 @@ class CashRegisterController extends Controller
     {
         // Validate the request data
         $validated = $request->validate([
-            'opening_balance' => 'required|numeric|min:0',
+            'opening_balance' => 'required|integer|min:0',
         ], [
             'opening_balance.required' => 'El monto inicial es obligatorio.',
-            'opening_balance.numeric' => 'El monto inicial debe ser un número.',
+            'opening_balance.integer' => 'El monto inicial debe ser un número entero.',
             'opening_balance.min' => 'El monto inicial no puede ser negativo.',
         ]);
 
@@ -59,11 +59,11 @@ class CashRegisterController extends Controller
 
         return response()->json([
             'total_orders' => $transactions->count(),
-            'opening_balance' => (float) $cashRegister->opening_balance,
-            'system_cash' => (float) $systemCash,
-            'system_card' => (float) $methodData->get(PaymentMethod::CARD->value, 0),
-            'system_sinpe' => (float) $methodData->get(PaymentMethod::SINPE->value, 0),
-            'system_total' => (float) ($systemCash + $methodData->get(PaymentMethod::CARD->value) + $methodData->get(PaymentMethod::SINPE->value)),
+            'opening_balance' => (int) $cashRegister->opening_balance,
+            'system_cash' => (int) $systemCash,
+            'system_card' => (int) $methodData->get(PaymentMethod::CARD->value, 0),
+            'system_sinpe' => (int) $methodData->get(PaymentMethod::SINPE->value, 0),
+            'system_total' => (int) ($systemCash + $methodData->get(PaymentMethod::CARD->value, 0) + $methodData->get(PaymentMethod::SINPE->value, 0)),
         ]);
     }
 
@@ -73,9 +73,9 @@ class CashRegisterController extends Controller
     public function close(Request $request, CashRegister $cashRegister): JsonResponse
     {
         $validated = $request->validate([
-            'physical_cash' => 'required|numeric|min:0',
-            'physical_card' => 'required|numeric|min:0',
-            'physical_sinpe' => 'required|numeric|min:0',
+            'physical_cash' => 'required|integer|min:0',
+            'physical_card' => 'required|integer|min:0',
+            'physical_sinpe' => 'required|integer|min:0',
             'notes' => 'nullable|string|max:500',
         ]);
 

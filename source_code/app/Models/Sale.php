@@ -36,7 +36,7 @@ class Sale extends Model
      */
     protected $casts = [
         'date' => 'datetime',
-        'total' => 'decimal:2',
+        'total' => 'integer',
         'payment_status' => PaymentStatus::class,
     ];
 
