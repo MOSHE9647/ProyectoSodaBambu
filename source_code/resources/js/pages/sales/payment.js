@@ -30,9 +30,318 @@ const escapeHtml = (value) =>
 		.replace(/\"/g, "&quot;")
 		.replace(/'/g, "&#039;");
 
+const BUSINESS_NAME = document.title?.trim() || "Soda El Bambu";
+
+const getReceiptDate = (saleData) => {
+	const dateValue = saleData?.date ? new Date(saleData.date) : new Date();
+	return Number.isNaN(dateValue.getTime())
+		? new Date().toLocaleString("es-CR")
+		: dateValue.toLocaleString("es-CR");
+};
+
+const getReceiptItems = (saleResultData, saleSnapshot) => {
+	const snapshotItems = saleSnapshot?.receipt_details || [];
+	const resultItems = saleResultData?.sale_details || [];
+
+	if (snapshotItems.length > 0) {
+		return snapshotItems;
+	}
+
+	return resultItems.map((item) => ({
+		...item,
+		name: item.product?.name || `Producto #${item.product_id || "N/A"}`,
+		tax_amount: Number(item.sub_total || 0) * Number(item.applied_tax || 0),
+		total:
+			Number(item.sub_total || 0) +
+			Number(item.sub_total || 0) * Number(item.applied_tax || 0),
+	}));
+};
+
+const getReceiptStyles = () => `
+	<style>
+		@page {
+			size: 80mm auto;
+			margin: 0;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			background: #f4f4f4;
+			color: #111;
+			font-family: Consolas, "Courier New", monospace;
+			font-size: 11px;
+			line-height: 1.25;
+		}
+
+		.receipt-shell {
+			width: min(80mm, 100vw);
+			min-height: 100vh;
+			margin: 0 auto;
+			background: #fff;
+			padding: 18px;
+		}
+
+		.receipt {
+			width: min(80mm, 100%);
+			margin: 0 auto;
+		}
+
+		.receipt-header,
+		.receipt-footer {
+			text-align: center;
+		}
+
+		.business-name {
+			font-size: 20px;
+			font-weight: 700;
+			text-transform: uppercase;
+			margin-bottom: 8px;
+		}
+
+		.receipt-line {
+			border-top: 1px dashed #111;
+			margin: 10px 0;
+		}
+
+		.receipt-row {
+			display: flex;
+			justify-content: space-between;
+			gap: 4px;
+		}
+
+		.receipt-label {
+			white-space: nowrap;
+		}
+
+		.receipt-value {
+			text-align: right;
+			word-break: break-word;
+		}
+
+		.receipt-item {
+			margin-bottom: 10px;
+		}
+
+		.receipt-item-name {
+			font-weight: 700;
+			word-break: break-word;
+		}
+
+		.receipt-total {
+			font-size: 18px;
+			font-weight: 700;
+		}
+
+		@media print {
+			@page {
+				size: 80mm auto;
+				margin: 0;
+			}
+
+			body {
+				background: #fff;
+				font-size: 11px;
+			}
+
+			.receipt-shell {
+				width: 80mm;
+				min-height: auto;
+				margin: 0;
+				padding: 3mm;
+			}
+
+			.receipt {
+				width: 72mm;
+			}
+
+			.business-name {
+				font-size: 15px;
+				margin-bottom: 2mm;
+			}
+
+			.receipt-line {
+				margin: 2mm 0;
+			}
+
+			.receipt-item {
+				margin-bottom: 2mm;
+			}
+
+			.receipt-total {
+				font-size: 13px;
+			}
+		}
+	</style>
+`;
+
+const buildReceiptHtml = ({
+	saleResultData,
+	saleSnapshot,
+	paymentDetails,
+	totalTendered,
+	changeAmount,
+}) => {
+	const items = getReceiptItems(saleResultData, saleSnapshot);
+	const subtotal = items.reduce(
+		(sum, item) => toIntegerAmount(sum + Number(item.sub_total || 0)),
+		0,
+	);
+	const taxTotal = items.reduce(
+		(sum, item) =>
+			toIntegerAmount(
+				sum +
+					(Number(item.tax_amount) ||
+						Number(item.sub_total || 0) * Number(item.applied_tax || 0)),
+			),
+		0,
+	);
+	const total = Number(saleResultData?.total || saleSnapshot?.total || 0);
+	const invoiceNumber = saleResultData?.invoice_number || "N/A";
+
+	const itemsHtml = items
+		.map((item) => {
+			const quantity = Number(item.quantity || 0);
+			const unitPrice = Number(item.unit_price || 0);
+			const lineTotal =
+				Number(item.total) ||
+				Number(item.sub_total || 0) +
+					Number(item.sub_total || 0) * Number(item.applied_tax || 0);
+
+			return `
+				<div class="receipt-item">
+					<div class="receipt-item-name">${escapeHtml(item.name || `Producto #${item.product_id || "N/A"}`)}</div>
+					<div class="receipt-row">
+						<span>${escapeHtml(quantity)} x ${formatCurrency(unitPrice)}</span>
+						<span>${formatCurrency(lineTotal)}</span>
+					</div>
+				</div>
+			`;
+		})
+		.join("");
+
+	const paymentsHtml = paymentDetails
+		.map(
+			(payment) => `
+				<div class="receipt-row">
+					<span>${escapeHtml(METHOD_LABELS[payment.method] || payment.method)}</span>
+					<span>${formatCurrency(payment.amount)}</span>
+				</div>
+				${
+					payment.reference
+						? `<div class="receipt-row"><span>Ref.</span><span>${escapeHtml(payment.reference)}</span></div>`
+						: ""
+				}
+			`,
+		)
+		.join("");
+
+	return `
+		<!doctype html>
+		<html lang="es">
+		<head>
+			<meta charset="utf-8">
+			<title>Tiquete ${escapeHtml(invoiceNumber)}</title>
+			${getReceiptStyles()}
+		</head>
+		<body>
+			<div class="receipt-shell">
+				<main class="receipt">
+					<header class="receipt-header">
+						<div class="business-name">${escapeHtml(BUSINESS_NAME)}</div>
+						<div>Comprobante de venta</div>
+						<div>${escapeHtml(getReceiptDate(saleResultData))}</div>
+						<div>Factura: ${escapeHtml(invoiceNumber)}</div>
+					</header>
+
+					<div class="receipt-line"></div>
+
+					<section>
+						${itemsHtml}
+					</section>
+
+					<div class="receipt-line"></div>
+
+					<section>
+						<div class="receipt-row">
+							<span>Subtotal</span>
+							<span>${formatCurrency(subtotal)}</span>
+						</div>
+						<div class="receipt-row">
+							<span>Impuestos</span>
+							<span>${formatCurrency(taxTotal)}</span>
+						</div>
+						<div class="receipt-row receipt-total">
+							<span>Total</span>
+							<span>${formatCurrency(total)}</span>
+						</div>
+					</section>
+
+					<div class="receipt-line"></div>
+
+					<section>
+						<div class="receipt-item-name">Métodos de pago</div>
+						${paymentsHtml}
+						<div class="receipt-row">
+							<span>Total recibido</span>
+							<span>${formatCurrency(totalTendered)}</span>
+						</div>
+						<div class="receipt-row">
+							<span>Vuelto</span>
+							<span>${formatCurrency(changeAmount)}</span>
+						</div>
+					</section>
+
+					<div class="receipt-line"></div>
+
+					<footer class="receipt-footer">
+						Gracias por su compra
+					</footer>
+				</main>
+			</div>
+		</body>
+		</html>
+	`;
+};
+
+const showReceiptPreview = async (receiptHtml) => {
+	await SwalModal.fire({
+		title: "Tiquete",
+		html: `<iframe title="Vista previa del tiquete" style="width: 86mm; height: 70vh; border: 1px solid #ddd; background: #fff;" srcdoc="${escapeHtml(receiptHtml)}"></iframe>`,
+		width: 420,
+		showConfirmButton: true,
+		confirmButtonText: "Cerrar",
+		customClass: {
+			confirmButton: "btn btn-success mx-1",
+			htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
+		},
+	});
+};
+
+const printReceipt = async (receiptHtml) => {
+	const printWindow = window.open("", "_blank", "width=520,height=760");
+
+	if (!printWindow) {
+		await showReceiptPreview(receiptHtml);
+		return;
+	}
+
+	printWindow.document.open();
+	printWindow.document.write(receiptHtml);
+	printWindow.document.close();
+
+	window.setTimeout(() => {
+		printWindow.focus();
+		printWindow.print();
+	}, 250);
+};
+
 const toIntegerAmount = (value) => Math.round(Number(value) || 0);
 
-const formatAmountInputValue = (value) => String(toIntegerAmount(value));
+const formatAmountInputValue = (value) => parseInt(toIntegerAmount(value));
 
 const parseAmountInputValue = (value) => {
 	const normalizedValue = String(value || "")
@@ -52,47 +361,6 @@ const appendKeyboardValue = (currentValue, appendedValue) => {
 	}
 
 	return `${currentValue}${appendedValue}`;
-};
-
-const getSaleSuccessSummaryHtml = (saleResult) => {
-	const saleData = saleResult?.data || {};
-	const invoiceNumber = saleData.invoice_number || "N/A";
-	const paymentStatusRaw = String(saleData.payment_status || "").toLowerCase();
-	const paymentStatus =
-		paymentStatusRaw === "paid"
-			? "Pagada"
-			: paymentStatusRaw === "pending"
-				? "Pendiente"
-				: "N/A";
-	const total = Number(saleData.total || 0);
-	const dateValue = saleData.date ? new Date(saleData.date) : null;
-	const formattedDate = dateValue && !Number.isNaN(dateValue.getTime())
-		? dateValue.toLocaleString("es-CR")
-		: "N/A";
-
-	return `
-		<div style="text-align: left; color: #1f1f1f;">
-			<div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: #198754;">Venta exitosa</div>
-			<div style="border: 1px solid #e9ecef; border-radius: 10px; background: #ffffff; padding: 14px; font-size: 1rem;">
-				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-					<span>Factura:</span>
-					<span style="font-weight: 600;">${escapeHtml(invoiceNumber)}</span>
-				</div>
-				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-					<span>Estado del pago:</span>
-					<span style="font-weight: 600;">${escapeHtml(paymentStatus)}</span>
-				</div>
-				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-					<span>Total:</span>
-					<span style="font-weight: 700; color: #198754;">${formatCurrency(total)}</span>
-				</div>
-				<div style="display: flex; justify-content: space-between;">
-					<span>Fecha:</span>
-					<span style="font-weight: 600;">${escapeHtml(formattedDate)}</span>
-				</div>
-			</div>
-		</div>
-	`;
 };
 
 const renderHiddenPaymentRows = (rowsContainer, payments) => {
@@ -165,6 +433,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 	const saleTotal = toIntegerAmount(saleData.total || 0);
 	const payments = [];
 	let selectedMethod = PaymentMethods.CASH;
+	let keyboardTarget = "amount";
 
 	const showReferenceRequiredAlert = () => {
 		showPaymentInlineAlert(
@@ -266,6 +535,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 		referenceGroup.classList.toggle("d-none", !requiresReference);
 		if (!requiresReference) {
 			referenceInput.value = "";
+			keyboardTarget = "amount";
 		}
 	};
 
@@ -327,8 +597,16 @@ const initializePaymentModalUI = (popup, saleData) => {
 		updateCashChangePreview();
 	});
 
+	amountInput.addEventListener("focus", () => {
+		keyboardTarget = "amount";
+	});
+
 	referenceInput.addEventListener("input", () => {
 		referenceInput.value = referenceInput.value.replace(/\D/g, "");
+	});
+
+	referenceInput.addEventListener("focus", () => {
+		keyboardTarget = "reference";
 	});
 
 	referenceInput.addEventListener("keydown", (event) => {
@@ -379,6 +657,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 	clearPaymentAmountButton.addEventListener("click", () => {
 		amountInput.value = "";
+		keyboardTarget = "amount";
 		amountInput.focus();
 		updateCashChangePreview();
 	});
@@ -386,6 +665,22 @@ const initializePaymentModalUI = (popup, saleData) => {
 	keyboardBtns.forEach((btn) => {
 		btn.addEventListener("click", () => {
 			const key = btn.dataset.keyboardKey;
+			const isReferenceTarget =
+				keyboardTarget === "reference" &&
+				selectedMethod !== PaymentMethods.CASH &&
+				!referenceGroup.classList.contains("d-none");
+
+			if (isReferenceTarget) {
+				if (/^\d+$/.test(key)) {
+					referenceInput.value = `${referenceInput.value}${key}`.replace(/\D/g, "");
+				} else if (key === "delete") {
+					referenceInput.value = referenceInput.value.slice(0, -1);
+				}
+
+				referenceInput.focus();
+				return;
+			}
+
 			let currentValue = amountInput.value || "0";
 			const currentAmount = parseAmountInputValue(currentValue);
 
@@ -429,6 +724,7 @@ const initializePaymentModalUI = (popup, saleData) => {
 			}
 
 			updateCashChangePreview();
+			amountInput.focus();
 		});
 	});
 
@@ -582,33 +878,46 @@ const paymentFormEventListener = async (event, saleData) => {
 		paymentDetails[cashPaymentIndex].change_amount = roundedChangeAmount;
 	}
 
+	const shouldPrintReceipt =
+		paymentForm.querySelector("#print-receipt-checkbox")?.checked === true;
+	let receiptHtml = null;
+
 	SwalModal.showLoading();
 
 	const saleResult = await processSale(paymentDetails);
 	if (saleResult?.success) {
+		if (shouldPrintReceipt) {
+			receiptHtml = buildReceiptHtml({
+				saleResultData: saleResult,
+				saleSnapshot: saleData,
+				paymentDetails,
+				totalTendered,
+				changeAmount: roundedChangeAmount,
+			});
+		}
 		SwalModal.close();
 
-		await SwalModal.fire({
-			title: "",
-			html: getSaleSuccessSummaryHtml(saleResult),
-			width: 760,
-			background: "#ffffff",
-			color: "#1f1f1f",
-			showConfirmButton: true,
-			showCancelButton: false,
-			confirmButtonText: "Cerrar",
-			allowEscapeKey: true,
-			allowOutsideClick: true,
-			customClass: {
-				popup: "swal-popup w-auto h-auto",
-				title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
-				closeButton: "swal-close-btn fs-3",
-				htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
-				confirmButton: "btn btn-success mx-1",
-				cancelButton: "btn btn-outline-secondary mx-1",
-				icon: "mb-4",
-			},
-		});
+		if (shouldPrintReceipt && receiptHtml) {
+			await printReceipt(
+				buildReceiptHtml({
+					saleResultData: saleResult.data,
+					saleSnapshot: saleData,
+					paymentDetails,
+					totalTendered,
+					changeAmount: roundedChangeAmount,
+				}),
+			);
+		} else {
+			await SwalModal.fire({
+				icon: SwalNotificationTypes.SUCCESS,
+				title: "Venta exitosa",
+				text: saleResult.message || "La venta fue registrada correctamente.",
+				confirmButtonText: "Aceptar",
+				customClass: {
+					confirmButton: "btn btn-success mx-1",
+				},
+			});
+		}
 	} else {
 		SwalModal.hideLoading();
 	}

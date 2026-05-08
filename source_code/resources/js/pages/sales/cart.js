@@ -532,7 +532,19 @@ export const getActiveSaleData = () => {
 				sub_total: toIntegerAmount(sub_total),
 			}),
 		),
-		total: Math.round(Number(total) || 0),
+		receipt_details: currentCart.map(
+			({ product_id, name, quantity, unit_price, applied_tax, sub_total }) => ({
+				product_id,
+				name,
+				quantity,
+				unit_price,
+				applied_tax,
+				sub_total,
+				tax_amount: sub_total * applied_tax,
+				total: sub_total + sub_total * applied_tax,
+			}),
+		),
+		total: (Number(total) || 0).toFixed(2),
 	};
 };
 
