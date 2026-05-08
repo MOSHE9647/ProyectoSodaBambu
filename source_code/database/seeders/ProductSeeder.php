@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ProductType;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductStock;
@@ -23,16 +24,26 @@ class ProductSeeder extends Seeder
         $catBebida = Category::where('name', 'Licores')->first()->id;
 
         $products = [
-            ['category_id' => $catDesayuno, 'name' => 'Gallo Pinto Especial'],
-            ['category_id' => $catFuerte,   'name' => 'Casado con Carne en Salsa'],
-            ['category_id' => $catFuerte,   'name' => 'Arroz con Pollo'],
-            ['category_id' => $catFuerte,   'name' => 'Chifrijo Grande'],
-            ['category_id' => $catBebida,   'name' => 'Cerveza Imperial (Botella)'],
-            ['category_id' => $catBebida,   'name' => 'Cerveza Pilsen (Botella)'],
-            ['category_id' => $catFuerte,   'name' => 'Olla de Carne (Fin de semana)'],
-            ['category_id' => $catFuerte,   'name' => 'Hamburguesa Artesanal'],
-            ['category_id' => $catDesayuno, 'name' => 'Omelette con Tostadas'],
-            ['category_id' => $catFuerte,   'name' => 'Filete de Pescado al Ajillo'],
+            // 5 Dishes
+            ['category_id' => $catDesayuno, 'name' => 'Gallo Pinto Especial', 'type' => ProductType::DISH->value],
+            ['category_id' => $catFuerte,   'name' => 'Casado con Carne en Salsa', 'type' => ProductType::DISH->value],
+            ['category_id' => $catFuerte,   'name' => 'Arroz con Pollo', 'type' => ProductType::DISH->value],
+            ['category_id' => $catFuerte,   'name' => 'Chifrijo Grande', 'type' => ProductType::DISH->value],
+            ['category_id' => $catFuerte,   'name' => 'Hamburguesa Artesanal', 'type' => ProductType::DISH->value],
+
+            // 5 Drinks (prepared in-house)
+            ['category_id' => $catBebida,   'name' => 'Refresco Casero de Tamarindo', 'type' => ProductType::DRINK->value],
+            ['category_id' => $catBebida,   'name' => 'Horchata de Conquito', 'type' => ProductType::DRINK->value],
+            ['category_id' => $catBebida,   'name' => 'Fresco de Mora Natural', 'type' => ProductType::DRINK->value],
+            ['category_id' => $catBebida,   'name' => 'Agua de Sapo (Especial)', 'type' => ProductType::DRINK->value],
+            ['category_id' => $catBebida,   'name' => 'Cacao Caliente Casero', 'type' => ProductType::DRINK->value],
+
+            // 5 Common merchandises
+            ['category_id' => $catBebida,   'name' => 'Coca-Cola (350ml)', 'type' => ProductType::MERCHANDISE->value],
+            ['category_id' => $catBebida,   'name' => 'Sprite (350ml)', 'type' => ProductType::MERCHANDISE->value],
+            ['category_id' => $catBebida,   'name' => 'Fanta Naranja (350ml)', 'type' => ProductType::MERCHANDISE->value],
+            ['category_id' => $catBebida,   'name' => 'Agua Mineral (500ml)', 'type' => ProductType::MERCHANDISE->value],
+            ['category_id' => $catBebida,   'name' => 'Red Bull (250ml)', 'type' => ProductType::MERCHANDISE->value],
         ];
 
         foreach ($products as $product) {

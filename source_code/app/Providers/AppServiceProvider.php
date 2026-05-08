@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Contract;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\Purchase;
@@ -10,6 +11,7 @@ use App\Models\Sale;
 use App\Models\SaleDetail;
 use App\Models\Supply;
 use App\Models\User;
+use App\Observers\ContractObserver;
 use App\Observers\ProductObserver;
 use App\Observers\ProductStockObserver;
 use App\Observers\PurchaseDetailObserver;
@@ -46,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
         Sale::observe(SaleObserver::class);
         SaleDetail::observe(SaleDetailObserver::class);
         Purchase::observe(PurchaseObserver::class);
+        Contract::observe(ContractObserver::class);
 
         // Force HTTPS in production
         if (config('app.env') !== 'local') {

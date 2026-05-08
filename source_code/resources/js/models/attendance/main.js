@@ -357,7 +357,7 @@ function initHistoryTab() {
 				label: "Fecha",
 				labelIcon: "bi-calendar-date me-2",
 				class: "attendance-date-filter",
-				wrapperClass: "w-auto",
+				wrapperClass: "mb-2 w-auto",
 				placeholder: "Seleccione una fecha",
 			},
 			{

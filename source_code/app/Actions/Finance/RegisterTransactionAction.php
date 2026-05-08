@@ -5,6 +5,7 @@ namespace App\Actions\Finance;
 use App\Enums\CashRegisterStatus;
 use App\Enums\TransactionType;
 use App\Models\CashRegister;
+use App\Models\Contract;
 use App\Models\Payment;
 use App\Models\Purchase;
 use App\Models\Sale;
@@ -19,7 +20,7 @@ class RegisterTransactionAction
         // (Sale/Contract -> Income, Purchase/Payroll -> Expense)
         $type = match ($payment->origin_type) {
             Sale::class => TransactionType::INCOME,
-            // Contract::class              => TransactionType::INCOME,
+            Contract::class => TransactionType::INCOME,
             Purchase::class => TransactionType::EXPENSE,
             // Payroll::class               => TransactionType::EXPENSE,
             default => throw new \InvalidArgumentException("Tipo de origen de pago no soportado: {$payment->origin_type}")
@@ -28,12 +29,12 @@ class RegisterTransactionAction
         $origin = $payment->origin; // This automatically loads the Sale, Purchase, etc. model.
 
         $message = match ($payment->origin_type) {
-            Sale::class => "Pago de venta #{$origin->invoice_number}",
-            Purchase::class => "Compra a proveedor: {$origin->supplier->name}",
+            Sale::class => "Pago de venta #{$origin?->invoice_number}",
+            Purchase::class => "Compra a proveedor: {$origin?->supplier?->name}",
+            Contract::class => "Pago de contrato - Cliente: {$origin?->client?->name}",
 
             // Hypothetically in the future:
-            // Contract::class => "Pago de contrato - Cliente: {$origin->client->name}",
-            // Payroll::class  => "Pago de nómina - Colaborador: {$origin->employee->user->name}",
+            // Payroll::class  => "Pago de nómina - Colaborador: {$origin?->employee?->user?->name}",
 
             default => throw new \InvalidArgumentException("Tipo de origen de pago no soportado: {$payment->origin_type}")
         };

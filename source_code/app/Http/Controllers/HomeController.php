@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Contract\GetActiveContractsCountAction;
+use App\Actions\Contract\GetDailyMealServiceAction;
 use App\Actions\Inventory\GetLowStockProductsCount;
 use App\Actions\Inventory\GetProductsAboutToExpireCount;
 use App\Actions\Inventory\GetSuppliesAboutToExpireCount;
@@ -29,7 +31,9 @@ class HomeController extends Controller
         GetMonthlySalesDataAction $getMonthlySalesDataAction,
         GetDailySalesDataAction $getDailySalesDataAction,
         GetSuppliesAboutToExpireCount $getSuppliesAboutToExpireCount,
-        GetTopSellingProductsAction $getTopSellingProductsAction
+        GetTopSellingProductsAction $getTopSellingProductsAction,
+        GetActiveContractsCountAction $getActiveContractsCountAction,
+        GetDailyMealServiceAction $getDailyMealServiceAction,
     ) {
 
         /**
@@ -66,10 +70,20 @@ class HomeController extends Controller
             return $getTopSellingProductsAction->execute();
         });
 
+        $activeContractsCount = Cache::remember('active_contracts_count', now()->addDay(), function () use ($getActiveContractsCountAction) {
+            return $getActiveContractsCountAction->execute();
+        });
+
+        $todaysMeals = Cache::remember('todays_meals', now()->addMinutes(10), function () use ($getDailyMealServiceAction) {
+            return $getDailyMealServiceAction->execute();
+        });
+
         return view('dashboard', [
             'aboutToExpireSupplies' => $aboutToExpireSupplies,
             'totalMinStockProducts' => $totalMinStockProducts,
             'aboutToExpireProducts' => $aboutToExpireProducts,
+            'activeContractsCount' => $activeContractsCount,
+            'todaysMeals' => $todaysMeals,
             ...$salesStats, ...$monthlyStats, ...$dailyStats, 'topSellingProducts' => $topSellingProducts,
         ]);
     }

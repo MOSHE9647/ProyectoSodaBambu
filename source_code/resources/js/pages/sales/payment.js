@@ -4,7 +4,7 @@ import {
 	SwalNotificationTypes,
 	SwalToast,
 } from "../../utils/sweetalert.js";
-import { setLoadingState } from "../../utils/utils.js";
+import { escapeHtml, setLoadingState } from "../../utils/utils.js";
 import { PaymentMethods, processSale } from "./api.js";
 import { getActiveSaleData } from "./cart.js";
 
@@ -21,14 +21,6 @@ const formatCurrency = (amount) => {
 		maximumFractionDigits: 0,
 	})}`;
 };
-
-const escapeHtml = (value) =>
-	String(value ?? "")
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/\"/g, "&quot;")
-		.replace(/'/g, "&#039;");
 
 const BUSINESS_NAME = document.title?.trim() || "Soda El Bambu";
 
@@ -47,14 +39,20 @@ const getReceiptItems = (saleResultData, saleSnapshot) => {
 		return snapshotItems;
 	}
 
-	return resultItems.map((item) => ({
-		...item,
-		name: item.product?.name || `Producto #${item.product_id || "N/A"}`,
-		tax_amount: Number(item.sub_total || 0) * Number(item.applied_tax || 0),
-		total:
-			Number(item.sub_total || 0) +
-			Number(item.sub_total || 0) * Number(item.applied_tax || 0),
-	}));
+	return resultItems.map((item) => {
+		const taxRate = (Number(item.applied_tax) || 0) / 100;
+		const itemTotal = Number(item.sub_total || 0); // Assuming API returns total as sub_total
+		const itemBasePrice = Math.round(itemTotal / (1 + taxRate));
+		const itemTax = itemTotal - itemBasePrice;
+
+		return {
+			...item,
+			name: item.product?.name || `Producto #${item.product_id || "N/A"}`,
+			tax_amount: itemTax,
+			total: itemTotal,
+			sub_total: itemBasePrice,
+		};
+	});
 };
 
 const getReceiptStyles = () => `
@@ -195,7 +193,8 @@ const buildReceiptHtml = ({
 			toIntegerAmount(
 				sum +
 					(Number(item.tax_amount) ||
-						Number(item.sub_total || 0) * Number(item.applied_tax || 0)),
+						Number(item.sub_total || 0) *
+							Number(item.applied_tax || 0)),
 			),
 		0,
 	);
@@ -352,7 +351,12 @@ const parseAmountInputValue = (value) => {
 };
 
 const sanitizeAmountInputValue = (value) => {
-	return String(value || "").replace(/[^\d]/g, "");
+	const sanitized = String(value || "")
+		.replace(/[^0-9.,]/g, "")
+		.replace(/[,\.]/g, (match, index, str) => {
+			return str.indexOf(match) === index ? "." : "";
+		});
+	return sanitized;
 };
 
 const appendKeyboardValue = (currentValue, appendedValue) => {
@@ -396,7 +400,9 @@ const renderHiddenPaymentRows = (rowsContainer, payments) => {
 const initializePaymentModalUI = (popup, saleData) => {
 	const methodButtons = popup.querySelectorAll("[data-payment-method]");
 	const amountInput = popup.querySelector("#payment-amount-input");
-	const clearPaymentAmountButton = popup.querySelector("#clear-payment-amount-button");
+	const clearPaymentAmountButton = popup.querySelector(
+		"#clear-payment-amount-button",
+	);
 	const paymentChangePreview = popup.querySelector("#payment-change-preview");
 	const referenceInput = popup.querySelector("#payment-reference-input");
 	const referenceGroup = popup.querySelector("#payment-reference-group");
@@ -472,7 +478,9 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 		popup.appendChild(alertBackdrop);
 
-		const acceptButton = alertBackdrop.querySelector("#payment-inline-alert-accept");
+		const acceptButton = alertBackdrop.querySelector(
+			"#payment-inline-alert-accept",
+		);
 		if (acceptButton) {
 			acceptButton.addEventListener("click", () => {
 				alertBackdrop.remove();
@@ -515,7 +523,10 @@ const initializePaymentModalUI = (popup, saleData) => {
 			.forEach((button) => {
 				button.addEventListener("click", () => {
 					const removeIndex = Number(button.dataset.removeIndex);
-					if (Number.isInteger(removeIndex) && payments[removeIndex]) {
+					if (
+						Number.isInteger(removeIndex) &&
+						payments[removeIndex]
+					) {
 						payments.splice(removeIndex, 1);
 						refreshTotals();
 					}
@@ -547,12 +558,17 @@ const initializePaymentModalUI = (popup, saleData) => {
 		}
 
 		const paidTotal = payments.reduce(
-			(sum, payment) => toIntegerAmount(sum + Number(payment.amount || 0)),
+			(sum, payment) =>
+				toIntegerAmount(sum + Number(payment.amount || 0)),
 			0,
 		);
-		const remainingBeforeCurrent = toIntegerAmount(Math.max(0, saleTotal - paidTotal));
+		const remainingBeforeCurrent = toIntegerAmount(
+			Math.max(0, saleTotal - paidTotal),
+		);
 		const receivedAmount = parseAmountInputValue(amountInput.value);
-		const estimatedChange = toIntegerAmount(Math.max(0, receivedAmount - remainingBeforeCurrent));
+		const estimatedChange = toIntegerAmount(
+			Math.max(0, receivedAmount - remainingBeforeCurrent),
+		);
 
 		paymentChangePreview.textContent = `Vuelto estimado: ${formatCurrency(estimatedChange)}`;
 		paymentChangePreview.classList.remove("d-none");
@@ -560,7 +576,8 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 	const refreshTotals = () => {
 		const paidTotal = payments.reduce(
-			(sum, payment) => toIntegerAmount(sum + Number(payment.amount || 0)),
+			(sum, payment) =>
+				toIntegerAmount(sum + Number(payment.amount || 0)),
 			0,
 		);
 		const remaining = toIntegerAmount(Math.max(0, saleTotal - paidTotal));
@@ -672,7 +689,8 @@ const initializePaymentModalUI = (popup, saleData) => {
 
 			if (isReferenceTarget) {
 				if (/^\d+$/.test(key)) {
-					referenceInput.value = `${referenceInput.value}${key}`.replace(/\D/g, "");
+					referenceInput.value =
+						`${referenceInput.value}${key}`.replace(/\D/g, "");
 				} else if (key === "delete") {
 					referenceInput.value = referenceInput.value.slice(0, -1);
 				}
@@ -754,7 +772,8 @@ const initializePaymentModalUI = (popup, saleData) => {
 		}
 
 		const paidTotal = payments.reduce(
-			(sum, payment) => toIntegerAmount(sum + Number(payment.amount || 0)),
+			(sum, payment) =>
+				toIntegerAmount(sum + Number(payment.amount || 0)),
 			0,
 		);
 		const remaining = toIntegerAmount(Math.max(0, saleTotal - paidTotal));
@@ -783,7 +802,9 @@ const initializePaymentModalUI = (popup, saleData) => {
 			);
 
 			if (existingCashPayment) {
-				existingCashPayment.amount = toIntegerAmount(existingCashPayment.amount + amount);
+				existingCashPayment.amount = toIntegerAmount(
+					existingCashPayment.amount + amount,
+				);
 				referenceInput.value = "";
 				refreshTotals();
 				return;
@@ -808,65 +829,141 @@ const initializePaymentModalUI = (popup, saleData) => {
 };
 
 /**
- * Handles the payment form submission flow for a sale.
- *
- * @async
- * @function paymentFormEventListener
- * @param {SubmitEvent} event - The form submission event.
- * @param {{ total: number|string }} saleData - Sale information used for payment validation and change calculation.
- * @returns {Promise<void>} Resolves when the payment submission flow completes.
+ * Muestra el modal de pago de forma genérica.
+ * @param {Object} config
+ * @param {number} config.total - Monto total a cobrar.
+ * @param {string} config.title - Título del modal (ej: "Pago de Contrato").
+ * @param {Function} config.onComplete - Callback que recibe (paymentDetails, totalTendered).
+ * @param {string} [config.loadingId] - ID del botón para el estado de carga.
  */
-const paymentFormEventListener = async (event, saleData) => {
-	event.preventDefault();
+export async function openPaymentModal({ total, title, onComplete, loadingId = "finalize-action" }) {
+    if (!total || total <= 0) {
+        SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: "El monto debe ser mayor a 0." });
+		return { completed: false, reason: "invalid-total" };
+    }
 
-	const paymentForm = event.currentTarget;
-	if (!paymentForm) {
-		return;
-	}
+    setLoadingState(loadingId, true);
 
-	const paymentDetails = [];
-	let totalTendered = 0;
-	const saleTotal = toIntegerAmount(saleData.total || 0);
+    try {
+        // El endpoint ahora podría ser más genérico en el backend
+        const url = route("sales.payment-modal", { paymentTotal: total }); 
+        const response = await fetch(url);
+        const modalHtml = await response.text();
 
-	const paymentRows = paymentForm.querySelectorAll(".payment-row");
-	paymentRows.forEach((row) => {
-		const methodElement = row.querySelector(".payment-method");
-		const amountElement = row.querySelector(".payment-amount");
-		const referenceElement = row.querySelector(".payment-reference");
+        setLoadingState(loadingId, false);
 
-		const method = methodElement?.value;
-		const amount = parseAmountInputValue(amountElement?.value || "0");
-		const reference = referenceElement?.value || null;
-
-		if (!method) {
-			return;
+		if (!modalHtml) {
+			return { completed: false, reason: "empty-modal" };
 		}
 
-		totalTendered += amount;
+		return await new Promise((resolve) => {
+			let isResolved = false;
 
-		paymentDetails.push({
-			method,
-			amount,
-			reference: method !== PaymentMethods.CASH ? reference : null,
-			change_amount: 0,
-		});
-	});
+			const resolveOnce = (result) => {
+				if (isResolved) {
+					return;
+				}
 
-	if (paymentDetails.length === 0) {
-		SwalToast.fire({
-			icon: SwalNotificationTypes.WARNING,
-			title: "Debes agregar al menos un método de pago.",
-		});
-		return;
-	}
+				isResolved = true;
+				resolve(result);
+			};
 
-	if (totalTendered < saleTotal) {
-		SwalToast.fire({
-			icon: SwalNotificationTypes.WARNING,
-			title: `El monto ingresado (${formatCurrency(totalTendered)}) es menor al total de la venta (${formatCurrency(saleTotal)}).`,
+			SwalModal.fire({
+				title: `${title}: ${formatCurrency(total)}`,
+				html: modalHtml,
+				showConfirmButton: false,
+				didOpen: () => {
+					const popup = SwalModal.getPopup();
+					const paymentData = { total, payments: [] };
+
+					// Inicializar la UI pasando el callback de completado
+					initializePaymentModalUI(popup, paymentData);
+
+					const paymentForm = popup.querySelector("#payment-form");
+					if (!paymentForm) {
+						resolveOnce({ completed: false, reason: "missing-form" });
+						SwalModal.close();
+						return;
+					}
+
+					paymentForm.addEventListener("submit", async (e) => {
+						e.preventDefault();
+						const { details, tendered, shouldPrint } = extractPaymentDetails(paymentForm, total);
+
+						if (details.length === 0) {
+							return;
+						}
+
+						// Capturamos el estado actual del carrito antes de que onComplete lo limpie
+						const saleSnapshot = getActiveSaleData();
+
+						try {
+							const saleResult = await onComplete(details, tendered);
+							if (!saleResult || saleResult.success === false) {
+								return;
+							}
+
+							if (shouldPrint) {
+								const receiptHtml = buildReceiptHtml({
+									saleResultData: saleResult.data,
+									saleSnapshot: saleSnapshot,
+									paymentDetails: details,
+									totalTendered: tendered,
+									changeAmount: Math.max(0, tendered - total),
+								});
+								await printReceipt(receiptHtml);
+							}
+
+							resolveOnce({ completed: true, details, tendered, printed: shouldPrint });
+							SwalModal.close();
+						} catch (submissionError) {
+							console.error("Error while completing payment modal:", submissionError);
+							SwalToast.fire({
+								icon: SwalNotificationTypes.ERROR,
+								title: "No se pudo completar el pago.",
+							});
+						}
+					});
+				},
+				willClose: () => {
+					resolveOnce({ completed: false, reason: "closed" });
+				},
+			});
 		});
-		return;
-	}
+    } catch (error) {
+        console.error("Error loading payment modal:", error);
+        setLoadingState(loadingId, false);
+        SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: "Error al abrir la pantalla de pago." });
+		return { completed: false, reason: "load-error" };
+    }
+}
+
+// Función auxiliar para extraer datos sin procesar la lógica de negocio
+const extractPaymentDetails = (form, saleTotal) => {
+    const paymentDetails = [];
+    let totalTendered = 0;
+	const shouldPrint = form.querySelector("#print-receipt-checkbox")?.checked === true;
+
+    form.querySelectorAll(".payment-row").forEach((row) => {
+        const amount = parseFloat(row.querySelector(".payment-amount").value) || 0;
+        const method = row.querySelector(".payment-method").value;
+        totalTendered += amount;
+
+        paymentDetails.push({
+            method,
+            amount,
+            reference: method !== PaymentMethods.CASH ? row.querySelector(".payment-reference").value : null,
+        });
+    });
+
+    // Validar que el monto cubra el total
+    if (totalTendered < saleTotal) {
+        SwalToast.fire({ 
+            icon: SwalNotificationTypes.WARNING, 
+            title: `Monto insuficiente (${formatCurrency(totalTendered)} de ${formatCurrency(saleTotal)})` 
+        });
+        return { details: [], tendered: 0, shouldPrint: false };
+    }
 
 	const changeAmount = Math.max(0, totalTendered - saleTotal);
 	const roundedChangeAmount = toIntegerAmount(changeAmount);
@@ -878,111 +975,5 @@ const paymentFormEventListener = async (event, saleData) => {
 		paymentDetails[cashPaymentIndex].change_amount = roundedChangeAmount;
 	}
 
-	const shouldPrintReceipt =
-		paymentForm.querySelector("#print-receipt-checkbox")?.checked === true;
-	let receiptHtml = null;
-
-	SwalModal.showLoading();
-
-	const saleResult = await processSale(paymentDetails);
-	if (saleResult?.success) {
-		if (shouldPrintReceipt) {
-			receiptHtml = buildReceiptHtml({
-				saleResultData: saleResult,
-				saleSnapshot: saleData,
-				paymentDetails,
-				totalTendered,
-				changeAmount: roundedChangeAmount,
-			});
-		}
-		SwalModal.close();
-
-		if (shouldPrintReceipt && receiptHtml) {
-			await printReceipt(
-				buildReceiptHtml({
-					saleResultData: saleResult.data,
-					saleSnapshot: saleData,
-					paymentDetails,
-					totalTendered,
-					changeAmount: roundedChangeAmount,
-				}),
-			);
-		} else {
-			await SwalModal.fire({
-				icon: SwalNotificationTypes.SUCCESS,
-				title: "Venta exitosa",
-				text: saleResult.message || "La venta fue registrada correctamente.",
-				confirmButtonText: "Aceptar",
-				customClass: {
-					confirmButton: "btn btn-success mx-1",
-				},
-			});
-		}
-	} else {
-		SwalModal.hideLoading();
-	}
+    return { details: paymentDetails, tendered: totalTendered, shouldPrint };
 };
-
-/**
- * Opens and renders the payment modal for the current sale flow.
- *
- * @async
- * @function showPaymentModal
- * @returns {Promise<void>} Resolves when the modal flow has been handled.
- */
-export async function showPaymentModal() {
-	const saleData = getActiveSaleData();
-	if (!saleData || saleData.sale_details.length === 0) {
-		SwalToast.fire({
-			icon: SwalNotificationTypes.ERROR,
-			title: "El carrito está vacío. Agrega productos antes de cobrar.",
-		});
-		return;
-	}
-
-	setLoadingState("finalize-sale", true);
-
-	try {
-		const url = route("sales.payment-modal", {
-			paymentTotal: saleData.total,
-		});
-		const response = await fetchWithErrorHandling(url);
-		const modalHtml = await response.text();
-
-		setLoadingState("finalize-sale", false);
-
-		if (modalHtml) {
-			SwalModal.fire({
-				title: `Procesar pago: ${formatCurrency(saleData.total)}`,
-				showConfirmButton: false,
-				showCancelButton: false,
-				showCloseButton: true,
-				allowEscapeKey: false,
-				allowOutsideClick: false,
-				html: `${modalHtml}`,
-				didOpen: () => {
-					const popup = SwalModal.getPopup();
-					if (!popup) {
-						return;
-					}
-
-					initializePaymentModalUI(popup, saleData);
-
-					const paymentForm = popup?.querySelector("#payment-form");
-					if (paymentForm) {
-						paymentForm.addEventListener("submit", (event) =>
-							paymentFormEventListener(event, saleData),
-						);
-					}
-				},
-			});
-		}
-	} catch (error) {
-		console.error("Error loading payment modal:", error);
-		setLoadingState("finalize-sale", false);
-		SwalToast.fire({
-			icon: SwalNotificationTypes.ERROR,
-			title: "Ocurrió un problema al abrir la pantalla de pago.",
-		});
-	}
-}

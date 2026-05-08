@@ -2,49 +2,54 @@
 
 use App\Enums\UserRole;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
-
-test('CP-01_EIF-02 - creates a user logs in uses a feature and logs out', function () {
-    // Dado que: se crea un usuario administrador con credenciales válidas.
-    $password = 'password123';
-    $user = User::factory()->withRole(UserRole::ADMIN)->create([
-        'email' => 'test@example.com',
-        'password' => $password,
-        'email_verified_at' => now(),
+test('CP-FUN-03 - an administrator with an active session can create a user', function () {
+    // Given: an administrator user exists in the database.
+    $adminPassword = 'adminpassword';
+    $adminUser = User::factory()->withRole(UserRole::ADMIN)->create([
+        'email' => 'admin@example.com',
+        'password' => $adminPassword,
     ]);
 
+    // When: the administrator user logs in.
+    $page = loginAsUser($adminUser, $adminPassword);
+    $this->assertAuthenticatedAs($adminUser);
+
+    // And: the administrator user can access the user creation page.
+    $page->navigate(route('users.index'));
+    $page->assertSee('Gestión de Usuarios')
+        ->click('.create-button')
+        ->assertSee('Crear Usuario');
+
+    // And: the administrator user completes the user creation form and submits it.
+    $newUser = [
+        'name' => 'New User',
+        'email' => 'newuser@example.com',
+        'password' => 'newpassword123',
+    ];
+
+    $page->fill('#name', $newUser['name'])
+        ->fill('#email', $newUser['email'])
+        ->fill('#password', $newUser['password'])
+        ->fill('#password_confirmation', $newUser['password'])
+        ->select('#role', UserRole::ADMIN->value)
+        ->click('#create-user-form-button');
+
+    // Then: the new user is created successfully and appears in the users list.
+    $page->assertSee('Usuario creado correctamente.')
+        ->select('#dt-length-0', 'All')
+        ->assertSee($newUser['email']);
+
+    // And: the user exists in the database with the correct data.
     $this->assertDatabaseHas('users', [
-        'email' => 'test@example.com',
+        'email' => $newUser['email'],
+        'name' => $newUser['name'],
     ]);
 
-    // Cuando: el usuario abre la pantalla de login, digita sus credenciales y presiona ingresar.
-    $page = visit(route('login'));
+    // And: the administrator user can log out successfully.
+    $page->script('document.getElementById("logout-form").submit()');
 
-    $page->assertSee('Iniciar Sesión')
-        ->fill('#email', $user->email)
-        ->fill('#password', $password)
-        ->click('#login-button');
-
-    // Entonces: el sistema autentica al usuario y muestra el dashboard.
-    $page->assertPathIs(route('dashboard', absolute: false))
-        ->assertSee('Ventas de hoy');
-
-    $this->assertAuthenticatedAs($user);
-
-    // Y: el usuario utiliza una funcionalidad del sistema al consultar la gestión de productos.
-    $page->navigate(route('products.index'))
-        ->assertPathIs(route('products.index', absolute: false))
-        ->assertSee('Gestión de Productos')
-        ->assertSee('Precio Venta');
-
-    // Y: el usuario cierra sesión desde el menú de usuario.
-    $page->click('.dropdown-toggle')
-        ->click('#logoutBtn');
-
-    $page->assertPathIs(route('login', absolute: false))
+    $page->assertPathIs('/login')
         ->assertSee('Iniciar Sesión');
-
     $this->assertGuest();
-});
+})->group('s7-tests');
