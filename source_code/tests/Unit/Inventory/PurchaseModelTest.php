@@ -97,13 +97,13 @@ test('CP-05_EIF-35 - purchase model is mass-assignable for fillable attributes',
     $purchase = Purchase::create([
         'supplier_id' => Supplier::factory()->create()->id,
         'invoice_number' => 'INV-10001',
-        'payment_status' => PaymentStatus::PAID,
+        'payment_status' => PaymentStatus::PENDING,
         'date' => '2026-03-20 12:00:00',
         'total' => 2500.75,
     ]);
 
     // Then: the attributes are persisted correctly.
     expect($purchase->invoice_number)->toBe('INV-10001');
-    expect($purchase->payment_status)->toBe(PaymentStatus::PAID);
+    expect($purchase->payment_status)->toBe(PaymentStatus::PENDING);
     expect((string) $purchase->total)->toBe('2500.75');
 });

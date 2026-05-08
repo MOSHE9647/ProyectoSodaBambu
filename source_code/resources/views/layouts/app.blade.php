@@ -36,8 +36,12 @@
 	</div>
 
 	{{-- PWA Scripts --}}
-	<script src="{{ asset('sw.js') }}"></script>
-	<script src="{{ asset('scripts/registerServiceWorker.js') }}"></script>
+	@if(!app()->environment('testing', 'local', 'dusk'))
+		<script src="{{ asset('sw.js') }}"></script>
+		<script src="{{ asset('scripts/registerServiceWorker.js') }}"></script>
+	@endif
+
+	{{-- CSRF Token for JavaScript --}}
 	<script type="text/javascript">let csrfToken = @json(csrf_token());</script>
 	
 	{{-- Additional Scripts --}}

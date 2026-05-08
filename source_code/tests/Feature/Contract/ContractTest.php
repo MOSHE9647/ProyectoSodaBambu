@@ -25,7 +25,7 @@ beforeEach(function () {
     ]);
 });
 
-test('can create contract with details and payment', function () {
+test('CP-01_EIF-216 - can create contract with details and payment', function () {
     $payload = [
         'client_id' => $this->client->id,
         'business_name' => 'Empresa Test S.A.',
@@ -60,7 +60,7 @@ test('can create contract with details and payment', function () {
     $this->assertDatabaseHas('transactions', ['amount' => 40000]);
 });
 
-test('fails if payment is insufficient', function () {
+test('CP-02_EIF-216 - fails if payment is insufficient', function () {
     $payload = [
         'client_id' => $this->client->id,
         'business_name' => 'Empresa Deudora',
@@ -79,7 +79,7 @@ test('fails if payment is insufficient', function () {
         ->assertJsonValidationErrors(['payment_details']);
 });
 
-test('resolves uniqueness conflict with soft deleted records', function () {
+test('CP-03_EIF-216 - resolves uniqueness conflict with soft deleted records', function () {
     // 1. Crear un contrato con datos controlados
     $contract = Contract::factory()->create([
         'client_id' => $this->client->id,
@@ -141,7 +141,7 @@ test('resolves uniqueness conflict with soft deleted records', function () {
     ]);
 });
 
-test('destroy contract soft deletes it', function () {
+test('CP-04_EIF-216 - destroy contract soft deletes it', function () {
     $contract = Contract::factory()->create();
 
     $this->actingAs($this->admin)

@@ -24,7 +24,7 @@ class PurchaseFactory extends Factory
             'invoice_number' => $this->faker->unique()->numerify('INV-#####'),
             'date' => $this->faker->dateTimeBetween('-1 year', 'now'),
             'total' => $this->faker->randomFloat(2, 10, 1000),
-            'payment_status' => $this->faker->randomElement(PaymentStatus::cases()),
+            'payment_status' => PaymentStatus::PENDING,
         ];
     }
 }
