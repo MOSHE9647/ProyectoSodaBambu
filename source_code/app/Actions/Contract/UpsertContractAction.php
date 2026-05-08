@@ -41,7 +41,8 @@ class UpsertContractAction
 
             // Procesar relaciones
             $this->handleContractDetails($contract, $contractDetailsData);
-            $this->handlePaymentDetails($contract, $paymentDetailsData);
+            
+            $this->processAutomaticRefundOrPayment($contract, $paymentDetailsData);
 
             return $contract;
         }, 5);
@@ -67,9 +68,19 @@ class UpsertContractAction
             $id = $detailData['id'] ?? null;
             $cleanData = Arr::except($detailData, ['id', 'created_at', 'updated_at', 'deleted_at']);
 
-            $detail = $id
+            // Buscamos un detalle existente por ID o por la combinación única (incluyendo eliminados)
+            // Esto evita el error de Duplicate Entry al intentar crear algo que ya existe en Soft Deletes.
+            $detail = $id 
                 ? $contract->details()->withTrashed()->findOrFail($id)
-                : new ContractDetail(['contract_id' => $contract->id]);
+                : $contract->details()->withTrashed()
+                    ->where('product_id', $cleanData['product_id'])
+                    ->where('meal_time', $cleanData['meal_time'] instanceof \App\Enums\MealTime ? $cleanData['meal_time']->value : $cleanData['meal_time'])
+                    ->whereDate('serve_date', $cleanData['serve_date'])
+                    ->first();
+
+            if (! $detail) {
+                $detail = new ContractDetail(['contract_id' => $contract->id]);
+            }
 
             $detail->fill($cleanData);
 
@@ -81,17 +92,32 @@ class UpsertContractAction
         }
     }
 
-    private function handlePaymentDetails(Contract $contract, ?array $paymentDetailsData): void
+    private function processAutomaticRefundOrPayment(Contract $contract, ?array $paymentDetailsData): void
     {
-        // Si no vienen pagos nuevos (ej. el contrato se actualizó pero el saldo pendiente era 0), no hacemos nada.
-        if (empty($paymentDetailsData)) {
+        $totalValue = (float) $contract->total_value;
+        $totalPaid = (float) $contract->payments()->sum(DB::raw('amount - change_amount'));
+        $pendingBalance = round($totalValue - $totalPaid, 2);
+
+        // CASO 1: Hay pagos nuevos enviados desde el modal (Diferencia positiva)
+        if (!empty($paymentDetailsData)) {
+            $this->handlePaymentDetails($contract, $paymentDetailsData);
             return;
         }
 
-        // NOTA IMPORTANTE: A diferencia de las ventas tradicionales, aquí NO eliminamos los pagos
-        // que no vengan en el Request. Esto preserva el historial de pagos anteriores cuando
-        // el usuario solo está pagando una nueva "diferencia".
+        // CASO 2: El nuevo total es menor a lo pagado (Diferencia negativa = Devolución)
+        if ($pendingBalance < 0) {
+            $this->createPayment->execute($contract, [
+                'amount' => $pendingBalance, // Se envía negativo (ej: -5000)
+                'method' => \App\Enums\PaymentMethod::CASH->value, // Las devoluciones suelen ser en efectivo
+                'change_amount' => 0,
+                'reference' => 'Devolución por ajuste de valor de contrato',
+                'date' => now(),
+            ]);
+        }
+    }
 
+    private function handlePaymentDetails(Contract $contract, array $paymentDetailsData): void
+    {
         // Crear o actualizar pagos entrantes
         foreach ($paymentDetailsData as $paymentData) {
             $paymentId = $paymentData['id'] ?? null;

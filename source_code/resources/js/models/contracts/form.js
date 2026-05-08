@@ -74,7 +74,7 @@ const getFormElements = () => {
 	};
 };
 
-const appendContractDetailRow = (product, mealTimeValue, serveDate) => {
+const appendContractDetailRow = (product, mealTimeValue, serveDate, startDate = "") => {
 	// Generate the options for the Product Select, marking the current product as selected
 	const productsOptions = PRODUCTS
 		.map(
@@ -128,7 +128,7 @@ const appendContractDetailRow = (product, mealTimeValue, serveDate) => {
 				<div class="border-secondary w-auto text-start">
 					<div class="input-group input-group-sm has-validation">
 						<input type="date" name="serve_date" class="form-control" aria-describedby="serve_date-error"
-							min="${getTodayMidnight().toISOString().split('T')[0]}"
+							min="${startDate}"
 							value="${serveDate}"
 						>
 						<div id="serve_date-error" class="invalid-feedback ps-2" role="alert">
@@ -586,12 +586,12 @@ const generateRandomMenu = async () => {
 				
 				if (coverage.dishes < 1) {
 					const dish = drawRandomProduct(dishes);
-					if (dish) appendContractDetailRow(dish, mealValue, formattedDate);
+					if (dish) appendContractDetailRow(dish, mealValue, formattedDate, startDate);
 				}
 
 				if (coverage.drinks < 1) {
 					const drink = drawRandomProduct(drinks);
-					if (drink) appendContractDetailRow(drink, mealValue, formattedDate);
+					if (drink) appendContractDetailRow(drink, mealValue, formattedDate, startDate);
 				}
 			});
 
@@ -1249,9 +1249,29 @@ const handleFormSubmission = async (event, validationResult) => {
 		}
 	} else {
 		values.payment_details = []; // Ensure payment details is an empty array if no payment is needed
+		const amountToReturn = Math.abs(pendingBalance).toLocaleString('es-CR', { 
+			style: 'currency', 
+			currency: 'CRC' 
+		});
+
+		const confirmation = await SwalConfirmation.fire({
+			icon: "info",
+			title: "Confirmar Devolución",
+			html: `
+				El cliente tiene un pago previo que excede el nuevo total del contrato. 
+				Se deberá procesar una devolución por un monto de <strong>${amountToReturn}</strong>.
+				<br><br>¿Deseas continuar con el registro?
+			`,
+			confirmButtonText: "Sí, confirmar y enviar",
+			cancelButtonText: "No, revisar contrato",
+		}).then((result) => result.isConfirmed);
+
+		if (!confirmation) {
+			setLoadingState(FORM_ID, false);
+			return;
+		}
 	}
 
-	console.log("Enviando datos del contrato:", values);
 	setLoadingState(FORM_ID, true);
 
 	try {

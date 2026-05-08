@@ -101,7 +101,7 @@ class ContractController extends Controller
      */
     public function edit(int $id): View
     {
-        $contract = Contract::withTrashed()->findOrFail($id);
+        $contract = Contract::withTrashed()->with('payments')->findOrFail($id);
         $clients = Client::all(['id', 'first_name', 'last_name']);
         $products = Product::whereIn('type', [ProductType::DISH, ProductType::DRINK])
             ->get(['id', 'name', 'sale_price', 'type']);

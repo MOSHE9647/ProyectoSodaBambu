@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ContractState;
 use Database\Factories\ContractFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -52,17 +53,17 @@ class Contract extends Model
     public function getStatusAttribute(): string
     {
         if ($this->deleted_at) {
-            return 'inactive';
+            return ContractState::INACTIVE->value;
         }
         $today = now()->startOfDay();
         if ($today->lt($this->start_date)) {
-            return 'upcoming';
+            return ContractState::UPCOMING->value;
         }
         if ($today->gt($this->end_date)) {
-            return 'expired';
+            return ContractState::EXPIRED->value;
         }
 
-        return 'active';
+        return ContractState::ACTIVE->value;
     }
 
     /**

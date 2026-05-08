@@ -1,4 +1,5 @@
 @php
+    use App\Enums\ContractState;
     use App\Enums\MealTime;
     use App\Enums\PaymentMethod;
     use App\Enums\PaymentStatus;
@@ -197,7 +198,7 @@
                             :id="'start_date'"
                             :type="'date'" 
                             :class="'border-secondary w-auto'"
-                            :min="Carbon\Carbon::now()->timezone('America/Costa_Rica')->format('Y-m-d')"
+                            :min="$isEditing ? $contract->start_date->format('Y-m-d') : Carbon\Carbon::now()->timezone('America/Costa_Rica')->format('Y-m-d')"
                             :inputClass="$errors->has('start_date') ? 'is-invalid' : ''"
                             :value="old('start_date', $isEditing ? $contract->start_date->format('Y-m-d') : '')"
                             :errorMessage="$errors->first('start_date') ?? ''"
@@ -420,7 +421,7 @@
                                                 :name="'serve_date'"
                                                 :type="'date'" 
                                                 :class="'border-secondary w-auto'"
-                                                :min="Carbon\Carbon::now()->timezone('America/Costa_Rica')->format('Y-m-d')"
+                                                :min="$isEditing ? $contractDetail->serve_date->format('Y-m-d') : Carbon\Carbon::now()->timezone('America/Costa_Rica')->format('Y-m-d')"
                                                 :inputClass="$errors->has('serve_date') ? 'is-invalid' : ''"
                                                 :value="old('serve_date', $contractDetail->serve_date->format('Y-m-d'))"
                                                 :errorMessage="$errors->first('serve_date') ?? ''"
@@ -617,6 +618,25 @@
                     </div>
 
                     <hr class="my-1">
+
+                    @if ($isEditing && $contract->status !== ContractState::ACTIVE->value)
+                        @php
+                            $contractState = ContractState::from($contract->status);
+                            $color = $contractState->color();
+                            $statusMessages = [
+                                ContractState::INACTIVE->value => 'Para reactivar este contrato, edite cualquier campo y guarde los cambios.',
+                                ContractState::EXPIRED->value => 'Para renovarlo, actualice las fechas y guarde los cambios.',
+                                ContractState::UPCOMING->value => 'Este contrato está programado para comenzar en el futuro. Se activará automáticamente al llegar a la fecha de inicio.',
+                            ];
+                        @endphp
+                        <x-alert :type="$color" class="mb-0">
+                            <span>
+                                Este contrato está actualmente 
+                                <strong>{{ ucfirst($contractState->label()) }}</strong>.<br> 
+                                {{ $statusMessages[$contractState->value] ?? 'Información no disponible.' }}
+                            </span>
+                        </x-alert>
+                    @endif
 
                     {{-- Progress --}}
                     <div>

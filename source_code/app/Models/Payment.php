@@ -21,7 +21,6 @@ class Payment extends Model
         'date',
         'origin_id',    // Sales, purchase, contract, or payroll ID
         'origin_type',  // Sales, purchase, contract, or payroll class
-
     ];
 
     protected $casts = [
