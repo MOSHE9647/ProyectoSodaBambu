@@ -179,7 +179,7 @@
 					@endif
                 </span>
                 <span id="last-sale-payment-amount" class="text-success fw-bold">
-					₡ {{ number_format($lastSale?->total ?? 0, 2, ',', ' ') }}
+					₡ {{ number_format($lastSale?->total ?? 0, 0, ',', ' ') }}
 				</span>
             </div>
 

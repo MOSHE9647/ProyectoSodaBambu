@@ -13,7 +13,7 @@
 	$selectedExpirationDate = old('expiration_date', isset($product) ? ($product->expiration_date?->format('Y-m-d') ?? '') : '');
 	$selectedExpirationAlertDays = old('expiration_alert_days', isset($product) ? ($product->expiration_alert_days ?? 7) : 7);
 	$defaultMargin = $selectedType === ProductType::MERCHANDISE->value
-		? old('margin_percentage', isset($product) ? ($product->margin_percentage ?? '') : '0.35')
+		? old('margin_percentage', isset($product) ? ($product->margin_percentage ?? '') : '35')
 		: old('margin_percentage', isset($product) ? ($product->margin_percentage ?? '') : '');
 @endphp
 
@@ -116,21 +116,21 @@
             <div class="row g-3">
                 {{-- Reference Cost --}}
                 <div id="reference-cost-group" class="col-12 col-md-4">
-                    <x-form.input :id="'reference_cost'" :type="'number'" :step="'0.01'" :min="'0'" :maxLength="'10'" :class="'border-secondary'" :inputClass="$errors->has('reference_cost') ? 'is-invalid' : ''" :placeholder="'Ej: 1200.00'" :value="old('reference_cost', $product->reference_cost ?? '')" :errorMessage="$errors->first('reference_cost') ?? ''" :iconLeft="'bi bi-cash-coin'" :required="false">
+                    <x-form.input :id="'reference_cost'" :type="'number'" :step="'1'" :min="'0'" :maxLength="'10'" :class="'border-secondary'" :inputClass="$errors->has('reference_cost') ? 'is-invalid' : ''" :placeholder="'Ej: 1200'" :value="old('reference_cost', $product->reference_cost ?? '')" :errorMessage="$errors->first('reference_cost') ?? ''" :iconLeft="'bi bi-cash-coin'" :required="false">
                         Costo de Referencia <span id="merchandise-reference-cost-required" class="text-danger">*</span>
                     </x-form.input>
                 </div>
 
                 {{-- Tax Percentage --}}
                 <div id="tax-percentage-group" class="col-12 col-md-4">
-                    <x-form.input :id="'tax_percentage'" :type="'number'" :step="'0.01'" :min="'0'" :max="'1'" :maxLength="'6'" :class="'border-secondary'" :inputClass="$errors->has('tax_percentage') ? 'is-invalid' : ''" :placeholder="'Ej: 0.13'" :value="old('tax_percentage', $product->tax_percentage ?? '')" :errorMessage="$errors->first('tax_percentage') ?? ''" :iconLeft="'bi bi-percent'" :required="false">
+                    <x-form.input :id="'tax_percentage'" :type="'number'" :step="'1'" :min="'0'" :max="'100'" :maxLength="'6'" :class="'border-secondary'" :inputClass="$errors->has('tax_percentage') ? 'is-invalid' : ''" :placeholder="'Ej: 13'" :value="old('tax_percentage', $product->tax_percentage ?? '')" :errorMessage="$errors->first('tax_percentage') ?? ''" :iconLeft="'bi bi-percent'" :required="false">
                         Impuesto (%) <span id="merchandise-tax-required" class="text-danger">*</span>
                     </x-form.input>
                 </div>
 
                 {{-- Margin Percentage --}}
                 <div id="margin-percentage-group" class="col-12 col-md-4">
-                    <x-form.input :id="'margin_percentage'" :type="'number'" :step="'0.01'" :min="'0'" :max="'1'" :maxLength="'6'" :class="'border-secondary'" :inputClass="$errors->has('margin_percentage') ? 'is-invalid' : ''" :placeholder="'Ej: 0.35'" :value="old('margin_percentage', $defaultMargin)" :errorMessage="$errors->first('margin_percentage') ?? ''" :iconLeft="'bi bi-graph-up-arrow'" :required="false">
+                    <x-form.input :id="'margin_percentage'" :type="'number'" :step="'1'" :min="'0'" :max="'100'" :maxLength="'6'" :class="'border-secondary'" :inputClass="$errors->has('margin_percentage') ? 'is-invalid' : ''" :placeholder="'Ej: 35'" :value="old('margin_percentage', $defaultMargin)" :errorMessage="$errors->first('margin_percentage') ?? ''" :iconLeft="'bi bi-graph-up-arrow'" :required="false">
                         Margen (%) <span id="merchandise-margin-required" class="text-danger">*</span>
                     </x-form.input>
                     <small class="text-muted">Obligatorio solo para Mercadería.</small>
@@ -140,7 +140,7 @@
             <div class="row g-3">
                 {{-- Sale Price --}}
                 <div id="sale-price-group" class="col-12">
-                    <x-form.input :id="'sale_price'" :type="'number'" :step="'0.01'" :min="'0'" :maxLength="'10'" :class="'border-secondary'" :inputClass="$errors->has('sale_price') ? 'is-invalid' : ''" :placeholder="'Ej: 4063.50'" :value="old('sale_price', $product->sale_price ?? '')" :errorMessage="$errors->first('sale_price') ?? ''" :iconLeft="'bi bi-cash-stack'" :required="in_array($selectedType, [ProductType::DISH->value, ProductType::DRINK->value, ProductType::PACKAGED->value], true)">
+                    <x-form.input :id="'sale_price'" :type="'number'" :step="'1'" :min="'0'" :maxLength="'10'" :class="'border-secondary'" :inputClass="$errors->has('sale_price') ? 'is-invalid' : ''" :placeholder="'Ej: 4063'" :value="old('sale_price', $product->sale_price ?? '')" :errorMessage="$errors->first('sale_price') ?? ''" :iconLeft="'bi bi-cash-stack'" :required="in_array($selectedType, [ProductType::DISH->value, ProductType::DRINK->value, ProductType::PACKAGED->value], true)">
                         Precio de Venta <span id="sale-price-required" class="text-danger d-none">*</span>
                     </x-form.input>
                     <small id="sale-price-help" class="text-muted">Para Mercadería este precio se calcula automáticamente</small>

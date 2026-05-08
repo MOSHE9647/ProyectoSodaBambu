@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use app\Enums\CashRegisterStatus;
+use App\Enums\CashRegisterStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,8 +25,8 @@ class CashRegister extends Model
     protected $casts = [
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
-        'opening_balance' => 'decimal:2',
-        'closing_balance' => 'decimal:2',
+        'opening_balance' => 'integer',
+        'closing_balance' => 'integer',
         'status' => CashRegisterStatus::class,
     ];
 

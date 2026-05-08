@@ -1,14 +1,10 @@
 @forelse($products as $product)
 
 @php
-    $referenceCost = $product->reference_cost ?? 0;
-    $marginPercentage = $product->margin_percentage ?? 0;
-    $priceWithMargin = $referenceCost + ($referenceCost * $marginPercentage);
-
     $productData = [
         'id' => $product->id,
         'name' => $product->name,
-        'price' => $priceWithMargin,
+        'price' => (int) round($product->sale_price ?? 0),
         'tax_percentage' => $product->tax_percentage ?? 0,
         'has_inventory' => $product->has_inventory ? 1 : 0,
         'stock' => $product->stock?->current_stock ?? 0,
@@ -33,7 +29,7 @@
                 {{ $product->name }}
             </h6>
             <span class="fw-bold text-success flex-shrink-0 product-price">
-                ₡ {{ number_format($product->sale_price ?? 0, 2, ',', '.') }}
+                ₡ {{ number_format($product->sale_price ?? 0, 0, '.', ' ') }}
             </span>
         </div>
 

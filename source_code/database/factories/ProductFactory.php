@@ -19,9 +19,9 @@ class ProductFactory extends Factory
      */
     public function definition(): array
     {
-        $referenceCost = $this->faker->randomFloat(2, 500, 12000);
-        $marginPercentage = $this->faker->randomFloat(2, 0.20, 0.60);
-        $taxPercentage = 0.13; // 13% tax
+        $referenceCost = $this->faker->numberBetween(500, 12000);
+        $marginPercentage = $this->faker->numberBetween(20, 60);
+        $taxPercentage = 13; // 13% tax
 
         return [
             'category_id' => Category::factory(),

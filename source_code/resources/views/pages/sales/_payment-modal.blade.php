@@ -377,7 +377,8 @@
                     id="payment-amount-input"
                     class="form-control"
                     type="text"
-                    inputmode="decimal"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
                     value="{{ number_format($paymentTotal, 0, '.', '') }}"
                 >
                 <button id="clear-payment-amount-button" type="button" class="btn btn-outline-secondary btn-clear-amount">Limpiar</button>

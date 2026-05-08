@@ -247,8 +247,8 @@
             <div class="mb-3">
                 <label for="quick-product-reference-cost" class="form-label">Costo de referencia <span
                         class="text-danger">*</span></label>
-                <input type="number" step="0.01" min="0" class="form-control"
-                    id="quick-product-reference-cost" name="reference_cost" placeholder="Ej: 1500.00" required>
+                <input type="number" step="1" min="0" class="form-control"
+                    id="quick-product-reference-cost" name="reference_cost" placeholder="Ej: 1500" required>
                 <div class="invalid-feedback" id="quick-product-reference-cost-error"></div>
             </div>
 
@@ -256,19 +256,19 @@
             <div class="mb-3">
                 <label for="quick-product-tax-percentage" class="form-label">
                     Impuesto
-                    <small class="text-muted">(decimal, Ej: 0.13 = 13%)</small>
+                    <small class="text-muted">(decimal, Ej: 13 = 13%)</small>
                 </label>
-                <input type="number" step="0.01" min="0" max="1" class="form-control"
-                    id="quick-product-tax-percentage" name="tax_percentage" placeholder="Ej: 0.13" required>
+                <input type="number" step="1" min="0" max="100" class="form-control"
+                    id="quick-product-tax-percentage" name="tax_percentage" placeholder="Ej: 13" required>
                 <div class="invalid-feedback" id="quick-product-tax-percentage-error"></div>
             </div>
             <div class="mb-3">
                 <label for="quick-product-margin-percentage" class="form-label">
                     Margen de ganancia
-                    <small class="text-muted">(decimal, Ej: 0.35 = 35%)</small>
+                    <small class="text-muted">(decimal, Ej: 35 = 35%)</small>
                 </label>
-                <input type="number" step="0.01" min="0" max="1" class="form-control"
-                    id="quick-product-margin-percentage" name="margin_percentage" placeholder="Ej: 0.35" required>
+                <input type="number" step="1" min="0" max="100" class="form-control"
+                    id="quick-product-margin-percentage" name="margin_percentage" placeholder="Ej: 35" required>
                 <div class="invalid-feedback" id="quick-product-margin-percentage-error"></div>
             </div>
             <div class="mb-3">
