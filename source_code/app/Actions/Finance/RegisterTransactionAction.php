@@ -38,7 +38,7 @@ class RegisterTransactionAction
         $message = match ($payment->origin_type) {
             Sale::class => "Pago de venta #{$origin?->invoice_number}",
             Purchase::class => "Compra a proveedor: {$origin?->supplier?->name}",
-            Contract::class => ($isRefund ? "Devolución de contrato" : "Pago de contrato") . " - Cliente: {$origin?->client?->first_name} {$origin?->client?->last_name}",
+            Contract::class => ($isRefund ? 'Devolución de contrato' : 'Pago de contrato')." - Cliente: {$origin?->client?->first_name} {$origin?->client?->last_name}",
 
             // Hypothetically in the future:
             // Payroll::class  => "Pago de nómina - Colaborador: {$origin?->employee?->user?->name}",

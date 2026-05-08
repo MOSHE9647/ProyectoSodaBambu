@@ -40,15 +40,15 @@ test('can create contract with details and payment', function () {
                 'product_id' => $this->dish->id,
                 'meal_time' => MealTime::LUNCH->value,
                 'serve_date' => now()->format('Y-m-d'),
-            ]
+            ],
         ],
         'payment_details' => [
             [
                 'method' => PaymentMethod::CASH->value,
                 'amount' => 40000,
                 'change_amount' => 0,
-            ]
-        ]
+            ],
+        ],
     ];
 
     $response = $this->actingAs($this->admin)
@@ -67,11 +67,11 @@ test('fails if payment is insufficient', function () {
         'total_value' => 5000,
         'payment_status' => PaymentStatus::PAID->value,
         'contract_details' => [
-            ['product_id' => $this->dish->id, 'meal_time' => MealTime::LUNCH->value, 'serve_date' => now()->format('Y-m-d')]
+            ['product_id' => $this->dish->id, 'meal_time' => MealTime::LUNCH->value, 'serve_date' => now()->format('Y-m-d')],
         ],
         'payment_details' => [
-            ['method' => PaymentMethod::CASH->value, 'amount' => 2000, 'change_amount' => 0]
-        ]
+            ['method' => PaymentMethod::CASH->value, 'amount' => 2000, 'change_amount' => 0],
+        ],
     ];
 
     $this->actingAs($this->admin)
@@ -124,9 +124,9 @@ test('resolves uniqueness conflict with soft deleted records', function () {
                 'product_id' => $this->dish->id,
                 'meal_time' => MealTime::BREAKFAST->value,
                 'serve_date' => now()->startOfDay()->format('Y-m-d'),
-            ]
+            ],
         ],
-        'payment_details' => [] // Asumiendo que ya estaba pagado históricamente
+        'payment_details' => [], // Asumiendo que ya estaba pagado históricamente
     ];
 
     $this->actingAs($this->admin)
@@ -137,7 +137,7 @@ test('resolves uniqueness conflict with soft deleted records', function () {
     expect(ContractDetail::where('contract_id', $contract->id)->count())->toEqual(1);
     $this->assertDatabaseHas('contract_details', [
         'id' => $detail->id,
-        'deleted_at' => null
+        'deleted_at' => null,
     ]);
 });
 

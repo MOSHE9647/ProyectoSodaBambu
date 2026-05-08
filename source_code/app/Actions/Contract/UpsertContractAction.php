@@ -4,6 +4,8 @@ namespace App\Actions\Contract;
 
 use App\Actions\Finance\ProcessPaymentAction;
 use App\Actions\Finance\UpdatePaymentAction;
+use App\Enums\MealTime;
+use App\Enums\PaymentMethod;
 use App\Models\Contract;
 use App\Models\ContractDetail;
 use Illuminate\Support\Arr;
@@ -41,7 +43,7 @@ class UpsertContractAction
 
             // Procesar relaciones
             $this->handleContractDetails($contract, $contractDetailsData);
-            
+
             $this->processAutomaticRefundOrPayment($contract, $paymentDetailsData);
 
             return $contract;
@@ -70,11 +72,11 @@ class UpsertContractAction
 
             // Buscamos un detalle existente por ID o por la combinación única (incluyendo eliminados)
             // Esto evita el error de Duplicate Entry al intentar crear algo que ya existe en Soft Deletes.
-            $detail = $id 
+            $detail = $id
                 ? $contract->details()->withTrashed()->findOrFail($id)
                 : $contract->details()->withTrashed()
                     ->where('product_id', $cleanData['product_id'])
-                    ->where('meal_time', $cleanData['meal_time'] instanceof \App\Enums\MealTime ? $cleanData['meal_time']->value : $cleanData['meal_time'])
+                    ->where('meal_time', $cleanData['meal_time'] instanceof MealTime ? $cleanData['meal_time']->value : $cleanData['meal_time'])
                     ->whereDate('serve_date', $cleanData['serve_date'])
                     ->first();
 
@@ -99,8 +101,9 @@ class UpsertContractAction
         $pendingBalance = round($totalValue - $totalPaid, 2);
 
         // CASO 1: Hay pagos nuevos enviados desde el modal (Diferencia positiva)
-        if (!empty($paymentDetailsData)) {
+        if (! empty($paymentDetailsData)) {
             $this->handlePaymentDetails($contract, $paymentDetailsData);
+
             return;
         }
 
@@ -108,7 +111,7 @@ class UpsertContractAction
         if ($pendingBalance < 0) {
             $this->createPayment->execute($contract, [
                 'amount' => $pendingBalance, // Se envía negativo (ej: -5000)
-                'method' => \App\Enums\PaymentMethod::CASH->value, // Las devoluciones suelen ser en efectivo
+                'method' => PaymentMethod::CASH->value, // Las devoluciones suelen ser en efectivo
                 'change_amount' => 0,
                 'reference' => 'Devolución por ajuste de valor de contrato',
                 'date' => now(),

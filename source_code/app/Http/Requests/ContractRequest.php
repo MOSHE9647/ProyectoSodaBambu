@@ -244,17 +244,17 @@ class ContractRequest extends FormRequest
 
         // Intentamos obtener el contrato desde la ruta o el input de forma segura
         $contractParam = $this->route('contract') ?? $this->route('id') ?? $this->input('id');
-        
+
         $contract = null;
         if ($contractParam) {
-            $contract = ($contractParam instanceof Contract) 
-                ? $contractParam->loadMissing('payments') 
+            $contract = ($contractParam instanceof Contract)
+                ? $contractParam->loadMissing('payments')
                 : Contract::withTrashed()->with('payments')->find($contractParam);
         }
 
         $historicalPaidAmount = 0;
         if ($contract?->payments) {
-            $historicalPaidAmount = (float) round($contract->payments->sum(fn ($p) => (float)$p->amount - (float)$p->change_amount), 2);
+            $historicalPaidAmount = (float) round($contract->payments->sum(fn ($p) => (float) $p->amount - (float) $p->change_amount), 2);
         }
 
         $totalPaid = $historicalPaidAmount + $newPaidAmount;
