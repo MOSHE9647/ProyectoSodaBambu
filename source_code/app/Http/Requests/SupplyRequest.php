@@ -67,7 +67,7 @@ class SupplyRequest extends FormRequest
             'quantity.integer' => 'La cantidad debe ser un número entero.',
             'quantity.min' => 'La cantidad no puede ser menor a 0.',
             'unit_price.required' => 'El precio unitario es obligatorio.',
-            'unit_price.numeric' => 'El precio unitario debe ser un número válido.',
+            'unit_price.integer' => 'El precio unitario debe ser un número entero.',
             'unit_price.min' => 'El precio unitario no puede ser menor a 0.',
             // 'unit_price.regex' => 'El precio unitario debe tener máximo 2 decimales.',
             'expiration_date.date' => 'La fecha de vencimiento debe tener un formato válido.',

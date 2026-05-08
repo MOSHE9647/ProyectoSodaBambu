@@ -14,7 +14,7 @@ class DecimalFormat implements CastsAttributes
      */
     public function get(Model $model, string $key, mixed $value, array $attributes): string
     {
-        return number_format($value, 2, ',', ' ');
+        return number_format($value, 2, ',', '.');
     }
 
     /**
