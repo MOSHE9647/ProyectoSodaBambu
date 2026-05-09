@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Amp\Http\HttpStatus;
 use App\Models\Category;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response as HttpStatus;
 
 class OffcanvasFormController extends Controller
 {
@@ -39,7 +39,7 @@ class OffcanvasFormController extends Controller
             ]),
             default => response()->json([
                 'error' => 'Tipo de formulario no válido.',
-            ], HttpStatus::BAD_REQUEST),
+            ], HttpStatus::HTTP_BAD_REQUEST),
         };
     }
 }
