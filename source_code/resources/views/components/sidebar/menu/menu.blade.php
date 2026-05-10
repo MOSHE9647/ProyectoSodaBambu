@@ -177,7 +177,7 @@
 	};
 @endphp
 
-<div class="accordion vh-100" id="sidebar-accordion">
+<div class="accordion vh-100 overflow-auto" id="sidebar-accordion">
     <ul class="nav nav-pills flex-nowrap flex-column overflow-auto mb-auto gap-2">
         @foreach ($sidebarItems as $name => $item)
             @hasanyrole($item['role'])
