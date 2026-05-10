@@ -67,27 +67,10 @@ class SaleObserver implements ShouldHandleEventsAfterCommit
      */
     private function refreshSalesCache(): void
     {
-        // Force cache refresh by forgetting the previous key before executing the remember
+        // Force cache refresh by forgetting the previous key
         Cache::forget('today_sales_stats');
         Cache::forget('monthly_sales_stats');
         Cache::forget('daily_sales_stats');
         Cache::forget('top_selling_products');
-
-        // Get the latest sales stats and cache them for 10 minutes
-        Cache::remember('today_sales_stats', now()->addMinutes(10), function () {
-            return $this->calculateDailySalesTrendAction->execute();
-        });
-
-        Cache::remember('monthly_sales_stats', now()->addMinutes(10), function () {
-            return app(GetMonthlySalesDataAction::class)->execute();
-        });
-
-        Cache::remember('daily_sales_stats', now()->addMinutes(10), function () {
-            return app(GetDailySalesDataAction::class)->execute();
-        });
-
-        Cache::remember('top_selling_products', now()->addMinutes(10), function () {
-            return app(GetTopSellingProductsAction::class)->execute();
-        });
     }
 }

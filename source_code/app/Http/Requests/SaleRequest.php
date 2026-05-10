@@ -302,24 +302,31 @@ class SaleRequest extends FormRequest
      */
     private function validateProductStockAvailabity(Validator $validator): void
     {
-        foreach ($this->input('sale_details', []) as $index => $detail) {
+        $details = $this->input('sale_details', []);
+
+        // Get unique product IDs and detail IDs from the request to minimize database queries
+        $productIds = collect($details)->pluck('product_id')->filter();
+        $detailIds = collect($details)->pluck('id')->filter();
+
+        // Make only 2 database queries: one for products with stock, and one for existing sale details (if updating)
+        $products = Product::with('stock')->whereIn('id', $productIds)->get()->keyBy('id');
+        $existingDetails = SaleDetail::whereIn('id', $detailIds)->get()->keyBy('id');
+
+        foreach ($details as $index => $detail) {
             $productId = $detail['product_id'] ?? null;
             $requestedQty = (int) ($detail['quantity'] ?? 0);
 
-            if (! $productId || $requestedQty <= 0) {
+            if (!$productId || $requestedQty <= 0)
                 continue;
-            }
 
-            $product = Product::with('stock')->find($productId);
+            // Search in memory not in the database to avoid multiple queries in case of duplicate product IDs
+            $product = $products->get($productId);
 
-            // Only validates if product has inventory tracking enabled
             if ($product?->has_inventory) {
-                $currentStock = $product->stock?->current_stock ?? 0;
-                $availableStock = $currentStock;
+                $availableStock = $product->stock?->current_stock ?? 0;
 
-                // If this is an update (detail has ID), we need to add back the existing quantity to the available stock
                 if (isset($detail['id'])) {
-                    $existingDetail = SaleDetail::find($detail['id']);
+                    $existingDetail = $existingDetails->get($detail['id']);
                     if ($existingDetail && $existingDetail->product_id == $productId) {
                         $availableStock += $existingDetail->quantity;
                     }
