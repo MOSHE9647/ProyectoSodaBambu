@@ -20,7 +20,7 @@ class ProductController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware(RoleMiddleware::using(UserRole::ADMIN->value . '|' . UserRole::EMPLOYEE->value)),
+            new Middleware(RoleMiddleware::using(UserRole::ADMIN->value.'|'.UserRole::EMPLOYEE->value)),
             new Middleware(RoleMiddleware::using(UserRole::ADMIN->value), only: ['edit', 'update', 'destroy']),
         ];
     }
@@ -35,21 +35,21 @@ class ProductController extends Controller implements HasMiddleware
                 ->withStockDetails()
                 ->leftJoin('product_stocks as ps', 'ps.product_id', '=', 'products.id')
                 ->addSelect('products.*', 'ps.current_stock', 'ps.minimum_stock')
-                ->when($request->boolean('low_stock') || $filter === 'low_stock', fn($q) => $q->lowStock())
-                ->when($request->boolean('expiring_soon') || $filter === 'expiring_soon', fn($q) => $q->expiringSoon());
+                ->when($request->boolean('low_stock') || $filter === 'low_stock', fn ($q) => $q->lowStock())
+                ->when($request->boolean('expiring_soon') || $filter === 'expiring_soon', fn ($q) => $q->expiringSoon());
 
             return DataTables::of($query)
-                ->filterColumn('current_stock', fn($q, $keyword) => $q->whereRaw('CAST(ps.current_stock AS TEXT) LIKE ?', ["%{$keyword}%"]))
-                ->filterColumn('minimum_stock', fn($q, $keyword) => $q->whereRaw('CAST(ps.minimum_stock AS TEXT) LIKE ?', ["%{$keyword}%"]))
+                ->filterColumn('current_stock', fn ($q, $keyword) => $q->whereRaw('CAST(ps.current_stock AS TEXT) LIKE ?', ["%{$keyword}%"]))
+                ->filterColumn('minimum_stock', fn ($q, $keyword) => $q->whereRaw('CAST(ps.minimum_stock AS TEXT) LIKE ?', ["%{$keyword}%"]))
                 ->orderColumn('current_stock', 'ps.current_stock $1')
                 ->orderColumn('minimum_stock', 'ps.minimum_stock $1')
-                ->addColumn('expiration_days', fn(Product $product) => $product->expiration_label)
+                ->addColumn('expiration_days', fn (Product $product) => $product->expiration_label)
                 ->toJson();
         }
 
         $lowStockProducts = ProductStock::query()
             ->with(['product:id,name,barcode,has_inventory'])
-            ->whereHas('product', fn($q) => $q->where('has_inventory', true))
+            ->whereHas('product', fn ($q) => $q->where('has_inventory', true))
             ->lowStock()
             ->orderByRaw('(minimum_stock - current_stock) DESC')
             ->limit(5)

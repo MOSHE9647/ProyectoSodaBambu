@@ -6,7 +6,6 @@ use App\Enums\PaymentStatus;
 use App\Enums\ProductType;
 use App\Models\SaleDetail;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class GetTopSellingProductsAction
 {

@@ -10,6 +10,7 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 class BuildSalesReportSpreadsheetAction
 {
     private const CURRENCY_FORMAT = '"₡" #,##0';
+
     private const PERCENT_FORMAT = '0.00"%"';
 
     /**
@@ -17,7 +18,7 @@ class BuildSalesReportSpreadsheetAction
      */
     public function execute(array $reportData): Spreadsheet
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $activeSection = $reportData['activeSection'] ?? 'sales';
 
@@ -133,7 +134,7 @@ class BuildSalesReportSpreadsheetAction
     {
         // Estilo de metadatos y encabezados
         $sheet->getStyle('A1:'.$lastColLetter.'6')->getFont()->setBold(true);
-        
+
         $sheet->getStyle('A7:'.$lastColLetter.'7')->getFont()->setBold(true);
         $sheet->getStyle('A7:'.$lastColLetter.'7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle('A7:'.$lastColLetter.'7')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFD9EAD3');

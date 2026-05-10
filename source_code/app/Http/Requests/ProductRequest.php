@@ -49,10 +49,10 @@ class ProductRequest extends FormRequest
             'barcode' => blank($this->input('barcode')) ? null : trim((string) $this->input('barcode')),
             'reference_cost' => blank($this->input('reference_cost')) ? null : $this->input('reference_cost'),
             'sale_price' => blank($this->input('sale_price')) ? ($requiresManualSalePrice ? '' : null) : $this->input('sale_price'),
-            'expiration_date' => $isMerchandise && !blank($this->input('expiration_date')) ? $this->input('expiration_date') : null,
-            'expiration_alert_days' => $isMerchandise && !blank($this->input('expiration_alert_days')) ? $this->input('expiration_alert_days') : null,
-            'tax_percentage' => $isMerchandise && !blank($this->input('tax_percentage')) ? $this->input('tax_percentage') : null,
-            'margin_percentage' => $isMerchandise && !blank($marginInput) ? $marginInput : null,
+            'expiration_date' => $isMerchandise && ! blank($this->input('expiration_date')) ? $this->input('expiration_date') : null,
+            'expiration_alert_days' => $isMerchandise && ! blank($this->input('expiration_alert_days')) ? $this->input('expiration_alert_days') : null,
+            'tax_percentage' => $isMerchandise && ! blank($this->input('tax_percentage')) ? $this->input('tax_percentage') : null,
+            'margin_percentage' => $isMerchandise && ! blank($marginInput) ? $marginInput : null,
             'current_stock' => blank($this->input('current_stock')) ? null : $this->input('current_stock'),
             'minimum_stock' => blank($this->input('minimum_stock')) ? null : $this->input('minimum_stock'),
         ]);
@@ -164,7 +164,7 @@ class ProductRequest extends FormRequest
             $salePrice = $this->input('sale_price');
 
             // Ensure sale price is greater than reference cost
-            if (!blank($referenceCost) && !blank($salePrice)) {
+            if (! blank($referenceCost) && ! blank($salePrice)) {
                 if ((int) $salePrice <= (int) $referenceCost) {
                     $validator->errors()->add('sale_price', 'El precio de venta debe ser mayor al costo de referencia.');
                 }

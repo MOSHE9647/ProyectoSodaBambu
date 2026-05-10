@@ -88,7 +88,7 @@ class Product extends Model
     {
         return Attribute::make(
             get: function () {
-                if (!$this->expiration_date) {
+                if (! $this->expiration_date) {
                     return 'N/A';
                 }
 
@@ -149,9 +149,9 @@ class Product extends Model
     /**
      * Calculate the suggested sale price based on cost, taxes, and profit margin.
      *
-     * @param float $referenceCost The base cost of the product.
-     * @param float $taxPercentage The tax percentage to apply (e.g., 13).
-     * @param float $marginPercentage The desired profit margin percentage (e.g., 35).
+     * @param  float  $referenceCost  The base cost of the product.
+     * @param  float  $taxPercentage  The tax percentage to apply (e.g., 13).
+     * @param  float  $marginPercentage  The desired profit margin percentage (e.g., 35).
      * @return float The calculated sale price rounded to the nearest multiple of 5.
      */
     public static function calculateSalePrice(float $referenceCost, float $taxPercentage, float $marginPercentage): float
@@ -165,7 +165,8 @@ class Product extends Model
 
     /**
      * Scope for eager loading stock details (current_stock and minimum_stock) in a single query.
-     * @param Builder $query The Eloquent query builder instance.
+     *
+     * @param  Builder  $query  The Eloquent query builder instance.
      * @return Builder The modified query builder with stock details added to the select statement.
      */
     public function scopeWithStockDetails(Builder $query): Builder
@@ -185,7 +186,7 @@ class Product extends Model
      * Only products that track inventory (has_inventory = true) are considered.
      * A product is considered low stock if its current_stock is less than or equal to its minimum_stock.
      *
-     * @param Builder $query The Eloquent query builder instance.
+     * @param  Builder  $query  The Eloquent query builder instance.
      * @return Builder The modified query builder with the low stock filter applied.
      */
     public function scopeLowStock(Builder $query): Builder
@@ -202,7 +203,8 @@ class Product extends Model
      * - It has a non-null expiration_alert_date.
      * - The expiration_date is today or in the future.
      * - The expiration_alert_date is today or in the past.
-     * @param Builder $query The Eloquent query builder instance.
+     *
+     * @param  Builder  $query  The Eloquent query builder instance.
      * @return Builder The modified query builder with the expiring soon filter applied.
      */
     public function scopeExpiringSoon(Builder $query): Builder

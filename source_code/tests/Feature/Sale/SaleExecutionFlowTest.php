@@ -54,7 +54,7 @@ function assertSaleMathIntegrity(Sale $sale): void
         ->sum('amount');
     $paymentsTotal = (float) $sale->payments()
         ->get()
-        ->sum(fn($p) => $p->amount - $p->change_amount);
+        ->sum(fn ($p) => $p->amount - $p->change_amount);
 
     $transactionsTotal = (float) Transaction::query()
         ->whereIn('payment_id', function ($query) use ($sale) {
