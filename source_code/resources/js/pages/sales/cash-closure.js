@@ -1,4 +1,4 @@
-import { SwalModal, SwalToast, SwalNotificationTypes } from "../../utils/sweetalert.js";
+import { SwalModal, SwalToast, SwalNotificationTypes, SwalConfirmation } from "../../utils/sweetalert.js";
 
 const getTheme = () => document.documentElement.getAttribute('data-bs-theme') || 'light';
 
@@ -568,12 +568,15 @@ const saveClosure = async (registerId, payload) => {
         const result = await response.json();
         if (!response.ok) throw new Error(result.message || "Error al procesar el cierre.");
 
-        SwalModal.fire({
+        SwalConfirmation.fire({
             icon: SwalNotificationTypes.SUCCESS,
             title: 'Caja Cerrada',
             text: 'El reporte de cierre ha sido generado correctamente.',
             confirmButtonText: 'Aceptar',
-        }).then(() => window.location.reload());
+        }).then(() => {
+            window.dispatchEvent(new CustomEvent("cash-register-closed"));
+            window.location.reload();
+        });
     } catch (error) {
         SwalModal.fire({
             icon: SwalNotificationTypes.ERROR,

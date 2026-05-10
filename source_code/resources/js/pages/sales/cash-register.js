@@ -181,17 +181,46 @@ const showOpeningCashModal = async () => {
 			const initialAmount = result.value;
 			saveInitialCashRegisterAmount(initialAmount);
 
+			updateTabProtection(true); // Mark the register as open to protect the tab
+
 			const $menuItem = $('#cash-closure-menu-item');
     		$menuItem.removeClass('d-none').addClass('d-block').attr('data-is-active', 'true');
     	}
 	});
 };
 
-export function initializeCashRegister() {
+// Variable de estado local en el módulo
+let isRegisterOpen = false;
 
-    const showOpeningCashModalElement = $("#show-opening-cash-modal");
-	if (showOpeningCashModalElement.length && showOpeningCashModalElement.data("show-modal")) {
-		showOpeningCashModal();
+/**
+ * Actualiza el estado de protección de la pestaña
+ */
+const updateTabProtection = (isOpen) => {
+    isRegisterOpen = isOpen;
+};
+
+export function initializeCashRegister() {
+	const showOpeningCashModalElement = $("#show-opening-cash-modal");
+
+	if (showOpeningCashModalElement.length > 0) {
+		const shouldShowModal = showOpeningCashModalElement.data("show-modal");
+
+		updateTabProtection(!shouldShowModal);
+
+		if (shouldShowModal) {
+			showOpeningCashModal();
+		}
 	}
-    
+	
+	// Tab protection: Alert the user if they try to close or navigate away while the cash register is open
+	window.addEventListener("beforeunload", (event) => {
+		if (isRegisterOpen) {
+			event.preventDefault();
+			event.returnValue = "";
+		}
+	});
+
+	window.addEventListener("cash-register-closed", () => {
+		updateTabProtection(false);
+	});
 }
