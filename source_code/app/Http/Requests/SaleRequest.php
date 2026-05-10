@@ -51,9 +51,9 @@ class SaleRequest extends FormRequest
             'sale_details.*.id' => ['sometimes', 'integer', 'exists:sale_details,id'],
             'sale_details.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'sale_details.*.quantity' => ['required', 'integer', 'min:1'],
-            'sale_details.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'sale_details.*.unit_price' => ['required', 'numeric', 'regex:/^\d+(\.\d{1,2})?$/', 'min:0'],
             'sale_details.*.applied_tax' => ['required', 'integer', 'between:0,100'],
-            'sale_details.*.sub_total' => ['required', 'numeric', 'min:0'],
+            'sale_details.*.sub_total' => ['required', 'numeric', 'regex:/^\d+(\.\d{1,2})?$/', 'min:0'],
 
             // Payment fields (optional, but if present must be valid)
             'payment_details' => ['sometimes', 'array'],
@@ -105,6 +105,7 @@ class SaleRequest extends FormRequest
 
             'sale_details.*.unit_price.required' => 'El precio unitario es obligatorio en cada detalle.',
             'sale_details.*.unit_price.numeric' => 'El precio unitario debe ser un número positivo.',
+            'sale_details.*.unit_price.regex' => 'El precio unitario debe tener como máximo 2 decimales.',
             'sale_details.*.unit_price.min' => 'El precio unitario no puede ser negativo.',
 
             'sale_details.*.applied_tax.required' => 'El impuesto aplicado es obligatorio en cada detalle.',
@@ -113,6 +114,7 @@ class SaleRequest extends FormRequest
 
             'sale_details.*.sub_total.required' => 'El subtotal es obligatorio en cada detalle.',
             'sale_details.*.sub_total.numeric' => 'El subtotal debe ser un número positivo.',
+            'sale_details.*.sub_total.regex' => 'El subtotal debe tener como máximo 2 decimales.',
             'sale_details.*.sub_total.min' => 'El subtotal no puede ser negativo.',
 
             'payment_details.array' => 'Los detalles de pago deben ser un arreglo.',

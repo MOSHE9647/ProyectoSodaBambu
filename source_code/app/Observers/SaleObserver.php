@@ -64,8 +64,14 @@ class SaleObserver implements ShouldHandleEventsAfterCommit
      */
     private function refreshSalesCache(): void
     {
-        // Force cache refresh by forgetting the previous key
-        Cache::forget('today_sales_stats');
+        // Recompute and store the today's sales stats so tests and dashboard remain consistent
+        try {
+            $todayStats = $this->calculateDailySalesTrendAction->execute();
+            Cache::put('today_sales_stats', $todayStats, now()->addMinutes(10));
+        } catch (\Throwable $e) {
+            // If the calculation fails for any reason, fall back to forgetting the key
+            Cache::forget('today_sales_stats');
+        }
         Cache::forget('monthly_sales_stats');
         Cache::forget('daily_sales_stats');
         Cache::forget('top_selling_products');
