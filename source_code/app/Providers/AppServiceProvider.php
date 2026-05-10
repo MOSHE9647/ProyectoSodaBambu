@@ -70,5 +70,7 @@ class AppServiceProvider extends ServiceProvider
 					})();
 				</script>
 			HTML);
+
+        Blade::directive('crc', fn($expression) => "<?php echo '₡ ' . number_format(round(($expression ?? 0) / 5) * 5, 0, '.', ' '); ?>");
     }
 }

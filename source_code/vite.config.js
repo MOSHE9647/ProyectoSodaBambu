@@ -15,4 +15,7 @@ export default defineConfig({
 			refresh: true,
 		}),
 	],
+	build: {
+		sourcemap: true, // Enable source maps for easier debugging
+	}
 });

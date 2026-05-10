@@ -36,7 +36,7 @@ test('CP-01_EIF-33 - integrates product creation with sale price calculation', f
     $product = Product::where('barcode', '7501234567001')->firstOrFail();
 
     expect($product->name)->toBe('Producto de integración EIF-33')
-        ->and((float) $product->sale_price)->toBe(2288.0)
+        ->and((float) $product->sale_price)->toBe(2290.0)
         ->and((float) $product->tax_percentage)->toBe(13.0)
         ->and((float) $product->margin_percentage)->toBe(35.0);
 

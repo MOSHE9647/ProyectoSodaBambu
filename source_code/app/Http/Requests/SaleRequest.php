@@ -16,7 +16,7 @@ use Illuminate\Validation\Validator;
 use function in_array;
 use function strlen;
 
-class SaleStoreRequest extends FormRequest
+class SaleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -51,9 +51,9 @@ class SaleStoreRequest extends FormRequest
             'sale_details.*.id' => ['sometimes', 'integer', 'exists:sale_details,id'],
             'sale_details.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'sale_details.*.quantity' => ['required', 'integer', 'min:1'],
-            'sale_details.*.unit_price' => ['required', 'integer', 'min:0'],
+            'sale_details.*.unit_price' => ['required', 'decimal:2', 'min:0'],
             'sale_details.*.applied_tax' => ['required', 'integer', 'between:0,100'],
-            'sale_details.*.sub_total' => ['required', 'integer', 'min:0'],
+            'sale_details.*.sub_total' => ['required', 'decimal:2', 'min:0'],
 
             // Payment fields (optional, but if present must be valid)
             'payment_details' => ['sometimes', 'array'],
@@ -104,7 +104,7 @@ class SaleStoreRequest extends FormRequest
             'sale_details.*.quantity.min' => 'La cantidad debe ser al menos 1.',
 
             'sale_details.*.unit_price.required' => 'El precio unitario es obligatorio en cada detalle.',
-            'sale_details.*.unit_price.integer' => 'El precio unitario debe ser un número entero.',
+            'sale_details.*.unit_price.decimal' => 'El precio unitario debe ser un número decimal con hasta 2 decimales.',
             'sale_details.*.unit_price.min' => 'El precio unitario no puede ser negativo.',
 
             'sale_details.*.applied_tax.required' => 'El impuesto aplicado es obligatorio en cada detalle.',
@@ -112,7 +112,7 @@ class SaleStoreRequest extends FormRequest
             'sale_details.*.applied_tax.between' => 'El impuesto aplicado debe estar entre 0 y 100.',
 
             'sale_details.*.sub_total.required' => 'El subtotal es obligatorio en cada detalle.',
-            'sale_details.*.sub_total.integer' => 'El subtotal debe ser un número entero.',
+            'sale_details.*.sub_total.decimal' => 'El subtotal debe ser un número decimal con hasta 2 decimales.',
             'sale_details.*.sub_total.min' => 'El subtotal no puede ser negativo.',
 
             'payment_details.array' => 'Los detalles de pago deben ser un arreglo.',
@@ -150,8 +150,8 @@ class SaleStoreRequest extends FormRequest
      * Validates that the sale total matches the sum of all sale details.
      *
      * This method ensures data integrity by comparing the provided total against
-     * the calculated sum of all individual sale detail sub-totals. Both values are
-     * compared as integer currency values.
+     * the calculated sum of all individual sale detail sub-totals, applying
+     * the Costa Rican currency rounding rule (nearest multiple of 5).
      *
      * @param  Validator  $validator  The validator instance to add errors to
      *
@@ -159,12 +159,21 @@ class SaleStoreRequest extends FormRequest
      */
     private function validateTotalMatchesDetails(Validator $validator): void
     {
-        $total = (int) $this->input('total', 0);
-        $detailsTotalWithTax = collect($this->input('sale_details', []))
-            ->sum(fn ($d) => (int) ($d['sub_total'] ?? 0) + (int) round((int) ($d['sub_total'] ?? 0) * ((float) ($d['applied_tax'] ?? 0) / 100)));
+        $totalFromFrontend = (int) $this->input('total', 0);
+        $saleDetails = collect($this->input('sale_details', []));
 
-        if ($total !== $detailsTotalWithTax) {
-            $validator->errors()->add('total', "El total ($total) no coincide con la suma de los productos ($detailsTotalWithTax).");
+        $exactDetailsTotal = $saleDetails->sum(function ($detail) {
+            $subTotalBase = (float) ($detail['sub_total'] ?? 0);
+            $taxRate = (float) ($detail['applied_tax'] ?? 0) / 100;
+
+            return $subTotalBase * (1 + $taxRate);
+        });
+
+        // Redondeamos el gran total exacto al múltiplo de 5 (igual que en JS)
+        $roundedCalculatedTotal = (int) (round($exactDetailsTotal / 5) * 5);
+
+        if ($totalFromFrontend !== $roundedCalculatedTotal) {
+            $validator->errors()->add('total', "El total (₡ $totalFromFrontend) no coincide con la suma calculada de los productos (₡ $roundedCalculatedTotal).");
         }
     }
 
@@ -200,7 +209,9 @@ class SaleStoreRequest extends FormRequest
             if ($payments->isEmpty()) {
                 $validator->errors()->add('payment_details', 'Debe registrar al menos un pago para marcar la venta como Completa.');
             } elseif ($paidAmount < $total) {
-                $validator->errors()->add('payment_details', "Monto insuficiente para completar la venta (Pagado: $paidAmount, Total: $total).");
+                $totalFormatted = format_crc($total);
+                $paidAmountFormatted = format_crc($paidAmount);
+                $validator->errors()->add('payment_details', "Monto insuficiente para completar la venta (Pagado: $paidAmountFormatted, Total: $totalFormatted).");
             }
         }
 

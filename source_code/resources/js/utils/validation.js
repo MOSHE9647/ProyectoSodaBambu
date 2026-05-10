@@ -157,6 +157,15 @@ export function validateAndDisplayField(fieldValidators, values, showFieldError,
 }
 
 /**
+ * Validates if the provided value is an integer multiple of 5.
+ * @param {string|number} val - The value to validate.
+ * @returns {boolean} - Returns true if the value is an integer and a multiple of 5, false otherwise.
+ */
+export const validateMultipleOf5 = (val) => {
+	return Number.isInteger(Number(val)) && Number(val) % 5 === 0;
+};
+
+/**
  * Retrieves the field and its associated error element based on the field ID.
  * @param fieldId
  * @returns {{field: *|jQuery|HTMLElement, errorElement: *|jQuery|[]}}

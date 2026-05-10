@@ -376,10 +376,11 @@
                 <input
                     id="payment-amount-input"
                     class="form-control"
-                    type="text"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    value="{{ number_format($paymentTotal, 0, '.', '') }}"
+                    type="number"
+                    placeholder="Ingrese el monto recibido"
+                    min="0"
+                    step="1"
+                    value="{{ format_crc($paymentTotal, false) }}"
                 >
                 <button id="clear-payment-amount-button" type="button" class="btn btn-outline-secondary btn-clear-amount">Limpiar</button>
             </div>
@@ -430,19 +431,19 @@
             <div class="payment-totals small">
                 <div class="d-flex justify-content-between mb-1">
                     <span>Total Factura:</span>
-                    <span id="payment-total" class="fw-semibold">₡ {{ number_format($paymentTotal, 0, ',', ' ') }}</span>
+                    <span id="payment-total" class="fw-semibold">{{ format_crc($paymentTotal) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-1">
                     <span>Total Pagado:</span>
-                    <span id="payment-paid" class="fw-semibold">₡ 0</span>
+                    <span id="payment-paid" class="fw-semibold">{{ format_crc(0) }}</span>
                 </div>
                 <div class="d-flex justify-content-between">
                     <span>Restante:</span>
-                    <span id="payment-remaining" class="fw-bold">₡ {{ number_format($paymentTotal, 0, ',', ' ') }}</span>
+                    <span id="payment-remaining" class="fw-bold">{{ format_crc($paymentTotal) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mt-1">
                     <span>Vuelto:</span>
-                    <span id="payment-change" class="fw-semibold text-success">₡ 0</span>
+                    <span id="payment-change" class="fw-semibold text-success">{{ format_crc(0) }}</span>
                 </div>
             </div>
 

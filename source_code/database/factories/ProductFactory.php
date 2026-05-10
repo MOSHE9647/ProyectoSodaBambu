@@ -19,8 +19,8 @@ class ProductFactory extends Factory
      */
     public function definition(): array
     {
-        $referenceCost = $this->faker->numberBetween(500, 12000);
-        $marginPercentage = $this->faker->numberBetween(20, 60);
+        $referenceCost = $this->faker->numberBetween(1, 400) * 5; // Random cost between 5 and 2000
+        $marginPercentage = $this->faker->numberBetween(1, 35); // Random margin between 1% and 35%
         $taxPercentage = 13; // 13% tax
 
         return [

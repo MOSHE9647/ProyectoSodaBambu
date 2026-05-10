@@ -1,9 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-    @include('models.products.form', [
+    @include('models.products._form', [
         'action' => route('products.store'),
         'product' => null,
-        'productStock' => $productStock ?? null,
     ])
 @endsection

@@ -96,7 +96,13 @@ const normalizeReceiptData = (raw) => {
 
 export const buildReceiptHtml = ({ data, paymentDetails, totalTendered, changeAmount }) => {
 	const info = normalizeReceiptData(data);
-	const dateStr = new Date(info.date).toLocaleString("es-CR");
+	const dateStr = new Date(info.date).toLocaleString("es-CR", {
+		day: "2-digit",
+		month: "short",
+		year: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
 
 	const itemsHtml = info.items.map(i => `
 		<div class="receipt-item">

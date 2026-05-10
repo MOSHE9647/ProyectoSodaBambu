@@ -53,11 +53,11 @@ class CategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return RedirectResponse
+     * @return JsonResponse|RedirectResponse
      *
      * @throws Throwable
      */
-    public function store(CategoryRequest $request)
+    public function store(CategoryRequest $request): JsonResponse|RedirectResponse
     {
         $categoryData = $request->validated();
 

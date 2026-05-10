@@ -1,9 +1,10 @@
 import { showModelInfo, deleteModel } from "../actions.js";
 import { CreateNewDataTable } from "../../utils/datatables.js";
-import { capitalizeSentence, toggleLoadingState } from "../../utils/utils.js";
+import { capitalizeSentence, toggleLoadingState, formatCurrency } from "../../utils/utils.js";
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 // ==================== Constants ====================
+
 const MODEL_NAME = "producto";
 const BTN_CLASS_PRIMARY = "btn-primary";
 
@@ -22,14 +23,8 @@ const PRODUCT_TYPE_LABELS = {
 	packaged: "Empaquetado",
 };
 
-const CURRENCY_FORMATTER = new Intl.NumberFormat("es-CR", {
-	style: "currency",
-	currency: "CRC",
-	minimumFractionDigits: 0,
-	maximumFractionDigits: 0,
-});
-
 // ==================== State Management ====================
+
 // Centralized state object to manage filters and DataTable instance.
 const urlParams = new URLSearchParams(window.location.search);
 const State = {
@@ -44,17 +39,15 @@ const State = {
 };
 
 // ==================== Global Exports ====================
+
 window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
 
 // ==================== Formatters ====================
+
 const formatProductType = (type) => PRODUCT_TYPE_LABELS[type] || type || "N/A";
 const formatStockValue = (value) => value ?? "N/A";
-const formatCurrency = (value) => {
-	const amount = Number.parseFloat(value);
-	return CURRENCY_FORMATTER.format(Number.isNaN(amount) ? 0 : amount);
-};
 
 function formatCurrentStock(currentValue, minimumValue) {
 	if (currentValue == null || minimumValue == null) return "N/A";
@@ -70,6 +63,7 @@ function formatCurrentStock(currentValue, minimumValue) {
 }
 
 // ==================== Filter Logic ====================
+
 function setFilter(filterType) {
 	// If the same filter is clicked again, it toggles off (sets to null), otherwise it sets the new filter
 	State.filter = State.filter === filterType ? null : filterType;
@@ -95,7 +89,7 @@ function updateFilterUI() {
 	const isLowStock = State.filter === "low_stock";
 	const isExpiring = State.filter === "expiring_soon";
 
-	// Using .html() to prevent losing the icons (<tr>) defined by datatables.js
+	// Using jQuery strictly for DOM Class and HTML manipulation
 	$(".low-stock-filter-button")
 		.toggleClass("btn-warning", isLowStock)
 		.toggleClass("btn-outline-warning", !isLowStock);
@@ -130,6 +124,7 @@ window.showProduct = (url, anchor) => showModelInfo(url, anchor, MODEL_NAME);
 window.deleteProduct = (e) => deleteModel(e, MODEL_NAME);
 
 // ==================== DataTable Initialization ====================
+
 $(() => {
 	const columns = [
 		{
@@ -161,7 +156,12 @@ $(() => {
 			className: "dt-left",
 			render: formatStockValue,
 		},
-		{ data: "sale_price", name: "sale_price", render: formatCurrency },
+		{ 
+            data: "sale_price", 
+            name: "sale_price", 
+            // Utilizamos la función global que garantiza el redondeo a 5 y el formato "₡ 5 000"
+            render: (data) => formatCurrency(data) 
+        },
 		{
 			data: "expiration_days",
 			name: "expiration_date",

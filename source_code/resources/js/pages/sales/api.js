@@ -1,9 +1,8 @@
-import { setLoadingState } from "../../utils/utils.js";
+import { formatCurrency, setLoadingState } from "../../utils/utils.js";
 import {
 	getActiveSaleData,
 	clearActiveCart,
 	syncFinalizeSaleButtonState,
-	formatCurrency,
 } from "./cart.js";
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 import { createSinpeMovilIcon } from "../../utils/sinpemovil-icon.js";

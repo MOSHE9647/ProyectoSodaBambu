@@ -22,26 +22,23 @@ class GetTopSellingProductsAction
             ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
             ->join('products', 'sale_details.product_id', '=', 'products.id')
             ->where('sales.payment_status', PaymentStatus::PAID)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('products.deleted_at')
             // Filter by product type: food and drinks
-            ->WhereIn('products.type', [
-                ProductType::DISH->value,
-                ProductType::DRINK->value,
-            ])
-            ->select(
-                'products.name as product_name',
-                DB::raw('SUM(sale_details.quantity) as total_volume'),
-                DB::raw('SUM(sale_details.sub_total) as total_revenue')
-            )
+            ->whereIn('products.type', [ProductType::DISH, ProductType::DRINK])
+            ->selectRaw('
+                products.name,
+                SUM(sale_details.quantity) as volume,
+                SUM(sale_details.sub_total) as revenue
+            ')
             ->groupBy('products.id', 'products.name')
-            ->orderByDesc('total_volume')
+            ->orderByDesc('volume')
             ->limit($limit)
             ->get()
-            ->map(function ($item) {
-                return [
-                    'name' => $item->product_name,
-                    'volume' => (float) $item->total_volume,
-                    'revenue' => (float) $item->total_revenue,
-                ];
-            });
+            ->map(fn ($item) => [
+                'name' => $item->name,
+                'volume' => (int) $item->volume,
+                'revenue' => (int) $item->revenue,
+            ]);
     }
 }

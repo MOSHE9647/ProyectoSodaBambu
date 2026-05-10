@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Enums\ProductType;
+use Carbon\Carbon;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,9 +30,10 @@ class Product extends Model
         'barcode',
         'name',
         'type',
-        'expiration_date',
-        'expiration_alert_days',
         'has_inventory',
+        'expiration_date',
+        'expiration_alert_date',
+        'expiration_alert_days',
         'reference_cost',
         'tax_percentage',
         'margin_percentage',
@@ -45,6 +48,7 @@ class Product extends Model
     protected $casts = [
         'has_inventory' => 'boolean',
         'expiration_date' => 'date',
+        'expiration_alert_date' => 'date',
         'expiration_alert_days' => 'integer',
         'reference_cost' => 'integer',
         'tax_percentage' => 'integer',
@@ -52,6 +56,55 @@ class Product extends Model
         'sale_price' => 'integer',
         'type' => ProductType::class,
     ];
+
+    /**
+     * Boot the model to hook into lifecycle events.
+     */
+    protected static function booted(): void
+    {
+        // Intercepts the saving event to calculate the expiration alert date based on the expiration date and alert days.
+        static::saving(function (Product $product) {
+            $product->expiration_alert_date =
+                ($product->expiration_date && $product->expiration_alert_days !== null)
+                ? Carbon::parse($product->expiration_date)
+                    ->subDays($product->expiration_alert_days)
+                    ->toDateString()
+                : null;
+        });
+    }
+
+    /**
+     * Get a human-readable label for the product's expiration status.
+     *
+     * Returns:
+     * - 'N/A' if the product does not have an expiration date.
+     * - 'Expired' if the expiration date is in the past.
+     * - 'Today' if the expiration date is today.
+     * - '{n} day(s)' if the expiration date is in the future.
+     *
+     * @return Attribute<string, never>
+     */
+    protected function expirationLabel(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if (!$this->expiration_date) {
+                    return 'N/A';
+                }
+
+                $expirationDate = Carbon::parse($this->expiration_date)->startOfDay();
+                $daysRemaining = (int) now()->startOfDay()->diffInDays($expirationDate, false);
+
+                if ($daysRemaining < 0) {
+                    return 'Vencido';
+                } elseif ($daysRemaining === 0) {
+                    return 'Hoy';
+                }
+
+                return "{$daysRemaining} día(s)";
+            }
+        );
+    }
 
     /**
      * Get the category that owns the product.
@@ -94,72 +147,70 @@ class Product extends Model
     }
 
     /**
-     * Calculate sale price using tax and margin percentages in decimal format.
+     * Calculate the suggested sale price based on cost, taxes, and profit margin.
+     *
+     * @param float $referenceCost The base cost of the product.
+     * @param float $taxPercentage The tax percentage to apply (e.g., 13).
+     * @param float $marginPercentage The desired profit margin percentage (e.g., 35).
+     * @return float The calculated sale price rounded to the nearest multiple of 5.
      */
-    public static function calculateSalePrice(int $referenceCost, int $taxPercentage, int $marginPercentage): int
+    public static function calculateSalePrice(float $referenceCost, float $taxPercentage, float $marginPercentage): float
     {
-        // Convertimos los porcentajes enteros a factor decimal para el cálculo interno
-        $taxFactor = $taxPercentage / 100;
-        $marginFactor = $marginPercentage / 100;
+        $basePrice = $referenceCost + $referenceCost * ($taxPercentage / 100);
+        $salePrice = $basePrice + $basePrice * ($marginPercentage / 100);
 
-        $basePrice = $referenceCost + ($referenceCost * $taxFactor);
-        $salePrice = $basePrice + ($basePrice * $marginFactor);
-
-        // Retornamos un entero redondeado (Eliminamos los decimales por completo)
-        return (int) round($salePrice);
+        // Round to nearest multiple of 5
+        return round($salePrice / 5) * 5;
     }
 
     /**
-     * Scope para unir la información de stock.
-     * (Este query ya es 100% agnóstico ya que solo usa joins y selects estándar)
+     * Scope for eager loading stock details (current_stock and minimum_stock) in a single query.
+     * @param Builder $query The Eloquent query builder instance.
+     * @return Builder The modified query builder with stock details added to the select statement.
      */
     public function scopeWithStockDetails(Builder $query): Builder
     {
-        return $query->leftJoin('product_stocks as ps', function ($join) {
-            $join->on('ps.product_id', '=', 'products.id')
-                ->whereNull('ps.deleted_at');
-        })->select([
-            'products.*',
-            'ps.current_stock',
-            'ps.minimum_stock',
+        return $query->addSelect([
+            'current_stock' => ProductStock::select('current_stock')
+                ->whereColumn('product_id', 'products.id')
+                ->take(1),
+            'minimum_stock' => ProductStock::select('minimum_stock')
+                ->whereColumn('product_id', 'products.id')
+                ->take(1),
         ]);
     }
 
     /**
-     * Scope para filtrar productos con bajo stock.
-     * (whereColumn también es soportado nativamente por todos los motores)
+     * Scope to filter products with low stock (DB Agnostic).
+     * Only products that track inventory (has_inventory = true) are considered.
+     * A product is considered low stock if its current_stock is less than or equal to its minimum_stock.
+     *
+     * @param Builder $query The Eloquent query builder instance.
+     * @return Builder The modified query builder with the low stock filter applied.
      */
     public function scopeLowStock(Builder $query): Builder
     {
-        return $query->where('products.has_inventory', true)
-            ->whereNotNull('ps.current_stock')
-            ->whereColumn('ps.current_stock', '<=', 'ps.minimum_stock');
+        return $query->where('has_inventory', true)
+            ->whereHas('stock', function (Builder $q) {
+                $q->whereColumn('current_stock', '<=', 'minimum_stock');
+            });
     }
 
     /**
-     * Scope para filtrar productos por vencer pronto (DB Agnostic).
+     * Scope to filter products that are expiring soon.
+     * A product is considered expiring soon if:
+     * - It has a non-null expiration_alert_date.
+     * - The expiration_date is today or in the future.
+     * - The expiration_alert_date is today or in the past.
+     * @param Builder $query The Eloquent query builder instance.
+     * @return Builder The modified query builder with the expiring soon filter applied.
      */
     public function scopeExpiringSoon(Builder $query): Builder
     {
-        // Obtenemos la fecha de hoy desde PHP (Formato YYYY-MM-DD)
         $today = now()->toDateString();
 
-        // Identificamos qué base de datos estamos usando
-        $driver = $query->getConnection()->getDriverName();
-
-        // 1. Aseguramos que la fecha sea hoy o en el futuro (Esto reemplaza la parte "BETWEEN 0")
-        $query->whereDate('products.expiration_date', '>=', $today);
-
-        // 2. Aplicamos la suma de días según el motor de base de datos
-        return match ($driver) {
-            'sqlite' => $query->whereRaw(
-                "products.expiration_date <= date(?, '+' || products.expiration_alert_days || ' days')",
-                [$today]
-            ),
-            default => clone $query->whereRaw(
-                'products.expiration_date <= DATE_ADD(?, INTERVAL products.expiration_alert_days DAY)',
-                [$today]
-            ), // MySQL / MariaDB
-        };
+        return $query->whereNotNull('expiration_alert_date')
+            ->whereDate('expiration_date', '>=', $today)
+            ->whereDate('expiration_alert_date', '<=', $today);
     }
 }
