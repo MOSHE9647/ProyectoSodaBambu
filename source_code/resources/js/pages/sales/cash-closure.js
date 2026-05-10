@@ -573,10 +573,7 @@ const saveClosure = async (registerId, payload) => {
             title: 'Caja Cerrada',
             text: 'El reporte de cierre ha sido generado correctamente.',
             confirmButtonText: 'Aceptar',
-        }).then(() => {
-            window.dispatchEvent(new CustomEvent("cash-register-closed"));
-            window.location.reload();
-        });
+        }).then(() => window.location.reload());
     } catch (error) {
         SwalModal.fire({
             icon: SwalNotificationTypes.ERROR,
