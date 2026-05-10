@@ -316,8 +316,9 @@ class SaleRequest extends FormRequest
             $productId = $detail['product_id'] ?? null;
             $requestedQty = (int) ($detail['quantity'] ?? 0);
 
-            if (!$productId || $requestedQty <= 0)
+            if (! $productId || $requestedQty <= 0) {
                 continue;
+            }
 
             // Search in memory not in the database to avoid multiple queries in case of duplicate product IDs
             $product = $products->get($productId);
