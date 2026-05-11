@@ -77,13 +77,13 @@
 		</x-form.auth.input>
 
 		{{-- Remember Me Checkbox --}}
-		<x-form.auth.checkbox
+		{{-- <x-form.auth.checkbox
 			:id="'remember'"
 			:class="'w-100 py-1'"
 			:checked="old('remember') ? 'checked' : null"
 		>
 			Mantener sesión iniciada
-		</x-form.auth.checkbox>
+		</x-form.auth.checkbox> --}}
 
 		{{-- Submit Button --}}
 		<x-form.button

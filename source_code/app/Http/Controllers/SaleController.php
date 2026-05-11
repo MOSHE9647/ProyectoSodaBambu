@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Sale\UpsertSaleAction;
 use App\Enums\UserRole;
-use App\Http\Requests\SaleStoreRequest;
+use App\Http\Requests\SaleRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Sale;
@@ -51,7 +51,7 @@ class SaleController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(SaleStoreRequest $saleStoreRequest, UpsertSaleAction $upsertSaleAction)
+    public function store(SaleRequest $saleStoreRequest, UpsertSaleAction $upsertSaleAction)
     {
         // Validates the request and retrieves the validated data
         $saleValidatedData = $saleStoreRequest->validated();
@@ -70,7 +70,7 @@ class SaleController extends Controller implements HasMiddleware
 
         return response()->json([
             'message' => 'Venta registrada exitosamente.',
-            'data' => $sale->load('saleDetails', 'payments'),
+            'data' => $sale->load('saleDetails.product', 'payments'),
         ], 201);
     }
 
@@ -82,20 +82,20 @@ class SaleController extends Controller implements HasMiddleware
         //
     }
 
-    public function showPaymentModal(float $paymentTotal): string
+    public function showPaymentModal(int $paymentTotal): string
     {
         $validatedData = Validator::make(
             ['total' => $paymentTotal],
-            ['total' => ['required', 'numeric', 'min:0']],
+            ['total' => ['required', 'integer', 'min:0']],
             [
                 'total.required' => 'El total de la venta es requerido para procesar el pago.',
-                'total.numeric' => 'El total de la venta debe ser un número válido.',
+                'total.integer' => 'El total de la venta debe ser un número válido.',
                 'total.min' => 'El total de la venta no puede ser negativo.',
             ]
         )->validate();
 
         return view('pages.sales._payment-modal', [
-            'paymentTotal' => (float) $validatedData['total'],
+            'paymentTotal' => (int) $validatedData['total'],
         ])->render();
     }
 
@@ -110,7 +110,7 @@ class SaleController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      */
-    public function update(SaleStoreRequest $saleStoreRequest, UpsertSaleAction $upsertSaleAction)
+    public function update(SaleRequest $saleStoreRequest, UpsertSaleAction $upsertSaleAction)
     {
         // Validates the request and retrieves the validated data
         $saleValidatedData = $saleStoreRequest->validated();

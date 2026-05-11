@@ -1,9 +1,8 @@
-import { setLoadingState } from "../../utils/utils.js";
+import { formatCurrency, setLoadingState } from "../../utils/utils.js";
 import {
 	getActiveSaleData,
 	clearActiveCart,
 	syncFinalizeSaleButtonState,
-	formatCurrency,
 } from "./cart.js";
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 import { createSinpeMovilIcon } from "../../utils/sinpemovil-icon.js";
@@ -207,20 +206,21 @@ export const processSale = async (
 			icon: SwalNotificationTypes.ERROR,
 			title: "El carrito está vacío.",
 		});
-		return { success: false };
+		return { success: false, message: "El carrito está vacío." };
 	}
 
 	// Build request payload.
 	const payload = {
 		payment_status: paymentStatus,
 		date: new Date().toISOString(),
-		total: cartData.total,
+		total: parseInt(cartData.total),
 		sale_details: cartData.sale_details,
 		payment_details: paymentDetails,
 	};
 
 	// Enable loading state while processing sale.
 	setLoadingState("finalize-sale", true);
+	console.log("Processing sale with payload:", payload);
 
 	try {
 		const url = route("sales.store");
@@ -258,7 +258,11 @@ export const processSale = async (
 				}),
 			);
 
-			return true; // Indicate successful completion to caller.
+			return {
+				success: true,
+				data: responseData.data,
+				message: responseData.message,
+			};
 		} else {
 			const errorData = await response.json();
 			SwalToast.fire({
@@ -267,7 +271,7 @@ export const processSale = async (
 				timer: 15000, // Extend timer for error messages
 			});
 			console.error("Error response from server:", errorData);
-			return false;
+			return { success: false, message: errorData.message || "Error al procesar el pago" };
 		}
 	} catch (error) {
 		console.error("Error durante el flujo de venta:", error);
@@ -276,7 +280,7 @@ export const processSale = async (
 			title: "Error de conexión con el servidor.",
 			timer: 15000, // Extend timer for error messages
 		});
-		return { success: false };
+		return { success: false, message: "Error de conexión con el servidor." };
 	} finally {
 		setLoadingState("finalize-sale", false);
 		syncFinalizeSaleButtonState();

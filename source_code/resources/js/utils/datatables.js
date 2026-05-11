@@ -329,7 +329,7 @@ function buildSelectElementHtml(element) {
 	});
 
 	return `
-        <div class="input-group mb-2 ${escapeHtml(element.wrapperClass ?? '')}">
+        <div class="input-group ${escapeHtml(element.wrapperClass ?? '')}">
             <label class="input-group-text" for="${selectId}">${labelIcon ? `<i class="${labelIcon}"></i>` : ''}${labelText}</label>
             <select class="form-select ${selectClass}" id="${selectId}" name="${selectName}" ${disabledAttr} ${handlerAttrs}>
                 ${optionsHtml}

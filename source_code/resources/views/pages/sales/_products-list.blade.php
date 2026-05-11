@@ -1,15 +1,22 @@
 @forelse($products as $product)
 
 @php
-    $referenceCost = $product->reference_cost ?? 0;
-    $marginPercentage = $product->margin_percentage ?? 0;
-    $priceWithMargin = $referenceCost + ($referenceCost * $marginPercentage);
+    // Extraemos los valores exactos (floats) sin redondear
+    $exactSalePrice = (float) ($product->sale_price ?? 0);
+    $taxPercentage = (float) ($product->tax_percentage ?? 0);
+    $taxRate = $taxPercentage / 100;
+
+    // Calculamos la matemática pura en el servidor
+    $exactBasePrice = $exactSalePrice / (1 + $taxRate);
+    $exactTaxAmount = $exactSalePrice - $exactBasePrice;
 
     $productData = [
         'id' => $product->id,
         'name' => $product->name,
-        'price' => $priceWithMargin,
-        'tax_percentage' => $product->tax_percentage ?? 0,
+        'base_price' => $exactBasePrice,     // Precio sin impuesto
+        'tax_amount' => $exactTaxAmount,     // Monto exacto del impuesto
+        'sale_price' => $exactSalePrice,     // Precio de venta (Base + Impuesto)
+        'tax_percentage' => $taxPercentage,
         'has_inventory' => $product->has_inventory ? 1 : 0,
         'stock' => $product->stock?->current_stock ?? 0,
     ];
@@ -20,7 +27,9 @@
     class="card p-3 shadow-sm h-100 product-card"
     data-product-id="{{ $productData['id'] }}"
     data-product-name="{{ e($productData['name']) }}"
-    data-product-price="{{ $productData['price'] }}"
+    data-product-base-price="{{ $productData['base_price'] }}"
+    data-product-tax-amount="{{ $productData['tax_amount'] }}"
+    data-product-sale-price="{{ $productData['sale_price'] }}"
     data-product-tax-percentage="{{ $productData['tax_percentage'] }}"
     data-product-has-inventory="{{ $productData['has_inventory'] }}"
     data-product-stock="{{ (int) $productData['stock'] }}"
@@ -33,7 +42,7 @@
                 {{ $product->name }}
             </h6>
             <span class="fw-bold text-success flex-shrink-0 product-price">
-                ₡ {{ number_format($product->sale_price ?? 0, 2, ',', '.') }}
+                {{ format_crc($exactSalePrice) }}
             </span>
         </div>
 

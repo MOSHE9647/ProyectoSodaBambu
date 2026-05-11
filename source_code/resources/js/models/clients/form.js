@@ -69,7 +69,7 @@ function validateClientForm(values) {
  * Handles the client form submission.
  * @returns {boolean} True if the form is valid and can be submitted, false otherwise.
  */
-function submitClientForm() {
+export function submitClientForm() {
 	clearAllFieldErrors(fieldValidators);
 
 	// Cache DOM elements
@@ -95,13 +95,9 @@ function submitClientForm() {
 
 // ==================== Event Listeners ====================
 
-/**
- * Real-time validation for input fields.
- * Validates fields on input and shows/hides error messages accordingly.
- */
-$(document).on('input change', `#${FORM_ID} input`, function (e) {
+export const realTimeValidationHandler = (e) => {
 	const $target = $(e.target);
-	const fieldId = $target.attr('id');
+	const fieldId = $target.attr("id");
 
 	// Skip if field is not in validators
 	if (!fieldValidators.hasOwnProperty(fieldId)) {
@@ -109,15 +105,15 @@ $(document).on('input change', `#${FORM_ID} input`, function (e) {
 	}
 
 	let value = $target.val().trim();
-	const {validator, emptyMsg, invalidMsg} = fieldValidators[fieldId];
-	
+	const { validator, emptyMsg, invalidMsg } = fieldValidators[fieldId];
+
 	// Format phone number in real-time
-	if (fieldId === 'phone') {
+	if (fieldId === "phone") {
 		value = formatPhoneNumber(value);
 		$target.val(value);
 	}
 
-	if (fieldId === 'phone' && !value) {
+	if (fieldId === "phone" && !value) {
 		clearFieldError(fieldId);
 		return;
 	}
@@ -133,6 +129,14 @@ $(document).on('input change', `#${FORM_ID} input`, function (e) {
 	} else {
 		clearFieldError(fieldId);
 	}
+};
+
+/**
+ * Real-time validation for input fields.
+ * Validates fields on input and shows/hides error messages accordingly.
+ */
+$(document).on('input change', `#${FORM_ID} input`, function (e) {
+	realTimeValidationHandler(e);
 });
 
 /**

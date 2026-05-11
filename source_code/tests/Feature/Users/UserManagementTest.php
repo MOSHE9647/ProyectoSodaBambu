@@ -307,7 +307,7 @@ test('CP-10_EIF-20_QA2 - validates email uniqueness when updating user', functio
  * Priority: Medium
  * Jira Link: https://est-una.atlassian.net/browse/EIF-20
  */
-test('CP-11_EIF-20_QA2 - lists all users in JSON format for DataTables', function () {
+test('CP-FUN-02 - lists all users in JSON format for DataTables', function () {
     // Given: an authenticated admin and multiple users in database.
     $admin = createAdminActor();
     User::factory()->count(3)->create(['email_verified_at' => now()]);
@@ -326,4 +326,4 @@ test('CP-11_EIF-20_QA2 - lists all users in JSON format for DataTables', functio
                 '*' => ['id', 'name', 'email', 'roles'],
             ],
         ]);
-});
+})->group('s7-tests');

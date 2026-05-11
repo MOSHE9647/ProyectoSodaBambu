@@ -1,38 +1,55 @@
-{{-- Page Header --}}
-<x-header 
-	title="{{ isset($client) ? 'Editar Cliente' : 'Crear Cliente' }}" 
-	subtitle="{{
-	isset($client) ? 'Modifica la información del cliente existente'
-				   : 'Registra un nuevo cliente'
-	}}" 
-/>
+@php
+    // Detects if the form is being rendered inside an offcanvas
+    $isOffcanvas ??= false;
 
-{{-- Form Container --}}
-<div class="card-container rounded-2 p-4 w-75 justify-content-start">
-    <form id="{{ isset($client) ? 'edit-client-form' : 'create-client-form' }}" action="{{ $action }}" method="POST" class="d-flex flex-column gap-2">
+    // Determines if we are editing an existing client or creating a new one
+    $isEditing = isset($client);
+
+    $pageTitle = $isEditing ? 'Editar Cliente' : 'Crear Cliente';
+    $pageSubtitle = $isEditing ? 'Modifica la información del cliente existente' : 'Registra un nuevo cliente';
+
+    // Form configuration
+    $formId = $isEditing ? 'edit-client-form' : 'create-client-form';
+    $actionUrl = $action ?? route('clients.store');
+@endphp
+
+@if(! $isOffcanvas)
+    {{-- Page Header --}}
+    <x-header title="{{ $pageTitle }}" subtitle="{{ $pageSubtitle }}" />
+
+    {{-- Form Container --}}
+    <div class="card-container rounded-2 p-4 w-75 justify-content-start">
+@else
+    <div class="container-fluid px-0">
+@endif
+    {{-- Form Container --}}
+    <form id="{{ $formId }}" action="{{ $action }}" method="POST" class="d-flex flex-column gap-2">
         {{-- CSRF Token --}}
         @csrf
-        @if(isset($client))
-        @method('PUT')
+
+        @if($isEditing)
+            @method('PUT')
         @endif
 
         {{-- SECTION 1: Basic Information --}}
         <section id="basic-information" class="d-flex flex-column mb-4 gap-3">
-            <h5 class="text-muted pb-3 border-bottom border-secondary">
-                <i class="bi bi-person-fill me-3"></i>
-                Información Básica
-            </h5>
+            @if(! $isOffcanvas)
+                <h5 class="text-muted pb-3 border-bottom border-secondary">
+                    <i class="bi bi-person-fill me-3"></i>
+                    Información Básica
+                </h5>
+            @endif
 
             <div class="row g-3">
                 {{-- First Name --}}
-                <div class="col-6">
+                <div class="{{ $isOffcanvas ? 'col-12' : 'col-12 col-md-6' }}">
                     <x-form.input :id="'first_name'" :type="'text'" :class="'border-secondary'" :inputClass="$errors->has('first_name') ? 'is-invalid' : ''" :placeholder="'Ej: María'" :value="old('first_name', optional($client)->first_name ?? '')" :errorMessage="$errors->first('first_name') ?? ''" :iconLeft="'bi bi-person'" :required="true">
                         Nombre <span class="text-danger">*</span>
                     </x-form.input>
                 </div>
 
                 {{-- Last Name --}}
-                <div class="col-6">
+                <div class="{{ $isOffcanvas ? 'col-12' : 'col-12 col-md-6' }}">
                     <x-form.input :id="'last_name'" :type="'text'" :class="'border-secondary'" :inputClass="$errors->has('last_name') ? 'is-invalid' : ''" :placeholder="'Ej: García López'" :value="old('last_name', optional($client)->last_name ?? '')" :errorMessage="$errors->first('last_name') ?? ''" :iconLeft="'bi bi-person-fill'" :required="true">
                         Apellidos <span class="text-danger">*</span>
                     </x-form.input>
@@ -41,14 +58,14 @@
 
             <div class="row g-3">
                 {{-- Email --}}
-                <div class="col-md-6">
+                <div class="{{ $isOffcanvas ? 'col-12' : 'col-12 col-md-6' }}">
                     <x-form.input :id="'email'" :type="'email'" :class="'border-secondary'" :inputClass="$errors->has('email') ? 'is-invalid' : ''" :errorMessage="$errors->first('email') ?? ''" :placeholder="'cliente@ejemplo.com'" :value="old('email', optional($client)->email ?? '')" :iconLeft="'bi bi-envelope'" :required="true">
                         Correo Electrónico <span class="text-danger">*</span>
                     </x-form.input>
                 </div>
 
                 {{-- Phone Number --}}
-                <div class="col-md-6">
+                <div class="{{ $isOffcanvas ? 'col-12' : 'col-12 col-md-6' }}">
                     <x-form.input :id="'phone'" :type="'tel'" :class="'border-secondary'" :inputClass="$errors->has('phone') ? 'is-invalid' : ''" :errorMessage="$errors->first('phone') ?? ''" :placeholder="'+506 XXXX XXXX'" :value="old('phone', optional($client)->phone ?? '')" :iconLeft="'bi bi-telephone'">
                         Teléfono
                     </x-form.input>
@@ -58,16 +75,21 @@
 
         {{-- Form Actions --}}
         <div class="d-flex justify-content-end gap-2">
-            {{-- Cancel Button --}}
-            <a href="{{ route('clients.index') }}" class="btn btn-outline-danger px-4">
-                Cancelar
-            </a>
+            @if(! $isOffcanvas)
+                {{-- Cancel Button --}}
+                <a href="{{ route('clients.index') }}" class="btn btn-outline-danger px-4">Cancelar</a>
+            @endif
 
             {{-- Submit Button --}}
-            <x-form.button :id="isset($client) ? 'edit-client-form-button' : 'create-client-form-button'" :spinnerId="isset($client) ? 'edit-client-form-spinner' : 'create-client-form-spinner'" :class="'btn-primary px-4'" :loadingMessage="isset($client) ? 'Actualizando...' : 'Guardando...'">
-                <div id="{{ isset($client) ? 'edit-client-form-button-text' : 'create-client-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
+            <x-form.button 
+                :id="$isEditing ? 'edit-client-form-button' : 'create-client-form-button'" 
+                :spinnerId="$isEditing ? 'edit-client-form-spinner' : 'create-client-form-spinner'"
+                :class="'btn-primary px-4'"
+                :loadingMessage="$isEditing ? 'Actualizando...' : 'Guardando...'"
+            >
+                <div id="{{ $isEditing ? 'edit-client-form-button-text' : 'create-client-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-person-add me-2"></i>
-                    {{ isset($client) ? 'Actualizar' : 'Guardar' }}
+                    {{ $isEditing ? 'Actualizar' : 'Guardar' }}
                 </div>
             </x-form.button>
         </div>

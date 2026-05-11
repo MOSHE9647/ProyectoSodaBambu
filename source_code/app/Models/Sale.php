@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Contracts\Receipable;
 use App\Enums\PaymentStatus;
+use Carbon\Carbon;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Sale extends Model
+class Sale extends Model implements Receipable
 {
     /** @use HasFactory<SaleFactory> */
     use HasFactory, SoftDeletes;
@@ -36,7 +38,7 @@ class Sale extends Model
      */
     protected $casts = [
         'date' => 'datetime',
-        'total' => 'decimal:2',
+        'total' => 'integer',
         'payment_status' => PaymentStatus::class,
     ];
 
@@ -71,5 +73,83 @@ class Sale extends Model
     public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'origin');
+    }
+
+    // ===== Receipable Interface Implementation =====
+
+    /**
+     * Get the receipt/invoice number for this sale.
+     */
+    public function getReceiptNumber(): string
+    {
+        return $this->invoice_number ?? 'N/A';
+    }
+
+    /**
+     * Get the date when this sale occurred.
+     */
+    public function getReceiptDate(): Carbon
+    {
+        return $this->date ?? now();
+    }
+
+    /**
+     * Get the total amount for this sale.
+     */
+    public function getReceiptTotal(): int
+    {
+        return $this->total ?? 0;
+    }
+
+    /**
+     * Get the sale items with all necessary data.
+     */
+    public function getReceiptItems(): array
+    {
+        return $this->saleDetails->map(function ($detail) {
+            return [
+                'name' => $detail->product?->name ?? "Producto #{$detail->product_id}",
+                'quantity' => $detail->quantity,
+                'unit_price' => $detail->unit_price,
+                'sub_total' => $detail->sub_total,
+                'applied_tax' => $detail->applied_tax,
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Get the subtotal (before taxes).
+     */
+    public function getReceiptSubtotal(): int
+    {
+        return $this->saleDetails->sum('sub_total') ?? 0;
+    }
+
+    /**
+     * Get the total tax amount.
+     */
+    public function getReceiptTaxTotal(): int
+    {
+        return collect($this->getReceiptItems())->reduce(function ($carry, $item) {
+            $taxAmount = (int) round($item['sub_total'] * ($item['applied_tax'] / 100));
+
+            return $carry + $taxAmount;
+        }, 0);
+    }
+
+    /**
+     * Get the receipt type label.
+     */
+    public function getReceiptType(): string
+    {
+        return 'Comprobante de venta';
+    }
+
+    /**
+     * Check if this sale can generate a receipt.
+     */
+    public function canGenerateReceipt(): bool
+    {
+        return $this->invoice_number && $this->saleDetails->count() > 0;
     }
 }

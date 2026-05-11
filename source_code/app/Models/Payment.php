@@ -21,12 +21,11 @@ class Payment extends Model
         'date',
         'origin_id',    // Sales, purchase, contract, or payroll ID
         'origin_type',  // Sales, purchase, contract, or payroll class
-
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
-        'change_amount' => 'decimal:2',
+        'amount' => 'integer',
+        'change_amount' => 'integer',
         'date' => 'datetime',
         'method' => PaymentMethod::class,
     ];

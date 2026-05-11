@@ -171,16 +171,23 @@
 
             {{-- Payment Method --}}
             <div class="d-flex align-items-center gap-2">
-                <span id="last-sale-payment-method" class="{{ $paymentStatusClass }} d-flex align-items-center gap-2" title="{{ $paymentText }}">
-					{!! $paymentIcon !!}
-					@if(!$paymentMethod) 
-						<span class="d-none d-sm-inline">Pago Pendiente</span> 
-						<span class="text-muted">·</span>
-					@endif
-                </span>
-                <span id="last-sale-payment-amount" class="text-success fw-bold">
-					₡ {{ number_format($lastSale?->total ?? 0, 2, ',', ' ') }}
-				</span>
+                @if($lastSale)
+                    <span id="last-sale-payment-method" class="{{ $paymentStatusClass }} d-flex align-items-center gap-2" title="{{ $paymentText }}">
+                        {!! $paymentIcon !!}
+                        @if(!$paymentMethod) 
+                            <span class="d-none d-sm-inline">Pago Pendiente</span> 
+                            <span class="text-muted">·</span>
+                        @endif
+                    </span>
+                    <span id="last-sale-payment-amount" class="text-success fw-bold">
+                        {{ format_crc($lastSale->total) }}
+                    </span>
+                @else
+                    <span class="text-muted small d-flex align-items-center gap-2">
+                        <i class="bi bi-dash-circle"></i>
+                        Sin transacciones
+                    </span>
+                @endif
             </div>
 
             <span class="text-muted">·</span>

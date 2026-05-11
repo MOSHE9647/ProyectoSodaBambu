@@ -5,8 +5,8 @@ import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
 import { initializeHotkeys } from "./hotkeys.js";
-import { showPaymentModal } from "./payment.js";
-import { SwalModal } from "../../utils/sweetalert.js";
+import { openPaymentModal } from "./payment.js";
+import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 /**
  * Updates the sales page clock element with the current local time.
@@ -52,8 +52,8 @@ const updateLastSaleTime = () => {
 $(() => {
 	// Initialize all sales-related components
 	initializeCashRegister();
-  initializeSalesProducts();
-  initializeSalesCart();
+  	initializeSalesProducts();
+  	initializeSalesCart();
 	initializeSalesOrderTabs();
 	initializeHotkeys();
 
@@ -68,7 +68,35 @@ $(() => {
     const finalizeSaleButton = $("#finalize-sale-button");
     if (finalizeSaleButton.length) {
         finalizeSaleButton.on("click", async () => {
-			showPaymentModal();
+			const saleData = getActiveSaleData();
+
+			let successMessage = "Venta registrada con éxito.";
+
+			const { completed, printed } = await openPaymentModal({
+				total: saleData.total,
+				title: "Procesar Venta",
+				loadingId: "finalize-sale",
+				onComplete: async (paymentDetails, totalTendered) => {
+					SwalModal.showLoading();
+					const saleResult = await processSale(paymentDetails);
+					if (saleResult?.success) {
+						if (saleResult.message) {
+							successMessage = saleResult.message;
+						}
+						return saleResult;
+					}
+
+					SwalModal.hideLoading();
+					return false;
+				}
+			});
+
+			if (completed && !printed) {
+				SwalToast.fire({
+					icon: SwalNotificationTypes.SUCCESS,
+					title: successMessage,
+				});
+			}
 		});
     }
 

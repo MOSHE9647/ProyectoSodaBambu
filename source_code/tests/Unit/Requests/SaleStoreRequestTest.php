@@ -1,14 +1,14 @@
 <?php
 
 use App\Enums\PaymentStatus;
-use App\Http\Requests\SaleStoreRequest;
+use App\Http\Requests\SaleRequest;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
 
 uses(RefreshDatabase::class);
 
-function saleStorePayload(float $total): array
+function saleStorePayload(int|float $total): array
 {
     $firstProduct = Product::factory()->create(['has_inventory' => false]);
     $secondProduct = Product::factory()->create(['has_inventory' => false]);
@@ -21,16 +21,16 @@ function saleStorePayload(float $total): array
             [
                 'product_id' => $firstProduct->id,
                 'quantity' => 2,
-                'unit_price' => 50.00,
-                'applied_tax' => 0.00,
-                'sub_total' => 100.00,
+                'unit_price' => '50.00',
+                'applied_tax' => 0,
+                'sub_total' => '100.00',
             ],
             [
                 'product_id' => $secondProduct->id,
                 'quantity' => 1,
-                'unit_price' => 25.00,
-                'applied_tax' => 0.00,
-                'sub_total' => 25.00,
+                'unit_price' => '25.00',
+                'applied_tax' => 0,
+                'sub_total' => '25.00',
             ],
         ],
     ];
@@ -38,7 +38,7 @@ function saleStorePayload(float $total): array
 
 function validateSaleStoreRequest(array $payload)
 {
-    $request = SaleStoreRequest::create('/', 'POST', $payload);
+    $request = SaleRequest::create('/', 'POST', $payload);
     $validator = Validator::make($request->all(), $request->rules());
 
     foreach ($request->after() as $callback) {
@@ -51,14 +51,53 @@ function validateSaleStoreRequest(array $payload)
 }
 
 test('sale store request accepts totals that match the sum of detail subtotals', function () {
-    $validator = validateSaleStoreRequest(saleStorePayload(125.00));
+    $validator = validateSaleStoreRequest(saleStorePayload(125));
 
     expect($validator->errors()->isEmpty())->toBeTrue();
 });
 
 test('sale store request rejects totals that do not match the sum of detail subtotals', function () {
-    $validator = validateSaleStoreRequest(saleStorePayload(124.99));
+    $validator = validateSaleStoreRequest(saleStorePayload(124));
 
     expect($validator->errors()->has('total'))->toBeTrue();
-    expect($validator->errors()->first('total'))->toBe('El total (124.99) no coincide con la suma de los productos (125).');
+    expect($validator->errors()->first('total'))->toBe('El total (₡ 124) no coincide con la suma calculada de los productos (₡ 125).');
+});
+
+test('sale store request rejects decimal currency values', function () {
+    $payload = saleStorePayload(125);
+    $payload['total'] = 125.50;
+    $payload['sale_details'][0]['unit_price'] = '50.256';
+    $payload['sale_details'][0]['sub_total'] = '100.501';
+    $payload['payment_status'] = PaymentStatus::PAID->value;
+    $payload['payment_details'] = [
+        [
+            'method' => 'cash',
+            'amount' => 125.50,
+            'change_amount' => 0.25,
+        ],
+    ];
+
+    $validator = validateSaleStoreRequest($payload);
+
+    expect($validator->errors()->has('total'))->toBeTrue()
+        ->and($validator->errors()->has('sale_details.0.unit_price'))->toBeTrue()
+        ->and($validator->errors()->has('sale_details.0.sub_total'))->toBeTrue()
+        ->and($validator->errors()->has('payment_details.0.amount'))->toBeTrue()
+        ->and($validator->errors()->has('payment_details.0.change_amount'))->toBeTrue();
+});
+
+test('sale store request matches frontend line-level tax rounding', function () {
+    $payload = saleStorePayload(10);
+    $payload['sale_details'][0]['quantity'] = 1;
+    $payload['sale_details'][0]['unit_price'] = '5.00';
+    $payload['sale_details'][0]['applied_tax'] = 10;
+    $payload['sale_details'][0]['sub_total'] = '5.00';
+    $payload['sale_details'][1]['quantity'] = 1;
+    $payload['sale_details'][1]['unit_price'] = '5.00';
+    $payload['sale_details'][1]['applied_tax'] = 10;
+    $payload['sale_details'][1]['sub_total'] = '5.00';
+
+    $validator = validateSaleStoreRequest($payload);
+
+    expect($validator->errors()->isEmpty())->toBeTrue();
 });

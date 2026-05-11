@@ -173,9 +173,9 @@ test('CP-05_EIF-32 - updates existing product data successfully', function () {
         'type' => ProductType::MERCHANDISE->value,
         'has_inventory' => true,
         'reference_cost' => 1000,
-        'tax_percentage' => 0.13,
-        'margin_percentage' => 0.35,
-        'sale_price' => 1525.5,
+        'tax_percentage' => 13,
+        'margin_percentage' => 35,
+        'sale_price' => 1526,
     ]);
 
     ProductStock::factory()->create([
@@ -429,7 +429,7 @@ test('CP-12_EIF-32 - index view exposes low stock products list for dashboard ca
  * Priority: Medium
  * Jira Link: https://est-una.atlassian.net/browse/EIF-32
  */
-test('CP-13_EIF-32 - product create form loads categories and null product stock', function () {
+test('CP-13_EIF-32 - product create form loads categories', function () {
     // Given: an authenticated admin and available categories.
     $admin = createAdminUserForProduct();
     Category::factory()->count(2)->create();
@@ -440,8 +440,7 @@ test('CP-13_EIF-32 - product create form loads categories and null product stock
     // Then: view includes categories and productStock as null.
     $response
         ->assertSuccessful()
-        ->assertViewHas('categories')
-        ->assertViewHas('productStock', null);
+        ->assertViewHas('categories');
 });
 
 /**

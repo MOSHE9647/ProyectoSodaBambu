@@ -91,7 +91,7 @@
     .payment-method-option.is-active {
         border-color: var(--payment-primary);
         background: var(--payment-primary-soft);
-        box-shadow: 0 0 0 1px rgba(122, 193, 67, .25);
+        box-shadow: 0 0 0 1px rgba(43, 168, 70, 0.25);
     }
 
     .payment-method-option .method-check {
@@ -107,10 +107,11 @@
         display: flex;
         flex-direction: column;
         gap: 5px;
-        min-height: 84px;
-        max-height: 132px;
-        overflow-y: auto;
-        padding-right: 4px;
+        flex: 1 1 110px;
+        min-height: 110px;
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
         margin-bottom: 6px;
     }
 
@@ -135,6 +136,18 @@
         border-top: 1px solid var(--payment-border);
         padding-top: 6px;
         margin-top: 6px;
+    }
+    
+    .payment-print-option {
+        border-top: 1px solid var(--payment-border);
+        padding-top: 8px;
+        margin-top: 8px;
+        margin-bottom: 34px;
+    }
+
+    .payment-print-option .form-check-input:checked {
+        background-color: var(--payment-primary);
+        border-color: var(--payment-primary);
     }
 
     .payment-label {
@@ -363,9 +376,11 @@
                 <input
                     id="payment-amount-input"
                     class="form-control"
-                    type="text"
-                    inputmode="decimal"
-                    value="{{ number_format($paymentTotal, 0, '.', '') }}"
+                    type="number"
+                    placeholder="Ingrese el monto recibido"
+                    min="0"
+                    step="1"
+                    value="{{ format_crc($paymentTotal, false) }}"
                 >
                 <button id="clear-payment-amount-button" type="button" class="btn btn-outline-secondary btn-clear-amount">Limpiar</button>
             </div>
@@ -416,19 +431,28 @@
             <div class="payment-totals small">
                 <div class="d-flex justify-content-between mb-1">
                     <span>Total Factura:</span>
-                    <span id="payment-total" class="fw-semibold">₡ {{ number_format($paymentTotal, 0, ',', ' ') }}</span>
+                    <span id="payment-total" class="fw-semibold">{{ format_crc($paymentTotal) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-1">
                     <span>Total Pagado:</span>
-                    <span id="payment-paid" class="fw-semibold">₡ 0</span>
+                    <span id="payment-paid" class="fw-semibold">{{ format_crc(0) }}</span>
                 </div>
                 <div class="d-flex justify-content-between">
                     <span>Restante:</span>
-                    <span id="payment-remaining" class="fw-bold">₡ {{ number_format($paymentTotal, 0, ',', ' ') }}</span>
+                    <span id="payment-remaining" class="fw-bold">{{ format_crc($paymentTotal) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mt-1">
                     <span>Vuelto:</span>
-                    <span id="payment-change" class="fw-semibold text-success">₡ 0</span>
+                    <span id="payment-change" class="fw-semibold text-success">{{ format_crc(0) }}</span>
+                </div>
+            </div>
+
+            <div class="payment-print-option">
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="print-receipt-checkbox" checked>
+                    <label class="form-check-label fw-semibold small" for="print-receipt-checkbox">
+                        Imprimir tiquete
+                    </label>
                 </div>
             </div>
 

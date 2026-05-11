@@ -103,7 +103,7 @@
                     :id="'expiration_date'"
                     :type="'text'"
                     :readonly="true"
-                    :value="$product->expiration_date ? Carbon::parse($product->expiration_date)->format('d/m/Y') : 'N/A'"
+                    :value="$product->expiration_date ? Carbon::parse($product->expiration_date)->format('Y-m-d') : 'N/A'"
                     :iconLeft="'bi bi-calendar-event'"
                     :placeholder="'Fecha de Vencimiento'"
                 >
@@ -114,7 +114,7 @@
             <div class="col-12 col-md-6">
                 <x-form.input.floating-label
                     :id="'expiration_alert_days'"
-                    :type="'text'"
+                    :type="'number'"
                     :readonly="true"
                     :value="(int) ($product->expiration_alert_days ?? 7)"
                     :iconLeft="'bi bi-bell'"
@@ -129,7 +129,7 @@
                     :id="'reference_cost'"
                     :type="'text'"
                     :readonly="true"
-                    :value="'₡ ' . number_format((float) $product->reference_cost, 2, '.', ',')"
+                    :value="format_crc($product->reference_cost)"
                     :iconLeft="'bi bi-cash-coin'"
                     :placeholder="'Costo de Referencia'"
                 >
@@ -142,7 +142,7 @@
                     :id="'tax_percentage'"
                     :type="'text'"
                     :readonly="true"
-                    :value="number_format((float) $product->tax_percentage, 2, '.', ',') . ' %'"
+                    :value="(int) $product->tax_percentage . ' %'"
                     :iconLeft="'bi bi-percent'"
                     :placeholder="'Impuesto (%)'"
                 >
@@ -155,7 +155,7 @@
                     :id="'margin_percentage'"
                     :type="'text'"
                     :readonly="true"
-                    :value="number_format((float) $product->margin_percentage, 2, '.', ',') . ' %'"
+                    :value="(int) $product->margin_percentage . ' %'"
                     :iconLeft="'bi bi-graph-up-arrow'"
                     :placeholder="'Margen (%)'"
                 >
@@ -169,7 +169,7 @@
                 :id="'sale_price'"
                 :type="'text'"
                 :readonly="true"
-                :value="'₡ ' . number_format((float) $product->sale_price, 2, '.', ',')"
+                :value="format_crc($product->sale_price)"
                 :iconLeft="'bi bi-cash-stack'"
                 :placeholder="'Precio de Venta'"
             >

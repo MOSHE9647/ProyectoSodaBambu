@@ -23,9 +23,27 @@
                 </div>
 
                 <div class="col-6">
-                    <x-form.input :id="'measure_unit'" :type="'text'" :class="'border-secondary'" :inputClass="$errors->has('measure_unit') ? 'is-invalid' : ''" :placeholder="'Ej: Kilogramos'" :value="old('measure_unit', $supply->measure_unit ?? '')" :errorMessage="$errors->first('measure_unit') ?? ''" :iconLeft="'bi bi-rulers'" :required="true">
+                    <x-form.select 
+                        :id="'measure_unit'" 
+                        :class="'border-secondary'" 
+                        :selectClass="$errors->has('measure_unit') ? 'is-invalid' : ''" 
+                        :errorMessage="$errors->first('measure_unit') ?? ''" 
+                        :iconLeft="'bi bi-rulers'" 
+                        :required="true"
+                    >
+                        @slot('options')
+                            <option value="" disabled {{ old('measure_unit', $supply->measure_unit ?? '') == '' ? 'selected' : '' }}>
+                                Seleccione una unidad
+                            </option>
+                            <option value="Kilogramos" {{ old('measure_unit', $supply->measure_unit ?? '') == 'Kilogramos' ? 'selected' : '' }}>Kilogramos (kg)</option>
+                            <option value="Gramos" {{ old('measure_unit', $supply->measure_unit ?? '') == 'Gramos' ? 'selected' : '' }}>Gramos (g)</option>
+                            <option value="Litros" {{ old('measure_unit', $supply->measure_unit ?? '') == 'Litros' ? 'selected' : '' }}>Litros (l)</option>
+                            <option value="Mililitros" {{ old('measure_unit', $supply->measure_unit ?? '') == 'Mililitros' ? 'selected' : '' }}>Mililitros (ml)</option>
+                            <option value="Unidades" {{ old('measure_unit', $supply->measure_unit ?? '') == 'Unidades' ? 'selected' : '' }}>Unidades</option>
+                            <option value="Paquetes" {{ old('measure_unit', $supply->measure_unit ?? '') == 'Paquetes' ? 'selected' : '' }}>Paquetes</option>
+                        @endslot
                         Unidad de Medida <span class="text-danger">*</span>
-                    </x-form.input>
+                    </x-form.select>
                 </div>
 
                 <div class="col-6">
@@ -35,7 +53,7 @@
                 </div>
 
                 <div class="col-6">
-                    <x-form.input :id="'unit_price'" :type="'number'" :class="'border-secondary'" :inputClass="$errors->has('unit_price') ? 'is-invalid' : ''" :placeholder="'0.00'" :value="old('unit_price', $supply->unit_price ?? '0')" :errorMessage="$errors->first('unit_price') ?? ''" :iconLeft="'bi bi-currency-dollar'" :required="true" step="0.01">
+                    <x-form.input :id="'unit_price'" :type="'number'" :class="'border-secondary'" :inputClass="$errors->has('unit_price') ? 'is-invalid' : ''" :placeholder="'0'" :value="old('unit_price', $supply->unit_price ?? '0')" :errorMessage="$errors->first('unit_price') ?? ''" :iconLeft="'bi bi-cash-stack'" :required="true" step="0.01">
                         Precio Unitario <span class="text-danger">*</span>
                     </x-form.input>
                 </div>

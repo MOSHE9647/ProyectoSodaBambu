@@ -24,9 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);
 
-        $middleware->web(append: [CheckOpenCashRegister::class,
-        ]);
-
+        $middleware->web(append: [CheckOpenCashRegister::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (UnauthorizedException $e, $request) {
