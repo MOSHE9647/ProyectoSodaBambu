@@ -96,13 +96,10 @@ jobs:
 
             - name: Pull Vercel Environment Information
               run: vercel pull --yes --environment=preview
-
-            - name: Build Project Artifacts
-              run: vercel build
               
             - name: Deploy Project Artifacts to Vercel
               run: |
-                PREVIEW_URL=$(vercel deploy --prebuilt)
+                PREVIEW_URL=$(vercel deploy)
                 echo "Despliegue exitoso en Vercel. URL de vista previa: $PREVIEW_URL"
                 echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
 
@@ -151,12 +148,9 @@ jobs:
             - name: Pull Vercel Environment Information
               run: vercel pull --yes --environment=production
 
-            - name: Build Project Artifacts
-              run: vercel build --prod
-
             - name: Deploy Project Artifacts to Vercel
               run: |
-                PROD_URL=$(vercel deploy --prebuilt --prod)
+                PROD_URL=$(vercel deploy --prod)
                 echo "Despliegue exitoso en Vercel. URL de producción: $PROD_URL"
                 echo "PROD_URL=$PROD_URL" >> $GITHUB_ENV
 
