@@ -609,13 +609,14 @@ const generateRandomMenu = async () => {
     SwalToast.fire({ icon: "success", title: "Menú generado correctamente." });
 };
 
-const recalculateTotalValue = (initialRecalc = false) => {
+const recalculateTotalValue = (initialRecalc = false, ignoreDefinedValue = false) => {
 	const tableEl = getFormElements().contract_details_table;
 	const totalValueInput = getFormElements().total_value;
 
 	const portionsPerDay = parseInt(getFormElements().portions_per_day.val()) || 0;
 	const totalValue = parseInt(totalValueInput.val()) || 0;
 	
+	if (totalValue !== 0 && !ignoreDefinedValue) return;
 	let contractValue = 0;
 
 	$(tableEl).find("tbody tr:not(#empty-row)").each(function () {
@@ -1238,11 +1239,11 @@ const handleFormSubmission = async (event, validationResult) => {
 
 			return { success: true, data: result.data, redirect: result.redirect, message: result.message };
 		} catch (error) {
-			console.error("Error al guardar:", error);
+			console.error("Error al guardar:", error.message || error);
 			const errorMsg = error.errors
-				? getLaravelFirstError(error.errors)
+				? getLaravelFirstError(error)
 				: error.message || "Error al procesar el contrato";
-			SwalToast.fire({ icon: "error", title: errorMsg });
+			SwalToast.fire({ icon: "error", title: errorMsg.message || errorMsg });
 			return { success: false };
 		} finally {
 			setLoadingState(FORM_ID, false);
@@ -1368,12 +1369,12 @@ const bindEventListeners = () => {
 			elements.days_to_serve.prop("checked", false).trigger("change");
 		});
 
-	// Meal Time Selection Event within Contract Details (delegated)
+	// Meal Time and Product Selection Event within Contract Details (delegated)
 	elements.contract_details_table.on(
 		"change",
-		'select[name="meal_time"]',
+		'select[name="meal_time"], select[name="product_id"]',
 		function () {
-			updateSummary.details(); // Recalculate details summary after meal time change
+			updateSummary.details(); // Recalculate details summary after meal time or product change
 		},
 	);
 
@@ -1444,7 +1445,7 @@ const bindEventListeners = () => {
 			});
 			return;
 		}
-		recalculateTotalValue();
+		recalculateTotalValue(false, true); // Force recalculation based on details, ignoring any pre-filled total value
 	});
 
 	// Intercept form submission

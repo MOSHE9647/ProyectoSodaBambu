@@ -42,7 +42,9 @@ class ContractRequest extends FormRequest
             'id' => ['sometimes', 'integer', 'exists:contracts,id'],
             'client_id' => ['required', 'integer', 'exists:clients,id'],
             'business_name' => ['required', 'string', 'max:255'],
-            'start_date' => ['required', 'date', $this->isMethod('POST') ? 'after_or_equal:today' : ''],
+            'start_date' => ['required', 'date', $this->isMethod('POST')
+                ? 'after_or_equal:'.now('America/Costa_Rica')->toDateString()
+                : ''],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'days_to_serve' => ['required', 'array', 'min:1'],
             'days_to_serve.*' => ['required', 'string', Rule::in(WeekDay::cases())],
