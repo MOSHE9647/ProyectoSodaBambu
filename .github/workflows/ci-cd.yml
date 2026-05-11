@@ -104,6 +104,14 @@ jobs:
                 echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
 
             # Email notification for deployment status
+            # ---- Success Email Preparation and Notification ----
+            - name: Prepare Success Email Template
+              if: success()
+              run: |
+                export DEPLOY_ENV="Vista Previa (Preview)"
+                export DEPLOY_URL="${{ env.PREVIEW_URL }}"
+                envsubst < .github/templates/deploy-success.html > email-success.html
+
             - name: Notify Success via Email
               if: success()
               uses: dawidd6/action-send-mail@v3
@@ -112,10 +120,17 @@ jobs:
                 server_port: 587
                 username: ${{ secrets.EMAIL_USERNAME }}
                 password: ${{ secrets.EMAIL_PASSWORD }}
-                subject: "Vercel Deployment Successful - Preview Ready"
-                body: "Las pruebas pasaron y el despliegue a Vercel fue exitoso. Puedes probar los cambios generados en la siguiente URL de vista previa: ${{ env.PREVIEW_URL }}"
+                subject: "Despliegue Exitoso a Vercel (Preview) | Soda El Bambú"
                 to: ${{ secrets.EMAIL_RECIPIENT }}
                 from: "CI/CD Pipeline <ci-cd-helper@${{ secrets.EMAIL_USERNAME }}>"
+                html_body: file://email-success.html
+
+            # ---- Failure Email Preparation and Notification ----
+            - name: Prepare Error Email Template
+              if: failure()
+              run: |
+                  export DEPLOY_ENV="Vista Previa (Preview)"
+                  envsubst < .github/templates/deploy-error.html > email-error.html
 
             - name: Notify Failure via Email
               if: failure()
@@ -125,10 +140,10 @@ jobs:
                 server_port: 587
                 username: ${{ secrets.EMAIL_USERNAME }}
                 password: ${{ secrets.EMAIL_PASSWORD }}
-                subject: "Vercel Deployment Failed"
-                body: "El despliegue a Vercel falló. Por favor, revisa los logs de GitHub Actions para más detalles."
+                subject: "Despliegue Fallido a Vercel (Preview) | Soda El Bambú"
                 to: ${{ secrets.EMAIL_RECIPIENT }}
                 from: "CI/CD Pipeline <ci-cd-helper@${{ secrets.EMAIL_USERNAME }}>"
+                html_body: file://email-error.html
 
     # STEP 4: Deploy to Vercel (Production)
     deploy-production:
@@ -155,6 +170,14 @@ jobs:
                 echo "PROD_URL=$PROD_URL" >> $GITHUB_ENV
 
             # Email notification for deployment status
+            # ---- Success Email Preparation and Notification ----
+            - name: Prepare Success Email Template
+              if: success()
+              run: |
+                export DEPLOY_ENV="Producción"
+                export DEPLOY_URL="${{ env.PROD_URL }}"
+                envsubst < .github/templates/deploy-success.html > email-success.html
+            
             - name: Notify Success via Email
               if: success()
               uses: dawidd6/action-send-mail@v3
@@ -163,11 +186,18 @@ jobs:
                 server_port: 587
                 username: ${{ secrets.EMAIL_USERNAME }}
                 password: ${{ secrets.EMAIL_PASSWORD }}
-                subject: "Vercel Deployment Successful - Production Ready"
-                body: "Las pruebas pasaron y el despliegue a Vercel fue exitoso. La aplicación está ahora en producción y puedes acceder a ella en la siguiente URL: ${{ env.PROD_URL }}"
+                subject: "Despliegue Exitoso a Vercel (Producción) | Soda El Bambú"
                 to: ${{ secrets.EMAIL_RECIPIENT }}
                 from: "CI/CD Pipeline <ci-cd-helper@${{ secrets.EMAIL_USERNAME }}>"
+                html_body: file://email-success.html
 
+            # ---- Failure Email Preparation and Notification ----
+            - name: Prepare Error Email Template
+              if: failure()
+              run: |
+                  export DEPLOY_ENV="Producción"
+                  envsubst < .github/templates/deploy-error.html > email-error.html
+            
             - name: Notify Failure via Email
               if: failure()
               uses: dawidd6/action-send-mail@v3
@@ -176,7 +206,7 @@ jobs:
                 server_port: 587
                 username: ${{ secrets.EMAIL_USERNAME }}
                 password: ${{ secrets.EMAIL_PASSWORD }}
-                subject: "Vercel Production Deployment Failed"
-                body: "El despliegue de producción a Vercel falló. Por favor, revisa los logs de GitHub Actions para más detalles."
+                subject: "Despliegue Fallido a Vercel (Producción) | Soda El Bambú"
                 to: ${{ secrets.EMAIL_RECIPIENT }}
                 from: "CI/CD Pipeline <ci-cd-helper@${{ secrets.EMAIL_USERNAME }}>"
+                html_body: file://email-error.html
