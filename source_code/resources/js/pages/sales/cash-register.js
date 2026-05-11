@@ -1,6 +1,5 @@
 import { SwalModal, SwalToast, SwalNotificationTypes } from "../../utils/sweetalert.js";
 
-
 /**
  * Reusable SweetAlert2 custom class mappings used to keep modal styling
  * consistent across the sales page dialogs.
@@ -188,10 +187,8 @@ const showOpeningCashModal = async () => {
 };
 
 export function initializeCashRegister() {
-
     const showOpeningCashModalElement = $("#show-opening-cash-modal");
 	if (showOpeningCashModalElement.length && showOpeningCashModalElement.data("show-modal")) {
 		showOpeningCashModal();
 	}
-    
 }

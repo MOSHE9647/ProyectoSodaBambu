@@ -83,7 +83,7 @@ const normalizeReceiptData = (raw) => {
 	// 3. Totales inteligentes (Si el objeto raíz no los trae, los sumamos de los ítems)
 	const subtotal = Number(raw.data.subtotal) || Number(raw.data.sub_total) || items.reduce((s, i) => s + i.sub_total, 0) || items.reduce((s, i) => s + (i.product?.sale_price || 0) * raw.portions_per_day, 0);
 	const taxTotal = Number(raw.data.tax_total) || Number(raw.data.tax_amount) || items.reduce((s, i) => s + i.tax_amount, 0);
-	const total = Number(raw.data.total) || Number(raw.total_value) || (subtotal + taxTotal);
+	const total = Number(raw.data.total_value) || Number(raw.data.total) || (subtotal + taxTotal);
 
 	// 4. Título y fecha
 	const title = raw.data.receipt_type || (raw.data.invoice_number ? `Factura: ${raw.data.invoice_number}` : (raw.data.receipt_number ? `Ref: ${raw.data.receipt_number}` : "Comprobante"));
@@ -96,7 +96,13 @@ const normalizeReceiptData = (raw) => {
 
 export const buildReceiptHtml = ({ data, paymentDetails, totalTendered, changeAmount }) => {
 	const info = normalizeReceiptData(data);
-	const dateStr = new Date(info.date).toLocaleString("es-CR");
+	const dateStr = new Date(info.date).toLocaleString("es-CR", {
+		day: "2-digit",
+		month: "short",
+		year: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
 
 	const itemsHtml = info.items.map(i => `
 		<div class="receipt-item">

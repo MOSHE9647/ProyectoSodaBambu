@@ -43,6 +43,10 @@ class UpsertSaleAction
                 }
             }
 
+            $sale->load(['saleDetails' => function ($query) {
+                $query->withTrashed();
+            }, 'payments']);
+
             $this->handleSaleDetails($sale, $saleDetailsData);
             $this->handlePaymentDetails($sale, $salePaymentData);
 
@@ -76,11 +80,10 @@ class UpsertSaleAction
 
         // Create or update incoming details
         foreach ($saleDetailsData as $detailData) {
-            $id = $detailData['id'] ?? null;
             $cleanData = Arr::except($detailData, ['created_at', 'updated_at', 'deleted_at']);
 
-            $detail = $id
-                ? $sale->saleDetails()->withTrashed()->findOrFail($id)
+            $detail = isset($detailData['id'])
+                ? $sale->saleDetails->firstWhere('id', $detailData['id'])
                 : new SaleDetail(['sale_id' => $sale->id]);
 
             $detail->fill($cleanData);

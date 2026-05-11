@@ -412,25 +412,28 @@ export const calculateAlertDate = () => {
 	return null;
 };
 
-export const currencyFormatter = (
-	minFractionDigits = 2,
-	maxFractionDigits = 2,
-) => {
-	return new Intl.NumberFormat("es-CR", {
-		style: "currency",
-		currency: "CRC",
-		minimumFractionDigits: minFractionDigits,
-		maximumFractionDigits: maxFractionDigits,
-	});
+/**
+ * Redondea un número al múltiplo de 5 más cercano (Denominación de CRC).
+ * @param {number|string} value - Valor a redondear.
+ * @returns {number} Valor entero redondeado a múltiplo de 5.
+ */
+export const roundToNearestFive = (value) => {
+	const num = Number(value) || 0;
+	return Math.round(num / 5) * 5;
 };
 
-export const formatCurrency = (
-	amount,
-	minFractionDigits = 2,
-	maxFractionDigits = 2,
-) => {
-	const formatter = currencyFormatter(minFractionDigits, maxFractionDigits);
-	return formatter.format(amount || 0);
+/**
+ * Formatea un monto a la moneda de Costa Rica (Colones),
+ * redondeado al múltiplo de 5 más cercano, sin decimales
+ * y con espacio como separador de miles. (Ej: ₡ 5 000)
+ * @param {number|string} amount - Monto a formatear.
+ * @returns {string} Monto formateado.
+ */
+export const formatCurrency = (amount) => {
+	const roundedAmount = roundToNearestFive(amount);
+	// Expresión regular para separar miles con espacios en blanco
+	const formattedNumber = roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+	return `₡ ${formattedNumber}`;
 };
 
 export function getLaravelFirstError(errorData) {

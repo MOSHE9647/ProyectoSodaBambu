@@ -279,7 +279,7 @@
                             :step="1"
                             :class="'border-secondary w-auto'"
                             :inputClass="$errors->has('total_value') ? 'is-invalid' : ''"
-                            :placeholder="'Ej: 1500.00'"
+                            :placeholder="'Ej: 1500'"
                             :value="old('total_value', $contract?->total_value ?? 0)"
                             :errorMessage="$errors->first('total_value') ?? ''"
                             :textIconLeft="true"

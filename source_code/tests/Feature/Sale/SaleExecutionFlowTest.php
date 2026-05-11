@@ -97,9 +97,9 @@ test('CP-01_EIF-175_EIF-29 - creates a simple paid cash sale and registers stock
             [
                 'product_id' => $empanada->id,
                 'quantity' => 1,
-                'unit_price' => 1500,
+                'unit_price' => 1500.00,
                 'applied_tax' => 0,
-                'sub_total' => 1500,
+                'sub_total' => 1500.00,
             ],
         ],
         'payment_details' => [
@@ -160,9 +160,9 @@ test('CP-02_EIF-176_EIF-29 - accepts split payments and creates one transaction 
             [
                 'product_id' => $casado->id,
                 'quantity' => 1,
-                'unit_price' => 10000,
+                'unit_price' => 10000.00,
                 'applied_tax' => 0,
-                'sub_total' => 10000,
+                'sub_total' => 10000.00,
             ],
         ],
         'payment_details' => [
@@ -226,9 +226,9 @@ test('CP-03_EIF-183_EIF-30 - updates pending order quantity and adjusts stock on
             [
                 'product_id' => $refresco->id,
                 'quantity' => 3,
-                'unit_price' => 1200,
+                'unit_price' => 1200.00,
                 'applied_tax' => 0,
-                'sub_total' => 3600,
+                'sub_total' => 3600.00,
             ],
         ],
     ]));
@@ -289,9 +289,9 @@ test('CP-04_EIF-178_EIF-29 - changing product in a paid order restores old stock
             [
                 'product_id' => $casadoPollo->id,
                 'quantity' => 1,
-                'unit_price' => 5500,
+                'unit_price' => 5500.00,
                 'applied_tax' => 0,
-                'sub_total' => 5500,
+                'sub_total' => 5500.00,
             ],
         ],
         'payment_details' => [
@@ -380,9 +380,9 @@ test('CP-05_EIF-176_EIF-177_EIF-179_EIF-29 - updates existing payment method and
             [
                 'product_id' => $casado->id,
                 'quantity' => 1,
-                'unit_price' => 5000,
+                'unit_price' => 5000.00,
                 'applied_tax' => 0,
-                'sub_total' => 5000,
+                'sub_total' => 5000.00,
             ],
         ],
         'payment_details' => [
@@ -484,9 +484,9 @@ test('CP-06_EIF-175_EIF-177_EIF-179_EIF-29 - keeps invoice sequence format and o
             [
                 'product_id' => $productoA->id,
                 'quantity' => 1,
-                'unit_price' => 1000,
+                'unit_price' => 1000.00,
                 'applied_tax' => 0,
-                'sub_total' => 1000,
+                'sub_total' => 1000.00,
             ],
         ],
         'payment_details' => [
@@ -597,9 +597,9 @@ test('CP-08_EIF-178_EIF-179_EIF-29 - deleting a paid sale restores stock and sof
             [
                 'product_id' => $producto->id,
                 'quantity' => 1,
-                'unit_price' => 3500,
+                'unit_price' => 3500.00,
                 'applied_tax' => 0,
-                'sub_total' => 3500,
+                'sub_total' => 3500.00,
             ],
         ],
         'payment_details' => [

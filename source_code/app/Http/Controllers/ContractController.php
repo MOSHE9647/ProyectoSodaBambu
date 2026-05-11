@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Amp\Http\HttpStatus;
 use App\Actions\Contract\UpsertContractAction;
 use App\Enums\ProductType;
 use App\Http\Requests\ContractRequest;
@@ -13,6 +12,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Symfony\Component\HttpFoundation\Response as HttpStatus;
 use Yajra\DataTables\Facades\DataTables;
 
 class ContractController extends Controller
@@ -83,7 +83,7 @@ class ContractController extends Controller
             'redirect' => route('contracts.index'),
             'message' => 'Datos del contrato guardados exitosamente.',
             'data' => $contract->load('details.product', 'payments'),
-        ], HttpStatus::CREATED);
+        ], HttpStatus::HTTP_CREATED);
     }
 
     /**
@@ -137,7 +137,7 @@ class ContractController extends Controller
             'redirect' => route('contracts.index'),
             'message' => 'Datos del contrato actualizados exitosamente.',
             'data' => $contract->load('details.product', 'payments'),
-        ], HttpStatus::OK);
+        ], HttpStatus::HTTP_OK);
     }
 
     /**

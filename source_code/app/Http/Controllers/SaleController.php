@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Sale\UpsertSaleAction;
 use App\Enums\UserRole;
-use App\Http\Requests\SaleStoreRequest;
+use App\Http\Requests\SaleRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Sale;
@@ -51,7 +51,7 @@ class SaleController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(SaleStoreRequest $saleStoreRequest, UpsertSaleAction $upsertSaleAction)
+    public function store(SaleRequest $saleStoreRequest, UpsertSaleAction $upsertSaleAction)
     {
         // Validates the request and retrieves the validated data
         $saleValidatedData = $saleStoreRequest->validated();
@@ -110,7 +110,7 @@ class SaleController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      */
-    public function update(SaleStoreRequest $saleStoreRequest, UpsertSaleAction $upsertSaleAction)
+    public function update(SaleRequest $saleStoreRequest, UpsertSaleAction $upsertSaleAction)
     {
         // Validates the request and retrieves the validated data
         $saleValidatedData = $saleStoreRequest->validated();

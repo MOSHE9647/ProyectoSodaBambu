@@ -1,33 +1,21 @@
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert";
+import { formatCurrency, roundToNearestFive } from "../../utils/utils";
 
 const STORAGE_KEY = "pos_orders_state";
 
-// Global cart state
 const state = {
 	activeOrderId: "order-tab-0001",
 	orders: {},
 };
 
-// DOM variable cache
 let elements = {};
 
 // --- STATE MANAGEMENT ---
 
-/**
- * Persists all order carts in LocalStorage.
- *
- * @returns {void}
- */
 const saveToStorage = () => {
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(state.orders));
 };
 
-/**
- * Restores cart state from LocalStorage and ensures
- * the active order has an initialized cart array.
- *
- * @returns {void}
- */
 const loadFromStorage = () => {
 	const savedOrders = localStorage.getItem(STORAGE_KEY);
 	if (savedOrders) {
@@ -51,13 +39,6 @@ const getActiveCart = () => state.orders[state.activeOrderId] || [];
 
 // --- UTILITIES ---
 
-/**
- * Logs a technical error and shows a user-facing toast.
- *
- * @param {string} errorMessage
- * @param {string} consoleErrorMessage
- * @returns {void}
- */
 const showError = (errorMessage, consoleErrorMessage) => {
 	console.error(consoleErrorMessage);
 	SwalToast.fire({
@@ -66,111 +47,55 @@ const showError = (errorMessage, consoleErrorMessage) => {
 	});
 };
 
-// Optimized Currency Formatter using native Intl API
-const currencyFormatter = new Intl.NumberFormat("es-CR", {
-	style: "currency",
-	currency: "CRC",
-	minimumFractionDigits: 0,
-	maximumFractionDigits: 0,
-});
-
-export const formatCurrency = (amount) => {
-	const parts = currencyFormatter.formatToParts(Number(amount) || 0);
-
-	return parts
-		.map((part, index) => {
-			if (part.type === "currency") {
-				const nextPart = parts[index + 1];
-				if (!nextPart || nextPart.type !== "literal" || !/\s/.test(nextPart.value)) {
-					return `${part.value} `;
-				}
-			}
-
-			if (part.type === "literal" && /\s/.test(part.value)) return " ";
-
-			return part.value;
-		})
-		.join("");
+const toFixedNumber = (num) => {
+    return Number(Number(num).toFixed(2));
 };
 
 /**
- * Parses a localized numeric string to a float.
- *
- * @param {string|undefined} value
- * @returns {number}
+ * Calcula y normaliza los montos de un item del carrito.
+ * Retorna un objeto NUEVO con los cálculos actualizados.
  */
-const parsePrice = (value) => Math.round(Number.parseFloat(value?.replace(/,/g, ".") || 0));
-const parseRate = (value) => Number.parseFloat(value?.replace(/,/g, ".") || 0);
-const toIntegerAmount = (value) => Math.round(Number(value) || 0);
-
 const normalizeCartItemAmounts = (item) => {
 	const quantity = parseInt(item.quantity, 10) || 1;
-	const unitPrice = toIntegerAmount(item.unit_price);
-
+	
 	return {
 		...item,
 		quantity,
-		unit_price: unitPrice,
-		applied_tax: Number(item.applied_tax) || 0,
-		sub_total: toIntegerAmount(unitPrice * quantity),
+		unit_base_price: toFixedNumber(item.unit_base_price),
+		unit_tax_amount: toFixedNumber(item.unit_tax_amount),
+		unit_sale_price: toFixedNumber(item.unit_sale_price),
+		applied_tax: toFixedNumber(item.applied_tax),
+		subtotal_base: toFixedNumber(item.unit_base_price * quantity), 
+		subtotal_tax: toFixedNumber(item.unit_tax_amount * quantity), 
+		subtotal_sale: toFixedNumber(item.unit_sale_price * quantity), 
 	};
 };
 
 // --- VALIDATIONS ---
 
-/**
- * Validates whether a product with inventory can be added to cart at least once.
- *
- * @param {HTMLElement} productCard
- * @returns {boolean}
- */
-export const validateProductStock = (productCard) => {
-	const hasInventory = productCard.dataset.productHasInventory === "1";
+export const validateProductStock = ($productCard) => {
+	const hasInventory = $productCard.data("productHasInventory") == 1;
 	if (!hasInventory) return true;
 
-	const productStock = parseInt(productCard.dataset.productStock, 10);
+	const productStock = parseInt($productCard.data("productStock"), 10);
 	if (productStock <= 0) {
 		SwalToast.fire({
 			icon: SwalNotificationTypes.WARNING,
-			title: `El producto "${productCard.dataset.productName}" no tiene suficiente stock.`,
+			title: `El producto "${$productCard.data("productName")}" no tiene suficiente stock.`,
 		});
 		return false;
 	}
 	return true;
 };
 
-/**
- * Validates stock availability against a desired quantity.
- *
- * @param {{
- *   hasInventory: boolean,
- *   availableStock: number,
- *   desiredQuantity: number,
- *   productName: string
- * }} params
- * @returns {boolean}
- */
-const validateStockForQuantity = ({
-	hasInventory,
-	availableStock,
-	desiredQuantity,
-	productName,
-}) => {
+const validateStockForQuantity = ({ hasInventory, availableStock, desiredQuantity, productName }) => {
 	if (!hasInventory) return true;
-
 	if (availableStock <= 0) {
-		SwalToast.fire({
-			icon: SwalNotificationTypes.WARNING,
-			title: `El producto "${productName}" no tiene stock disponible.`,
-		});
+		SwalToast.fire({ icon: SwalNotificationTypes.WARNING, title: `El producto "${productName}" no tiene stock disponible.` });
 		return false;
 	}
-
 	if (desiredQuantity > availableStock) {
-		SwalToast.fire({
-			icon: SwalNotificationTypes.WARNING,
-			title: `Stock insuficiente para "${productName}". Disponible: ${availableStock}.`,
-		});
+		SwalToast.fire({ icon: SwalNotificationTypes.WARNING, title: `Stock insuficiente para "${productName}". Disponible: ${availableStock}.` });
 		return false;
 	}
 	return true;
@@ -178,52 +103,27 @@ const validateStockForQuantity = ({
 
 // --- UI UPDATES ---
 
-/**
- * Enables or disables finalize/clear buttons based on active cart content.
- *
- * @returns {void}
- */
 export const syncFinalizeSaleButtonState = () => {
 	if (!elements.finalizeSaleButton || !elements.clearSaleButton) return;
-
 	const hasProducts = getActiveCart().length > 0;
-	elements.finalizeSaleButton.disabled = !hasProducts;
-	elements.clearSaleButton.disabled = !hasProducts;
+	elements.finalizeSaleButton.prop("disabled", !hasProducts);
+	elements.clearSaleButton.prop("disabled", !hasProducts);
 };
 
-/**
- * Creates the HTML markup for a single cart row.
- *
- * @param {{
- *   product_id: string|number,
- *   name: string,
- *   quantity: number,
- *   unit_price: number
- * }} item
- * @returns {string}
- */
 const createCartItemHTML = (item) => {
-	const taxRate = (Number(item.applied_tax) || 0) / 100;
-	const priceWithoutTax = Math.round(item.unit_price / (1 + taxRate));
-
 	return `
     <div class="d-flex flex-row justify-content-between align-items-center gap-2 w-100" data-cart-item-id="${item.product_id}">
         <div class="d-flex flex-column text-start overflow-hidden flex-grow-1">
             <span class="fw-bold text-truncate text-body" style="font-size: 0.95rem;" title="${item.name}">${item.name}</span>
-            <span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">${formatCurrency(priceWithoutTax)} c/u</span>
+            <span class="text-body-secondary fw-medium" style="font-size: 0.85rem;">
+                ${formatCurrency(item.unit_base_price)} c/u
+            </span>
         </div>
         <div class="d-flex flex-row align-items-center justify-content-end gap-2 flex-shrink-0">
             <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="decrease" data-product-id="${item.product_id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
                 <i class="bi bi-dash fs-6"></i>
             </button>
-            
-            <input type="number" 
-				class="form-control text-center fw-semibold text-body quantity-input px-1 py-0 border-0" 
-				data-product-id="${item.product_id}" 
-				value="${item.quantity}" 
-				min="1"
-				style="width: 38px; background-color: transparent;">
-
+            <input type="number" class="form-control text-center fw-semibold text-body quantity-input px-1 py-0 border-0" data-product-id="${item.product_id}" value="${item.quantity}" min="1" style="width: 38px; background-color: transparent;">
             <button type="button" class="btn border-0 p-0 d-flex align-items-center justify-content-center rounded-2" data-action="increase" data-product-id="${item.product_id}" style="background-color: var(--bs-secondary-bg-subtle); color: var(--bs-body-color); width: 28px; height: 28px;">
                 <i class="bi bi-plus fs-6"></i>
             </button>
@@ -235,221 +135,135 @@ const createCartItemHTML = (item) => {
 	`;
 };
 
-/**
- * Renders all active cart items and recalculates subtotal, tax, and total.
- *
- * @returns {void}
- */
 const renderCartItems = () => {
-	if (!elements.saleDetailsContainer) return;
+	if (!elements.saleDetailsContainer || elements.saleDetailsContainer.length === 0) return;
 
 	const currentCart = getActiveCart();
 
 	if (currentCart.length === 0) {
-		elements.saleDetailsContainer.innerHTML = `
+		elements.saleDetailsContainer.html(`
             <div class="d-flex flex-column flex-grow-1 justify-content-center align-items-center text-center text-muted">
                 <i class="bi bi-bag fs-1 mb-2"></i>
                 <p>Selecciona un producto para agregarlo a la orden</p>
             </div>
-        `;
-		elements.saleTax.textContent = "₡ 0";
-		elements.saleSubtotal.textContent = "₡ 0";
-		elements.saleTotal.textContent = "₡ 0";
+        `);
+		elements.saleTax.text("₡ 0");
+		elements.saleSubtotal.text("₡ 0");
+		elements.saleTotal.text("₡ 0");
 		syncFinalizeSaleButtonState();
 		return;
 	}
 
-	let subtotalWithoutTax = 0;
-	let totalTaxAmount = 0;
+	let finalSubtotalBase = 0;
+	let finalTotalTax = 0;
+	let finalTotalSale = 0;
 
-	const html = currentCart
-		.map((item) => {
-			const taxRate = (Number(item.applied_tax) || 0) / 100;
-			// El sub_total guardado es (unit_price * quantity), osea TOTAL
-			const itemTotal = item.sub_total;
-			const itemBasePrice = Math.round(itemTotal / (1 + taxRate));
-			const itemTax = itemTotal - itemBasePrice;
+	const html = currentCart.map((item) => {
+		finalSubtotalBase += item.subtotal_base;
+		finalTotalTax += item.subtotal_tax;
+		finalTotalSale += item.subtotal_sale;
 
-			subtotalWithoutTax += itemBasePrice;
-			totalTaxAmount += itemTax;
+		return createCartItemHTML(item);
+	}).join("");
 
-			return createCartItemHTML(item);
-		})
-		.join("");
-
-	elements.saleDetailsContainer.innerHTML = html;
-	elements.saleSubtotal.textContent = formatCurrency(subtotalWithoutTax);
-	elements.saleTax.textContent = formatCurrency(totalTaxAmount);
-	elements.saleTotal.textContent = formatCurrency(subtotalWithoutTax + totalTaxAmount);
+	elements.saleDetailsContainer.html(html);
+	
+	elements.saleSubtotal.text(formatCurrency(finalSubtotalBase));
+	elements.saleTax.text(formatCurrency(finalTotalTax));
+	elements.saleTotal.text(formatCurrency(finalTotalSale));
 
 	syncFinalizeSaleButtonState();
 };
 
 // --- CART ACTIONS ---
 
-/**
- * Adds a product to the active cart, or increases its quantity if already present.
- * Stock is validated before any mutation.
- *
- * @param {string|number} productId
- * @param {HTMLElement} productCard
- * @returns {void}
- */
-const addToCart = (productId, productCard) => {
-	const name = productCard.dataset.productName;
-	const price = toIntegerAmount(parsePrice(productCard.dataset.productPrice));
-	const tax = parseRate(productCard.dataset.productTaxPercentage);
-	const hasInventory = productCard.dataset.productHasInventory === "1";
-	const availableStock = parseInt(productCard.dataset.productStock, 10) || 0;
+const updateItemInCart = (productId, newQuantity) => {
+    const currentCart = getActiveCart();
+    const index = currentCart.findIndex(item => item.product_id == productId);
+    
+    if (index !== -1) {
+        // Creamos una copia actualizada y la reemplazamos en el arreglo original
+        const updatedItem = { ...currentCart[index], quantity: newQuantity };
+        currentCart[index] = normalizeCartItemAmounts(updatedItem);
+        
+        saveToStorage();
+        renderCartItems();
+    }
+};
+
+const addToCart = (productId, $productCard) => {
+	const name = $productCard.data("productName");
+	const hasInventory = $productCard.data("productHasInventory") == 1;
+	const availableStock = parseInt($productCard.data("productStock"), 10) || 0;
+    
+    const unitBasePrice = parseFloat($productCard.data("productBasePrice")) || 0;
+    const unitTaxAmount = parseFloat($productCard.data("productTaxAmount")) || 0;
+    const unitSalePrice = parseFloat($productCard.data("productSalePrice")) || 0;
+    const taxPercentage = parseFloat($productCard.data("productTaxPercentage")) || 0;
 
 	const currentCart = getActiveCart();
-	let existingItem = currentCart.find(
-		(item) => item.product_id === productId,
-	);
-
+	let existingItem = currentCart.find((item) => item.product_id == productId);
 	const desiredQuantity = existingItem ? existingItem.quantity + 1 : 1;
 
-	if (
-		!validateStockForQuantity({
-			hasInventory,
-			availableStock,
-			desiredQuantity,
-			productName: name,
-		})
-	) {
-		return;
-	}
+	if (!validateStockForQuantity({ hasInventory, availableStock, desiredQuantity, productName: name })) return;
 
 	if (existingItem) {
-		existingItem.has_inventory = hasInventory;
-		existingItem.available_stock = availableStock;
-		existingItem.quantity += 1;
-		existingItem.sub_total =
-			existingItem.quantity * existingItem.unit_price;
+        updateItemInCart(productId, desiredQuantity);
 	} else {
-		currentCart.push({
+		currentCart.push(normalizeCartItemAmounts({
 			product_id: productId,
 			name,
 			quantity: 1,
-			unit_price: price,
-			applied_tax: tax,
+			unit_base_price: unitBasePrice,
+			unit_tax_amount: unitTaxAmount,
+			unit_sale_price: unitSalePrice,
+			applied_tax: taxPercentage,
 			has_inventory: hasInventory,
 			available_stock: availableStock,
-			sub_total: price,
-		});
+		}));
+        saveToStorage();
+        renderCartItems();
 	}
-
-	saveToStorage();
-	renderCartItems();
 };
 
-/**
- * Cart mutation handlers for the active order.
- *
- * @type {{
- *   decrease: (productId: string|number) => void,
- *   increase: (productId: string|number) => void,
- *   update: (productId: string|number, newQuantityStr: string) => void,
- *   remove: (productId: string|number) => void
- * }}
- */
 const cartActions = {
-	/**
-	 * Decreases quantity by one (minimum quantity is 1).
-	 *
-	 * @param {string|number} productId
-	 * @returns {void}
-	 */
 	decrease: (productId) => {
-		const item = getActiveCart().find((i) => i.product_id === productId);
+		const item = getActiveCart().find((i) => i.product_id == productId);
 		if (item && item.quantity > 1) {
-			item.quantity -= 1;
-			item.sub_total = item.quantity * item.unit_price;
-			saveToStorage();
-			renderCartItems();
+			updateItemInCart(productId, item.quantity - 1);
 		}
 	},
-	/**
-	 * Increases quantity by one after validating stock limits.
-	 *
-	 * @param {string|number} productId
-	 * @returns {void}
-	 */
 	increase: (productId) => {
-		const item = getActiveCart().find((i) => i.product_id === productId);
+		const item = getActiveCart().find((i) => i.product_id == productId);
 		if (!item) return;
+		if (!validateStockForQuantity({
+			hasInventory: item.has_inventory, availableStock: item.available_stock, desiredQuantity: item.quantity + 1, productName: item.name,
+		})) return;
 
-		if (
-			!validateStockForQuantity({
-				hasInventory: item.has_inventory,
-				availableStock: item.available_stock,
-				desiredQuantity: item.quantity + 1,
-				productName: item.name,
-			})
-		) {
-			return;
-		}
-
-		item.quantity += 1;
-		item.sub_total = item.quantity * item.unit_price;
-		saveToStorage();
-		renderCartItems();
+		updateItemInCart(productId, item.quantity + 1);
 	},
-	/**
-	 * Updates quantity from direct input, enforcing minimum quantity
-	 * and stock constraints.
-	 *
-	 * @param {string|number} productId
-	 * @param {string} newQuantityStr
-	 * @returns {void}
-	 */
 	update: (productId, newQuantityStr) => {
-		const item = getActiveCart().find((i) => i.product_id === productId);
+		const item = getActiveCart().find((i) => i.product_id == productId);
 		if (!item) return;
 
 		let newQuantity = parseInt(newQuantityStr, 10);
-
-		// Prevent NaN values and enforce minimum quantity of 1.
 		if (isNaN(newQuantity) || newQuantity < 1) {
-			SwalToast.fire({
-				icon: SwalNotificationTypes.WARNING,
-				title: "La cantidad mínima debe ser 1.",
-			});
-			// Restore the previous valid quantity in the input.
+			SwalToast.fire({ icon: SwalNotificationTypes.WARNING, title: "La cantidad mínima debe ser 1." });
 			renderCartItems();
 			return;
 		}
 
-		// Validate stock before applying the new quantity.
-		if (
-			!validateStockForQuantity({
-				hasInventory: item.has_inventory,
-				availableStock: item.available_stock,
-				desiredQuantity: newQuantity,
-				productName: item.name,
-			})
-		) {
-			// Re-render to reset the input to the last valid quantity.
+		if (!validateStockForQuantity({
+			hasInventory: item.has_inventory, availableStock: item.available_stock, desiredQuantity: newQuantity, productName: item.name,
+		})) {
 			renderCartItems();
 			return;
 		}
 
-		// Apply the quantity update after validation succeeds.
-		item.quantity = newQuantity;
-		item.sub_total = item.quantity * item.unit_price;
-		saveToStorage();
-		renderCartItems();
+		updateItemInCart(productId, newQuantity);
 	},
-	/**
-	 * Removes an item from the active cart.
-	 *
-	 * @param {string|number} productId
-	 * @returns {void}
-	 */
 	remove: (productId) => {
-		state.orders[state.activeOrderId] = getActiveCart().filter(
-			(i) => i.product_id !== productId,
-		);
+		state.orders[state.activeOrderId] = getActiveCart().filter((i) => i.product_id != productId);
 		saveToStorage();
 		renderCartItems();
 	},
@@ -457,127 +271,73 @@ const cartActions = {
 
 // --- EXPORTED APIS ---
 
-/**
- * Clears all items from the active cart.
- *
- * @returns {void}
- */
 export const clearActiveCart = () => {
 	state.orders[state.activeOrderId] = [];
 	saveToStorage();
 	renderCartItems();
 };
 
-/**
- * Switches the active order tab and initializes an empty cart if needed.
- *
- * @param {string|number} newOrderId
- * @returns {void}
- */
 export const switchActiveOrder = (newOrderId) => {
 	state.activeOrderId = newOrderId;
-	if (!state.orders[state.activeOrderId]) {
-		state.orders[state.activeOrderId] = [];
-	}
+	if (!state.orders[state.activeOrderId]) state.orders[state.activeOrderId] = [];
 	saveToStorage();
 	renderCartItems();
 };
 
-/**
- * Deletes a stored cart by order id.
- *
- * @param {string|number} orderId
- * @returns {void}
- */
 export const deleteOrderCart = (orderId) => {
 	delete state.orders[orderId];
 	saveToStorage();
 };
 
-/**
- * Builds and returns the active sale payload for backend submission.
- *
- * @returns {{
- *   sale_details: Array<{
- *     product_id: string|number,
- *     quantity: number,
- *     unit_price: number,
- *     applied_tax: number,
- *     sub_total: number
- *   }>,
- *   total: string
- * }}
- */
 export const getActiveSaleData = () => {
 	const currentCart = getActiveCart();
-	let saleTotal = 0;
+	let exactSaleTotal = 0; 
 
 	const sale_details = currentCart.map((item) => {
-		const { product_id, quantity, unit_price, applied_tax, sub_total } = item;
-		const taxRate = (Number(applied_tax) || 0) / 100;
-
-		const itemBaseSubtotal = Math.round(sub_total / (1 + taxRate));
-		const itemBasePrice = Math.round(unit_price / (1 + taxRate));
-
-		saleTotal += toIntegerAmount(sub_total);
+		exactSaleTotal += item.subtotal_sale;
 
 		return {
-			product_id,
-			quantity,
-			unit_price: itemBasePrice,
-			applied_tax,
-			sub_total: itemBaseSubtotal,
+			product_id: parseInt(item.product_id, 10),
+			quantity: parseInt(item.quantity, 10),
+			unit_price: item.unit_base_price, 
+			applied_tax: item.applied_tax,
+			sub_total: item.subtotal_base, 
 		};
 	});
 
 	const receipt_details = currentCart.map((item) => {
-		const { product_id, name, quantity, unit_price, applied_tax, sub_total } = item;
-		const taxRate = (Number(applied_tax) || 0) / 100;
-
-		const itemTotal = sub_total;
-		const itemBasePrice = Math.round(itemTotal / (1 + taxRate));
-		const itemTax = itemTotal - itemBasePrice;
-
 		return {
-			product_id,
-			name,
-			quantity,
-			unit_price,
-			applied_tax,
-			sub_total: itemBasePrice,
-			tax_amount: itemTax,
-			total: itemTotal,
+			product_id: parseInt(item.product_id, 10),
+			name: item.name,
+			quantity: parseInt(item.quantity, 10),
+            // REDONDEO CRÍTICO: Usamos Math.round para que la factura sume enteros exactos
+			unit_price: Math.round(item.unit_sale_price),
+			applied_tax: item.applied_tax,
+			sub_total: Math.round(item.subtotal_base),
+			tax_amount: Math.round(item.subtotal_tax),
+			total: Math.round(item.subtotal_sale),
 		};
 	});
 
 	return {
 		sale_details,
 		receipt_details,
-		total: (Number(saleTotal) || 0).toFixed(2),
+		total: roundToNearestFive(exactSaleTotal), 
 	};
 };
 
-/**
- * Initializes the sales cart module:
- * - caches required DOM nodes
- * - loads persisted state
- * - renders cart and totals
- * - wires product/cart event listeners
- *
- * @returns {void}
- */
 export const initializeSalesCart = () => {
 	elements = {
-		productsGrid: document.getElementById("products-grid"),
-		saleDetailsContainer: document.getElementById("sale-details"),
-		saleTax: document.getElementById("sale-tax"),
-		saleSubtotal: document.getElementById("sale-subtotal"),
-		saleTotal: document.getElementById("sale-total"),
-		finalizeSaleButton: document.getElementById("finalize-sale-button"),
-		clearSaleButton: document.getElementById("clear-sale-btn"),
+		productsGrid: $("#products-grid"),
+		saleDetailsContainer: $("#sale-details"),
+		saleTax: $("#sale-tax"),
+		saleSubtotal: $("#sale-subtotal"),
+		saleTotal: $("#sale-total"),
+		finalizeSaleButton: $("#finalize-sale-button"),
+		clearSaleButton: $("#clear-sale-btn"),
 	};
 
-	if (Object.values(elements).some((el) => !el)) {
+	if (Object.values(elements).some(($el) => $el.length === 0)) {
 		showError(
 			"No se encontraron los elementos necesarios para inicializar el carrito.",
 			"Error al inicializar carrito. Faltan elementos críticos del DOM.",
@@ -588,46 +348,25 @@ export const initializeSalesCart = () => {
 	loadFromStorage();
 	renderCartItems();
 
-	elements.productsGrid.addEventListener("click", (event) => {
-		const productCard = event.target.closest(".product-card");
-		if (!productCard || !elements.productsGrid.contains(productCard))
-			return;
-
-		const productId = productCard.dataset.productId;
-		if (!productId) {
-			return showError(
-				"No se pudo agregar el producto al carrito.",
-				"No se encontró el ID del producto.",
-			);
-		}
-
-		if (validateProductStock(productCard)) {
-			addToCart(productId, productCard);
-		}
+	// Event Delegation
+	elements.productsGrid.on("click", ".product-card", function () {
+		const $productCard = $(this);
+		const productId = $productCard.data("productId");
+		if (!productId) return;
+		if (validateProductStock($productCard)) addToCart(productId, $productCard);
 	});
 
-	elements.saleDetailsContainer.addEventListener("click", (event) => {
-		const actionButton = event.target.closest("button[data-action]");
-		if (!actionButton) return;
-
-		const { action, productId } = actionButton.dataset;
-		if (productId && cartActions[action]) {
-			cartActions[action](productId);
-		}
+	elements.saleDetailsContainer.on("click", "button[data-action]", function () {
+		const action = $(this).data("action");
+		const productId = $(this).data("productId");
+		if (productId && cartActions[action]) cartActions[action](productId);
 	});
 
-	elements.clearSaleButton.addEventListener("click", clearActiveCart);
-
-	elements.saleDetailsContainer.addEventListener("change", (event) => {
-		if (event.target.classList.contains("quantity-input")) {
-			const productId = event.target.dataset.productId;
-			const newQuantity = event.target.value;
-
-			if (productId) {
-				cartActions.update(productId, newQuantity);
-			}
-		}
+	elements.saleDetailsContainer.on("change", ".quantity-input", function () {
+		const productId = $(this).data("productId");
+		const newQuantity = $(this).val();
+		if (productId) cartActions.update(productId, newQuantity);
 	});
 
-	elements.clearSaleButton.addEventListener("click", clearActiveCart);
+	elements.clearSaleButton.on("click", clearActiveCart);
 };

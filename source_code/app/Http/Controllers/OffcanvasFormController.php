@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Amp\Http\HttpStatus;
 use App\Models\Category;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response as HttpStatus;
 
 class OffcanvasFormController extends Controller
 {
@@ -19,13 +19,14 @@ class OffcanvasFormController extends Controller
             ]),
             'category' => view('models.category._form', [
                 'action' => route('categories.store'),
+                'isOffcanvas' => true,
                 'category' => null,
             ]),
             'supplier' => view('models.suppliers.form', [
                 'action' => route('suppliers.store'),
                 'supplier' => null,
             ]),
-            'product' => view('models.products.form', [
+            'product' => view('models.products._form', [
                 'categories' => Category::all(['id', 'name']),
                 'action' => route('products.store'),
                 'isOffcanvas' => true,
@@ -39,7 +40,7 @@ class OffcanvasFormController extends Controller
             ]),
             default => response()->json([
                 'error' => 'Tipo de formulario no válido.',
-            ], HttpStatus::BAD_REQUEST),
+            ], HttpStatus::HTTP_BAD_REQUEST),
         };
     }
 }

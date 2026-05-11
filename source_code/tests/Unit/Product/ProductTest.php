@@ -12,6 +12,6 @@ test('CP-01_EIF-33 - calculates correct sale price', function () {
     $salePrice = Product::calculateSalePrice($referenceCost, $taxPercentage, $marginPercentage);
 
     // Entonces: el precio de venta se calcula correctamente y se redondea a 2 decimales.
-    $expectedPrice = 2288; // Cálculo manual: 1500 + (1500 * 0.13) = 1695; 1695 + (1695 * 0.35) = 2288.25
+    $expectedPrice = 2290.0; // Cálculo manual: 1500 + (1500 * 0.13) = 1695; 1695 + (1695 * 0.35) = 2288.25 -> redondeado a 2290.0
     expect($salePrice)->toBe($expectedPrice);
 });

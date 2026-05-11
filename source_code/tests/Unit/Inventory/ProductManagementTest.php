@@ -19,7 +19,7 @@ test('CP-01_EIF-32 - calculateSalePrice applies tax and margin correctly', funct
     $salePrice = Product::calculateSalePrice($referenceCost, $taxPercentage, $marginPercentage);
 
     // Then: the expected final value is returned.
-    expect($salePrice)->toBe(15255);
+    expect($salePrice)->toBe(15255.0);
 });
 
 /**

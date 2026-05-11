@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\PaymentStatus;
-use App\Http\Requests\SaleStoreRequest;
+use App\Http\Requests\SaleRequest;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
@@ -21,16 +21,16 @@ function saleStorePayload(int|float $total): array
             [
                 'product_id' => $firstProduct->id,
                 'quantity' => 2,
-                'unit_price' => 50,
-                'applied_tax' => 0.00,
-                'sub_total' => 100,
+                'unit_price' => '50.00',
+                'applied_tax' => 0,
+                'sub_total' => '100.00',
             ],
             [
                 'product_id' => $secondProduct->id,
                 'quantity' => 1,
-                'unit_price' => 25,
-                'applied_tax' => 0.00,
-                'sub_total' => 25,
+                'unit_price' => '25.00',
+                'applied_tax' => 0,
+                'sub_total' => '25.00',
             ],
         ],
     ];
@@ -38,7 +38,7 @@ function saleStorePayload(int|float $total): array
 
 function validateSaleStoreRequest(array $payload)
 {
-    $request = SaleStoreRequest::create('/', 'POST', $payload);
+    $request = SaleRequest::create('/', 'POST', $payload);
     $validator = Validator::make($request->all(), $request->rules());
 
     foreach ($request->after() as $callback) {
@@ -60,14 +60,14 @@ test('sale store request rejects totals that do not match the sum of detail subt
     $validator = validateSaleStoreRequest(saleStorePayload(124));
 
     expect($validator->errors()->has('total'))->toBeTrue();
-    expect($validator->errors()->first('total'))->toBe('El total (124) no coincide con la suma de los productos (125).');
+    expect($validator->errors()->first('total'))->toBe('El total (₡ 124) no coincide con la suma calculada de los productos (₡ 125).');
 });
 
 test('sale store request rejects decimal currency values', function () {
     $payload = saleStorePayload(125);
     $payload['total'] = 125.50;
-    $payload['sale_details'][0]['unit_price'] = 50.25;
-    $payload['sale_details'][0]['sub_total'] = 100.50;
+    $payload['sale_details'][0]['unit_price'] = '50.256';
+    $payload['sale_details'][0]['sub_total'] = '100.501';
     $payload['payment_status'] = PaymentStatus::PAID->value;
     $payload['payment_details'] = [
         [
@@ -87,15 +87,15 @@ test('sale store request rejects decimal currency values', function () {
 });
 
 test('sale store request matches frontend line-level tax rounding', function () {
-    $payload = saleStorePayload(12);
+    $payload = saleStorePayload(10);
     $payload['sale_details'][0]['quantity'] = 1;
-    $payload['sale_details'][0]['unit_price'] = 5;
+    $payload['sale_details'][0]['unit_price'] = '5.00';
     $payload['sale_details'][0]['applied_tax'] = 10;
-    $payload['sale_details'][0]['sub_total'] = 5;
+    $payload['sale_details'][0]['sub_total'] = '5.00';
     $payload['sale_details'][1]['quantity'] = 1;
-    $payload['sale_details'][1]['unit_price'] = 5;
+    $payload['sale_details'][1]['unit_price'] = '5.00';
     $payload['sale_details'][1]['applied_tax'] = 10;
-    $payload['sale_details'][1]['sub_total'] = 5;
+    $payload['sale_details'][1]['sub_total'] = '5.00';
 
     $validator = validateSaleStoreRequest($payload);
 

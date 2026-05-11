@@ -9,7 +9,7 @@ import { applyTheme } from './utils/theme-toggler.js';
 import { SwalNotificationTypes, SwalToast } from "./utils/sweetalert.js";
 import { initializePageLoadingProgressBar } from './utils/progress-bar.js';
 import { scrollToItem, checkScrollbarVisibility } from './utils/scrollbar.js';
-import { checkConnectionStatus, updateConnectionStatus } from './utils/connection-status.js';
+import { checkConnectionStatus } from './utils/connection-status.js';
 import {initializeCashClosure} from './pages/sales/cash-closure.js';
 
 // ==================== Global Functions ====================
@@ -18,8 +18,7 @@ window.$ = $;
 window.SwalToast = SwalToast;
 window.bootstrap = bootstrap;
 window.ApexCharts = ApexCharts; 
-window.SwalNotificationTypes = SwalNotificationTypes; 
-window.updateConnectionStatus = updateConnectionStatus;
+window.SwalNotificationTypes = SwalNotificationTypes;
 
 // ==================== Main Initialization ====================
 
