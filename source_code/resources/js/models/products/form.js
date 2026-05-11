@@ -279,6 +279,12 @@ export function initProductFormEvents(
 				alertContainer.toggleClass("d-none", !alertDate);
 			}
 
+			// For sale_price field, if it's not merchandise, update hidden field
+			if (fieldId === "sale_price" && $("#type").val() !== PRODUCT_TYPE_MERCHANDISE) {
+				const value = $target.val().trim();
+				$("#sale_price_hidden").val(value);
+			}
+
 			const validators = getActiveFieldValidators();
 
 			// Skip if field is not in active validators
