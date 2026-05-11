@@ -1,9 +1,10 @@
 <?php
 
-use App\Models\User;
-use App\Models\Category;
+use App\Enums\ProductType;
 use App\Enums\UserRole;
-use App\Enums\ProductType; 
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\User;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -11,7 +12,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed(UserSeeder::class);
-    $this->admin = User::whereHas('roles', function($q) {
+    $this->admin = User::whereHas('roles', function ($q) {
         $q->where('name', UserRole::ADMIN->value);
     })->first();
 });
@@ -32,7 +33,7 @@ test('el modulo de productos rechaza precios decimales y almacena enteros (EIF-2
         'minimum_stock' => 1,
         'expiration_date' => now()->addYear()->format('Y-m-d'),
         'expiration_alert_days' => 30,
-        'tax_percentage' => 13
+        'tax_percentage' => 13,
     ];
 
     $response = $this->actingAs($this->admin)
@@ -52,7 +53,7 @@ test('el modulo de productos rechaza precios decimales y almacena enteros (EIF-2
         'minimum_stock' => 1,
         'expiration_date' => now()->addYear()->format('Y-m-d'),
         'expiration_alert_days' => 30,
-        'tax_percentage' => 13
+        'tax_percentage' => 13,
     ];
 
     $response = $this->actingAs($this->admin)
@@ -63,32 +64,32 @@ test('el modulo de productos rechaza precios decimales y almacena enteros (EIF-2
     // VALIDACIÓN FLEXIBLE: Verificamos que se guardó y que el precio NO tiene decimales
     $this->assertDatabaseHas('products', [
         'name' => 'Producto Entero Final',
-        'reference_cost' => 1800
+        'reference_cost' => 1800,
     ]);
 
-    $product = \App\Models\Product::where('name', 'Producto Entero Final')->first();
+    $product = Product::where('name', 'Producto Entero Final')->first();
     // Verificamos que sea un número entero (sin puntos decimales significativos)
     expect($product->sale_price)->toBeInt();
 });
 
 test('el modulo de insumos maneja costos como enteros (EIF-210)', function () {
-    $routeName = 'supplies.store'; 
+    $routeName = 'supplies.store';
 
     $payload = [
         'name' => 'Insumo Test Final',
         'unit_price' => 500,
         'measure_unit' => 'kg',
         'quantity' => 10,
-        'description' => 'Test'
+        'description' => 'Test',
     ];
 
     $response = $this->actingAs($this->admin)
         ->postJson(route($routeName), $payload);
-    
+
     expect($response->status())->toBeIn([200, 201, 302]);
 
     $this->assertDatabaseHas('supplies', [
         'name' => 'Insumo Test Final',
-        'unit_price' => 500 
+        'unit_price' => 500,
     ]);
 });

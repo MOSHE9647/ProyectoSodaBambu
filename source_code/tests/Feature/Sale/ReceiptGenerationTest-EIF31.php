@@ -1,14 +1,15 @@
 <?php
 
-use App\Models\User;
+use App\Contracts\Receipable;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
+use App\Enums\UserRole;
+use App\Models\CashRegister;
 use App\Models\Product;
 use App\Models\ProductStock;
-use App\Models\CashRegister;
 use App\Models\Sale;
 use App\Models\SaleDetail;
-use App\Enums\PaymentStatus;
-use App\Enums\PaymentMethod;
-use App\Enums\UserRole;
+use App\Models\User;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -16,7 +17,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed(UserSeeder::class);
-    $this->admin = User::whereHas('roles', function($q) {
+    $this->admin = User::whereHas('roles', function ($q) {
         $q->where('name', UserRole::ADMIN->value);
     })->first();
 
@@ -33,7 +34,7 @@ test('la respuesta de la venta contiene todos los datos necesarios para el tique
     // 1. Preparar producto con nombre específico para validar que llegue al tiquete
     $product = Product::factory()->create([
         'name' => 'Refresco de Bambú',
-        'sale_price' => 1500
+        'sale_price' => 1500,
     ]);
     ProductStock::factory()->create(['product_id' => $product->id, 'current_stock' => 10]);
 
@@ -48,16 +49,16 @@ test('la respuesta de la venta contiene todos los datos necesarios para el tique
                 'quantity' => 1,
                 'unit_price' => 1500,
                 'applied_tax' => 0,
-                'sub_total' => 1500
-            ]
+                'sub_total' => 1500,
+            ],
         ],
         'payment_details' => [
             [
                 'method' => PaymentMethod::CASH->value,
                 'amount' => 1500,
-                'change_amount' => 0
-            ]
-        ]
+                'change_amount' => 0,
+            ],
+        ],
     ];
 
     // 3. Ejecutar la petición
@@ -73,13 +74,13 @@ test('la respuesta de la venta contiene todos los datos necesarios para el tique
                 'total',
                 'sale_details' => [
                     '*' => [
-                        'product' => ['name']
-                    ]
+                        'product' => ['name'],
+                    ],
                 ],
                 'payments' => [
-                    '*' => ['method', 'amount']
-                ]
-            ]
+                    '*' => ['method', 'amount'],
+                ],
+            ],
         ]);
 
     // 5. Validar integridad de los datos
@@ -92,19 +93,19 @@ test('el modelo Sale implementa correctamente la lógica de Receipable', functio
     // Para que canGenerateReceipt sea true, necesita invoice_number y al menos un detalle
     $sale = Sale::factory()->create([
         'total' => 5000,
-        'invoice_number' => 'FAC-TEST-001'
+        'invoice_number' => 'FAC-TEST-001',
     ]);
-    
+
     SaleDetail::factory()->create([
         'sale_id' => $sale->id,
         'quantity' => 1,
         'unit_price' => 5000,
-        'sub_total' => 5000
+        'sub_total' => 5000,
     ]);
-    
+
     $sale->refresh();
 
-    expect($sale)->toBeInstanceOf(\App\Contracts\Receipable::class);
+    expect($sale)->toBeInstanceOf(Receipable::class);
     expect($sale->getReceiptTotal())->toBe(5000);
     expect($sale->canGenerateReceipt())->toBeTrue();
 });
