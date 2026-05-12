@@ -83,3 +83,20 @@ test('CP-08_EIF-20_QA2 - denies deletion of last remaining admin user', function
     expect($response->allowed())->toBeFalse();
     expect($response->message())->toContain('último administrador');
 });
+
+test('CP-07_EIF-274 - allows deletion of admin when exactly two admins exist', function () {
+    // Given: exactly two admins exist in the system (minimum case for EIF-274)
+    $authenticatedAdmin = User::factory()->withRole(UserRole::ADMIN)->create();
+    $adminToDelete = User::factory()->withRole(UserRole::ADMIN)->create();
+
+    // Ensure no other users exist that could interfere
+    User::whereNotIn('id', [$authenticatedAdmin->id, $adminToDelete->id])->delete();
+
+    // When: the delete policy is evaluated
+    $policy = new UserPolicy;
+    $response = $policy->delete($authenticatedAdmin, $adminToDelete);
+
+    // Then: deletion must NOT be blocked (more than one admin exists)
+    expect($response->allowed())->toBeFalse();
+    expect($response->message())->toBeNull();
+});
