@@ -97,6 +97,6 @@ test('CP-07_EIF-274 - allows deletion of admin when exactly two admins exist', f
     $response = $policy->delete($authenticatedAdmin, $adminToDelete);
 
     // Then: deletion must NOT be blocked (more than one admin exists)
-    expect($response->allowed())->toBeFalse();
+    expect($response->allowed())->toBeTrue();
     expect($response->message())->toBeNull();
 });
