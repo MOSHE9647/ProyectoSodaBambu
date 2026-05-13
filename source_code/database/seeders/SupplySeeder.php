@@ -107,7 +107,7 @@ class SupplySeeder extends Seeder
         ];
 
         foreach ($supplies as $supply) {
-            Supply::create($supply);
+            Supply::factory()->create($supply);
         }
     }
 }
