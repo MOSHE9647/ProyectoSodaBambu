@@ -390,7 +390,7 @@ test('CP-13_EIF-49 - returns default datatable column values when supply has no 
         ->assertJsonFragment([
             'id' => $supply->id,
             'quantity' => 0,
-            'unit_price' => '₡0',
+            'unit_price' => '₡ 0',
             'expiration_date' => 'N/A',
         ]);
 });
@@ -427,7 +427,7 @@ test('CP-14_EIF-49 - datatable computed columns use supply current values', func
         ->assertJsonFragment([
             'id' => $supply->id,
             'quantity' => 4,
-            'unit_price' => '₡1 200',
-            'expiration_date' => '05/04/2026',
+            'unit_price' => '₡ 1 200',
+            'expiration_date' => '2026-04-05',
         ]);
 });
