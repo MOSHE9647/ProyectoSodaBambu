@@ -432,13 +432,12 @@ test('CP-14_EIF-49 - datatable computed columns use supply current values', func
         ]);
 });
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // CP-16 al CP-20 — unit_price: rechazo de valores inválidos
 // User Story : EIF-49 - Gestion de insumos.
 // Jira Link  : https://est-una.atlassian.net/browse/EIF-49
 // ─────────────────────────────────────────────────────────────────────────────
- 
+
 /**
  * User Story: EIF-247 - Gestion de insumos.
  * Priority: High
@@ -457,33 +456,33 @@ test(
     function (string $description, mixed $invalidPrice) {
         // Given: an authenticated admin user.
         $admin = createAdminUserForSupply();
- 
+
         // When: the admin submits a supply with an invalid unit_price.
         $response = $this->actingAs($admin)
             ->from(route('supplies.create'))
             ->post(route('supplies.store'), [
-                'name'           => 'Insumo ' . $description,
-                'measure_unit'   => MeasureUnit::KILOGRAMS->value,
+                'name' => 'Insumo '.$description,
+                'measure_unit' => MeasureUnit::KILOGRAMS->value,
                 'measure_amount' => 1,
-                'quantity'       => 5,
-                'unit_price'     => $invalidPrice,
+                'quantity' => 5,
+                'unit_price' => $invalidPrice,
             ]);
- 
+
         // Then: validation fails on unit_price and no record is persisted.
         $response
             ->assertRedirect(route('supplies.create'))
             ->assertSessionHasErrors(['unit_price']);
- 
+
         $this->assertDatabaseCount('supplies', 0);
     }
 )->with([
-    'CP-16 - decimal value'           => ['decimal',      1250.50],
-    'CP-17 - not a multiple of 5'     => ['non-multiple', 1203],
-    'CP-18 - zero'                    => ['zero',         0],
-    'CP-19 - negative'                => ['negative',     -500],
-    'CP-20 - non-numeric string'      => ['string',       'abc'],
+    'CP-16 - decimal value' => ['decimal',      1250.50],
+    'CP-17 - not a multiple of 5' => ['non-multiple', 1203],
+    'CP-18 - zero' => ['zero',         0],
+    'CP-19 - negative' => ['negative',     -500],
+    'CP-20 - non-numeric string' => ['string',       'abc'],
 ]);
- 
+
 /**
  * User Story: EIF-247 - Gestion de insumos.
  * Priority: High
@@ -499,26 +498,25 @@ test(
     function (int $validPrice) {
         // Given: an authenticated admin user.
         $admin = createAdminUserForSupply();
- 
+
         // When: the admin submits a supply with a valid unit_price.
         $response = $this->actingAs($admin)->post(route('supplies.store'), [
-            'name'           => 'Insumo precio ' . $validPrice,
-            'measure_unit'   => MeasureUnit::KILOGRAMS->value,
+            'name' => 'Insumo precio '.$validPrice,
+            'measure_unit' => MeasureUnit::KILOGRAMS->value,
             'measure_amount' => 1,
-            'quantity'       => 5,
-            'unit_price'     => $validPrice,
+            'quantity' => 5,
+            'unit_price' => $validPrice,
         ]);
-        
+
         // Then: the supply is persisted and the user receives a success message.
         $response
             ->assertRedirect(route('supplies.index'))
             ->assertSessionHas('success', 'Insumo creado correctamente.');
- 
+
         $this->assertDatabaseHas('supplies', ['unit_price' => $validPrice]);
     }
 )->with([
-    'minimum valid (5)'  => [5],
-    'typical value (100)'=> [100],
+    'minimum valid (5)' => [5],
+    'typical value (100)' => [100],
     'large value (1250)' => [1250],
 ]);
-
