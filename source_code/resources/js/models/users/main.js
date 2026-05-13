@@ -55,11 +55,11 @@ window.deleteUser = function (e) {
  * @returns {boolean} True if delete should be disabled
  */
 function shouldDisableUserDelete(row, currentUser) {
-    const isAdmin = row.roles?.[0]?.name === ROLE_ADMIN;
+    const isAdmin = row.roles?.some((role) => role.name === ROLE_ADMIN) ?? false;
     const isLoggedInUser = row.id === currentUser.id;
-    const canDeleteAdmins = currentUser.canDelete;
-    
-    return isAdmin && (canDeleteAdmins || isLoggedInUser);
+    const canDeleteAdmins = currentUser.canDeleteAdmins;
+
+    return isLoggedInUser || (isAdmin && !canDeleteAdmins);
 }
 
 /**

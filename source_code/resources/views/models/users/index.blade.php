@@ -32,7 +32,7 @@ use App\Enums\UserRole;
 		window.UsersAppData = {
 			user: {
 				id: @json(auth()->user()->id),
-				canDelete: @json($adminCount > 1)
+				canDeleteAdmins: @json($adminCount > 1)
 			},
 			roles: @json(
 				collect(UserRole::cases())->map(fn($role) => [
