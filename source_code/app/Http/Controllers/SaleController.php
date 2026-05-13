@@ -40,12 +40,38 @@ class SaleController extends Controller implements HasMiddleware
         return view('pages.sales.sales', compact('products', 'categories', 'lastSale'));
     }
 
+   public function index(Request $request)
+{
+    if ($request->ajax() && $request->wantsJson()) {
+        // Para el historial - obtener ventas de hoy
+        $sales = Sale::with(['saleDetails.product', 'payments'])
+                    ->whereDate('date', today()) 
+                    ->latest()
+                    ->get();
+                    
+        return response()->json($sales);
+    }
+    
+    // Para la carga normal de la página
+    $products = $this->getProductsList($request);
+    $categories = Category::all();
+    $lastSale = Sale::with(['saleDetails', 'payments'])->latest()->first();
+
+    return view('pages.sales.sales', compact('products', 'categories', 'lastSale'));
+}
     /**
-     * Display a listing of the resource.
+     * Eliminar Venta - Solo Administrador
      */
-    public function index()
+    public function destroy(Sale $sale)
     {
-        //
+        // Verificación de seguridad adicional
+        if (auth()->user()->role->value !== \App\Enums\UserRole::ADMIN->value) {
+            return response()->json(['message' => 'Acción no autorizada.'], 403);
+        }
+
+        $sale->delete();
+
+        return response()->json(['message' => 'Venta eliminada con éxito.']);
     }
 
     /**
@@ -133,14 +159,6 @@ class SaleController extends Controller implements HasMiddleware
         ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Sale $sale)
-    {
-        //
-    }
-
     private function getProductsList(Request $request)
     {
         $search = $request->input('search', '');
@@ -153,4 +171,24 @@ class SaleController extends Controller implements HasMiddleware
 
         return $products;
     }
+    /**
+ * Obtener detalles de una venta específica
+ */
+public function getSaleDetails(Sale $sale)
+{
+    $sale->load(['saleDetails.product', 'payments']);
+    
+    return response()->json([
+        'invoice_number' => $sale->invoice_number,
+        'total' => $sale->total,
+        'details' => $sale->saleDetails->map(function($detail) {
+            return [
+                'product_name' => $detail->product->name,
+                'price' => $detail->price,
+                'quantity' => $detail->quantity,
+                'subtotal' => $detail->subtotal
+            ];
+        })
+    ]);
+}
 }

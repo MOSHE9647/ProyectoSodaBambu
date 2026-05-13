@@ -206,6 +206,11 @@
 
         {{-- Action Buttons --}}
         <div class="d-flex align-items-center gap-2" style="height: 2.2rem;">
+            {{-- Nuevo Botón de Historial --}}
+            <button type="button" data-bs-toggle="modal" data-bs-target="#historyModal" class="btn btn-outline-secondary btn-sm d-flex align-items-center action-icon-reveal" title="Ver historial de ventas">
+                <i class="bi bi-clock-history"></i>
+                <span class="action-icon-reveal__label">Historial</span>
+            </button>
             {{-- TODO: Implement reprint functionality --}}
             <button id="reprint-last-sale" class="btn btn-outline-primary btn-sm d-flex align-items-center action-icon-reveal" title="Reimprimir ticket de la última venta">
                 <i class="bi bi-printer"></i>
@@ -219,6 +224,59 @@
 
     </div>
 
+</div>
+<script>window.lastSaleId = "{{ $lastSale?->id }}";</script>
+
+
+<div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title"><i class="bi bi-clock-history me-2"></i>Historial de Ventas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="table-responsive">
+                    <table id="sales-history-table" class="table table-hover align-middle w-100">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Factura</th>
+                                <th>Fecha</th>
+                                <th>Total</th>
+                                <th class="text-center">Items</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="saleDetailsModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">Detalle: <span id="modal-invoice-number" class="fw-bold text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>PRODUCTO</th>
+                            <th class="text-end">PRECIO</th>
+                            <th class="text-center">CANT.</th>
+                            <th class="text-end">SUBTOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-details-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
