@@ -42,7 +42,7 @@
                 {{ $product->name }}
             </h6>
             <span class="fw-bold text-success flex-shrink-0 product-price">
-                {{ format_crc($exactSalePrice) }}
+                ₡{{ number_format($exactSalePrice, 0, ',', '.') }}
             </span>
         </div>
 

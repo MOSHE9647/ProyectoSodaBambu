@@ -153,4 +153,34 @@ class SaleController extends Controller implements HasMiddleware
 
         return $products;
     }
+
+    /**
+ * Obtiene el historial de ventas realizadas el día de hoy.
+ * Para la HU de Historial de Ventas.
+ */
+public function historyToday(): JsonResponse
+{
+    try {
+        $sales = Sale::whereDate('date', Carbon::today())
+            ->with(['payments', 'saleDetails']) // Cargamos relaciones necesarias
+            ->orderBy('date', 'desc')
+            ->get()
+            ->map(function ($sale) {
+                return [
+                    'id' => $sale->id,
+                    'invoice_number' => $sale->invoice_number,
+                    // Formateamos la hora para que el JS no sufra
+                    'formatted_time' => $sale->date->format('h:i A'),
+                    'total' => (float) $sale->total,
+                    // Obtenemos el nombre del método de pago o 'N/A'
+                    'payment_method' => $sale->payments->first()?->method?->label() ?? 'N/A',
+                    'items_count' => $sale->saleDetails->count(),
+                ];
+            });
+
+        return response()->json($sales);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Error al obtener el historial'], 500);
+    }
+}
 }

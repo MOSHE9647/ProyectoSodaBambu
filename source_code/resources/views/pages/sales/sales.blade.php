@@ -139,6 +139,11 @@
                             Limpiar orden
                         </div>
                     </x-form.button>
+                    {{-- Botón para abrir el Historial de Ventas --}}
+                    <button id="btn-show-history" class="btn btn-outline-secondary btn-sm d-flex align-items-center action-icon-reveal" title="Ver historial de ventas de hoy">
+                        <i class="bi bi-clock-history me-1"></i>
+                        <span class="action-icon-reveal__label">Historial</span>
+                    </button>
                 </div>
 
             </section>
@@ -180,7 +185,7 @@
                         @endif
                     </span>
                     <span id="last-sale-payment-amount" class="text-success fw-bold">
-                        {{ format_crc($lastSale->total) }}
+                        ₡{{ number_format($lastSale->total, 0, ',', '.') }}              
                     </span>
                 @else
                     <span class="text-muted small d-flex align-items-center gap-2">
@@ -220,8 +225,46 @@
     </div>
 
 </div>
+{{-- Modal de Historial de Ventas --}}
+<div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="historyModalLabel fw-bold">
+                    <i class="bi bi-clock-history me-2"></i>Historial de Ventas - Hoy
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Factura</th>
+                                <th>Hora</th>
+                                <th>Total</th>
+                                <th>Pago</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            {{-- Aquí el JS cargará las ventas --}}
+                        </tbody>
+                    </table>
+                </div>
+                <div id="history-loader" class="text-center d-none p-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Cargando ventas...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
-	@vite(['resources/js/pages/sales/main.js'])
+    @vite([
+        'resources/js/pages/sales/main.js',
+        'resources/js/pages/sales/history.js' {{-- Agregamos tu script aquí --}}
+    ])
 @endsection
