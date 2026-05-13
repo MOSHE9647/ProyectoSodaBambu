@@ -16,143 +16,13 @@ const METHOD_LABELS = {
 	[PaymentMethods.SINPE]: "SINPE",
 };
 
-const BUSINESS_NAME = document.title?.trim() || "Soda El Bambu";
-
 const CURRENCY_FORMATTER = new Intl.NumberFormat("es-CR", {
 	style: "currency",
 	currency: "CRC",
 	minimumFractionDigits: 0,
 	maximumFractionDigits: 0,
 });
-
-const RECEIPT_STYLES = `
-	<style>
-		@page { size: 80mm auto; margin: 0; }
-		* { box-sizing: border-box; }
-		body { margin: 0; background: #f4f4f4; color: #111; font-family: Consolas, monospace; font-size: 11px; line-height: 1.25; }
-		.receipt-shell { width: min(80mm, 100vw); min-height: 100vh; margin: 0 auto; background: #fff; padding: 18px; }
-		.receipt-header, .receipt-footer { text-align: center; }
-		.business-name { font-size: 18px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
-		.receipt-line { border-top: 1px dashed #111; margin: 8px 0; }
-		.receipt-row { display: flex; justify-content: space-between; gap: 4px; }
-		.receipt-item { margin-bottom: 8px; }
-		.receipt-item-name { font-weight: 700; word-break: break-word; }
-		.receipt-total { font-size: 16px; font-weight: 700; }
-		@media print {
-			body { background: #fff; font-size: 11px; }
-			.receipt-shell { width: 80mm; min-height: auto; margin: 0; padding: 3mm; }
-		}
-	</style>
-`;
-
-// --- UTILIDADES ---
-
 const formatCurrency = (amt) => CURRENCY_FORMATTER.format(Number(amt) || 0);
-
-/**
- * Normalizador agnóstico: Maneja tanto la salida del ReceiptBuilder (PHP)
- * como los modelos crudos de Eloquent (Sale, Contract) que vienen del Store.
- */
-const normalizeReceiptData = (raw) => {
-	if (!raw) return { title: "Comprobante", date: new Date(), items: [], subtotal: 0, tax: 0, total: 0 };
-
-	// 1. Extraer ítems de cualquier estructura posible
-	const rawItems = raw.data.items || raw.data.details || raw.data.sale_details || raw.data.receipt_details || [];
-	
-	// 2. Mapear ítems asegurando nombres y totales de línea
-	console.log("Raw items for receipt:", rawItems);
-	const items = rawItems.map(i => {
-		const qty = Number(i.quantity) || Number(raw.data.portions_per_day) || 1;
-		const unitPrice = Number(i.unit_price) || Number(i.price) || Number(i.product?.sale_price) || 0;
-		const sub = Number(i.sub_total) || Number(i.subtotal) || (qty * unitPrice);
-		
-		// Calcular impuesto si no viene calculado
-		const taxPercent = Number(i.applied_tax) || 0;
-		const taxAmt = Number(i.tax_amount) || Math.round(sub * (taxPercent / 100));
-
-		return {
-			name: i.name || i.product?.name || (i.product_id ? `Producto #${i.product_id}` : "Producto"),
-			quantity: qty,
-			price: unitPrice,
-			total: i.total || (sub + taxAmt),
-			sub_total: sub,
-			tax_amount: taxAmt
-		};
-	});
-
-	// 3. Totales inteligentes (Si el objeto raíz no los trae, los sumamos de los ítems)
-	const subtotal = Number(raw.data.subtotal) || Number(raw.data.sub_total) || items.reduce((s, i) => s + i.sub_total, 0) || items.reduce((s, i) => s + (i.product?.sale_price || 0) * raw.portions_per_day, 0);
-	const taxTotal = Number(raw.data.tax_total) || Number(raw.data.tax_amount) || items.reduce((s, i) => s + i.tax_amount, 0);
-	const total = Number(raw.data.total_value) || Number(raw.data.total) || (subtotal + taxTotal);
-
-	// 4. Título y fecha
-	const title = raw.data.receipt_type || (raw.data.invoice_number ? `Factura: ${raw.data.invoice_number}` : (raw.data.receipt_number ? `Ref: ${raw.data.receipt_number}` : "Comprobante"));
-	const date = raw.data.date || raw.data.receiptDate || raw.data.created_at || new Date();
-
-	return { title, date, items, subtotal, tax: taxTotal, total };
-};
-
-// --- CORE: GENERACIÓN DE TIQUETE ---
-
-export const buildReceiptHtml = ({ data, paymentDetails, totalTendered, changeAmount }) => {
-	const info = normalizeReceiptData(data);
-	const dateStr = new Date(info.date).toLocaleString("es-CR", {
-		day: "2-digit",
-		month: "short",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-
-	const itemsHtml = info.items.map(i => `
-		<div class="receipt-item">
-			<div class="receipt-item-name">${escapeHtml(i.name)}</div>
-			<div class="receipt-row">
-				<span>${i.quantity} x ${formatCurrency(i.price)}</span>
-				<span>${formatCurrency(i.total)}</span>
-			</div>
-		</div>
-	`).join("");
-
-	const paymentsHtml = paymentDetails.map(p => `
-		<div class="receipt-row">
-			<span>${escapeHtml(METHOD_LABELS[p.method] || p.method)}</span>
-			<span>${formatCurrency(p.amount)}</span>
-		</div>
-		${p.reference ? `<div class="receipt-row text-muted" style="font-size: 9px;"><span>Ref.</span><span>${escapeHtml(p.reference)}</span></div>` : ""}
-	`).join("");
-
-	return `
-		<!doctype html>
-		<html lang="es">
-		<head><meta charset="utf-8">${RECEIPT_STYLES}</head>
-		<body>
-			<div class="receipt-shell">
-				<main class="receipt">
-					<header class="receipt-header">
-						<div class="business-name">${escapeHtml(BUSINESS_NAME)}</div>
-						<div>${escapeHtml(info.title)}</div>
-						<div>${dateStr}</div>
-					</header>
-					<div class="receipt-line"></div>
-					${itemsHtml}
-					<div class="receipt-line"></div>
-					<div class="receipt-row"><span>Subtotal</span><span>${formatCurrency(info.subtotal)}</span></div>
-					<div class="receipt-row"><span>Impuestos</span><span>${formatCurrency(info.tax)}</span></div>
-					<div class="receipt-row receipt-total"><span>Total</span><span>${formatCurrency(info.total)}</span></div>
-					<div class="receipt-line"></div>
-					<div class="receipt-item-name">Detalle de Pago</div>
-					${paymentsHtml}
-					<div class="receipt-row"><span>Recibido</span><span>${formatCurrency(totalTendered)}</span></div>
-					<div class="receipt-row"><span>Vuelto</span><span>${formatCurrency(changeAmount)}</span></div>
-					<div class="receipt-line"></div>
-					<footer class="receipt-footer">¡Gracias por su visita!</footer>
-				</main>
-			</div>
-		</body>
-		</html>
-	`;
-};
 
 // --- CORE: MODAL DE PAGO ---
 
@@ -188,27 +58,34 @@ export async function openPaymentModal({ total, title, onComplete, loadingId, mo
 				didOpen: () => {
 					const popup = SwalModal.getPopup();
 					initializePaymentModalUI(popup, { total });
+					const paymentForm = popup.querySelector("#payment-form");
 
-					popup.querySelector("#payment-form").addEventListener("submit", async (e) => {
+					paymentForm.addEventListener("submit", async (e) => {
 						e.preventDefault();
 						const { details, tendered, shouldPrint } = extractPaymentDetails(e.target, total);
 						if (details.length === 0) return;
 
 						try {
-							// result.data contendrá el modelo guardado (Sale o Contract)
-							const result = await onComplete(details, tendered, receiptData);
+							// El módulo llamador procesa la lógica de guardado
+							const result = await onComplete(details, tendered);
+							
 							if (result && result.success !== false) {
 								if (shouldPrint) {
-									// Aquí el normalizador ahora maneja tanto result.data (Laravel) como receiptData (Builder)
-									const html = buildReceiptHtml({ 
-										data: result || receiptData, 
-										paymentDetails: details, 
-										totalTendered: tendered, 
-										changeAmount: Math.max(0, tendered - total) 
-									});
-									await printReceipt(html);
+									// Determinamos el tipo de modelo para la ruta de impresión
+									const type = modelType || (result.data?.invoice_number ? 'sales' : 'contracts');
+									const id = modelId || result.data?.id;
+
+									printReceipt(route('receipts.show', { 
+										model: type, 
+										id: id 
+									}));
 								}
-								resolve({ completed: true, result });
+
+								resolve({ 
+									completed: true, 
+									printed: shouldPrint, 
+									result 
+									});
 								SwalModal.close();
 							}
 						} catch (error) {
@@ -402,21 +279,14 @@ const extractPaymentDetails = (form, total) => {
 	};
 };
 
-const printReceipt = async (html) => {
-	const printWindow = window.open("", "_blank", "width=450,height=600");
+export const printReceipt = (url) => {
+	const printWindow = window.open(url, "_blank", "width=450,height=600");
 	if (!printWindow) {
-		await SwalModal.fire({
-			title: "Tiquete",
-			html: `<iframe style="width:100%;height:400px;border:none;" srcdoc="${escapeHtml(html)}"></iframe>`,
-			confirmButtonText: "Cerrar"
+		SwalToast.fire({ 
+			icon: SwalNotificationTypes.WARNING, 
+			title: "El bloqueador de ventanas emergentes impidió abrir el tiquete." 
 		});
 		return;
 	}
-	printWindow.document.write(html);
-	printWindow.document.close();
-	
-	setTimeout(() => {
-		printWindow.focus();
-		printWindow.print();
-	}, 250);
+	printWindow.focus();
 };

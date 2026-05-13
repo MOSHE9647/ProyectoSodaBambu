@@ -223,5 +223,9 @@
 @endsection
 
 @section('scripts')
+    <script type="text/javascript">
+        // Pass the last sale data to JavaScript for potential use in actions like reprinting the receipt
+        window.lastSaleData = @json($lastSale ?? null);
+    </script>
 	@vite(['resources/js/pages/sales/main.js'])
 @endsection

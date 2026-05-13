@@ -27,16 +27,21 @@ class ReceiptBuilder
         $subtotal = $this->getSubtotal($items);
         $taxTotal = $this->getTaxTotal($items);
         $total = $this->receipable->getReceiptTotal();
+        $payments = $this->receipable->getReceiptPayments();
+        $totalTendered = collect($payments)->sum('amount');
+        $changeAmount = $totalTendered - $total;
 
         return [
             'receipt_number' => $this->receipable->getReceiptNumber(),
-            'receipt_type' => $this->receipable->getReceiptType(),
             'date' => $this->receipable->getReceiptDate(),
             'items' => $items,
             'subtotal' => $subtotal,
             'tax_total' => $taxTotal,
             'total' => $total,
             'model_type' => $this->receipable::class,
+            'payments' => $payments,
+            'change_amount' => $changeAmount,
+            'total_tendered' => $totalTendered,
         ];
     }
 

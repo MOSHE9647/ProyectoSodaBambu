@@ -5,7 +5,7 @@ import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
 import { initializeHotkeys } from "./hotkeys.js";
-import { openPaymentModal } from "./payment.js";
+import { openPaymentModal, printReceipt } from "./payment.js";
 import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 /**
@@ -76,7 +76,7 @@ $(() => {
 				total: saleData.total,
 				title: "Procesar Venta",
 				loadingId: "finalize-sale",
-				onComplete: async (paymentDetails, totalTendered) => {
+				onComplete: async (paymentDetails) => {
 					SwalModal.showLoading();
 					const saleResult = await processSale(paymentDetails);
 					if (saleResult?.success) {
@@ -123,14 +123,18 @@ $(() => {
 				cancelButtonText: "No, cancelar",
 			}).then((result) => {
 				if (result.isConfirmed) {
-					// Placeholder for reprint logic; implement actual reprint functionality here.
-					SwalModal.fire({
-						title: "Funcionalidad no implementada",
-						text: "La función de reimprimir la última venta aún no está implementada.",
-						icon: "info",
-						customClass: SweetModalCustomClass,
-					});
-					// Example of triggering a click on the finalize button to simulate reprint; replace with actual reprint logic.
+					if (window.lastSaleData) {
+						printReceipt(route('receipts.show', {
+							model: 'sales',
+							id: window.lastSaleData.id,
+						}));
+					} else {
+						SwalToast.fire({
+							icon: SwalNotificationTypes.INFO,
+							title: "No hay ventas recientes para reimprimir."
+						});
+						console.warn("No last sale data available for reprint.");
+					}
 				}
 			});
 		});

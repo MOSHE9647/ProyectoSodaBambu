@@ -106,15 +106,27 @@ class Sale extends Model implements Receipable
      */
     public function getReceiptItems(): array
     {
-        return $this->saleDetails->map(function ($detail) {
-            return [
-                'name' => $detail->product?->name ?? "Producto #{$detail->product_id}",
-                'quantity' => $detail->quantity,
-                'unit_price' => $detail->unit_price,
-                'sub_total' => $detail->sub_total,
-                'applied_tax' => $detail->applied_tax,
-            ];
-        })->toArray();
+        return $this->saleDetails->map(fn($detail) => [
+            'name' => $detail->product?->name ?? "Producto #{$detail->product_id}",
+            'quantity' => $detail->quantity,
+            'unit_price' => $detail->unit_price,
+            'sub_total' => $detail->sub_total,
+            'applied_tax' => $detail->applied_tax,
+        ])->toArray();
+    }
+
+    /**
+    * Get the payments associated with this sale.
+    */
+    public function getReceiptPayments(): array
+    {
+        return $this->payments()->get()->map(fn($payment) => [
+            'amount' => $payment->amount,
+            'method_label' => $payment->method->label(),
+            'change_amount' => $payment->change_amount,
+            'reference' => $payment->reference,
+            'date' => $payment->created_at,
+        ])->toArray();
     }
 
     /**
@@ -135,14 +147,6 @@ class Sale extends Model implements Receipable
 
             return $carry + $taxAmount;
         }, 0);
-    }
-
-    /**
-     * Get the receipt type label.
-     */
-    public function getReceiptType(): string
-    {
-        return 'Comprobante de venta';
     }
 
     /**

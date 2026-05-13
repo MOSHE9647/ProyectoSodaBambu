@@ -76,8 +76,8 @@ class Contract extends Model implements Receipable
     public function getPeriodAttribute(): string
     {
         if ($this->start_date && $this->end_date) {
-            $start = $this->start_date->locale('es')->isoFormat('D MMM YYYY');
-            $end = $this->end_date->locale('es')->isoFormat('D MMM YYYY');
+            $start = Carbon::parse($this->start_date)->locale('es')->isoFormat('D MMM YYYY');
+            $end = Carbon::parse($this->end_date)->locale('es')->isoFormat('D MMM YYYY');
 
             return "$start - $end";
         }
@@ -136,7 +136,8 @@ class Contract extends Model implements Receipable
      */
     public function getReceiptNumber(): string
     {
-        return "CONTRATO-{$this->id}";
+        $contractId = str_pad($this->id, 10, '0', STR_PAD_LEFT);
+        return "CONTRATO-{$contractId}";
     }
 
     /**
@@ -160,15 +161,27 @@ class Contract extends Model implements Receipable
      */
     public function getReceiptItems(): array
     {
-        return $this->details->map(function ($detail) {
-            return [
-                'name' => $detail->product?->name ?? "Producto #{$detail->product_id}",
-                'quantity' => $detail->quantity ?? 1,
-                'unit_price' => $detail->unit_price ?? 0,
-                'sub_total' => $detail->subtotal ?? 0,
-                'applied_tax' => $detail->applied_tax ?? 0,
-            ];
-        })->toArray();
+        return $this->details->map(fn($detail) => [
+            'name' => $detail->product?->name ?? "Producto #{$detail->product_id}",
+            'quantity' => $detail->quantity ?? 1,
+            'unit_price' => $detail->unit_price ?? 0,
+            'sub_total' => $detail->subtotal ?? 0,
+            'applied_tax' => $detail->applied_tax ?? 0,
+        ])->toArray();
+    }
+
+    /**
+     * Get the payments associated with this contract.
+     */
+    public function getReceiptPayments(): array
+    {
+        return $this->payments()->get()->map(fn($payment) => [
+            'amount' => $payment->amount,
+            'method_label' => $payment->method->label(),
+            'change_amount' => $payment->change_amount,
+            'reference' => $payment->reference,
+            'date' => $payment->created_at,
+        ])->toArray();
     }
 
     /**
@@ -189,14 +202,6 @@ class Contract extends Model implements Receipable
 
             return $carry + $taxAmount;
         }, 0);
-    }
-
-    /**
-     * Get the receipt type label.
-     */
-    public function getReceiptType(): string
-    {
-        return 'Comprobante de contrato';
     }
 
     /**
