@@ -46,7 +46,7 @@ class ProductController extends Controller implements HasMiddleware
         }
 
         $lowStockCount = ProductStock::query()
-            ->whereHas('product', fn($q) => $q->where('has_inventory', true))
+            ->whereHas('product', fn ($q) => $q->where('has_inventory', true))
             ->lowStock()
             ->count();
         $expiringSoonCount = Product::query()->expiringSoon()->count();

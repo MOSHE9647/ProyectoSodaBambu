@@ -63,6 +63,7 @@ class SupplyController extends Controller implements HasMiddleware
         }
 
         $expiringSoonCount = Supply::query()->expiringSoon()->count();
+
         return view('models.supplies.index', compact('expiringSoonCount'));
     }
 

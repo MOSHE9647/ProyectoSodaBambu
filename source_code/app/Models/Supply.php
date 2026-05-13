@@ -72,7 +72,7 @@ class Supply extends Model
      * - The expiration_date is today or in the future.
      * - The expiration_alert_date is today or in the past.
      *
-     * @param  Builder $query  The Eloquent query builder instance.
+     * @param  Builder  $query  The Eloquent query builder instance.
      * @return Builder The modified query builder with the expiring soon filter applied.
      */
     public function scopeExpiringSoon(Builder $query): Builder

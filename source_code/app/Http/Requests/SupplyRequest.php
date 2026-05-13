@@ -14,9 +14,9 @@ class SupplyRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Puedes agregar lógica de roles aquí si lo requieres en un futuro, 
+        // Puedes agregar lógica de roles aquí si lo requieres en un futuro,
         // tal como en ContractRequest ($user->hasAnyRole(...))
-        return true; 
+        return true;
     }
 
     /**
