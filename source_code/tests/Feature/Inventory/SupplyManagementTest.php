@@ -515,8 +515,6 @@ test(
             ->assertSessionHas('success', 'Insumo creado correctamente.');
  
         $this->assertDatabaseHas('supplies', ['unit_price' => $validPrice]);
-
-        expect(true)->toBeFalse();
     }
 )->with([
     'minimum valid (5)'  => [5],
