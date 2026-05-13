@@ -2,7 +2,7 @@
 
 namespace App\Actions\Sale;
 
-use App\Models\Transaction; 
+use App\Models\Transaction;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 
@@ -27,7 +27,6 @@ class GetMonthlySalesDataAction
             ->whereBetween('created_at', [$monthStartUtc, $todayUtc])
             ->get(['created_at', 'amount']);
 
-        
         $incomesByDate = $incomes->groupBy(function ($income) use ($timezone) {
             return Carbon::parse($income->created_at)->timezone($timezone)->format('Y-m-d');
         })->map(fn ($group) => $group->sum('amount'));
