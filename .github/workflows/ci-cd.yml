@@ -2,9 +2,14 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: ["main", "dev", "feature/*", "release/*"]
+    branches: ["main", "dev"]
   pull_request:
     branches: ["main", "dev"]
+
+# Stop concurrent runs of the same workflow on the same branch to prevent conflicts and redundant deployments
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
