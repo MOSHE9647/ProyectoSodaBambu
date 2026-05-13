@@ -7,6 +7,19 @@ import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 const MODEL_NAME = 'insumo';
 const BTN_CLASS_PRIMARY = 'btn-primary';
+
+// Filter Configuration
+const FILTER_QUERY_PARAM = 'filter';
+const FILTER_VALUES = new Set(['expiring_soon']);
+
+const urlParams = new URLSearchParams(window.location.search);
+const requestedFilter = urlParams.get(FILTER_QUERY_PARAM);
+const initialFilter = FILTER_VALUES.has(requestedFilter) ? requestedFilter : null;
+
+let showOnlyExpiring = initialFilter === 'expiring_soon';
+let suppliesDataTable = null;
+
+// Routes Configuration
 const MODEL_ROUTES = {
     index:  route('supplies.index'),
     create: route('supplies.create'),
@@ -14,16 +27,6 @@ const MODEL_ROUTES = {
     edit:   route('supplies.edit', { supply: ':id' }),
     delete: route('supplies.destroy', { supply: ':id' }),
 };
-
-const urlParams = new URLSearchParams(window.location.search);
-let showOnlyExpiring = urlParams.get('filter') === 'expiring_soon';
-
-let suppliesDataTable = null;
-
-/** 
- * Lee el atributo 'data-can-manage-products' que agregamos a la tabla en Blade.
- */
-const canManageSupplies = ($('#supplies-table').data('can-manage-products') ?? '').toString() === '1';
 
 // ==================== Global Functions ====================
 
@@ -56,19 +59,24 @@ window.toggleExpiringFilter = function () {
 // ==================== DataTable Initialization ====================
 
 $(() => {
-    const tableEl = $('#supplies-table'); // <--- Defínela aquí adentro
-    const canManageSupplies = (tableEl.data('can-manage-supplies') ?? '').toString() === '1';
-    const canCreateSupplies = (tableEl.data('can-create-supplies') ?? '').toString() === '1';
+    const $table = $('#supplies-table');
+    const canManageSupplies = ($table.data('can-manage-supplies') ?? '').toString() === '1';
+    const canCreateSupplies = ($table.data('can-create-supplies') ?? '').toString() === '1';
     const columns = [
-        { data: 'name', name: 'name' },
-        { data: 'measure_unit', name: 'measure_unit' },
+        { 
+            data: 'name', 
+            name: 'name' 
+        },
+        { 
+            data: 'measure_unit', 
+            name: 'measure_unit' 
+        },
         { 
             data: 'quantity', 
             name: 'quantity', 
             type: 'string',
             searchable: false,
             className: 'text-left',
-            render: (data) => `<strong>${data}</strong>`,
         },
         { 
             data: 'unit_price', 
@@ -79,6 +87,7 @@ $(() => {
             data: 'expiration_date', 
             name: 'expiration_date', 
             searchable: false,
+            render: (data) => data ? formatDate(data) : 'N/A',
         },
         {
             data: 'created_at',
@@ -152,8 +161,10 @@ $(() => {
         ajax: {
             url: MODEL_ROUTES.index,
             data: (d) => {
-                d.expiring_soon = showOnlyExpiring ? 1 : 0;
-            }
-        }
+                if (showOnlyExpiring) {
+                    d.expiring_soon = 1;
+                }
+            },
+        },
     });
 });

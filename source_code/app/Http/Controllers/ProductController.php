@@ -28,15 +28,13 @@ class ProductController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $filter = $request->input('filter');
-
             $query = Product::query()
                 ->with('category')
                 ->withStockDetails()
                 ->leftJoin('product_stocks as ps', 'ps.product_id', '=', 'products.id')
                 ->addSelect('products.*', 'ps.current_stock', 'ps.minimum_stock')
-                ->when($request->boolean('low_stock') || $filter === 'low_stock', fn ($q) => $q->lowStock())
-                ->when($request->boolean('expiring_soon') || $filter === 'expiring_soon', fn ($q) => $q->expiringSoon());
+                ->when($request->boolean('low_stock'), fn ($q) => $q->lowStock())
+                ->when($request->boolean('expiring_soon'), fn ($q) => $q->expiringSoon());
 
             return DataTables::of($query)
                 ->filterColumn('current_stock', fn ($q, $keyword) => $q->whereRaw('CAST(ps.current_stock AS TEXT) LIKE ?', ["%{$keyword}%"]))
@@ -47,21 +45,13 @@ class ProductController extends Controller implements HasMiddleware
                 ->toJson();
         }
 
-        $lowStockProducts = ProductStock::query()
-            ->with(['product:id,name,barcode,has_inventory'])
-            ->whereHas('product', fn ($q) => $q->where('has_inventory', true))
+        $lowStockCount = ProductStock::query()
+            ->whereHas('product', fn($q) => $q->where('has_inventory', true))
             ->lowStock()
-            ->orderByRaw('(minimum_stock - current_stock) DESC')
-            ->limit(5)
-            ->get();
+            ->count();
+        $expiringSoonCount = Product::query()->expiringSoon()->count();
 
-        $expiringSoonProducts = Product::query()
-            ->expiringSoon()
-            ->orderBy('expiration_date')
-            ->limit(5)
-            ->get();
-
-        return view('models.products.index', compact('lowStockProducts', 'expiringSoonProducts'));
+        return view('models.products.index', compact('lowStockCount', 'expiringSoonCount'));
     }
 
     public function create()

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\MeasureUnit;
 use App\Enums\UserRole;
 use App\Models\Supply;
 use App\Models\User;
@@ -26,8 +27,9 @@ test('CP-01_EIF-49 - registers a supply with valid data and redirects with succe
     // When: the admin submits a valid supply registration request.
     $response = $this->actingAs($admin)->post(route('supplies.store'), [
         'name' => 'Harina de trigo',
-        'measure_unit' => 'kg',
+        'measure_unit' => MeasureUnit::KILOGRAMS->value,
         'quantity' => 8,
+        'measure_amount' => 25,
         'unit_price' => 1200,
     ]);
 
@@ -38,8 +40,9 @@ test('CP-01_EIF-49 - registers a supply with valid data and redirects with succe
 
     $this->assertDatabaseHas('supplies', [
         'name' => 'Harina de trigo',
-        'measure_unit' => 'kg',
+        'measure_unit' => MeasureUnit::KILOGRAMS->value,
         'quantity' => 8,
+        'measure_amount' => '25.00',
         'unit_price' => 1200,
         'deleted_at' => null,
     ]);
@@ -58,7 +61,8 @@ test('CP-02_EIF-49 - rejects supply registration when name is missing', function
     $response = $this->actingAs($admin)
         ->from(route('supplies.create'))
         ->post(route('supplies.store'), [
-            'measure_unit' => 'kg',
+            'measure_unit' => MeasureUnit::KILOGRAMS->value,
+            'measure_amount' => 25,
         ]);
 
     // Then: validation fails and no record is persisted.
@@ -103,7 +107,8 @@ test('CP-04_EIF-49 - rejects duplicated active supply names', function () {
     $admin = createAdminUserForSupply();
     Supply::factory()->create([
         'name' => 'Leche',
-        'measure_unit' => 'litros',
+        'measure_unit' => MeasureUnit::LITERS->value,
+        'measure_amount' => 1,
     ]);
 
     // When: the admin tries to register another active supply with the same name.
@@ -111,7 +116,8 @@ test('CP-04_EIF-49 - rejects duplicated active supply names', function () {
         ->from(route('supplies.create'))
         ->post(route('supplies.store'), [
             'name' => 'Leche',
-            'measure_unit' => 'litros',
+            'measure_unit' => MeasureUnit::LITERS->value,
+            'measure_amount' => 20,
         ]);
 
     // Then: validation fails on name uniqueness for non-deleted rows.
@@ -132,13 +138,15 @@ test('CP-05_EIF-49 - updates an existing supply and returns success message', fu
     $admin = createAdminUserForSupply();
     $supply = Supply::factory()->create([
         'name' => 'Frijoles',
-        'measure_unit' => 'kg',
+        'measure_unit' => MeasureUnit::KILOGRAMS->value,
+        'measure_amount' => 25,
     ]);
 
     // When: the admin updates supply fields.
     $response = $this->actingAs($admin)->put(route('supplies.update', $supply), [
         'name' => 'Frijoles negros',
-        'measure_unit' => 'kg',
+        'measure_unit' => MeasureUnit::KILOGRAMS->value,
+        'measure_amount' => 25,
     ]);
 
     // Then: the supply is updated successfully.
@@ -149,7 +157,8 @@ test('CP-05_EIF-49 - updates an existing supply and returns success message', fu
     $this->assertDatabaseHas('supplies', [
         'id' => $supply->id,
         'name' => 'Frijoles negros',
-        'measure_unit' => 'kg',
+        'measure_unit' => MeasureUnit::KILOGRAMS->value,
+        'measure_amount' => '25.00',
     ]);
 });
 
@@ -189,7 +198,8 @@ test('CP-07_EIF-49 - restores a soft-deleted supply when creating with the same 
 
     $deletedSupply = Supply::factory()->create([
         'name' => 'Sal',
-        'measure_unit' => 'kg',
+        'measure_unit' => MeasureUnit::KILOGRAMS->value,
+        'measure_amount' => 1,
     ]);
 
     $deletedSupply->delete();
@@ -197,7 +207,8 @@ test('CP-07_EIF-49 - restores a soft-deleted supply when creating with the same 
     // When: the admin submits the same supply name again.
     $response = $this->actingAs($admin)->post(route('supplies.store'), [
         'name' => 'Sal',
-        'measure_unit' => 'unidades',
+        'measure_unit' => MeasureUnit::UNITS->value,
+        'measure_amount' => 1,
         'quantity' => 20,
         'unit_price' => 350,
     ]);
@@ -212,7 +223,8 @@ test('CP-07_EIF-49 - restores a soft-deleted supply when creating with the same 
     $this->assertDatabaseHas('supplies', [
         'id' => $deletedSupply->id,
         'name' => 'Sal',
-        'measure_unit' => 'unidades',
+        'measure_unit' => MeasureUnit::UNITS->value,
+        'measure_amount' => '1.00',
         'quantity' => 20,
         'unit_price' => 350,
         'deleted_at' => null,
@@ -236,7 +248,8 @@ test('CP-08_EIF-49 - allows supply module access to non-admin users', function (
     $this->actingAs($employee)
         ->post(route('supplies.store'), [
             'name' => 'Prueba',
-            'measure_unit' => 'kg',
+            'measure_unit' => MeasureUnit::KILOGRAMS->value,
+            'measure_amount' => 1,
         ])
         // Then: all write actions are allowed for non-admin users as per updated requirements.
         ->assertRedirect(route('supplies.index'));
@@ -252,7 +265,8 @@ test('CP-09_EIF-49 - displays supply detail page with related purchase data', fu
     $admin = createAdminUserForSupply();
     $supply = Supply::factory()->create([
         'name' => 'Arroz',
-        'measure_unit' => 'kg',
+        'measure_unit' => MeasureUnit::KILOGRAMS->value,
+        'measure_amount' => 23,
     ]);
 
     // When: the admin views the supply detail page.
@@ -296,14 +310,16 @@ test('CP-11_EIF-49 - filters supplies expiring within 7 days via AJAX DataTables
     $admin = createAdminUserForSupply();
     Supply::factory()->create([
         'name' => 'Leche',
-        'measure_unit' => 'litros',
+        'measure_unit' => MeasureUnit::LITERS->value,
+        'measure_amount' => 1,
         'expiration_date' => now()->addDays(3)->toDateString(),
         'expiration_alert_days' => 7,
     ]);
 
     Supply::factory()->create([
         'name' => 'Huevos',
-        'measure_unit' => 'unidades',
+        'measure_unit' => MeasureUnit::UNITS->value,
+        'measure_amount' => 12,
         'expiration_date' => now()->addDays(20)->toDateString(),
         'expiration_alert_days' => 7,
     ]);
@@ -352,7 +368,8 @@ test('CP-13_EIF-49 - returns default datatable column values when supply has no 
     $admin = createAdminUserForSupply();
     $supply = Supply::factory()->create([
         'name' => 'Salsa Inglesa',
-        'measure_unit' => 'botella',
+        'measure_unit' => MeasureUnit::UNITS->value,
+        'measure_amount' => 1,
         'quantity' => 0,
         'unit_price' => 0,
         'expiration_date' => null,
@@ -388,7 +405,8 @@ test('CP-14_EIF-49 - datatable computed columns use supply current values', func
     $admin = createAdminUserForSupply();
     $supply = Supply::factory()->create([
         'name' => 'Levadura',
-        'measure_unit' => 'gramos',
+        'measure_unit' => MeasureUnit::GRAMS->value,
+        'measure_amount' => 500,
         'quantity' => 4,
         'unit_price' => 1200,
         'expiration_date' => '2026-04-05',
