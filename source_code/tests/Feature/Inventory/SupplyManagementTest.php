@@ -431,3 +431,96 @@ test('CP-14_EIF-49 - datatable computed columns use supply current values', func
             'expiration_date' => '2026-04-05',
         ]);
 });
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CP-16 al CP-20 — unit_price: rechazo de valores inválidos
+// User Story : EIF-49 - Gestion de insumos.
+// Jira Link  : https://est-una.atlassian.net/browse/EIF-49
+// ─────────────────────────────────────────────────────────────────────────────
+ 
+/**
+ * User Story: EIF-247 - Gestion de insumos.
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-247
+ *
+ * Cubre CP-16, CP-17, CP-18, CP-19, CP-20.
+ * Cada dataset representa un motivo de rechazo distinto del campo unit_price:
+ *   - CP-16: valor con decimal           → no es entero
+ *   - CP-17: entero no múltiplo de 5     → falla regla de múltiplo
+ *   - CP-18: cero                        → no es positivo
+ *   - CP-19: negativo                    → no es positivo
+ *   - CP-20: texto no numérico           → falla regla de tipo entero
+ */
+test(
+    'CP-16_to_CP-20_EIF-247 - rejects supply registration when unit_price is invalid',
+    function (string $description, mixed $invalidPrice) {
+        // Given: an authenticated admin user.
+        $admin = createAdminUserForSupply();
+ 
+        // When: the admin submits a supply with an invalid unit_price.
+        $response = $this->actingAs($admin)
+            ->from(route('supplies.create'))
+            ->post(route('supplies.store'), [
+                'name'           => 'Insumo ' . $description,
+                'measure_unit'   => MeasureUnit::KILOGRAMS->value,
+                'measure_amount' => 1,
+                'quantity'       => 5,
+                'unit_price'     => $invalidPrice,
+            ]);
+ 
+        // Then: validation fails on unit_price and no record is persisted.
+        $response
+            ->assertRedirect(route('supplies.create'))
+            ->assertSessionHasErrors(['unit_price']);
+ 
+        $this->assertDatabaseCount('supplies', 0);
+    }
+)->with([
+    'CP-16 - decimal value'           => ['decimal',      1250.50],
+    'CP-17 - not a multiple of 5'     => ['non-multiple', 1203],
+    'CP-18 - zero'                    => ['zero',         0],
+    'CP-19 - negative'                => ['negative',     -500],
+    'CP-20 - non-numeric string'      => ['string',       'abc'],
+]);
+ 
+/**
+ * User Story: EIF-247 - Gestion de insumos.
+ * Priority: High
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-247
+ *
+ * Complemento positivo de los casos anteriores.
+ * Verifica que los valores mínimos válidos de la regla sí son aceptados,
+ * evitando falsos negativos por una regla demasiado restrictiva.
+ * Valores probados: 5 (mínimo), 100, 1250 (borde típico).
+ */
+test(
+    'CP-15_EIF-247 - accepts unit_price when it is a positive integer and multiple of 5',
+    function (int $validPrice) {
+        // Given: an authenticated admin user.
+        $admin = createAdminUserForSupply();
+ 
+        // When: the admin submits a supply with a valid unit_price.
+        $response = $this->actingAs($admin)->post(route('supplies.store'), [
+            'name'           => 'Insumo precio ' . $validPrice,
+            'measure_unit'   => MeasureUnit::KILOGRAMS->value,
+            'measure_amount' => 1,
+            'quantity'       => 5,
+            'unit_price'     => $validPrice,
+        ]);
+        
+        // Then: the supply is persisted and the user receives a success message.
+        $response
+            ->assertRedirect(route('supplies.index'))
+            ->assertSessionHas('success', 'Insumo creado correctamente.');
+ 
+        $this->assertDatabaseHas('supplies', ['unit_price' => $validPrice]);
+
+        expect(true)->toBeFalse();
+    }
+)->with([
+    'minimum valid (5)'  => [5],
+    'typical value (100)'=> [100],
+    'large value (1250)' => [1250],
+]);
+
