@@ -1,0 +1,284 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main", "dev", "feature/*", "release/*"]
+  pull_request:
+    branches: ["main", "dev"]
+
+env:
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  # ==========================================
+  # STEP 1: LINTING (Laravel Pint)
+  # ==========================================
+  lint:
+    name: Fix Code Style
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [8.4]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: pint
+
+      - name: Run Pint
+        run: pint
+
+      - name: Commit linted files
+        uses: stefanzweifel/git-auto-commit-action@v6
+        with:
+          commit_message: Fixed code style with Laravel Pint
+
+  # ==========================================
+  # STEP 2: TESTING (Laravel Pest/PHPUnit)
+  # ==========================================
+  laravel-tests:
+    name: Laravel Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: source_code
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/database.sqlite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: xdebug
+
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: "npm"
+          cache-dependency-path: source_code/package-lock.json
+
+      - name: Directory Permissions
+        run: chmod -R 777 storage bootstrap/cache
+
+      - name: Run CI bootstrap
+        run: composer run ci
+
+      - name: Run Tests
+        run: php artisan test --ci --parallel --compact
+
+  # ==========================================
+  # STEP 3: DEPLOY PREVIEW (Vercel)
+  # ==========================================
+  deploy-preview:
+    name: Deploy to Vercel (Preview)
+    needs: [lint, laravel-tests]
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview
+
+      # ---- GitHub Deployments: Start ----
+      - name: Start GitHub Deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: Preview
+
+      # ---- Vercel Deployment ----
+      - name: Deploy Project to Vercel
+        run: |
+          PREVIEW_URL=$(vercel deploy)
+          echo "Despliegue exitoso en Vercel. URL de vista previa: $PREVIEW_URL"
+          echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
+
+      # ---- GitHub Deployments: Finish ----
+      - name: Finish GitHub Deployment Status
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: ${{ env.PREVIEW_URL }}
+
+      # ---- GitHub Deployment Summary and Comments ----
+      - name: Add Deployment Summary to GitHub (Push)
+        if: success()
+        run: |
+          echo "### 🚀 Vista Previa Desplegada en Vercel" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Las pruebas de calidad finalizaron correctamente y la versión de vista previa ya está disponible." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Estado:** Exitoso" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** [${{ env.PREVIEW_URL }}](${{ env.PREVIEW_URL }})" >> $GITHUB_STEP_SUMMARY
+          echo "**Último commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment PR with Preview URL
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request' && success()
+        with:
+          header: vercel-preview
+          message: |
+            ### ✅ Despliegue de Vista Previa
+
+            Las pruebas de calidad finalizaron correctamente y la versión de vista previa ya está disponible.
+            
+            **Estado:** Exitoso  
+            **URL:** [${{ env.PREVIEW_URL }}](${{ env.PREVIEW_URL }})
+            **Último commit:** ${{ github.sha }}
+
+      # ---- Success Email Preparation and Notification ----
+      - name: Prepare Success Email Template
+        if: success()
+        run: |
+          export DEPLOY_ENV="Vista Previa (Preview)"
+          export DEPLOY_URL="${{ env.PREVIEW_URL }}"
+          envsubst < .github/templates/deploy-success.html > email-success.html
+
+      - name: Notify Success via Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.EMAIL_SERVER_ADDRESS }}
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Despliegue Exitoso a Vercel (Preview) | Soda El Bambú"
+          to: ${{ secrets.EMAIL_RECIPIENT }}
+          from: "CI/CD Pipeline <ci-cd-helper@${{ secrets.EMAIL_USERNAME }}>"
+          html_body: file://email-success.html
+
+      # ---- Failure Email Preparation and Notification ----
+      - name: Prepare Error Email Template
+        if: failure()
+        run: |
+          export DEPLOY_ENV="Vista Previa (Preview)"
+          envsubst < .github/templates/deploy-error.html > email-error.html
+
+      - name: Notify Failure via Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.EMAIL_SERVER_ADDRESS }}
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Despliegue Fallido a Vercel (Preview) | Soda El Bambú"
+          to: ${{ secrets.EMAIL_RECIPIENT }}
+          from: "CI/CD Pipeline <ci-cd-helper@${{ secrets.EMAIL_USERNAME }}>"
+          html_body: file://email-error.html
+
+  # ==========================================
+  # STEP 4: DEPLOY PRODUCTION (Vercel)
+  # ==========================================
+  deploy-production:
+    name: Deploy to Vercel (Production)
+    needs: [lint, laravel-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production
+
+      # ---- GitHub Deployments: Start ----
+      - name: Start GitHub Deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: Production
+
+      # ---- Vercel Deployment (Production) ----
+      - name: Deploy Project to Vercel (Production)
+        run: |
+          PROD_URL=$(vercel deploy --prod)
+          echo "Despliegue exitoso en Vercel. URL de producción: $PROD_URL"
+          echo "PROD_URL=$PROD_URL" >> $GITHUB_ENV
+
+      # ---- GitHub Deployments: Finish ----
+      - name: Finish GitHub Deployment Status
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: ${{ env.PROD_URL }}
+
+      # ---- Success Email Preparation and Notification ----
+      - name: Prepare Success Email Template
+        if: success()
+        run: |
+          export DEPLOY_ENV="Producción"
+          export DEPLOY_URL="${{ env.PROD_URL }}"
+          envsubst < .github/templates/deploy-success.html > email-success.html
+
+      - name: Notify Success via Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.EMAIL_SERVER_ADDRESS }}
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Despliegue Exitoso a Vercel (Producción) | Soda El Bambú"
+          to: ${{ secrets.EMAIL_RECIPIENT }}
+          from: "CI/CD Pipeline <ci-cd-helper@${{ secrets.EMAIL_USERNAME }}>"
+          html_body: file://email-success.html
+
+      # ---- Failure Email Preparation and Notification ----
+      - name: Prepare Error Email Template
+        if: failure()
+        run: |
+          export DEPLOY_ENV="Producción"
+          envsubst < .github/templates/deploy-error.html > email-error.html
+
+      - name: Notify Failure via Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.EMAIL_SERVER_ADDRESS }}
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Despliegue Fallido a Vercel (Producción) | Soda El Bambú"
+          to: ${{ secrets.EMAIL_RECIPIENT }}
+          from: "CI/CD Pipeline <ci-cd-helper@${{ secrets.EMAIL_USERNAME }}>"
+          html_body: file://email-error.html
