@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background-color: #10b981;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 30px;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        .button {
+            background-color: #10b981;
+            color: white !important;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .footer {
+            background-color: #f9fafb;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>🚀 ¡Despliegue Exitoso!</h2>
+        </div>
+        <div class="content">
+            <p>Hola,</p>
+            <p>El código de <strong>Soda El Bambú</strong> ha pasado todas las pruebas correctamente y se ha completado
+                el despliegue en Vercel para el entorno de <strong>${DEPLOY_ENV}</strong>.</p>
+            <p>Puedes revisar la versión actualizada haciendo clic en el siguiente enlace:</p>
+
+            <div class="btn-container">
+                <a href="${DEPLOY_URL}" class="button">Ver ${DEPLOY_ENV}</a>
+            </div>
+        </div>
+        <div class="footer">
+            Este es un mensaje automático del Pipeline CI/CD. <br>
+            Rama actualizada: ${GITHUB_REF_NAME}
+        </div>
+    </div>
+</body>
+
+</html>
