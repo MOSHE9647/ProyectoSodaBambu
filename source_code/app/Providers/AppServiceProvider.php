@@ -11,6 +11,7 @@ use App\Models\Sale;
 use App\Models\SaleDetail;
 use App\Models\Supply;
 use App\Models\User;
+use App\Models\Transaction;
 use App\Observers\ContractObserver;
 use App\Observers\ProductObserver;
 use App\Observers\ProductStockObserver;
@@ -20,9 +21,11 @@ use App\Observers\SaleDetailObserver;
 use App\Observers\SaleObserver;
 use App\Observers\SupplyObserver;
 use App\Observers\UserObserver;
+use App\Observers\TransactionObserver;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -49,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
         SaleDetail::observe(SaleDetailObserver::class);
         Purchase::observe(PurchaseObserver::class);
         Contract::observe(ContractObserver::class);
+        Transaction::observe(TransactionObserver::class);
 
         // Force HTTPS in production
         if (config('app.env') !== 'local') {
