@@ -60,7 +60,7 @@ const baseFieldValidators = {
         message: 'El nombre del insumo es obligatorio y no puede exceder 50 caracteres.',
     },
     quantity: {
-        validate: (v) => rules.isNum(v) && parseInt(v) >= 0,
+        validate: (v) => rules.isNum(v) && parseInt(v) > 0,
         message: 'La cantidad es obligatoria, debe ser un número entero y no puede ser menor a 0.',
     },
     "measure_unit_selector-input": {
@@ -72,7 +72,7 @@ const baseFieldValidators = {
         message: 'Por favor, seleccione una unidad de medida del desplegable.',
     },
     unit_price: {
-        validate: (v) => rules.isNum(v) && validateMultipleOf5(v),
+        validate: (v) => rules.isNum(v) && parseInt(v) >= 5 && validateMultipleOf5(v),
         message: 'El precio unitario es obligatorio y debe ser un número entero múltiplo de 5.',
     },
     expiration_date: {
@@ -141,14 +141,6 @@ export const validateSupplyForm = () => {
         }
     }
 
-    for (const fieldId in fieldValidators) {
-        if (fieldId === 'measure_unit_selector-input' || fieldId === 'measure_unit_selector-value') {
-            const errorFieldId = `${fieldId.substring(0, fieldId.lastIndexOf('-'))}-error`;
-            clearFieldError(fieldId, errorFieldId);
-        } else {
-            clearFieldError(fieldId);
-        }
-    }
     const validationResult = errors.length > 0 ? errors[0] : [true, null, null];
     
     return [...validationResult, values];

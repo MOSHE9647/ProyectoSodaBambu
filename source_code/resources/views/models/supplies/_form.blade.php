@@ -192,8 +192,8 @@
                         :textIconRight="true"
                         :placeholder="'150'"
                         :required="true"
-                        :min="'0'"
-                        :step="'5'"
+                        :min="0"
+                        :step="5"
                     >
                         <x-slot:iconLeft>
                             <x-icons.colon-icon width="16" height="16" />

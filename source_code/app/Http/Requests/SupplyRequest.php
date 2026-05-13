@@ -53,7 +53,7 @@ class SupplyRequest extends FormRequest
             'quantity' => [$requiredOnCreate, 'integer', 'min:0'],
             'measure_unit' => [$requiredOnCreate, Rule::enum(MeasureUnit::class)],
             'measure_amount' => [$requiredOnCreate, 'numeric', 'min:0.01'],
-            'unit_price' => [$requiredOnCreate, 'integer', 'min:0', 'multiple_of:5'],
+            'unit_price' => [$requiredOnCreate, 'integer', 'min:5', 'multiple_of:5'],
             'expiration_date' => ['nullable', 'date', 'after_or_equal:'.now()->timezone('America/Costa_Rica')->toDateString()],
             'expiration_alert_days' => ['nullable', 'integer', 'min:0'],
         ];
@@ -82,7 +82,7 @@ class SupplyRequest extends FormRequest
 
             'unit_price.required' => 'El precio unitario es obligatorio.',
             'unit_price.integer' => 'El precio unitario debe ser un número entero.',
-            'unit_price.min' => 'El precio unitario no puede ser menor a 0.',
+            'unit_price.min' => 'El precio unitario no puede ser menor a 5.',
             'unit_price.multiple_of' => 'El precio debe ser múltiplo de 5 (ej. ₡5, ₡10, ₡50, ₡100).',
 
             'expiration_date.date' => 'La fecha de vencimiento debe tener un formato válido.',

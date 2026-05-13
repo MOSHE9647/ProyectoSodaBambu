@@ -90,9 +90,9 @@ $(() => {
             render: (data) => data ? formatDate(data) : 'N/A',
         },
         {
-            data: 'created_at',
-            name: 'created_at',
-            render: (data) => formatDate(data),
+            data: 'expiration_alert_date',
+            name: 'expiration_alert_date',
+            render: (data) => data ? formatDate(data) : 'N/A',
         }
     ];
 

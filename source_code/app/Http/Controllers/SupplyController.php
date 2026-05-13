@@ -59,6 +59,10 @@ class SupplyController extends Controller implements HasMiddleware
                     ? $supply->expiration_date->toDateString()
                     : 'N/A'
                 )
+                ->editColumn('expiration_alert_date', fn ($supply) => $supply->expiration_alert_date
+                    ? $supply->expiration_alert_date->toDateString()
+                    : 'N/A'
+                )
                 ->toJson();
         }
 
