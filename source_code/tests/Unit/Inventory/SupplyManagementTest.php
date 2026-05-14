@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\MeasureUnit;
 use App\Models\Supply;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
@@ -29,7 +30,8 @@ test('CP-02_EIF-49 - supply can be restored from soft delete', function () {
     // Given: a soft-deleted supply.
     $supply = Supply::factory()->create([
         'name' => 'Arroz',
-        'measure_unit' => 'kg',
+        'measure_unit' => MeasureUnit::KILOGRAMS,
+        'measure_amount' => 23,
     ]);
     $supply->delete();
 

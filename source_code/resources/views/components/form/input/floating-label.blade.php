@@ -8,6 +8,7 @@
 	'iconRight' => null,
 	'textIconRight' => false,
 	'inputClass' => '',
+	'labelClass' => '',
 	'type' => null,
 	'value' => null,
 	'step' => null,
@@ -54,7 +55,7 @@
 		>
 
 		{{-- Label --}}
-		<label for="{{ $id }}" class="form-label">
+		<label for="{{ $id }}" class="form-label {{ $labelClass }}">
 			{{ $slot ?? ucwords(str_replace('-', ' ', $name ?? $id)) }}
 		</label>
 	</div>

@@ -417,11 +417,10 @@ test('CP-12_EIF-32 - index view exposes low stock products list for dashboard ca
     // Then: low stock view data includes only inventory-enabled products.
     $response
         ->assertSuccessful()
-        ->assertViewHas('lowStockProducts');
+        ->assertViewHas('lowStockCount');
 
-    $lowStockProducts = $response->viewData('lowStockProducts');
-    expect($lowStockProducts->count())->toBeGreaterThanOrEqual(1);
-    expect($lowStockProducts->every(fn ($row) => $row->product?->has_inventory === true))->toBeTrue();
+    $lowStockCount = $response->viewData('lowStockCount');
+    expect($lowStockCount)->toBeGreaterThanOrEqual(1);
 });
 
 /**

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\MeasureUnit;
 use App\Http\Resources\SupplyResource;
 use App\Models\Supply;
 use Carbon\Carbon;
@@ -14,7 +15,8 @@ test('CP-RES-16 - supply resource returns basic attributes', function () {
     // Given: a supply with name and measure_unit
     $supply = Supply::factory()->create([
         'name' => 'Flour',
-        'measure_unit' => 'kg',
+        'measure_unit' => MeasureUnit::KILOGRAMS,
+        'measure_amount' => 25,
     ]);
 
     // When: we convert the supply to a resource
@@ -25,7 +27,9 @@ test('CP-RES-16 - supply resource returns basic attributes', function () {
     expect($array)
         ->toHaveKey('id', $supply->id)
         ->toHaveKey('name', 'Flour')
-        ->toHaveKey('measure_unit', 'kg');
+        ->toHaveKey('measure_unit', 'kg')
+        ->toHaveKey('measure_unit_label', 'Kilogramos')
+        ->toHaveKey('measure_amount', '25.00');
 });
 
 test('CP-RES-17 - supply resource formats created_at when DateTimeInterface', function () {
@@ -64,7 +68,7 @@ test('CP-RES-19 - supply resource returns null when created_at is invalid', func
     $supply = new Supply([
         'id' => 1,
         'name' => 'Salt',
-        'measure_unit' => 'g',
+        'measure_unit' => MeasureUnit::GRAMS,
         'created_at' => 123,
     ]);
 
