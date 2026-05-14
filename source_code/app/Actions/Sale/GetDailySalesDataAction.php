@@ -2,8 +2,7 @@
 
 namespace App\Actions\Sale;
 
-use App\Enums\PaymentStatus;
-use App\Models\Sale;
+use App\Models\Transaction; 
 use Carbon\Carbon;
 
 class GetDailySalesDataAction
@@ -17,37 +16,36 @@ class GetDailySalesDataAction
         $startOfDay = Carbon::now($timezone)->startOfDay()->timezone('UTC');
         $endOfDay = Carbon::now($timezone)->endOfDay()->timezone('UTC');
 
-        // Get all sales for the current local day using UTC bounds
-        $sales = Sale::whereBetween('date', [$startOfDay, $endOfDay])
-            ->where('payment_status', PaymentStatus::PAID)
-            ->get(['date', 'total']);
+        /**
+         * We retrieve today's incomes from the transactions table.
+         * We use the incomes() scope defined in the Transaction model.
+         */
+        $incomes = Transaction::incomes()
+            ->whereBetween('created_at', [$startOfDay, $endOfDay])
+            ->get(['created_at', 'amount']);
 
-        // Group sales by hour and sum totals
-        $salesByHour = $sales->groupBy(function ($sale) use ($timezone) {
-            // Converts the sale date to the specified timezone and formats it to get the hour (0-23)
-            return Carbon::parse($sale->date)->timezone($timezone)->format('G');
-        })->map(function ($group) {
-            // Sum the total for each hour group
-            return $group->sum('total');
-        });
+        // Group incomes by hour (0-23)
+        $incomesByHour = $incomes->groupBy(function ($income) use ($timezone) {
+            return Carbon::parse($income->created_at)->timezone($timezone)->format('G');
+        })->map(fn ($group) => $group->sum('amount'));
 
         $dailyTotal = 0;
         $labels = [];
         $values = [];
 
-        $openingTime = 7;  // 7 AM
-        $now = Carbon::now($timezone)->hour; // Current hour
+        $openingTime = 7;  // 7 AM or the time when the business opens
+        $now = Carbon::now($timezone)->hour;
 
-        // Iterate through each hour of the day from opening to closing time
+        // Iterate from opening time to current hour
         for ($i = $openingTime; $i <= $now; $i++) {
             $formattedTime = Carbon::createFromTime($i, 0, 0, $timezone)->format('g:i A');
 
-            // Get the total sales for the current hour, defaulting to 0 if there are no sales
-            $saleForHour = $salesByHour->get((string) $i, 0);
+            // Get the total income for the current hour
+            $incomeForHour = $incomesByHour->get((string) $i, 0);
 
             $labels[] = $formattedTime;
-            $values[] = $saleForHour;
-            $dailyTotal += $saleForHour;
+            $values[] = $incomeForHour;
+            $dailyTotal += $incomeForHour;
         }
 
         return [
