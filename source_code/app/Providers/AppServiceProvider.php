@@ -10,8 +10,8 @@ use App\Models\PurchaseDetail;
 use App\Models\Sale;
 use App\Models\SaleDetail;
 use App\Models\Supply;
-use App\Models\User;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Observers\ContractObserver;
 use App\Observers\ProductObserver;
 use App\Observers\ProductStockObserver;
@@ -20,12 +20,11 @@ use App\Observers\PurchaseObserver;
 use App\Observers\SaleDetailObserver;
 use App\Observers\SaleObserver;
 use App\Observers\SupplyObserver;
-use App\Observers\UserObserver;
 use App\Observers\TransactionObserver;
+use App\Observers\UserObserver;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-
 
 class AppServiceProvider extends ServiceProvider
 {
