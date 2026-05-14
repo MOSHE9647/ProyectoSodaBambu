@@ -54,7 +54,7 @@ class ReceiptBuilder
     {
         $items = $this->receipable->getReceiptItems();
 
-        return collect($items)->map(fn($item) => [
+        return collect($items)->map(fn ($item) => [
             'name' => $item['name'] ?? 'Producto desconocido',
             'quantity' => (int) ($item['quantity'] ?? 0),
             'unit_price' => (int) ($item['unit_price'] ?? 0),

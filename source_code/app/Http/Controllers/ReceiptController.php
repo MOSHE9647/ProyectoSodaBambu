@@ -40,7 +40,7 @@ class ReceiptController extends Controller implements HasMiddleware
      *
      * @param  string  $model  El nombre del modelo (ej: 'sales', 'contracts')
      * @param  int  $id  El ID del modelo
-     * @return JsonResponse|View  Retorna un JSON con los datos del recibo o una vista si se solicita HTML
+     * @return JsonResponse|View Retorna un JSON con los datos del recibo o una vista si se solicita HTML
      */
     public function show(string $model, int $id): JsonResponse|View
     {

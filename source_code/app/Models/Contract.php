@@ -20,7 +20,6 @@ class Contract extends Model implements Receipable
 
     /**
      * Cache for receipt items to avoid redundant calculations during a single request lifecycle.
-     * @var array|null
      */
     private ?array $receiptItemsCache = null;
 
@@ -143,6 +142,7 @@ class Contract extends Model implements Receipable
     public function getReceiptNumber(): string
     {
         $contractId = str_pad($this->id, 10, '0', STR_PAD_LEFT);
+
         return "CONTRATO-{$contractId}";
     }
 
@@ -168,7 +168,7 @@ class Contract extends Model implements Receipable
             $product = $firstDetail->product;
 
             // Handle case where product might have been deleted after contract creation
-            if (!$product) {
+            if (! $product) {
                 return [
                     'name' => "Producto #{$firstDetail->product_id}",
                     'quantity' => $group->count(),
@@ -195,8 +195,9 @@ class Contract extends Model implements Receipable
                 'applied_tax' => 0, // No tax applied for now, but can be calculated if needed
             ];
         })->values()->toArray();
-        
+
         $this->receiptItemsCache = $results;
+
         return $results;
     }
 
@@ -205,7 +206,7 @@ class Contract extends Model implements Receipable
      */
     public function getReceiptPayments(): array
     {
-        return $this->payments()->get()->map(fn($payment) => [
+        return $this->payments()->get()->map(fn ($payment) => [
             'amount' => $payment->amount,
             'method_label' => $payment->method->label(),
             'change_amount' => $payment->change_amount,
@@ -219,7 +220,7 @@ class Contract extends Model implements Receipable
      */
     public function getReceiptTaxTotal(): int
     {
-        // Since getReceiptItems already calculates the tax amount in 'applied_tax', 
+        // Since getReceiptItems already calculates the tax amount in 'applied_tax',
         // we just need to sum it up.
         return collect($this->getReceiptItems())->sum('applied_tax');
     }

@@ -106,7 +106,7 @@ class Sale extends Model implements Receipable
      */
     public function getReceiptItems(): array
     {
-        return $this->saleDetails->map(fn($detail) => [
+        return $this->saleDetails->map(fn ($detail) => [
             'name' => $detail->product?->name ?? "Producto #{$detail->product_id}",
             'quantity' => $detail->quantity,
             'unit_price' => $detail->unit_price,
@@ -116,11 +116,11 @@ class Sale extends Model implements Receipable
     }
 
     /**
-    * Get the payments associated with this sale.
-    */
+     * Get the payments associated with this sale.
+     */
     public function getReceiptPayments(): array
     {
-        return $this->payments()->get()->map(fn($payment) => [
+        return $this->payments()->get()->map(fn ($payment) => [
             'amount' => $payment->amount,
             'method_label' => $payment->method->label(),
             'change_amount' => $payment->change_amount,
