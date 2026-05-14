@@ -2,10 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Enums\ProductType;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\ProductStock;
 use Illuminate\Database\Seeder;
 
 class ProductSeeder extends Seeder
@@ -18,7 +16,7 @@ class ProductSeeder extends Seeder
         $this->call(CategorySeeder::class);
 
         // Obtener IDs de categorías
-        $cats = \App\Models\Category::pluck('id', 'name');
+        $cats = Category::pluck('id', 'name');
 
         $products = [
             // ARROCES
@@ -42,7 +40,6 @@ class ProductSeeder extends Seeder
             ['category_id' => $cats['Bebidas'], 'name' => 'Fresco de la Casa', 'sale_price' => 500, 'type' => 'drink'],
             ['category_id' => $cats['Bebidas'], 'name' => 'Agua Dulce en Agua', 'sale_price' => 750, 'type' => 'drink'],
             ['category_id' => $cats['Bebidas'], 'name' => 'Agua Dulce en Leche', 'sale_price' => 1000, 'type' => 'drink'],
-
 
             // DESAYUNOS
             ['category_id' => $cats['Desayunos'], 'name' => 'Gallo Pinto Económico', 'sale_price' => 2000, 'type' => 'dish'],
