@@ -179,11 +179,10 @@ class Contract extends Model implements Receipable
             }
 
             // Count total quantity for this product across all contract details
-            $quantity = $group->count();
+            $quantity = $group->count() * $firstDetail->contract->portions_per_day;
 
-            // Calculate Unit Price (Base Price = Reference + Margin)
-            // Formula: reference_cost + (reference_cost * margin_percentage / 100)
-            $unitPrice = $product->reference_cost + ($product->reference_cost * ($product->margin_percentage / 100));
+            // Use the product's sale price as the unit price for receipt purposes
+            $unitPrice = $product->sale_price;
 
             // Subtotal (base_price sum for all quantities)
             $subTotal = $quantity * $unitPrice;
@@ -193,7 +192,7 @@ class Contract extends Model implements Receipable
                 'quantity' => $quantity,
                 'unit_price' => (int) $unitPrice,
                 'sub_total' => (int) $subTotal,
-                'applied_tax' => (int) $product->tax_percentage,
+                'applied_tax' => 0, // No tax applied for now, but can be calculated if needed
             ];
         })->values()->toArray();
         

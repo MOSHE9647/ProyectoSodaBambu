@@ -46,7 +46,7 @@
             @if($receiptData['receipt_number'])
                 <div>N°: {{ $receiptData['receipt_number'] }}</div>
             @endif
-            <div>{{ \Carbon\Carbon::parse($receiptData['date'])->translatedFormat('d M Y H:i') }}</div>
+            <div>{{ \Carbon\Carbon::parse($receiptData['date'])->timezone('America/Costa_Rica')->translatedFormat('d M Y H:i') }}</div>
         </header>
 
         <div class="receipt-line"></div>

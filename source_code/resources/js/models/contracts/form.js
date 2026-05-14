@@ -28,6 +28,8 @@ const CLIENTS = CONTRACTS_DATA.clients || {};
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+let isTotalValueManuallyEdited = false;
+
 // ========================= Helpers ==========================
 
 const getFormFields = () => {
@@ -603,8 +605,8 @@ const generateRandomMenu = async () => {
     // Refresh UI
 	$("#empty-row").addClass("d-none");
 	updateSummary.progressBar();
-	recalculateTotalValue();
 	validateTableUniqueness();
+	recalculateTotalValue();
     
     SwalToast.fire({ icon: "success", title: "Menú generado correctamente." });
 };
@@ -612,11 +614,9 @@ const generateRandomMenu = async () => {
 const recalculateTotalValue = (initialRecalc = false, ignoreDefinedValue = false) => {
 	const tableEl = getFormElements().contract_details_table;
 	const totalValueInput = getFormElements().total_value;
-
 	const portionsPerDay = parseInt(getFormElements().portions_per_day.val()) || 0;
-	const totalValue = parseInt(totalValueInput.val()) || 0;
-	
-	if (totalValue !== 0 && !ignoreDefinedValue) return;
+
+	if (isTotalValueManuallyEdited && !ignoreDefinedValue) return;
 	let contractValue = 0;
 
 	$(tableEl).find("tbody tr:not(#empty-row)").each(function () {
@@ -626,6 +626,8 @@ const recalculateTotalValue = (initialRecalc = false, ignoreDefinedValue = false
 
 	if (initialRecalc) $(totalValueInput).val(contractValue.toFixed(0));
 	else $(totalValueInput).val(contractValue.toFixed(0)).trigger("input");
+
+	if (ignoreDefinedValue) isTotalValueManuallyEdited = false;
 };
 
 const clearDetailsTable = () => {
@@ -1339,8 +1341,11 @@ const bindEventListeners = () => {
 
 	elements.total_value
 		.off("input")
-		.on("input", function () {
+		.on("input", function (e) {
 			updateSummary.totalValue($(this));
+			if (e.originalEvent) {
+				isTotalValueManuallyEdited = true;
+			}
 		})
 		.trigger("input");
 
@@ -1497,4 +1502,8 @@ $(() => {
     bindOffcanvasEvents("create-offcanvas"); // Bind events related to the offcanvas component for creating contract details
 	updateSummary.details(true); // Initial details summary update on page load
     updateSummary.progressBar(); // Initial progress bar update on page load
+
+	if ((parseInt($("#total_value").val()) || 0) > 0) {
+		isTotalValueManuallyEdited = true;
+	}
 });
