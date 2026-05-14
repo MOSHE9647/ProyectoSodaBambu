@@ -43,8 +43,8 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // Generic receipt routes for any model implementing Receipable interface
     Route::prefix('receipts')->name('receipts.')->group(function () {
-        Route::get('/{model}/{id}', [ReceiptController::class, 'show'])->name('show');
         Route::get('/payment-modal/{paymentTotal}', [ReceiptController::class, 'paymentModal'])->name('payment-modal');
+        Route::get('/{model}/{id}', [ReceiptController::class, 'show'])->name('show');
     });
 
     // Sales routes with role-based access control defined in the controller

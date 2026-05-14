@@ -19,6 +19,12 @@ class Contract extends Model implements Receipable
     use HasFactory, SoftDeletes;
 
     /**
+     * Cache for receipt items to avoid redundant calculations during a single request lifecycle.
+     * @var array|null
+     */
+    private ?array $receiptItemsCache = null;
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -149,25 +155,50 @@ class Contract extends Model implements Receipable
     }
 
     /**
-     * Get the total value of this contract.
-     */
-    public function getReceiptTotal(): int
-    {
-        return $this->total_value ?? 0;
-    }
-
-    /**
      * Get the contract details as receipt items.
      */
     public function getReceiptItems(): array
     {
-        return $this->details->map(fn($detail) => [
-            'name' => $detail->product?->name ?? "Producto #{$detail->product_id}",
-            'quantity' => $detail->quantity ?? 1,
-            'unit_price' => $detail->unit_price ?? 0,
-            'sub_total' => $detail->subtotal ?? 0,
-            'applied_tax' => $detail->applied_tax ?? 0,
-        ])->toArray();
+        if ($this->receiptItemsCache !== null) {
+            return $this->receiptItemsCache;
+        }
+
+        $results = $this->details->groupBy('product_id')->map(function ($group) {
+            $firstDetail = $group->first();
+            $product = $firstDetail->product;
+
+            // Handle case where product might have been deleted after contract creation
+            if (!$product) {
+                return [
+                    'name' => "Producto #{$firstDetail->product_id}",
+                    'quantity' => $group->count(),
+                    'unit_price' => 0,
+                    'sub_total' => 0,
+                    'applied_tax' => 0,
+                ];
+            }
+
+            // Count total quantity for this product across all contract details
+            $quantity = $group->count();
+
+            // Calculate Unit Price (Base Price = Reference + Margin)
+            // Formula: reference_cost + (reference_cost * margin_percentage / 100)
+            $unitPrice = $product->reference_cost + ($product->reference_cost * ($product->margin_percentage / 100));
+
+            // Subtotal (base_price sum for all quantities)
+            $subTotal = $quantity * $unitPrice;
+
+            return [
+                'name' => $product->name,
+                'quantity' => $quantity,
+                'unit_price' => (int) $unitPrice,
+                'sub_total' => (int) $subTotal,
+                'applied_tax' => (int) $product->tax_percentage,
+            ];
+        })->values()->toArray();
+        
+        $this->receiptItemsCache = $results;
+        return $results;
     }
 
     /**
@@ -185,23 +216,33 @@ class Contract extends Model implements Receipable
     }
 
     /**
-     * Get the contract subtotal (sum of all details before tax).
-     */
-    public function getReceiptSubtotal(): int
-    {
-        return $this->details->sum('subtotal') ?? 0;
-    }
-
-    /**
      * Get the total tax amount for all contract details.
      */
     public function getReceiptTaxTotal(): int
     {
-        return collect($this->getReceiptItems())->reduce(function ($carry, $item) {
-            $taxAmount = (int) round($item['sub_total'] * ($item['applied_tax'] / 100));
+        // Since getReceiptItems already calculates the tax amount in 'applied_tax', 
+        // we just need to sum it up.
+        return collect($this->getReceiptItems())->sum('applied_tax');
+    }
 
-            return $carry + $taxAmount;
-        }, 0);
+    /**
+     * Get the contract subtotal (sum of all details before tax).
+     */
+    public function getReceiptSubtotal(): int
+    {
+        return collect($this->getReceiptItems())->sum('sub_total');
+    }
+
+    /**
+     * Get the total value of this contract.
+     */
+    public function getReceiptTotal(): int
+    {
+        $items = collect($this->getReceiptItems());
+        $itemsTotal = $items->sum('sub_total') + $items->sum('applied_tax');
+        $contractTotal = $this->total_value ?? 0;
+
+        return $contractTotal !== $itemsTotal ? $contractTotal : $itemsTotal;
     }
 
     /**

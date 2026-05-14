@@ -1259,6 +1259,8 @@ const handleFormSubmission = async (event, validationResult) => {
 			total: pendingBalance,
 			title: IS_EDITING ? "Cobrar Diferencia del Contrato" : "Procesar Pago del Contrato",
 			loadingId: FORM_ID,
+			modelType: 'contracts',
+			modelId: IS_EDITING ? values.id : null,
 			onComplete: async (paymentDetails, totalTendered) => {
 				const { isValid, message } = validatePaymentDetails(paymentDetails);
 				if (!isValid) {
