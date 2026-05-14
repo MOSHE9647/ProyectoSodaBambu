@@ -26,7 +26,7 @@ return new class extends Migration
 
             // Cost and pricing fields
             $table->integer('sale_price')->default(0);
-            $table->integer('tax_percentage')->default(0);
+            $table->integer('tax_percentage')->default(13);
             $table->integer('reference_cost')->default(0);
             $table->integer('margin_percentage')->default(35);
 

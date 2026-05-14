@@ -1,6 +1,5 @@
-<div class="d-flex flex-column text-start">
-    {{-- Fila 1: Nombre y Unidad --}}
-    <div class="row g-3 mb-3">
+<div class="d-flex flex-column text-start" style="max-width: 600px;">
+    <div class="row g-3">
         <div class="col-6">
             <x-form.input.floating-label
                 :id="'name'"
@@ -8,37 +7,61 @@
                 :readonly="true"
                 :value="$supply->name"
                 :placeholder="'Nombre'"
-                :iconLeft="'bi bi-tag'"
+                :iconLeft="'bi bi-type'"
             >
                 Nombre
             </x-form.input.floating-label>
         </div>
+
         <div class="col-6">
             <x-form.input.floating-label
-                :id="'measure_unit'"
+                :id="'brand'"
                 :type="'text'"
                 :readonly="true"
-                :value="$supply->measure_unit"
-                :placeholder="'Unidad de Medida'"
-                :iconLeft="'bi bi-rulers'"
+                :value="$supply->brand ?? 'N/A'"
+                :placeholder="'Marca'"
+                :iconLeft="'bi bi-card-text'"
             >
-                Unidad de Medida
+                Marca
             </x-form.input.floating-label>
         </div>
-    </div>
 
-    {{-- Fila 2: Stock y Precio --}}
-    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <x-form.input.floating-label
+                :id="'measure_amount'"
+                :type="'text'"
+                :readonly="true"
+                :value="$supply->measure_amount . ' ' . ($supply->measure_unit?->label() ?? $supply->measure_unit)"
+                :placeholder="'Cantidad por Unidad'"
+                :iconLeft="'bi bi-rulers'"
+            >
+                Cantidad por Unidad
+            </x-form.input.floating-label>
+        </div>
+
         <div class="col-6">
             <x-form.input.floating-label
                 :id="'stock'"
                 :type="'text'"
                 :readonly="true"
                 :value="$supply->quantity"
-                :placeholder="'Cantidad Disponible'"
-                :iconLeft="'bi bi-boxes'"
+                :placeholder="'Cantidad de Paquetes'"
+                :iconLeft="'bi bi-stack'"
             >
-                Cantidad Disponible
+                Cantidad de Paquetes
+            </x-form.input.floating-label>
+        </div>
+
+        <div class="col-6">
+            <x-form.input.floating-label
+                :id="'total_measure_amount'"
+                :type="'text'"
+                :readonly="true"
+                :value="(($supply->quantity ?? 0) * (float) ($supply->measure_amount ?? 0)) . ' ' . ($supply->measure_unit?->label() ?? $supply->measure_unit)"
+                :placeholder="'Cantidad Total'"
+                :iconLeft="'bi bi-calculator'"
+            >
+                Cantidad Total
             </x-form.input.floating-label>
         </div>
         <div class="col-6">
@@ -46,32 +69,61 @@
                 :id="'unit_price'"
                 :type="'text'"
                 :readonly="true"
-                :value="'₡ ' . number_format($supply->unit_price, 0, '.', ' ')"
+                :value="number_format($supply->unit_price, 0, '.', ' ')"
                 :placeholder="'Precio Unitario'"
-                :iconLeft="'bi bi-cash-stack'"
+                :textIconLeft="true"
             >
+                <x-slot:iconLeft>
+                    <x-icons.colon-icon width="16" height="16" />
+                </x-slot:iconLeft>
+
                 Precio Unitario
             </x-form.input.floating-label>
         </div>
-    </div>
 
-    <hr class="my-3"/>
-
-    {{-- Fila 3: Fechas --}}
-    <div class="row g-3 mb-0">
         <div class="col-6">
             <x-form.input.floating-label
                 :id="'expiration_date'"
                 :type="'text'"
                 :readonly="true"
-                :value="$supply->expiration_date ? \Carbon\Carbon::parse($supply->expiration_date)->locale('es')->translatedFormat('d \d\e F, Y') : 'N/A'"
-                :iconLeft="'bi bi-calendar-x'"
+                :value="$supply->expiration_date ? \Carbon\Carbon::parse($supply->expiration_date)->locale('es')->translatedFormat('d \\d\\e F, Y') : 'N/A'"
+                :iconLeft="'bi bi-calendar-event'"
                 :placeholder="'Fecha de Vencimiento'"
-                class="{{ $supply->expiration_date && \Carbon\Carbon::parse($supply->expiration_date)->isPast() ? 'text-danger fw-bold' : '' }}"
             >
                 Fecha de Vencimiento
             </x-form.input.floating-label>
         </div>
+
+        <div class="col-6">
+            <x-form.input.floating-label
+                :id="'expiration_alert_days'"
+                :type="'text'"
+                :readonly="true"
+                :value="$supply->expiration_alert_days ?? 'N/A'"
+                :iconLeft="'bi bi-bell'"
+                :placeholder="'Alertar con (días)'"
+            >
+                Alertar con (días)
+            </x-form.input.floating-label>
+        </div>
+
+        <div class="col-12">
+            <hr class="my-2"/>
+        </div>
+
+        <div class="col-6">
+            <x-form.input.floating-label
+                :id="'expiration_alert_date'"
+                :type="'text'"
+                :readonly="true"
+                :value="$supply->expiration_alert_date ? \Carbon\Carbon::parse($supply->expiration_alert_date)->locale('es')->translatedFormat('d \\d\\e F, Y') : 'N/A'"
+                :iconLeft="'bi bi-calendar-check'"
+                :placeholder="'Fecha de Alerta'"
+            >
+                Fecha de Alerta
+            </x-form.input.floating-label>
+        </div>
+
         <div class="col-6">
             <x-form.input.floating-label
                 :id="'created_at'"
