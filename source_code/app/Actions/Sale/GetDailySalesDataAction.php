@@ -2,7 +2,7 @@
 
 namespace App\Actions\Sale;
 
-use App\Models\Transaction; 
+use App\Models\Transaction;
 use Carbon\Carbon;
 
 class GetDailySalesDataAction
