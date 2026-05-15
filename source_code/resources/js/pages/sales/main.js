@@ -6,7 +6,8 @@ import { initializeSalesOrderTabs } from "./orders.js";
 import { setLoadingState } from "../../utils/utils.js";
 import { initializeHotkeys } from "./hotkeys.js";
 import { openPaymentModal, printReceipt } from "./payment.js";
-import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { SwalConfirmation, SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { showPaymentDetailsFormModal } from "../../models/payment/main.js";
 
 /**
  * Updates the sales page clock element with the current local time.
@@ -68,57 +69,30 @@ $(() => {
     const finalizeSaleButton = $("#finalize-sale-button");
     if (finalizeSaleButton.length) {
         finalizeSaleButton.on("click", async () => {
-			const saleData = getActiveSaleData();
+			const saleTotal = getActiveSaleData().total;
+			const { paymentDetails, shouldPrint } = await showPaymentDetailsFormModal(saleTotal);
 
-			let successMessage = "Venta registrada con éxito.";
-
-			const { completed, printed } = await openPaymentModal({
-				total: saleData.total,
-				title: "Procesar Venta",
-				loadingId: "finalize-sale",
-				onComplete: async (paymentDetails) => {
-					SwalModal.showLoading();
-					const saleResult = await processSale(paymentDetails);
-					if (saleResult?.success) {
-						if (saleResult.message) {
-							successMessage = saleResult.message;
-						}
-						return saleResult;
-					}
-
-					SwalModal.hideLoading();
-					return false;
+			const saleResult = await processSale(paymentDetails);
+			if (saleResult?.success) {
+				let successMessage = saleResult.message || "Venta procesada exitosamente.";
+				if (shouldPrint) {
+					printReceipt(route('receipts.show', {
+						model: 'sales',
+						id: saleResult.data?.id,
+					}));
 				}
-			});
-
-			if (completed && !printed) {
-				SwalToast.fire({
-					icon: SwalNotificationTypes.SUCCESS,
-					title: successMessage,
-				});
 			}
 		});
     }
 
 	const rePrintLastSaleButton = $("#reprint-last-sale");
 	if (rePrintLastSaleButton.length) {
-		const SweetModalCustomClass = {
-			title: "d-flex justify-content-center align-items-center border-bottom pb-3 mb-3",
-			popup: "swal-popup w-auto h-auto",
-			closeButton: "swal-close-btn fs-3",
-			htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
-			confirmButton: "btn btn-primary mx-1",
-			cancelButton: "btn btn-danger mx-1",
-			icon: "mb-4",
-		};
-
 		rePrintLastSaleButton.on("click", () => {
-			SwalModal.fire({
+			SwalConfirmation.fire({
 				title: "Reimprimir última venta",
 				text: "¿Deseas reimprimir el recibo de la última venta?",
-				icon: "question",
+				icon: SwalNotificationTypes.QUESTION,
 				showCancelButton: true,
-				customClass: SweetModalCustomClass,
 				confirmButtonText: "Sí, reimprimir",
 				cancelButtonText: "No, cancelar",
 			}).then((result) => {

@@ -31,21 +31,8 @@ export async function openPaymentModal({ total, title, onComplete, loadingId, mo
 	setLoadingState(loadingId, true);
 
 	try {
-		let receiptData = null;
-		
-		// 1. Obtener data base (Agnóstico)
-		if (modelType && modelId) {
-			const resp = await fetch(route("receipts.show", { model: modelType, id: modelId }));
-			receiptData = await resp.json();
-		} else {
-			receiptData = getActiveSaleData();
-		}
-
-		// 2. Obtener Modal HTML
-		const modalUrl = modelType 
-			? route("receipts.payment-modal", { model: modelType, id: modelId, paymentTotal: total })
-			: route("sales.payment-modal", { paymentTotal: total });
-		
+		// Obtener Modal HTML
+		const modalUrl = route("receipts.payment-modal", { paymentTotal: total });
 		const modalResp = await fetch(modalUrl);
 		const modalHtml = await modalResp.text();
 		setLoadingState(loadingId, false);

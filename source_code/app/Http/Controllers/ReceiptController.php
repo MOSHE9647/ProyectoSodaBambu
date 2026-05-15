@@ -92,7 +92,7 @@ class ReceiptController extends Controller implements HasMiddleware
             ]
         )->validate();
 
-        return view('pages.sales._payment-modal', [
+        return view('models.payments._payment-modal', [
             'paymentTotal' => (int) $validatedData['total'],
         ])->render();
     }

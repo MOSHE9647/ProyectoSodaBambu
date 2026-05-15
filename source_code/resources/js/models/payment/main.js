@@ -24,7 +24,7 @@ const PAYMENT_METHODS = {
  */
 const fetchPaymentDetailsModalContent = async (purchaseTotalAmount) => {
     try {
-        const url = route('payment-modal', { paymentTotal: purchaseTotalAmount });
+        const url = route('receipts.payment-modal', { paymentTotal: purchaseTotalAmount });
         const response = await fetchWithErrorHandling(url, {}, 
             'Error al cargar el formulario de detalles de pago. Por favor, inténtelo de nuevo.'
         );
@@ -57,8 +57,9 @@ const fetchPaymentDetailsModalContent = async (purchaseTotalAmount) => {
 const getPaymentDetailsFromForm = () => {
     const paymentDetails = [];
     const paymentItems = document.querySelectorAll(".payment-item");
+    const shouldPrint = document.getElementById("print_receipt_switch").checked;
 
-    paymentItems.forEach((item) => {
+    paymentItems?.forEach((item) => {
         const type = item.getAttribute("data-payment-type");
         const amount = parseInt(item.querySelector(".payment-item-amount").textContent.trim().replace(/[^0-9,-]+/g, "")) || 0;
         const reference = item.querySelector(".payment-item-reference")
@@ -74,7 +75,7 @@ const getPaymentDetailsFromForm = () => {
         });
     });
 
-    return paymentDetails;
+    return { paymentDetails, shouldPrint };
 };
 
 /**
@@ -112,13 +113,16 @@ export async function showPaymentDetailsFormModal(purchaseTotalAmount) {
 		});
 
         let paymentDetails = null;
+        let shouldPrint = false;
 
         // Handle form submission within the modal
         $(document)
             .off("submit", "#payment-details-form")
             .on("submit", "#payment-details-form", function (e) {
                 e.preventDefault();
-                paymentDetails = getPaymentDetailsFromForm();
+                const result = getPaymentDetailsFromForm();
+                paymentDetails = result.paymentDetails;
+                shouldPrint = result.shouldPrint;
             });
         
         return new Promise((resolve) => {
@@ -126,7 +130,7 @@ export async function showPaymentDetailsFormModal(purchaseTotalAmount) {
                 if (paymentDetails) {
                     modal.close();
                     clearInterval(checkPaymentDetailsInterval);
-                    resolve(paymentDetails);
+                    resolve({ paymentDetails, shouldPrint });
                 }
             }, 500);
         });
