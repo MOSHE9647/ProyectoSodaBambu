@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ProductType;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Seeder;
-use App\Enums\ProductType;
 
 class ProductSeeder extends Seeder
 {
@@ -21,7 +21,7 @@ class ProductSeeder extends Seeder
 
         $products = [
             // ARROCES
-            ['category_id' => $cats['Arroces'], 'name' => 'Arroz Cantonés', 'sale_price' => 3500, 'type' => ProductType::DISH -> value, 'has_inventory' => false],
+            ['category_id' => $cats['Arroces'], 'name' => 'Arroz Cantonés', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
             ['category_id' => $cats['Arroces'], 'name' => 'Arroz con Camarones', 'sale_price' => 4000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
             ['category_id' => $cats['Arroces'], 'name' => 'Arroz con Pollo', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
             ['category_id' => $cats['Arroces'], 'name' => 'Arroz con Carne', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
