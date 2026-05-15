@@ -4,24 +4,24 @@
 	{{-- Page Header --}}
 	<x-header title="Gestión de Productos" subtitle="Administre los productos existentes" />
 
-	@if(($lowStockProducts ?? collect())->isNotEmpty())
-	<div class="alert alert-warning d-flex flex-column gap-2" role="alert">
-		<div class="d-flex align-items-center gap-2">
-			<i class="bi bi-exclamation-triangle-fill"></i>
-			<strong>Alerta de stock bajo:</strong>
-			<span>{{ $lowStockProducts->count() }} producto(s) con stock actual menor o igual al mínimo.</span>
-		</div>
-	</div>
+	@if(($lowStockCount ?? 0) > 0)
+		<x-alert type="warning" :showIcon="false">
+			<div class="d-flex align-items-center gap-2">
+				<i class="bi bi-exclamation-triangle-fill"></i>
+				<strong>Alerta de stock bajo:</strong>
+				<span>{{ $lowStockCount }} producto(s) con stock actual menor o igual al mínimo.</span>
+			</div>
+		</x-alert>
 	@endif
 
-	@if(($expiringSoonProducts ?? collect())->isNotEmpty())
-	<div class="alert alert-danger d-flex flex-column gap-2" role="alert">
-		<div class="d-flex align-items-center gap-2">
-			<i class="bi bi-hourglass-split"></i>
-			<strong>Próximos a vencer:</strong>
-			<span>{{ $expiringSoonProducts->count() }} producto(s) dentro de su ventana de alerta configurada.</span>
-		</div>
-	</div>
+	@if(($expiringSoonCount ?? 0) > 0)
+		<x-alert type="danger" :showIcon="false">
+			<div class="d-flex align-items-center gap-2">
+				<i class="bi bi-hourglass-split"></i>
+				<strong>Próximos a vencer:</strong>
+				<span>{{ $expiringSoonCount }} producto(s) dentro de su ventana de alerta configurada.</span>
+			</div>
+		</x-alert>
 	@endif
 
 	{{-- Table Container --}}

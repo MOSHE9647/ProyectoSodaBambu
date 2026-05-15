@@ -48,32 +48,27 @@ class SupplyController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Supply::query();
-
-            if ($request->boolean('expiring_soon') || $request->filter === 'expiring_soon') {
-                $query->whereNotNull('expiration_date')
-                    ->whereBetween('expiration_date', [
-                        now()->startOfDay(),
-                        now()->addDays(7)->endOfDay(),
-                    ]);
-            }
+            $query = Supply::query()
+                ->when($request->boolean('expiring_soon'), fn ($q) => $q->expiringSoon());
 
             return DataTables::of($query)
-                ->editColumn('quantity', function ($supply) {
-                    return $supply->quantity ?? 0;
-                })
-                ->editColumn('unit_price', function ($supply) {
-                    return $supply->unit_price ? '₡'.number_format($supply->unit_price, 0, '.', ' ') : '₡0';
-                })
-                ->editColumn('expiration_date', function ($supply) {
-                    return $supply->expiration_date
-                        ? $supply->expiration_date->format('d/m/Y')
-                        : 'N/A';
-                })
+                ->editColumn('measure_unit', fn ($supply) => $supply->measure_unit?->label() ?? 'N/A')
+                ->editColumn('quantity', fn ($supply) => $supply->quantity ?? 0)
+                ->editColumn('unit_price', fn ($supply) => format_crc($supply->unit_price ?? 0))
+                ->editColumn('expiration_date', fn ($supply) => $supply->expiration_date
+                    ? $supply->expiration_date->toDateString()
+                    : 'N/A'
+                )
+                ->editColumn('expiration_alert_date', fn ($supply) => $supply->expiration_alert_date
+                    ? $supply->expiration_alert_date->toDateString()
+                    : 'N/A'
+                )
                 ->toJson();
         }
 
-        return view('models.supplies.index');
+        $expiringSoonCount = Supply::query()->expiringSoon()->count();
+
+        return view('models.supplies.index', compact('expiringSoonCount'));
     }
 
     /**
@@ -107,14 +102,14 @@ class SupplyController extends Controller implements HasMiddleware
             $supply = Supply::create($supplyData);
         }
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'message' => $message,
                 'supply' => [
                     'id' => $supply->id,
                     'name' => $supply->name,
-                    'unit_price' => (int) ($supply->unit_price ?? 0),
+                    'unit_price' => (float) ($supply->unit_price ?? 0),
                 ],
             ]);
         }
@@ -141,7 +136,7 @@ class SupplyController extends Controller implements HasMiddleware
      */
     public function edit(Supply $supply)
     {
-        return view('models.supplies.edit', compact('supply'));
+        return view('models.supplies.edit', ['supply' => $supply]);
     }
 
     /**
