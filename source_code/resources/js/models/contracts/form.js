@@ -1,11 +1,12 @@
 import Swal from "sweetalert2";
 import { bindOffcanvasEvents } from "../../utils/offcanvas.js";
-import { SwalConfirmation, SwalModal, SwalToast } from "../../utils/sweetalert.js";
+import { SwalConfirmation, SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 import { enableBootstrapTooltips, getLaravelFirstError, setLoadingState } from "../../utils/utils.js";
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation.js";
-import { openPaymentModal } from "../../pages/sales/payment.js";
+import { openPaymentModal, printReceipt } from "../../pages/sales/payment.js";
 import { PaymentStatus } from "../../pages/sales/api.js";
 import { initializeCashRegister } from "../../pages/sales/cash-register.js";
+import { showPaymentDetailsFormModal } from "../payment/main.js";
 
 // ==================== Environment Checks ====================
 
@@ -1257,28 +1258,53 @@ const handleFormSubmission = async (event, validationResult) => {
 	const pendingBalance = newTotal - amountPaid;
 
 	if (pendingBalance > 0) {
-		await openPaymentModal({
-			total: pendingBalance,
-			title: IS_EDITING ? "Cobrar Diferencia del Contrato" : "Procesar Pago del Contrato",
-			loadingId: FORM_ID,
-			modelType: 'contracts',
-			modelId: IS_EDITING ? values.id : null,
-			onComplete: async (paymentDetails, totalTendered) => {
-				const { isValid, message } = validatePaymentDetails(paymentDetails);
-				if (!isValid) {
-					Swal.showValidationMessage(message || "Algunos de los detalles de pago no son válidos.");
-					setTimeout(() => Swal.resetValidationMessage(), 3000);
-					return false;
-				}
-				values.payment_details = paymentDetails;
-				const result = await submitToServer();
+		const { paymentDetails, shouldPrint } = await showPaymentDetailsFormModal(pendingBalance);
+		const { isValid, message } = validatePaymentDetails(paymentDetails);
 
-				if (result.success && result.redirect) {
-					setTimeout(() => window.location.href = result.redirect, 1500);
-				}
-				return result;
+		if (!isValid) {
+			SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: message || "Algunos de los detalles de pago no son válidos." });
+			return;
+		}
+
+		values.payment_details = paymentDetails;
+		const result = await submitToServer();
+
+		if (result.success) {
+			if (shouldPrint) {
+				printReceipt(route('receipts.show', {
+					model: 'contracts',
+					id: result.data?.id,
+				}));
 			}
-		});
+
+			if (result.redirect) {
+				setTimeout(() => window.location.href = result.redirect, 1500);
+			} else {
+				SwalToast.fire({ icon: SwalNotificationTypes.SUCCESS, title: result.message || "Contrato guardado exitosamente." });
+			}
+		}
+		// await openPaymentModal({
+		// 	total: pendingBalance,
+		// 	title: IS_EDITING ? "Cobrar Diferencia del Contrato" : "Procesar Pago del Contrato",
+		// 	loadingId: FORM_ID,
+		// 	modelType: 'contracts',
+		// 	modelId: IS_EDITING ? values.id : null,
+		// 	onComplete: async (paymentDetails, totalTendered) => {
+		// 		const { isValid, message } = validatePaymentDetails(paymentDetails);
+		// 		if (!isValid) {
+		// 			Swal.showValidationMessage(message || "Algunos de los detalles de pago no son válidos.");
+		// 			setTimeout(() => Swal.resetValidationMessage(), 3000);
+		// 			return false;
+		// 		}
+		// 		values.payment_details = paymentDetails;
+		// 		const result = await submitToServer();
+
+		// 		if (result.success && result.redirect) {
+		// 			setTimeout(() => window.location.href = result.redirect, 1500);
+		// 		}
+		// 		return result;
+		// 	}
+		// });
 	} else {
 		values.payment_details = []; // Ensure payment details is an empty array if no payment is needed
 		

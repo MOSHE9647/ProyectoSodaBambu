@@ -74,7 +74,6 @@ $(() => {
 
 			const saleResult = await processSale(paymentDetails);
 			if (saleResult?.success) {
-				let successMessage = saleResult.message || "Venta procesada exitosamente.";
 				if (shouldPrint) {
 					printReceipt(route('receipts.show', {
 						model: 'sales',

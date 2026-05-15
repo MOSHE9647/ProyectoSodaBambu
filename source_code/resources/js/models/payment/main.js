@@ -1,5 +1,7 @@
+import { showBootstrapModal } from "../../utils/bootstrap";
 import { fetchWithErrorHandling } from "../../utils/error-handling";
 import { SwalModal, SwalToast } from "../../utils/sweetalert";
+import { enableBootstrapTooltips } from "../../utils/utils";
 
 /**
  * Defines the available payment methods in the system.
@@ -95,22 +97,34 @@ export async function showPaymentDetailsFormModal(purchaseTotalAmount) {
     if (html) {
         const modal = SwalModal.fire({
 			title: "Procesar Pago",
-			html: html,
-            showCloseButton: true,
+			html: `
+            <div id="payment-details-modal" class="d-flex flex-column flex-grow-1 text-start" style="min-width: 50rem !important; width: 100%;">
+                ${html}
+            </div>
+            `,
+			showCloseButton: true,
 			showCancelButton: false,
 			showConfirmButton: false,
 			allowOutsideClick: false,
 			allowEscapeKey: false,
-            customClass: {
-                popup: 'swal-popup w-auto h-auto',
-                title: 'd-flex justify-content-start align-items-center border-bottom pb-3 mb-3',
-                closeButton: 'swal-close-btn fs-3',
-                htmlContainer: 'pb-0 overflow-x-hidden text-start',
-                confirmButton: 'btn btn-primary mx-1',
-                cancelButton: 'btn btn-danger mx-1',
-                icon: 'mb-4',
-            },
+			customClass: {
+				popup: "swal-popup w-auto h-auto",
+				title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
+				closeButton: "swal-close-btn fs-3",
+				htmlContainer: "pb-0 overflow-x-hidden text-start",
+				confirmButton: "btn btn-primary mx-1",
+				cancelButton: "btn btn-danger mx-1",
+				icon: "mb-4",
+			},
 		});
+
+        // const modal = showBootstrapModal('payment-details-modal', 'Procesar Pago', html, {
+        //     modalClass: 'text-start',
+        //     modalStyle: 'max-width: 50rem; width: 100%;',
+        // });
+
+        const paymentModalContainer = document.getElementById("payment-details-modal");
+        enableBootstrapTooltips(paymentModalContainer);
 
         let paymentDetails = null;
         let shouldPrint = false;
@@ -129,6 +143,7 @@ export async function showPaymentDetailsFormModal(purchaseTotalAmount) {
             const checkPaymentDetailsInterval = setInterval(() => {
                 if (paymentDetails) {
                     modal.close();
+                    // modal.hide();
                     clearInterval(checkPaymentDetailsInterval);
                     resolve({ paymentDetails, shouldPrint });
                 }

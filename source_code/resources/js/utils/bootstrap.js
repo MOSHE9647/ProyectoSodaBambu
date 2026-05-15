@@ -33,7 +33,7 @@ const createBootstrapModal = (modalId = "myModal", modalTitle = "Modal Title", m
 
 	return `
     <div class="modal fade" id="${modalId}" data-bs-backdrop="${modalOptions.backdrop}" data-bs-keyboard="${modalOptions.keyboard}" tabindex="-1" aria-labelledby="${modalId}-label" aria-hidden="true">
-        <div class="modal-dialog ${modalOptions.verticallyCentered} ${modalOptions.scrollable} ${modalOptions.modalClass}" style="${modalOptions.modalStyle}">
+        <div class="modal-dialog ${modalOptions.verticallyCentered ? 'modal-dialog-centered' : ''} ${modalOptions.scrollable ? 'modal-dialog-scrollable' : ''} ${modalOptions.modalClass}" style="${modalOptions.modalStyle}">
             <div class="modal-content">
                 <div class="modal-header ps-4 pe-4">
                     <h1 class="modal-title fs-3" id="${modalId}-label">${modalTitle}</h1>

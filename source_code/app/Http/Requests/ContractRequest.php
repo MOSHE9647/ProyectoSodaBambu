@@ -264,13 +264,13 @@ class ContractRequest extends FormRequest
         // If the status is PAID, the total must be covered by the payments
         if ($status === PaymentStatus::PAID->value) {
             if ($totalPaid < $total) {
-                $validator->errors()->add('payment_details', "Monto insuficiente para completar la venta (Pagado: ₡$totalPaid, Total: ₡$total).");
+                $validator->errors()->add('payment_details', "Monto insuficiente para completar el pago (Pagado: ₡$totalPaid, Total: ₡$total).");
             }
         }
 
         // If the status is PENDING, there should be no NEW payments recorded
         if ($status === PaymentStatus::PENDING->value && ! $newPayments->isEmpty()) {
-            $validator->errors()->add('payment_details', 'Una venta PENDIENTE no debería tener pagos nuevos registrados.');
+            $validator->errors()->add('payment_details', 'Un contrato PENDIENTE no debería tener pagos nuevos registrados.');
         }
     }
 
