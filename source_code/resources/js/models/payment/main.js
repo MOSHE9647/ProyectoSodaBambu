@@ -1,12 +1,12 @@
 import { fetchWithErrorHandling } from "../../utils/error-handling";
-import { SwalModal, SwalToast } from "../../utils/sweetalert";
-import { enableBootstrapTooltips, formatCurrency } from "../../utils/utils";
+import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert";
+import { enableBootstrapTooltips, formatCurrency, setLoadingState } from "../../utils/utils";
 import { clearFieldError, showFieldError, validateMultipleOf5 } from "../../utils/validation";
 
 // ==================== Environment Checks ====================
 
 if (typeof $ === "undefined") {
-	throw new Error("This script requires jQuery");
+    throw new Error("This script requires jQuery");
 }
 
 // ======================== Constants =========================
@@ -17,7 +17,26 @@ const PAYMENT_METHODS = {
     SINPE: 'sinpe',
 };
 
-// ========================= Helpers ==========================
+// ===================== DOM Selectors ========================
+
+/**
+ * Centralized DOM element retrieval to ensure fresh references
+ */
+const getDOM = () => ({
+    amountToPay: $("#amount_to_pay"),
+    reference: $('#reference_number'),
+    addPaymentBtn: $('#add-payment-button'),
+    completePaymentBtn: $('#payment-button'),
+    totalPaid: $('#total-paid'),
+    totalAmount: $('#total_amount'),
+    changeAmount: $('#change_amount'),
+    paymentMethods: $('#payment-methods'),
+    paymentDetails: $('#payment-details'),
+    form: $("#payment-details-form"),
+    printSwitch: $("#print_receipt_switch")
+});
+
+// ===================== API / Fetching =======================
 
 const fetchPaymentDetailsModalContent = async (purchaseTotalAmount) => {
     try {
@@ -31,30 +50,27 @@ const fetchPaymentDetailsModalContent = async (purchaseTotalAmount) => {
 
         return html;
     } catch (error) {
-        console.error('Error fetching payment details modal content:', error);
-        SwalToast.fire({
-            icon: 'error',
-            title: error.message || 'Ocurrió un error al cargar el formulario de detalles de pago.',
-        });
+        console.error('Modal fetch error:', error);
+        SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: error.message || 'Error al cargar detalles de pago.' });
     }
 };
 
-const getPaymentDetailsFromForm = () => {
-    const paymentDetails = [];
-    const paymentItems = document.querySelectorAll(".payment-item");
-    const shouldPrint = document.getElementById("print_receipt_switch").checked;
+// ==================== State Extraction ======================
 
-    paymentItems?.forEach((item) => {
+const getExtractedPaymentDetails = () => {
+    const dom = getDOM();
+    const paymentDetails = [];
+    const shouldPrint = dom.printSwitch.is(':checked');
+    const changeAmount = parseInt(dom.changeAmount.text().replace(/[^0-9,]+/g, "")) || 0;
+
+    dom.paymentDetails.find(".payment-item").each((_, item) => {
         const type = item.getAttribute("data-payment-type");
-        const amount = parseInt(item.querySelector(".payment-item-amount").textContent.trim().replace(/[^0-9,-]+/g, "")) || 0;
-        const reference = item.querySelector(".payment-item-reference")
-            ? item.querySelector(".payment-item-reference").textContent.trim() || ""
-            : null;
-        const changeAmount = parseInt(document.getElementById("change_amount").textContent.trim().replace(/[^0-9,]+/g, "")) || 0;
+        const amount = parseInt($(item).find(".payment-item-amount").text().replace(/[^0-9,-]+/g, "")) || 0;
+        const reference = $(item).find(".payment-item-reference").text().trim() || '';
 
         paymentDetails.push({
             method: type,
-            amount: amount,
+            amount,
             reference: type !== PAYMENT_METHODS.CASH ? reference : '',
             change_amount: type === PAYMENT_METHODS.CASH ? changeAmount : 0,
         });
@@ -63,81 +79,64 @@ const getPaymentDetailsFromForm = () => {
     return { paymentDetails, shouldPrint };
 };
 
-const getPaymentDetailsFormElements = () => {
-    return {
-        amount_to_pay: $("#amount_to_pay"),
-        reference: $('#reference_number'),
-        add_payment_button: $('#add-payment-button'),
-        total_paid: $('#total-paid'),
-        total_amount: $('#total_amount'),
-        change_amount: $('#change_amount'),
-        payment_methods: $('#payment-methods'),
-        payment_details: $('#payment-details'),
-    };
-};
+// ===================== UI Updaters ==========================
 
 const toggleNoPaymentsMessage = () => {
-    const $paymentItems = $("#payment-details .payment-item");
-    $("#no-payments-message").toggleClass("d-none", $paymentItems.length > 0);
+    const hasPayments = getDOM().paymentDetails.find(".payment-item").length > 0;
+    $("#no-payments-message").toggleClass("d-none", hasPayments);
 };
 
-const toggleReferenceInput = (paymentMethod) => {
-    const $referenceInput = $('#reference_number');
-    const isCash = paymentMethod === PAYMENT_METHODS.CASH;
-    $referenceInput.prop('disabled', isCash).prop('readonly', isCash);
-};
-
-const togglePaymentMethodCheckedState = (selectedInput = null) => {
+const updateUIFormState = (selectedInput) => {
     if (!selectedInput) return;
+    const dom = getDOM();
+    const type = selectedInput.value;
+    const isCash = type === PAYMENT_METHODS.CASH;
+
+    // Toggle reference input state
+    dom.reference.prop('disabled', isCash).prop('readonly', isCash);
     
-    if (selectedInput.value === PAYMENT_METHODS.CASH) {
+    // Clear or validate reference based on selection
+    if (isCash) {
         clearFieldError("reference_number");
     } else {
-        const referenceValue = getPaymentDetailsFormElements().reference.val();
-        if (referenceValue !== "") {
-            validatePaymentField("reference_number", referenceValue, selectedInput.value);
-        }
+        validatePaymentField("reference_number", dom.reference.val(), type);
     }
-    
-    const $radioButtons = getPaymentDetailsFormElements().payment_methods.find('input[name="payment_method"]');
-    $radioButtons.each(function () {
+
+    // Update radio button visuals
+    dom.paymentMethods.find('input[name="payment_method"]').each(function () {
         const isSelected = this === selectedInput;
         $(this).closest('.radio-button').find('.checked').toggleClass('d-none', !isSelected);
     });
 };
 
-/**
- * Synchronizes and calculates the transaction financial data on the UI
- */
 const recalculateTotals = () => {
-    const elements = getPaymentDetailsFormElements();
-    const totalInvoice = parseInt(elements.total_amount.text().trim().replace(/[^0-9,-]+/g, "")) || 0;
+    const dom = getDOM();
+    const totalInvoice = parseInt(dom.totalAmount.text().replace(/[^0-9,-]+/g, "")) || 0;
     
     let totalPaid = 0;
     $(".payment-item-amount").each(function () {
-        totalPaid += parseInt($(this).text().trim().replace(/[^0-9,-]+/g, "")) || 0;
+        totalPaid += parseInt($(this).text().replace(/[^0-9,-]+/g, "")) || 0;
     });
     
-    elements.total_paid.text(formatCurrency(totalPaid, false));
+    dom.totalPaid.text(formatCurrency(totalPaid, false));
     
-    const change = totalPaid > totalInvoice ? totalPaid - totalInvoice : 0;
-    elements.change_amount.text(formatCurrency(change, false));
+    const change = Math.max(totalPaid - totalInvoice, 0);
+    dom.changeAmount.text(formatCurrency(change, false));
 
-    const remaining = totalInvoice - totalPaid;
-    elements.amount_to_pay.val(remaining > 0 ? remaining : 0);
+    const remaining = Math.max(totalInvoice - totalPaid, 0);
+    dom.amountToPay.val(remaining);
 };
 
-const renderPaymentItemDOM = (payment) => {
-    const $paymentDetailsContainer = $("#payment-details");
-    if (!$paymentDetailsContainer.length) return;
+// =================== Template Rendering =====================
 
+const getPaymentItemHTML = (payment) => {
     const referenceHtml = payment.reference ? `
         <span class="text-muted" style="font-size: 0.75rem;">
             Referencia: <span class="payment-item-reference">${payment.reference}</span>
         </span>
     ` : '';
 
-    const html = `
+    return `
         <div class="payment-item d-flex align-items-center justify-content-between text-start border border-1 border-secondary-subtle rounded-3 p-2" style="background-color: rgba(0, 0, 0, 0.05);" data-payment-type="${payment.type}">
             <div class="d-flex flex-column align-items-start">
                 <span class="fw-bold" style="font-size: 1rem;">${payment.label}</span>
@@ -158,205 +157,196 @@ const renderPaymentItemDOM = (payment) => {
             </div>
         </div>
     `;
+};
 
-    $paymentDetailsContainer.append(html);
+const renderOrUpdatePaymentItem = (payment) => {
+    const dom = getDOM();
+    const isCash = payment.type === PAYMENT_METHODS.CASH;
+    const $existingCashItem = dom.paymentDetails.find(`.payment-item[data-payment-type="${PAYMENT_METHODS.CASH}"]`);
+
+    // Only update existing row IF it is a Cash payment. Otherwise, always add a new row.
+    if (isCash && $existingCashItem.length) {
+        $existingCashItem.find('.payment-item-amount').text(formatCurrency(payment.amount, false));
+    } else {
+        dom.paymentDetails.append(getPaymentItemHTML(payment));
+        const $newBtn = dom.paymentDetails.children().last().find(".remove-payment-btn")[0];
+        if ($newBtn && typeof enableBootstrapTooltips === "function") {
+            enableBootstrapTooltips($newBtn);
+        }
+    }
+
     toggleNoPaymentsMessage();
+};
 
-    const $newButton = $paymentDetailsContainer.children().last().find(".remove-payment-btn");
-    if ($newButton.length && typeof enableBootstrapTooltips === "function") {
-        enableBootstrapTooltips($newButton[0]);
+// ==================== Validation Logic ======================
+
+const validatorsConfig = {
+    amount_to_pay: {
+        validate: (v) => validateMultipleOf5(v) && parseInt(v) > 0,
+        message: "El monto debe ser múltiplo de 5 y mayor a 0.",
+    },
+    reference_number: {
+        validate: (v, paymentMethod) => {
+            const val = String(v || "").trim();
+            if (val === "") return true; // Only validate if there's a value - reference is optional for non-cash methods
+            if (paymentMethod === PAYMENT_METHODS.CASH) return true; // No validation for cash reference since it's not required
+            if (paymentMethod === PAYMENT_METHODS.CARD) return val.length >= 4 && val.length <= 12; // For card payments, require 4-12 characters (e.g., last 4 digits or transaction ID)
+            if (paymentMethod === PAYMENT_METHODS.SINPE) return val.length >= 8 && val.length <= 12; // For SINPE, require 8-12 characters (e.g., phone number or transaction ID)
+        },
+        message: (paymentMethod) => {
+            if (paymentMethod === PAYMENT_METHODS.CARD) return "El número de referencia debe tener entre 4 y 12 caracteres.";
+            if (paymentMethod === PAYMENT_METHODS.SINPE) return "El número de referencia debe tener entre 8 y 12 caracteres.";
+            return "Número de referencia inválido.";
+        },
+    },
+};
+
+const validatePaymentField = (fieldId, value, paymentMethod) => {
+    // Reference is only required/validated if method is not CASH
+    if (fieldId === 'reference_number' && paymentMethod === PAYMENT_METHODS.CASH) {
+        clearFieldError(fieldId);
+        return true;
     }
-};
 
-// ==================== Validation Helpers ====================
-
-const baseFieldValidators = {
-	amount_to_pay: {
-		validate: (v) => validateMultipleOf5(v) && parseInt(v) > 0,
-		message: "El monto debe ser un número entero múltiplo de 5.",
-	},
-	reference_number: {
-		validate: (v) => {
-			const val = String(v || "").trim();
-			if (val === "") return true;
-			return val.length >= 4 && val.length <= 12;
-		},
-		message: "La referencia debe tener entre 4 y 12 caracteres.",
-	},
-};
-
-const getActiveFieldValidators = (selectedPaymentMethod) => {
-    if (selectedPaymentMethod === PAYMENT_METHODS.CASH) {
-        return { amount_to_pay: baseFieldValidators.amount_to_pay };
-    }
-    return {
-        amount_to_pay: baseFieldValidators.amount_to_pay,
-        reference_number: baseFieldValidators.reference_number,
-    };
-};
-
-const validatePaymentField = (fieldId, value, selectedPaymentMethod) => {
-    const validators = getActiveFieldValidators(selectedPaymentMethod);
-    const validator = validators[fieldId];
-
+    const validator = validatorsConfig[fieldId];
     if (!validator) return true;
 
-    const isValid = validator.validate(value);
-    if (!isValid) {
-        showFieldError(fieldId, validator.message);
-    } else {
-        clearFieldError(fieldId);
-    }
-
+    const isValid = validator.validate(value, paymentMethod);
+    isValid ? clearFieldError(fieldId) : showFieldError(fieldId, validator.message(paymentMethod));
+    
     return isValid;
 };
 
 const validatePaymentForm = () => {
-    const values = {
-        amount_to_pay: getPaymentDetailsFormElements().amount_to_pay.val(),
-        reference_number: getPaymentDetailsFormElements().reference.val(),
-    };
-    const selectedPaymentMethod = getPaymentDetailsFormElements().payment_methods.find('input[name="payment_method"]:checked').val();
-    const fieldsToValidate = getActiveFieldValidators(selectedPaymentMethod);
+    const dom = getDOM();
+    const method = dom.paymentMethods.find('input[name="payment_method"]:checked').val();
+    
+    const isAmountValid = validatePaymentField("amount_to_pay", dom.amountToPay.val(), method);
+    const isRefValid = validatePaymentField("reference_number", dom.reference.val(), method);
 
-    let isFormValid = true;
-    for (const [fieldId, validator] of Object.entries(fieldsToValidate)) {
-        const isFieldValid = validatePaymentField(fieldId, values[fieldId], selectedPaymentMethod);
-        if (!isFieldValid) isFormValid = false;
-    }
-    return isFormValid;
+    return isAmountValid && isRefValid;
 };
 
-// =============== Real-Time Validation Handler ===============
+const bindRealTimeValidation = () => {
+    const dom = getDOM();
 
-function bindRealTimeValidation() {
-    const refs = getPaymentDetailsFormElements();
-
-    refs.amount_to_pay.off("input").on("input", function () {
-        validatePaymentField(
-			"amount_to_pay",
-			refs.amount_to_pay.val(),
-			refs.payment_methods.find('input[name="payment_method"]:checked').val()
-		);
+    dom.amountToPay.on("input", function () {
+        const method = dom.paymentMethods.find('input[name="payment_method"]:checked').val();
+        validatePaymentField("amount_to_pay", $(this).val(), method);
     });
 
-    refs.reference.off("input").on("input", function () {
-        const selectedPaymentMethod = refs.payment_methods.find('input[name="payment_method"]:checked').val();
+    dom.reference.on("input", function () {
+        const method = dom.paymentMethods.find('input[name="payment_method"]:checked').val();
+        validatePaymentField("reference_number", $(this).val(), method);
+    });
+};
 
-        if (selectedPaymentMethod !== PAYMENT_METHODS.CASH) {
-            validatePaymentField("reference_number", refs.reference.val(), selectedPaymentMethod);
-        } else {
-            clearFieldError("reference_number");
+// ===================== Event Bindings =======================
+
+const bindEvents = () => {
+    const dom = getDOM();
+
+    dom.paymentMethods.find('input[name="payment_method"]').on("change", function () {
+        updateUIFormState(this);
+    });
+
+    dom.addPaymentBtn.on("click", (e) => {
+        e.preventDefault();
+
+        if (!validatePaymentForm()) {
+            return SwalToast.fire({
+                icon: 'warning',
+                title: 'Verifique los campos requeridos antes de agregar el pago.'
+            });
         }
-    });
-}
 
-// ===================== Event Listeners ======================
+        const method = dom.paymentMethods.find('input[name="payment_method"]:checked').val();
+        const paymentData = {
+            type: method,
+            label: method === PAYMENT_METHODS.CASH ? "Efectivo" : method === PAYMENT_METHODS.CARD ? "Tarjeta" : "SINPE Móvil",
+            amount: parseInt(dom.amountToPay.val()) || 0,
+            reference: method !== PAYMENT_METHODS.CASH ? dom.reference.val().trim() : null,
+        };
 
-function bindEventListeners() {
-    const $elements = getPaymentDetailsFormElements();
-
-    $elements.payment_methods.find('input[name="payment_method"]').off("change").on("change", function () {
-        const selectedPaymentMethod = $(this).val();
-        toggleReferenceInput(selectedPaymentMethod);
-        togglePaymentMethodCheckedState(this);
-    });
-
-    $elements.add_payment_button.off("click").on("click", () => {
-        if (validatePaymentForm()) {
-            const selectedPaymentMethod = $elements.payment_methods.find('input[name="payment_method"]:checked').val();
-            const amount = parseInt($elements.amount_to_pay.val()) || 0;
-            const reference = $elements.reference.val().trim();
-
-            const paymentData = {
-                type: selectedPaymentMethod,
-                label: selectedPaymentMethod === PAYMENT_METHODS.CASH ? "Efectivo" : selectedPaymentMethod === PAYMENT_METHODS.CARD ? "Tarjeta" : "SINPE Móvil",
-                amount,
-                reference: selectedPaymentMethod !== PAYMENT_METHODS.CASH ? reference : null,
-            };
-
-            renderPaymentItemDOM(paymentData);
-
-            $elements.amount_to_pay.val("");
-            $elements.reference.val("");
-            
-            recalculateTotals();
-        }
+        renderOrUpdatePaymentItem(paymentData);
+        dom.amountToPay.val("");
+        dom.reference.val("");
+        recalculateTotals();
     });
 
-    /**
-     * Using event delegation for dynamically rendered element item cleanups
-     */
-    $elements.payment_details.off("click", ".remove-payment-btn").on("click", ".remove-payment-btn", function () {
+    dom.paymentDetails.on("click", ".remove-payment-btn", function () {
         $(this).closest(".payment-item").remove();
         toggleNoPaymentsMessage();
         recalculateTotals();
     });
 
-    /**
-     * Triggers form submit explicitly to prevent button type specification conflicts
-     */
-    $("#payment-button").off("click").on("click", function (e) {
+    dom.completePaymentBtn.on("click", function (e) {
         e.preventDefault();
-        $("#payment-details-form").submit();
-    });
-}
-
-// ====================== Initialization ======================
-
-export async function showPaymentDetailsFormModal(purchaseTotalAmount) {
-    const html = await fetchPaymentDetailsModalContent(purchaseTotalAmount);
-    if (html) {
-        const modal = SwalModal.fire({
-			title: "Procesar Pago",
-			html: `
-            <div id="payment-details-modal" class="d-flex flex-column flex-grow-1 text-start" style="min-width: 50rem !important; max-width: 50rem; width: 100%;">
-                ${html}
-            </div>
-            `,
-			showCloseButton: true,
-			showCancelButton: false,
-			showConfirmButton: false,
-			allowOutsideClick: false,
-			allowEscapeKey: false,
-			customClass: {
-				popup: "swal-popup w-auto h-auto",
-				title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
-				closeButton: "swal-close-btn fs-3",
-				htmlContainer: "pb-0 overflow-x-hidden text-start",
-				confirmButton: "btn btn-primary mx-1",
-				cancelButton: "btn btn-danger mx-1",
-				icon: "mb-4",
-			},
-		});
         
-        bindEventListeners();
-        bindRealTimeValidation();
-        recalculateTotals();
-            
-        const paymentModalContainer = document.getElementById("payment-details-modal");
-        enableBootstrapTooltips(paymentModalContainer);
-
-        let paymentDetails = null;
-        let shouldPrint = false;
-
-        $(document)
-            .off("submit", "#payment-details-form")
-            .on("submit", "#payment-details-form", function (e) {
-                e.preventDefault();
-                const result = getPaymentDetailsFromForm();
-                paymentDetails = result.paymentDetails;
-                shouldPrint = result.shouldPrint;
+        const hasPayments = dom.paymentDetails.find(".payment-item").length > 0;
+        if (!hasPayments) {
+            return SwalToast.fire({
+                icon: 'warning',
+                title: 'Debe agregar al menos un pago para completar la venta.'
             });
+        }
+
+        dom.form.submit();
+    });
+};
+
+// ===================== Initialization =======================
+
+export async function showPaymentDetailsFormModal(purchaseTotalAmount, loadingButtonId) {
+    setLoadingState(loadingButtonId, true);
+    const html = await fetchPaymentDetailsModalContent(purchaseTotalAmount);
+    if (!html) return;
+
+    const modal = SwalModal.fire({
+        title: "Procesar Pago",
+        html: `
+        <div id="payment-details-modal" class="d-flex flex-column flex-grow-1 text-start" style="min-width: 50rem; max-width: 50rem; width: 100%;">
+            ${html}
+        </div>
+        `,
+        showCloseButton: true,
+        showCancelButton: false,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        customClass: {
+            popup: "swal-popup w-auto h-auto",
+            title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
+            closeButton: "swal-close-btn fs-3",
+            htmlContainer: "pb-0 overflow-x-hidden text-start",
+        },
+        didClose: () => { 
+            setLoadingState(loadingButtonId, false);
+        },
+    });
+    
+    bindEvents();
+    bindRealTimeValidation();
+    recalculateTotals();
         
-        return new Promise((resolve) => {
-            const checkPaymentDetailsInterval = setInterval(() => {
-                if (paymentDetails) {
-                    modal.close();
-                    clearInterval(checkPaymentDetailsInterval);
-                    resolve({ paymentDetails, shouldPrint });
-                }
-            }, 500);
-        });
-    }
+    const container = document.getElementById("payment-details-modal");
+    enableBootstrapTooltips(container);
+
+    let finalDetails = null;
+
+    $(document).off("submit", "#payment-details-form").on("submit", "#payment-details-form", function (e) {
+        e.preventDefault();
+        finalDetails = getExtractedPaymentDetails();
+    });
+    
+    return new Promise((resolve) => {
+        const interval = setInterval(() => {
+            if (finalDetails) {
+                modal.close();
+                setLoadingState(loadingButtonId, false);
+                clearInterval(interval);
+                resolve(finalDetails);
+            }
+        }, 300);
+    });
 }

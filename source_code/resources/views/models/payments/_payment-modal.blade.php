@@ -99,47 +99,11 @@
         </div>
 
         {{-- Details Content --}}
-        <div id="payment-details" class="d-flex flex-column flex-grow-1 gap-2 border-bottom pb-2">
-
-            @php
-                // Example payments - replace with dynamic data in real implementation
-                $amountPerPayment = round(($paymentTotal / 3) / 5) * 5; // Round to nearest 5 for better UX
-                $examplePayments = [
-                    [ 'label' => 'Efectivo', 'type' => 'cash', 'amount' => $amountPerPayment ],
-                    [ 'label' => 'Tarjeta', 'type' => 'card', 'amount' => $amountPerPayment, 'reference' => '123456789012' ],
-                    [ 'label' => 'SINPE Móvil', 'type' => 'sinpe', 'amount' => $amountPerPayment, 'reference' => '123456789012' ],
-                ];
-                $payments = collect([]);
-            @endphp
-
-            @forelse($payments as $payment)
-                <div class="payment-item d-flex align-items-center justify-content-between text-start border border-1 border-secondary-subtle rounded-3 p-2" style="background-color: rgba(0, 0, 0, 0.05);" data-payment-type="{{ $payment['type'] }}">
-                    <div class="d-flex flex-column align-items-start">
-                        <span class="fw-bold" style="font-size: 1rem;">{{ $payment['label'] }}</span>
-                        @isset($payment['reference'])
-                        <span class="text-muted" style="font-size: 0.75rem;">
-                            Referencia: <span class="payment-item-reference">{{ $payment['reference'] }}</span>
-                        </span>
-                        @endisset
-                    </div>
-                    <div class="d-flex align-items-center justify-content-end gap-3">
-                        <span class="d-flex fw-bolder text-success align-items-center justify-content-center" style="font-size: 1rem;">
-                            <x-icons.colon-icon class="me-1" />
-                            <span class="payment-item-amount">{{ format_crc($payment['amount'], false) }}</span>
-                        </span>
-                        <x-form.button :type="'button'" :class="'remove-payment-btn btn-sm btn-outline-danger pt-2'" data-bs-toggle="tooltip" data-bs-title="Eliminar este pago del resumen." style="font-size: 0.75rem;">
-                            <div class="d-flex align-items-center justify-content-center">
-                                <i class="bi bi-trash"></i>
-                            </div>
-                        </x-form.button>
-                    </div>
-                </div>
-            @empty
-                <div id="no-payments-message" class="d-flex flex-column flex-grow-1 justify-content-center align-items-center py-3 text-center text-muted">
-                    <i class="bi bi-receipt fs-1 mb-3"></i>
-                    <span class="fs-6">No se han agregado pagos.<br> Agrega un pago para ver el resumen aquí.</span>
-                </div>
-            @endforelse
+        <div id="payment-details" class="d-flex flex-column flex-grow-1 gap-2 border-bottom pb-2 overflow-y-auto" style="max-height: 229px;">
+            <div id="no-payments-message" class="d-flex flex-column flex-grow-1 justify-content-center align-items-center py-3 text-center text-muted">
+                <i class="bi bi-receipt fs-1 mb-3"></i>
+                <span class="fs-6">No se han agregado pagos.<br> Agrega un pago para ver el resumen aquí.</span>
+            </div>
         </div>
 
         {{-- Totals --}}
@@ -184,7 +148,7 @@
             <x-form.button :id="'payment-button'" :spinnerId="'payment-spinner'" :class="'btn-primary px-4 py-2 w-100'" :loadingMessage="'Cargando...'" data-bs-toggle="tooltip" data-bs-title="Procesar el pago y generar un ticket de venta.">
                 <div id="payment-button-text" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-receipt me-2"></i>
-                    Completar Venta
+                    Completar Pago
                 </div>
             </x-form.button>
         </div>

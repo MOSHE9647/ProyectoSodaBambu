@@ -69,7 +69,7 @@ $(() => {
     if (finalizeSaleButton.length) {
         finalizeSaleButton.on("click", async () => {
 			const saleTotal = getActiveSaleData().total;
-			const { paymentDetails, shouldPrint } = await showPaymentDetailsFormModal(saleTotal);
+			const { paymentDetails, shouldPrint } = await showPaymentDetailsFormModal(saleTotal, 'finalize-sale');
 
 			const saleResult = await processSale(paymentDetails);
 			if (saleResult?.success) {

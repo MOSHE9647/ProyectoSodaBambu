@@ -1256,7 +1256,7 @@ const handleFormSubmission = async (event, validationResult) => {
 	const pendingBalance = newTotal - amountPaid;
 
 	if (pendingBalance > 0) {
-		const { paymentDetails, shouldPrint } = await showPaymentDetailsFormModal(pendingBalance);
+		const { paymentDetails, shouldPrint } = await showPaymentDetailsFormModal(pendingBalance, FORM_ID);
 		const { isValid, message } = validatePaymentDetails(paymentDetails);
 
 		if (!isValid) {
