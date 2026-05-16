@@ -1,9 +1,8 @@
 import Swal from "sweetalert2";
 import { bindOffcanvasEvents } from "../../utils/offcanvas.js";
 import { SwalConfirmation, SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
-import { enableBootstrapTooltips, getLaravelFirstError, setLoadingState } from "../../utils/utils.js";
+import { enableBootstrapTooltips, getLaravelFirstError, printReceipt, setLoadingState } from "../../utils/utils.js";
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation.js";
-import { openPaymentModal, printReceipt } from "../../pages/sales/payment.js";
 import { PaymentStatus } from "../../pages/sales/api.js";
 import { initializeCashRegister } from "../../pages/sales/cash-register.js";
 import { showPaymentDetailsFormModal } from "../payment/main.js";
@@ -862,7 +861,6 @@ function validateContractField(fieldId, value) {
 
 function validatePaymentDetails(payment_details = []) {
 	if (!Array.isArray(payment_details) && payment_details.length > 0) {
-		// SwalToast.fire({ icon: "error", title: "Algunos de los detalles de pago no son válidos." });
 		return { isValid: false, message: "Algunos de los detalles de pago no son válidos." };
 	}
 	
@@ -1283,28 +1281,6 @@ const handleFormSubmission = async (event, validationResult) => {
 				SwalToast.fire({ icon: SwalNotificationTypes.SUCCESS, title: result.message || "Contrato guardado exitosamente." });
 			}
 		}
-		// await openPaymentModal({
-		// 	total: pendingBalance,
-		// 	title: IS_EDITING ? "Cobrar Diferencia del Contrato" : "Procesar Pago del Contrato",
-		// 	loadingId: FORM_ID,
-		// 	modelType: 'contracts',
-		// 	modelId: IS_EDITING ? values.id : null,
-		// 	onComplete: async (paymentDetails, totalTendered) => {
-		// 		const { isValid, message } = validatePaymentDetails(paymentDetails);
-		// 		if (!isValid) {
-		// 			Swal.showValidationMessage(message || "Algunos de los detalles de pago no son válidos.");
-		// 			setTimeout(() => Swal.resetValidationMessage(), 3000);
-		// 			return false;
-		// 		}
-		// 		values.payment_details = paymentDetails;
-		// 		const result = await submitToServer();
-
-		// 		if (result.success && result.redirect) {
-		// 			setTimeout(() => window.location.href = result.redirect, 1500);
-		// 		}
-		// 		return result;
-		// 	}
-		// });
 	} else {
 		values.payment_details = []; // Ensure payment details is an empty array if no payment is needed
 		

@@ -162,7 +162,9 @@ export function validateAndDisplayField(fieldValidators, values, showFieldError,
  * @returns {boolean} - Returns true if the value is an integer and a multiple of 5, false otherwise.
  */
 export const validateMultipleOf5 = (val) => {
-	return Number.isInteger(Number(val)) && Number(val) % 5 === 0;
+	if (val === "" || val === null || isNaN(val)) return false;
+	const num = Number(val);
+	return Number.isInteger(num) && num % 5 === 0;
 };
 
 /**

@@ -37,31 +37,30 @@
             <span class="fs-5 fw-bold">Total a Pagar:</span>
             <span class="d-flex fw-bolder text-success align-items-center" style="font-size: 1.5rem;">
                 <x-icons.colon-icon class="me-1" />
-                {{ format_crc($paymentTotal, false) }}
+                <span id="total_amount">{{ format_crc($paymentTotal, false) }}</span>
             </span>
         </div>
 
         {{-- Payment Method --}}
-        <x-form.input.radio-group :groupClass="'d-flex flex-column gap-2'" :labelClass="'d-none'">
+        <x-form.input.radio-group :id="'payment-methods'" :groupClass="'d-flex flex-column gap-2'" :labelClass="'d-none'">
             @foreach ($paymentMethods as $method)
                 <x-form.input.radio-button
                     :id="$method['id']"
                     :name="'payment_method'"
                     :value="$method['value']"
                     :class="'d-flex align-items-center justify-content-between rounded-3 text-start'"
+                    :style="'min-height: 4.111rem;'"
                     :checked="$method['checked']"
                 >
                     <div class="d-flex align-items-center p-2 rounded check-button">
                         @if($method['icon_is_svg'])
-                            <x-dynamic-component :component="$method['icon']" class="fs-4 me-4" />
+                            <x-dynamic-component :component="$method['icon']" class="fs-4" width="30" height="30" style="margin-right: 1.16rem;" />
                         @else
                             <i class="{{ $method['icon'] }} fs-4 me-4"></i>
                         @endif
                         <span class="fs-6">{{ $method['label'] }}</span>
                     </div>
-                    @if($method['checked'])
-                        <i class="checked bi bi-check-circle fs-6 me-2"></i>
-                    @endif
+                    <i class="checked {{ $method['checked'] ? 'd-block' : 'd-none' }} bi bi-check-circle fs-6 me-2"></i>
                 </x-form.input.radio-button>
             @endforeach
         </x-form.input.radio-group>
@@ -76,7 +75,7 @@
             </x-form.input>
 
             {{-- Reference Number --}}
-            <x-form.input :id="'reference_number'" :type="'numeric'" :class="'border-secondary w-100'" :placeholder="'Ej: 612314431345'" :iconLeft="'bi bi-credit-card-2-back'" :textIconRight="true" :required="false" :disabled="true" :readonly="true">
+            <x-form.input :id="'reference_number'" :type="'numeric'" :class="'border-secondary w-100'" :placeholder="'Ej: 612314431345'" :iconLeft="'bi bi-credit-card-2-back'" :textIconRight="true" :inputStyle="'transition: background-color 0.3s;'" :required="false" :disabled="true" :readonly="true">
                 Referencia de Pago:
                 <x-slot:iconRight>
                     <i class="bi bi-question-circle" data-bs-toggle="tooltip" data-bs-title="Número de referencia del pago, como el número de transacción o código de autorización. Útil para llevar un registro más detallado de los pagos realizados mediante Tarjeta o SINPE Móvil."></i>
@@ -95,7 +94,7 @@
 
     <form id="payment-details-form" class="table-container w-50 d-flex flex-column rounded-3 shadow-sm overflow-hidden p-2 pb-3" style="margin-block-end: 0;">
         {{-- Details Header --}}
-        <div class="d-flex justify-content-center align-items-center border-bottom px-3 py-2 mb-2" style="height: 55.2px;">
+        <div class="d-flex justify-content-center align-items-center border-bottom px-3 py-2 mb-2" style="height: 49.78px;">
             <span class="fs-5 fw-bold">Resumen de Pagos</span>
         </div>
 

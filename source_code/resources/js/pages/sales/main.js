@@ -3,9 +3,8 @@ import { initializeSalesCart, getActiveSaleData, clearActiveCart } from "./cart.
 import { initializeCashRegister } from "./cash-register.js";
 import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
-import { setLoadingState } from "../../utils/utils.js";
+import { printReceipt, setLoadingState } from "../../utils/utils.js";
 import { initializeHotkeys } from "./hotkeys.js";
-import { openPaymentModal, printReceipt } from "./payment.js";
 import { SwalConfirmation, SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 import { showPaymentDetailsFormModal } from "../../models/payment/main.js";
 
