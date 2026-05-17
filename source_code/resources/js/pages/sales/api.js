@@ -118,6 +118,11 @@ const updatePaymentStatusUI = (saleData) => {
         return;
     }
 
+    // Ensure elements are visible if they were hidden when there were no previous sales
+    $("#no-transactions-msg").hide();
+    lastSalePaymentMethodElement.removeClass("d-none");
+    lastSalePaymentAmountElement.removeClass("d-none");
+
     // Update general shared details (Items and Time)
     const totalItems = saleData.sale_details ? saleData.sale_details.length : 0;
     lastSaleItemsElement.text(`${totalItems} ítem(s)`);

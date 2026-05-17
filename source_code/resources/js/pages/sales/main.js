@@ -73,6 +73,8 @@ $(() => {
 
 			const saleResult = await processSale(paymentDetails);
 			if (saleResult?.success) {
+				window.lastSaleData = saleResult.data;
+
 				if (shouldPrint) {
 					printReceipt(route('receipts.show', {
 						model: 'sales',
