@@ -1,15 +1,12 @@
 <?php
 
-use App\Models\Contract;
-use App\Models\Sale;
-use App\Models\Payment;
-use App\Models\Client;
-use App\Models\User;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-
+use App\Models\Client;
+use App\Models\Contract;
+use App\Models\Payment;
+use App\Models\Sale;
+use App\Models\User;
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -18,16 +15,16 @@ use Illuminate\Support\Facades\DB;
  */
 function makeContract(array $overrides = []): Contract
 {
-    $user   = User::factory()->create();
+    $user = User::factory()->create();
     $client = Client::factory()->create();
 
     return Contract::factory()->create(array_merge([
-        'user_id'          => $user->id,
-        'client_id'        => $client->id,
-        'start_date'       => now()->toDateString(),
-        'end_date'         => now()->addMonth()->toDateString(),
+        'user_id' => $user->id,
+        'client_id' => $client->id,
+        'start_date' => now()->toDateString(),
+        'end_date' => now()->addMonth()->toDateString(),
         'portions_per_day' => 2,
-        'total_value'      => 50000,
+        'total_value' => 50000,
     ], $overrides));
 }
 
@@ -39,11 +36,11 @@ function makeSale(array $overrides = []): Sale
     $user = User::factory()->create();
 
     return Sale::factory()->create(array_merge([
-        'user_id'        => $user->id,
-        'invoice_number' => 'FAC-' . rand(1000, 9999),
+        'user_id' => $user->id,
+        'invoice_number' => 'FAC-'.rand(1000, 9999),
         'payment_status' => PaymentStatus::PAID,
-        'date'           => now(),
-        'total'          => 25000,
+        'date' => now(),
+        'total' => 25000,
     ], $overrides));
 }
 
@@ -53,11 +50,11 @@ function makeSale(array $overrides = []): Sale
 function attachPayment(Sale|Contract $model, int $amount, PaymentMethod $method, ?string $reference = null): Payment
 {
     return Payment::factory()->create([
-        'amount'      => $amount,
-        'method'      => $method,
-        'reference'   => $reference,
-        'date'        => now(),
-        'origin_id'   => $model->id,
+        'amount' => $amount,
+        'method' => $method,
+        'reference' => $reference,
+        'date' => now(),
+        'origin_id' => $model->id,
         'origin_type' => get_class($model),
     ]);
 }
@@ -69,7 +66,7 @@ test('CB-01 - una venta acepta múltiples pagos con distintos métodos para cubr
     $sale = makeSale(['total' => 25000]);
 
     // CUANDO: Se registran dos pagos parciales (Tarjeta + SINPE) que suman el total
-    $paymentCard  = attachPayment($sale, 15000, PaymentMethod::CARD,  'REF-CARD-001');
+    $paymentCard = attachPayment($sale, 15000, PaymentMethod::CARD, 'REF-CARD-001');
     $paymentSinpe = attachPayment($sale, 10000, PaymentMethod::SINPE, 'REF-SINPE-001');
 
     // ENTONCES: La venta tiene exactamente 2 pagos y la suma iguala el total
@@ -79,7 +76,7 @@ test('CB-01 - una venta acepta múltiples pagos con distintos métodos para cubr
     expect($payments)->toHaveCount(2)
         ->and($payments->sum('amount'))->toBe(25000)
         ->and($payments->pluck('method')->map->value->toArray())
-            ->toContain(PaymentMethod::CARD->value, PaymentMethod::SINPE->value);
+        ->toContain(PaymentMethod::CARD->value, PaymentMethod::SINPE->value);
 });
 
 // ─── CB-02: Número de referencia opcional para pagos electrónicos ──────────
@@ -105,11 +102,11 @@ test('CB-03 - el modelo Contract implementa Receipable y retorna número y total
 
     // CUANDO: Se consultan los métodos del contrato Receipable
     $receiptNumber = $contract->getReceiptNumber();
-    $receiptTotal  = $contract->getReceiptTotal();
-    $receiptDate   = $contract->getReceiptDate();
+    $receiptTotal = $contract->getReceiptTotal();
+    $receiptDate = $contract->getReceiptDate();
 
     // ENTONCES: Los valores coinciden con los datos del contrato
-    expect($receiptNumber)->toBe("CONTRATO-" . str_pad($contract->id, 10, '0', STR_PAD_LEFT))
+    expect($receiptNumber)->toBe('CONTRATO-'.str_pad($contract->id, 10, '0', STR_PAD_LEFT))
         ->and($receiptTotal)->toBe(75000)
         ->and($receiptDate->toDateString())->toBe(now()->toDateString());
 });
@@ -120,12 +117,12 @@ test('CB-04 - el modelo Sale implementa Receipable y retorna número de factura 
     // DADO: Una venta con número de factura y total conocidos
     $sale = makeSale([
         'invoice_number' => 'FAC-TEST-999',
-        'total'          => 30000,
+        'total' => 30000,
     ]);
 
     // CUANDO: Se consultan los métodos Receipable de la venta
     $receiptNumber = $sale->getReceiptNumber();
-    $receiptTotal  = $sale->getReceiptTotal();
+    $receiptTotal = $sale->getReceiptTotal();
 
     // ENTONCES: Los datos coinciden con los de la venta original
     expect($receiptNumber)->toBe('FAC-TEST-999')
@@ -139,8 +136,8 @@ test('CB-05 - el total de la venta refleja la suma de todos sus métodos de pago
     $sale = makeSale(['total' => 40000]);
 
     attachPayment($sale, 20000, PaymentMethod::CASH);
-    attachPayment($sale, 12000, PaymentMethod::CARD,  'REF-CARD-002');
-    attachPayment($sale, 8000,  PaymentMethod::SINPE, 'REF-SINPE-002');
+    attachPayment($sale, 12000, PaymentMethod::CARD, 'REF-CARD-002');
+    attachPayment($sale, 8000, PaymentMethod::SINPE, 'REF-SINPE-002');
 
     // CUANDO: Se suman los montos de todos los pagos asociados
     $sale->refresh();
