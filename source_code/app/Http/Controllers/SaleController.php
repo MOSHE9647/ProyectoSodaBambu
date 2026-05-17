@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Middleware\RoleMiddleware;
 
 class SaleController extends Controller implements HasMiddleware

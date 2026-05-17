@@ -292,7 +292,7 @@ class ContractRequest extends FormRequest
 
             // Reference for electronic payments (SINPE/Card)
             $requiresRef = [PaymentMethod::SINPE->value, PaymentMethod::CARD->value];
-            if (in_array($method, $requiresRef) && !empty($payment['reference'])) {
+            if (in_array($method, $requiresRef) && ! empty($payment['reference'])) {
                 $refLength = strlen($payment['reference']);
                 if ($method === PaymentMethod::SINPE->value && ($refLength < 8 || $refLength > 12)) {
                     $validator->errors()->add("payment_details.$index.reference", 'El número de comprobante debe tener entre 8 y 12 caracteres.');
