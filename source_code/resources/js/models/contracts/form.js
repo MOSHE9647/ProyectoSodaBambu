@@ -1,7 +1,7 @@
 import Swal from "sweetalert2";
 import { bindOffcanvasEvents } from "../../utils/offcanvas.js";
 import { SwalConfirmation, SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
-import { enableBootstrapTooltips, getLaravelFirstError, printReceipt, setLoadingState } from "../../utils/utils.js";
+import { enableBootstrapTooltips, getLaravelFirstError, printReceipt, setLoadingState, formatCurrency } from "../../utils/utils.js";
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation.js";
 import { PaymentStatus } from "../../pages/sales/api.js";
 import { initializeCashRegister } from "../../pages/sales/cash-register.js";
@@ -691,6 +691,35 @@ const getMissingDatesCount = () => {
     return [...expectedDates].filter(expectedDate => !providedDates.has(expectedDate)).length;
 };
 
+const contractDetailsHasChanges = () => {
+	const originalDetails = CONTRACTS_DATA.contractDetails || [];
+	const currentDetails = [];
+
+	$(getFormElements().contract_details_table).find('tbody tr:not(#empty-row)').each(function () {
+		const detailId = $(this).data("detail-id") || null;
+		const productId = parseInt($(this).find('select[name="product_id"]').val()) || null;
+		const mealTime = $(this).find('select[name="meal_time"]').val() || null;
+		const serveDate = $(this).find('input[name="serve_date"]').val() || null;
+
+		currentDetails.push({ id: detailId, product_id: productId, meal_time: mealTime, serve_date: serveDate });
+	});
+
+	let hasChanges = false;
+	if (originalDetails.length !== currentDetails.length) hasChanges = true;
+	else {
+		for (let i = 0; i < originalDetails.length; i++) {
+			if (originalDetails[i].product_id !== currentDetails[i].product_id ||
+				originalDetails[i].meal_time !== currentDetails[i].meal_time ||
+				originalDetails[i].serve_date !== currentDetails[i].serve_date) {
+				hasChanges = true;
+				break;
+			}
+		}
+	}
+	
+	return hasChanges;
+};
+
 const confirmIncompleteContract = async (missingCount) => {
     const confirmation = await SwalConfirmation.fire({
         icon: "question",
@@ -698,9 +727,19 @@ const confirmIncompleteContract = async (missingCount) => {
         text: `Faltan ${missingCount} día(s) por asignar en este período. ¿Desea guardar el contrato de todos modos y completar el menú después?`,
         confirmButtonText: "Sí, guardar",
         cancelButtonText: "Revisar menú",
-    }).then((result) => {
-        return result.isConfirmed;
-    });
+    }).then((result) => result.isConfirmed);
+
+	return confirmation;
+};
+
+const confirmChangesInContractDetails = async () => {
+	const confirmation = await SwalConfirmation.fire({
+		icon: "warning",
+		title: "Cambios en Detalles del Contrato",
+		text: "Se han detectado cambios en los detalles del contrato. ¿Desea continuar con estos cambios?",
+		confirmButtonText: "Sí, continuar",
+		cancelButtonText: "No, revisar detalles",
+	}).then((result) => result.isConfirmed);
 
 	return confirmation;
 };
@@ -911,7 +950,7 @@ function validateContractForm(payment_details = []) {
 				errors.push([
 					false,
 					fieldId,
-					`Fila ${index + 1}: ${validator.message}`,
+					`Menú - Fila ${index + 1}: ${validator.message}`,
 				]);
 			}
 		}
@@ -1255,7 +1294,7 @@ const handleFormSubmission = async (event, validationResult) => {
 	const newTotal = Number(values.total_value) || 0;
 	const pendingBalance = newTotal - amountPaid;
 
-	if (pendingBalance > 0) {
+	const showPaymentModalAndSubmit = async () => {
 		const { paymentDetails, shouldPrint } = await showPaymentDetailsFormModal(pendingBalance, FORM_ID);
 		const { isValid, message } = validatePaymentDetails(paymentDetails);
 
@@ -1274,47 +1313,156 @@ const handleFormSubmission = async (event, validationResult) => {
 					id: result.data?.id,
 				}));
 			}
+			
+			SwalToast.fire({
+				icon: SwalNotificationTypes.SUCCESS,
+				title: result.message || "Contrato guardado exitosamente.",
+			});
 
 			if (result.redirect) {
 				setTimeout(() => window.location.href = result.redirect, 1500);
-			} else {
-				SwalToast.fire({ icon: SwalNotificationTypes.SUCCESS, title: result.message || "Contrato guardado exitosamente." });
 			}
 		}
-	} else {
-		values.payment_details = []; // Ensure payment details is an empty array if no payment is needed
-		
-		if (pendingBalance < 0) {
-			const amountToReturn = Math.abs(pendingBalance).toLocaleString('es-CR', { 
-				style: 'currency', 
-				currency: 'CRC' 
-			});
-	
-			const confirmation = await SwalConfirmation.fire({
-				icon: "info",
-				title: "Confirmar Devolución",
-				html: `
-					El cliente tiene un pago previo que excede el nuevo total del contrato. 
-					Se deberá procesar una devolución por un monto de <strong>${amountToReturn}</strong>.
-					<br><br>¿Deseas continuar con el registro?
-				`,
-				confirmButtonText: "Sí, confirmar y enviar",
-				cancelButtonText: "No, revisar contrato",
-			}).then((result) => result.isConfirmed);
-	
-			if (!confirmation) {
-				setLoadingState(FORM_ID, false);
-				return;
-			}
-		}
+	};
 
+	if (!IS_EDITING) {
+		if (pendingBalance > 0) {
+			await showPaymentModalAndSubmit();
+		} else {
+			values.payment_details = [];
+			const result = await submitToServer();
+			if (result.success) {
+				SwalToast.fire({ icon: "success", title: result.message || "Contrato guardado exitosamente." });
+				if (result.redirect) window.location.href = result.redirect;
+			}
+		}
+		return;
+	}
+
+	// === IS_EDITING logic ===
+	const origContract = CONTRACTS_DATA.originalContract || {};
+	
+	const origTotal = Number(origContract.total_value) || 0;
+	const totalChanged = newTotal !== origTotal;
+	
+	const origPortions = Number(origContract.portions_per_day);
+	const portionsChanged = origPortions !== Number(values.portions_per_day);
+	
+	const origStart = origContract.start_date.split('T')[0];
+	const startChanged = origStart !== values.start_date;
+	
+	const origEnd = origContract.end_date.split('T')[0];
+	const endChanged = origEnd !== values.end_date;
+	
+	const origDays = (origContract.days_to_serve || []).slice().sort().join(',');
+	const newDays = (values.days_to_serve || []).slice().sort().join(',');
+	const daysChanged = origDays !== newDays;
+	
+	const detailsChanged = typeof contractDetailsHasChanges === 'function' ? contractDetailsHasChanges() : false;
+
+	const structuralChanges = [];
+	if (portionsChanged) structuralChanges.push("Porciones por día");
+	if (startChanged) structuralChanges.push("Fecha de inicio");
+	if (endChanged) structuralChanges.push("Fecha de fin");
+	if (daysChanged) structuralChanges.push("Días de servicio");
+
+	const hasStructuralChanges = structuralChanges.length > 0;
+
+	// A. No changes that require confirmations
+	if (!totalChanged && !hasStructuralChanges && !detailsChanged) {
+		values.payment_details = [];
 		const result = await submitToServer();
-
 		if (result.success) {
 			SwalToast.fire({ icon: "success", title: result.message || "Contrato guardado exitosamente." });
-			if (result.redirect) {
-				window.location.href = result.redirect;
-			}
+			if (result.redirect) window.location.href = result.redirect;
+		}
+		return;
+	}
+
+	let msgHtml = "";
+	
+	// D: Contract details changed
+	if (detailsChanged) {
+		msgHtml += `<p>Se han detectado cambios en los detalles del menú.</p>`;
+	}
+	
+	// C: Structural fields changed
+	if (hasStructuralChanges) {
+		msgHtml += `<p>Se han modificado los siguientes componentes del contrato: <strong>${structuralChanges.join(", ")}</strong>.</p>`;
+	}
+	
+	// B: Only total_value changed
+	if (totalChanged && !hasStructuralChanges && !detailsChanged) {
+		msgHtml += `<p>El valor del contrato fue modificado sin detectar cambios en su estructura que lo justifiquen.</p>`;
+	}
+
+	if (pendingBalance > 0) {
+		const amountMissing = formatCurrency(pendingBalance);
+		msgHtml += `<p>Hay una diferencia a favor. Se requiere un cobro adicional de <strong>${amountMissing}</strong> para aplicar los cambios.</p>
+					<p>¿Deseas continuar al pago?</p>`;
+		
+		const confirmation = await SwalConfirmation.fire({
+			icon: "info",
+			title: "Confirmar Cambios",
+			html: msgHtml,
+			confirmButtonText: "Sí, continuar al pago",
+			cancelButtonText: "No, revisar contrato",
+		}).then((result) => result.isConfirmed);
+
+		if (!confirmation) {
+			SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+			return;
+		}
+		await showPaymentModalAndSubmit();
+
+	} else if (pendingBalance < 0) {
+		const amountToReturn = formatCurrency(Math.abs(pendingBalance));
+		msgHtml += `<br>
+			<p>El cliente tiene un pago previo que excede el nuevo total del contrato.</p>
+			<p>Se deberá procesar una devolución por un monto de <strong>${amountToReturn}</strong>.</p>
+			<p>¿Deseas continuar con la actualización?</p>
+		`;
+
+		const confirmation = await SwalConfirmation.fire({
+			icon: "info",
+			title: "Confirmar Devolución",
+			html: msgHtml,
+			confirmButtonText: "Sí, confirmar y actualizar",
+			cancelButtonText: "No, revisar contrato",
+		}).then((result) => result.isConfirmed);
+
+		if (!confirmation) {
+			SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+			return;
+		}
+		values.payment_details = [];
+		const result = await submitToServer();
+		if (result.success) {
+			SwalToast.fire({ icon: "success", title: result.message || "Contrato guardado exitosamente." });
+			if (result.redirect) window.location.href = result.redirect;
+		}
+
+	} else {
+		// pendingBalance === 0
+		msgHtml += `<p>¿Deseas guardar estos cambios?</p>`;
+		const confirmation = await SwalConfirmation.fire({
+			icon: "info",
+			title: "Confirmar Cambios",
+			html: msgHtml,
+			confirmButtonText: "Sí, guardar cambios",
+			cancelButtonText: "No, revisar contrato",
+		}).then((result) => result.isConfirmed);
+
+		if (!confirmation) {
+			SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+			return;
+		}
+
+		values.payment_details = [];
+		const result = await submitToServer();
+		if (result.success) {
+			SwalToast.fire({ icon: "success", title: result.message || "Contrato guardado exitosamente." });
+			if (result.redirect) window.location.href = result.redirect;
 		}
 	}
 };
@@ -1477,19 +1625,21 @@ const bindEventListeners = () => {
 
 		// 2. Check for missing service days
         const missingDatesCount = getMissingDatesCount();
-		let proceedWithSubmission = true;
+		let proceedWithIncompleteDetails = true;
 
 		if (missingDatesCount > 0) {
-			proceedWithSubmission = await confirmIncompleteContract(missingDatesCount);
+			proceedWithIncompleteDetails = await confirmIncompleteContract(missingDatesCount);
 		}
 
-		if (!proceedWithSubmission) {
+		if (!proceedWithIncompleteDetails) {
 			SwalToast.fire({
 				icon: "info",
 				title: "Revise el menú para completar los días faltantes.",
 			});
 			return;
 		}
+
+		// 3. (Validation for changes in contract details has been moved to handleFormSubmission)
 
 		handleFormSubmission(e, [message, values]);
     });
@@ -1498,14 +1648,14 @@ const bindEventListeners = () => {
 // ====================== Initialization ======================
 
 $(() => {
+	if ((parseInt($("#total_value").val()) || 0) > 0) {
+		isTotalValueManuallyEdited = true;
+	}
+
 	initializeCashRegister(); // Ensure cash register is initialized before any interactions
     bindEventListeners(); // Bind all event listeners for form fields and buttons
     bindRealTimeValidation(); // Bind real-time validation for form fields
     bindOffcanvasEvents("create-offcanvas"); // Bind events related to the offcanvas component for creating contract details
-	updateSummary.details(true); // Initial details summary update on page load
+	updateSummary.details(false); // Initial details summary update on page load
     updateSummary.progressBar(); // Initial progress bar update on page load
-
-	if ((parseInt($("#total_value").val()) || 0) > 0) {
-		isTotalValueManuallyEdited = true;
-	}
 });

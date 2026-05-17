@@ -163,7 +163,7 @@ const updatePaymentStatusUI = (saleData) => {
         lastSalePaymentMethodElement.html(methodIcons[paymentMethod] || '<i class="bi bi-question-circle text-muted"></i>');
 		lastSalePaymentMethodElement.attr("title", `Pago vía ${getPaymentMethodLabel(paymentMethod)}`);
 
-        lastSalePaymentAmountElement.text(formatCurrency(paymentAmount));
+        lastSalePaymentAmountElement.text(formatCurrency(saleData.total));
     } else {
         lastSalePaymentMethodElement.html('<i class="bi bi-x-circle text-danger"></i>');
 		lastSalePaymentMethodElement.attr("title", "Sin detalles de pago");

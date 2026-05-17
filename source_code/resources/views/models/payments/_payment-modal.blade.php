@@ -145,7 +145,7 @@
                 <x-form.input.switch-button :id="'print_receipt_switch'" :name="'print_receipt'" :class="'switch'" :style="'width: 2.375rem; height: 1.3rem;'" :labelClass="'d-none'" :containerClass="'ms-2'" checked />
             </div>
 
-            <x-form.button :id="'payment-button'" :spinnerId="'payment-spinner'" :class="'btn-primary px-4 py-2 w-100'" :loadingMessage="'Cargando...'" data-bs-toggle="tooltip" data-bs-title="Procesar el pago y generar un ticket de venta.">
+            <x-form.button :id="'payment-button'" :spinnerId="'payment-spinner'" :class="'btn-primary px-4 py-2 w-100'" :loadingMessage="'Cargando...'" data-bs-toggle="tooltip" data-bs-title="Procesar el pago y generar un ticket de venta." disabled>
                 <div id="payment-button-text" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-receipt me-2"></i>
                     Completar Pago

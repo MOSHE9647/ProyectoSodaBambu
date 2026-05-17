@@ -11,6 +11,13 @@ if (typeof $ === "undefined") {
 
 // ======================== Constants =========================
 
+/**
+ * Payment method constants.
+ * @constant {Object}
+ * @property {string} CASH - Cash payment method ('cash')
+ * @property {string} CARD - Card payment method ('card')
+ * @property {string} SINPE - SINPE payment method ('sinpe')
+ */
 const PAYMENT_METHODS = {
     CASH: 'cash',
     CARD: 'card',
@@ -21,6 +28,8 @@ const PAYMENT_METHODS = {
 
 /**
  * Centralized DOM element retrieval to ensure fresh references
+ * 
+ * @returns {Object} An object containing jQuery references to various DOM elements.
  */
 const getDOM = () => ({
     amountToPay: $("#amount_to_pay"),
@@ -38,6 +47,13 @@ const getDOM = () => ({
 
 // ===================== API / Fetching =======================
 
+/**
+ * Fetches the HTML content for the payment details modal from the server.
+ * 
+ * @async
+ * @param {number|string} purchaseTotalAmount - The total amount of the purchase to be sent to the server.
+ * @returns {Promise<string|undefined>} The HTML content of the modal, or undefined if an error occurs.
+ */
 const fetchPaymentDetailsModalContent = async (purchaseTotalAmount) => {
     try {
         const url = route('receipts.payment-modal', { paymentTotal: purchaseTotalAmount });
@@ -57,6 +73,13 @@ const fetchPaymentDetailsModalContent = async (purchaseTotalAmount) => {
 
 // ==================== State Extraction ======================
 
+/**
+ * Extracts and compiles the current payment details and settings from the DOM.
+ * 
+ * @returns {Object} An object containing:
+ * - {Array<Object>} paymentDetails - List of extracted payment items (method, amount, reference, change_amount).
+ * - {boolean} shouldPrint - Whether the receipt should be printed.
+ */
 const getExtractedPaymentDetails = () => {
     const dom = getDOM();
     const paymentDetails = [];
@@ -81,11 +104,25 @@ const getExtractedPaymentDetails = () => {
 
 // ===================== UI Updaters ==========================
 
+/**
+ * Toggles the visibility of the "No payments added" message based on the presence of payment items.
+ */
 const toggleNoPaymentsMessage = () => {
     const hasPayments = getDOM().paymentDetails.find(".payment-item").length > 0;
     $("#no-payments-message").toggleClass("d-none", hasPayments);
 };
 
+const toggleCompleteButtonState = () => {
+    const hasPayments = getDOM().paymentDetails.find(".payment-item").length > 0;
+    getDOM().completePaymentBtn.prop("disabled", !hasPayments);
+};
+
+/**
+ * Updates the UI state of the form based on the selected payment method.
+ * Disables/enables reference input and handles visual selection state.
+ * 
+ * @param {HTMLElement} selectedInput - The clicked/selected radio button element.
+ */
 const updateUIFormState = (selectedInput) => {
     if (!selectedInput) return;
     const dom = getDOM();
@@ -109,6 +146,10 @@ const updateUIFormState = (selectedInput) => {
     });
 };
 
+/**
+ * Recalculates the total paid amount, change, and remaining amount to pay,
+ * then updates the respective DOM elements with formatted currency values.
+ */
 const recalculateTotals = () => {
     const dom = getDOM();
     const totalInvoice = parseInt(dom.totalAmount.text().replace(/[^0-9,-]+/g, "")) || 0;
@@ -129,6 +170,16 @@ const recalculateTotals = () => {
 
 // =================== Template Rendering =====================
 
+/**
+ * Generates the HTML string for a single payment item row.
+ * 
+ * @param {Object} payment - The payment data object.
+ * @param {string} payment.type - The payment method type.
+ * @param {string} payment.label - The display label for the payment method.
+ * @param {string} [payment.reference] - The transaction reference (optional).
+ * @param {number} payment.amount - The payment amount.
+ * @returns {string} The generated HTML string for the payment item.
+ */
 const getPaymentItemHTML = (payment) => {
     const referenceHtml = payment.reference ? `
         <span class="text-muted" style="font-size: 0.75rem;">
@@ -159,6 +210,11 @@ const getPaymentItemHTML = (payment) => {
     `;
 };
 
+/**
+ * Renders a new payment item to the DOM or updates an existing cash payment item.
+ * 
+ * @param {Object} payment - The payment data object to render or update.
+ */
 const renderOrUpdatePaymentItem = (payment) => {
     const dom = getDOM();
     const isCash = payment.type === PAYMENT_METHODS.CASH;
@@ -180,10 +236,14 @@ const renderOrUpdatePaymentItem = (payment) => {
 
 // ==================== Validation Logic ======================
 
+/**
+ * Configuration object containing validation rules and messages for form fields.
+ * @type {Object}
+ */
 const validatorsConfig = {
     amount_to_pay: {
         validate: (v) => validateMultipleOf5(v) && parseInt(v) > 0,
-        message: "El monto debe ser múltiplo de 5 y mayor a 0.",
+        message: () => "El monto debe ser múltiplo de 5 y mayor a 0.",
     },
     reference_number: {
         validate: (v, paymentMethod) => {
@@ -201,6 +261,14 @@ const validatorsConfig = {
     },
 };
 
+/**
+ * Validates a specific payment form field.
+ * 
+ * @param {string} fieldId - The ID of the field to validate. Maps to keys in validatorsConfig.
+ * @param {string|number} value - The input value to validate.
+ * @param {string} paymentMethod - The currently selected payment method.
+ * @returns {boolean} True if the field is valid, false otherwise.
+ */
 const validatePaymentField = (fieldId, value, paymentMethod) => {
     // Reference is only required/validated if method is not CASH
     if (fieldId === 'reference_number' && paymentMethod === PAYMENT_METHODS.CASH) {
@@ -217,6 +285,11 @@ const validatePaymentField = (fieldId, value, paymentMethod) => {
     return isValid;
 };
 
+/**
+ * Validates the entire payment form based on the currently selected payment method.
+ * 
+ * @returns {boolean} True if all required fields are valid, false otherwise.
+ */
 const validatePaymentForm = () => {
     const dom = getDOM();
     const method = dom.paymentMethods.find('input[name="payment_method"]:checked').val();
@@ -227,6 +300,9 @@ const validatePaymentForm = () => {
     return isAmountValid && isRefValid;
 };
 
+/**
+ * Binds input events to trigger real-time validation on form fields.
+ */
 const bindRealTimeValidation = () => {
     const dom = getDOM();
 
@@ -243,6 +319,10 @@ const bindRealTimeValidation = () => {
 
 // ===================== Event Bindings =======================
 
+/**
+ * Binds click and change events for the payment details modal UI.
+ * Handles adding, removing payments, and form submission.
+ */
 const bindEvents = () => {
     const dom = getDOM();
 
@@ -272,12 +352,14 @@ const bindEvents = () => {
         dom.amountToPay.val("");
         dom.reference.val("");
         recalculateTotals();
+        toggleCompleteButtonState();
     });
 
     dom.paymentDetails.on("click", ".remove-payment-btn", function () {
         $(this).closest(".payment-item").remove();
         toggleNoPaymentsMessage();
         recalculateTotals();
+        toggleCompleteButtonState();
     });
 
     dom.completePaymentBtn.on("click", function (e) {
@@ -297,6 +379,15 @@ const bindEvents = () => {
 
 // ===================== Initialization =======================
 
+/**
+ * Initializes and displays the payment details form modal.
+ * Sets up event listeners, validation, and handles the modal lifecycle.
+ * 
+ * @async
+ * @param {number|string} purchaseTotalAmount - The total invoice amount to initialize the form.
+ * @param {string} loadingButtonId - The DOM ID of the button that triggered the modal, to manage its loading state.
+ * @returns {Promise<Object>} A promise resolving to the final payment details extracted upon form submission.
+ */
 export async function showPaymentDetailsFormModal(purchaseTotalAmount, loadingButtonId) {
     setLoadingState(loadingButtonId, true);
     const html = await fetchPaymentDetailsModalContent(purchaseTotalAmount);

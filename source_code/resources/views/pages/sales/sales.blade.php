@@ -206,7 +206,6 @@
 
         {{-- Action Buttons --}}
         <div class="d-flex align-items-center gap-2" style="height: 2.2rem;">
-            {{-- TODO: Implement reprint functionality --}}
             <button id="reprint-last-sale" class="btn btn-outline-primary btn-sm d-flex align-items-center action-icon-reveal" title="Reimprimir ticket de la última venta">
                 <i class="bi bi-printer"></i>
                 <span class="action-icon-reveal__label">Reimprimir</span>
