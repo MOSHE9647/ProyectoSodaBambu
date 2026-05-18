@@ -37,21 +37,41 @@ $(document).ready(function () {
         return dataTable;
     }
 
-    function createChart(containerSelector, labels, values, axisTitle) {
+   function createChart(containerSelector, labels, values, axisTitle) {
         const container = $(containerSelector)[0];
 
         if (!container) {
             return null;
         }
 
+        // Detectar dinámicamente si estamos en el gráfico de ventas o de productos
+        const isProductsChart = containerSelector.includes('products');
+        const seriesName = isProductsChart ? 'Unidades Vendidas' : 'Ingresos';
+
         const chart = new ApexCharts(container, {
             series: [{
-                name: 'Ingresos',
+                name: seriesName,
                 data: values,
             }],
             xaxis: {
                 categories: labels,
                 title: { text: axisTitle },
+                labels: {
+                    show: true,
+                    rotate: -50, // Rota los nombres en diagonal para que no se corten
+                    rotateAlways: isProductsChart, // Solo fuerza la rotación fija en productos
+                    style: {
+                        fontSize: '11px'
+                    }
+                }
+            },
+            yaxis: {
+                forceNiceScale: true, // Quita los decimales feos (.5) cuando hay pocos datos
+                labels: {
+                    formatter: function (val) {
+                        return isProductsChart ? Math.round(val).toLocaleString() : '₡ ' + Math.round(val).toLocaleString();
+                    },
+                },
             },
             chart: {
                 type: 'area',
@@ -71,7 +91,6 @@ $(document).ready(function () {
                     },
                     autoSelected: 'pan',
                 },
-                sparkline: { enabled: true },
             },
             theme: {
                 mode: getCurrentTheme(),
@@ -94,7 +113,7 @@ $(document).ready(function () {
                 theme: getCurrentTheme(),
                 y: {
                     formatter: function (val) {
-                        return '₡ ' + val.toLocaleString();
+                        return isProductsChart ? val.toLocaleString() : '₡ ' + val.toLocaleString();
                     },
                 },
             },

@@ -204,7 +204,7 @@
 
             <div class="col-md-4">
                 <x-stat-card
-                    title="Unidades por Dia (promedio)"
+                    title="Unidades por Día (promedio)"
                     color-theme="green"
                     currency="false"
                     trend="{{ ($averageUnitsTrendDirection ?? 'up') === 'down' ? '-' : '+' }}{{ number_format($averageUnitsVariationPercent ?? 0, 1, ',', '.') }}%"

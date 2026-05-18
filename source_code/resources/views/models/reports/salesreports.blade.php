@@ -187,7 +187,7 @@
                 <thead>
                     <tr>
                         <th scope="col">FECHA</th>
-                        <th scope="col">ORDENES</th>
+                        <th scope="col">ÓRDENES</th>
                         <th scope="col">INGRESOS</th>
                         <th scope="col">TICKET PROMEDIO</th>
                     </tr>

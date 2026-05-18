@@ -80,13 +80,16 @@ class GetSalesReportDataAction
             $income = (int) $salesForDay->sum('total');
             $orders = $salesForDay->count();
 
-            $dailyReports[] = [
-                'date_raw' => $date->format('Y-m-d'),
-                'date' => $date->format('d/m/Y'),
-                'orders' => $orders,
-                'income' => $income,
-                'avg_ticket' => $orders > 0 ? (int) round($income / $orders) : 0,
-            ];
+            // Criterio de Aceptación: Solo agregar si hubo ingresos
+            if ($income > 0) {
+                $dailyReports[] = [
+                    'date_raw' => $date->format('Y-m-d'),
+                    'date' => $date->format('d/m/Y'),
+                    'orders' => $orders,
+                    'income' => $income,
+                    'avg_ticket' => $orders > 0 ? (int) round($income / $orders) : 0,
+                ];
+            }
         }
 
         $dailyReports = collect($dailyReports)
@@ -110,9 +113,9 @@ class GetSalesReportDataAction
             $activeCategoryId
         );
 
-        $totalIncome = (int) collect($topProducts)->sum('income');
+        $totalIncome = (int) collect($dailyReports)->sum('income');
+        $totalOrders = (int) collect($dailyReports)->sum('orders');
         $totalSoldUnits = (int) collect($topProducts)->sum('sold_quantity');
-        $totalOrders = $sales->count();
         $daysInPeriod = max($startLocal->copy()->startOfDay()->diffInDays($endLocal->copy()->startOfDay()) + 1, 1);
         $categories = Category::query()->orderBy('name')->get(['id', 'name']);
         $activeCategoryName = $activeCategoryId
