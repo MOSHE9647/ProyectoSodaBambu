@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Casts\DecimalFormat;
 use App\Enums\EmployeeStatus;
 use App\Enums\PaymentFrequency;
 use Database\Factories\EmployeeFactory;
