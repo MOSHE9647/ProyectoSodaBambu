@@ -7,14 +7,25 @@ use App\Models\Sale;
 use App\Models\SaleDetail;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Vite;
 
 beforeEach(function () {
     app()->bind('Illuminate\Foundation\Vite', function () {
-        return new class {
-            public function __invoke(...$args) { return ''; }
-            public function __call($name, $args) { return ''; }
-            public static function __callStatic($name, $args) { return ''; }
+        return new class
+        {
+            public function __invoke(...$args)
+            {
+                return '';
+            }
+
+            public function __call($name, $args)
+            {
+                return '';
+            }
+
+            public static function __callStatic($name, $args)
+            {
+                return '';
+            }
         };
     });
 });
@@ -41,8 +52,8 @@ function createPaidSale(string $date, int $total = 10000): Sale
         ->timezone('UTC');
 
     return Sale::factory()->create([
-        'date'           => $utcDate,
-        'total'          => $total,
+        'date' => $utcDate,
+        'total' => $total,
         'payment_status' => PaymentStatus::PAID,
     ]);
 }
@@ -53,11 +64,11 @@ function createPaidSale(string $date, int $total = 10000): Sale
 function createSaleDetail(Sale $sale, Product $product, int $quantity, int $unitPrice): SaleDetail
 {
     return SaleDetail::factory()->create([
-        'sale_id'     => $sale->id,
-        'product_id'  => $product->id,
-        'quantity'    => $quantity,
-        'unit_price'  => $unitPrice,
-        'sub_total'   => $quantity * $unitPrice,
+        'sale_id' => $sale->id,
+        'product_id' => $product->id,
+        'quantity' => $quantity,
+        'unit_price' => $unitPrice,
+        'sub_total' => $quantity * $unitPrice,
         'applied_tax' => 0,
     ]);
 }
@@ -88,17 +99,17 @@ test('CP-01_EIF-252 - daily reports table omits dates with zero income', functio
 
     // When: el admin consulta el reporte con rango custom que cubre ambas fechas
     $response = $this->actingAs($admin)->get(route('reports', [
-        'section'    => 'sales',
-        'period'     => 'custom',
+        'section' => 'sales',
+        'period' => 'custom',
         'start_date' => '2026-05-10',
-        'end_date'   => '2026-05-12',
+        'end_date' => '2026-05-12',
     ]));
 
     // Then: la vista se retorna y $dailyReports solo contiene la fecha con ingreso
     $response->assertSuccessful()->assertViewIs('models.reports.salesreports');
 
     $dailyReports = $response->viewData('dailyReports');
-    $reportDates  = collect($dailyReports)->pluck('date')->toArray();
+    $reportDates = collect($dailyReports)->pluck('date')->toArray();
 
     // La fecha con ingreso debe estar presente en formato dd/mm/yyyy
     expect($reportDates)->toContain('10/05/2026');
@@ -123,10 +134,10 @@ test('CP-02_EIF-252 - daily reports dates are formatted as dd/mm/yyyy', function
 
     // When: el admin consulta el reporte para ese día específico
     $response = $this->actingAs($admin)->get(route('reports', [
-        'section'    => 'sales',
-        'period'     => 'custom',
+        'section' => 'sales',
+        'period' => 'custom',
         'start_date' => '2026-05-15',
-        'end_date'   => '2026-05-15',
+        'end_date' => '2026-05-15',
     ]));
 
     // Then: la fecha en $dailyReports usa formato dd/mm/yyyy
@@ -160,16 +171,16 @@ test('CP-03_EIF-252 - totalIncome card matches the sum of dailyReports income ro
 
     // When: el admin consulta el reporte para ese rango
     $response = $this->actingAs($admin)->get(route('reports', [
-        'section'    => 'sales',
-        'period'     => 'custom',
+        'section' => 'sales',
+        'period' => 'custom',
         'start_date' => '2026-05-01',
-        'end_date'   => '2026-05-03',
+        'end_date' => '2026-05-03',
     ]));
 
     // Then: $totalIncome coincide con la suma de filas Y con el total esperado
     $response->assertSuccessful();
 
-    $totalIncome  = $response->viewData('totalIncome');
+    $totalIncome = $response->viewData('totalIncome');
     $dailyReports = $response->viewData('dailyReports');
 
     $sumFromTable = collect($dailyReports)->sum('income');
@@ -189,17 +200,17 @@ test('CP-03_EIF-252 - totalIncome card matches the sum of dailyReports income ro
  */
 test('CP-04_EIF-252 - topProducts income values are plain integers without currency symbols', function () {
     // Given: un admin, un producto con venta y su detalle
-    $admin   = createAdminForReports();
+    $admin = createAdminForReports();
     $product = Product::factory()->create(['name' => 'Café Americano']);
-    $sale    = createPaidSale('2026-05-10', 6000);
+    $sale = createPaidSale('2026-05-10', 6000);
     createSaleDetail($sale, $product, 3, 2000);
 
     // When: el admin consulta el reporte de productos
     $response = $this->actingAs($admin)->get(route('reports', [
-        'section'    => 'products',
-        'period'     => 'custom',
+        'section' => 'products',
+        'period' => 'custom',
         'start_date' => '2026-05-10',
-        'end_date'   => '2026-05-10',
+        'end_date' => '2026-05-10',
     ]));
 
     // Then: cada income en $topProducts es un entero sin ₡ ni comas de formato
@@ -228,7 +239,7 @@ test('CP-04_EIF-252 - topProducts income values are plain integers without curre
  */
 test('CP-05_EIF-252 - averageUnitsPerDay is calculated over total period days', function () {
     // Given: un admin y ventas concentradas en 2 de 5 días
-    $admin   = createAdminForReports();
+    $admin = createAdminForReports();
     $product = Product::factory()->create(['name' => 'Pan Artesanal']);
 
     // Día 1: 4 unidades vendidas
@@ -243,10 +254,10 @@ test('CP-05_EIF-252 - averageUnitsPerDay is calculated over total period days', 
 
     // When: el admin consulta el reporte de productos para un rango de 5 días
     $response = $this->actingAs($admin)->get(route('reports', [
-        'section'    => 'products',
-        'period'     => 'custom',
+        'section' => 'products',
+        'period' => 'custom',
         'start_date' => '2026-05-01',
-        'end_date'   => '2026-05-05',
+        'end_date' => '2026-05-05',
     ]));
 
     // Then: averageUnitsPerDay = 10 unidades / 5 días totales = 2.0
