@@ -262,7 +262,7 @@ const bindRealTimeValidation = () => {
 
 // ==================== Form Submission Handler ====================
 
-const submitPurchaseFormHandler = async (url, token, method, values, shouldPrint) => {
+const submitPurchaseFormHandler = async (url, token, method, values, shouldPrint = false) => {
 	if (method === 'PUT') values.id = url.split('/').pop();
 
 	if (Array.isArray(values.purchase_details)) {
@@ -360,14 +360,20 @@ const bindMainFormSubmission = () => {
 
 		$("#form-error-alert").addClass("d-none");
 
+		const url = this.action;
+		const token = $(this).find('input[name="_token"]').val();
+		const httpMethod = $(this).find('input[name="_method"]').val()?.toUpperCase() || 'POST';
+
 		// Extract current amounts and status
-        const currentTotal = parseInt($("#total_amount").val()) || 0;
+		const total = $("#total").text() || 0;
+        const currentTotal = parseFormattedNumber(total) || 0;
         const currentStatus = $("#payment_status").val() || values.payment_status || PaymentStatus.PENDING;
-        const amountPaid = parseFloat(PURCHASE_DATA.amountPaid) || 0; 
+        const amountPaid = parseFormattedNumber(PURCHASE_DATA.amountPaid) || 0; 
         let pendingBalance = currentTotal - amountPaid;
 
 		// Case 1: Creating a new purchase and user selects "Paid" - show payment modal with full amount
 		if (!IS_EDITING) {
+			let shouldPrint = false;
             if (currentStatus === PaymentStatus.PAID) {
                 const paymentInfo = await showPaymentDetailsFormModal(currentTotal);
                 
@@ -376,9 +382,10 @@ const bindMainFormSubmission = () => {
                     return;
                 }
                 values.payment_details = paymentInfo.paymentDetails;
+				shouldPrint = paymentInfo.shouldPrint || false;
             }
             
-            await submitPurchaseFormHandler(url, token, httpMethod, values);
+            await submitPurchaseFormHandler(url, token, httpMethod, values, shouldPrint);
             return;
         }
 
@@ -403,6 +410,7 @@ const bindMainFormSubmission = () => {
 		// If payment status changed from pending to paid, or if total increased while already paid, show payment modal to capture additional payment details
 		if (oldStatus === PaymentStatus.PENDING && currentStatus === PaymentStatus.PAID) {
             const confirm = await SwalConfirmation.fire({
+				icon: SwalNotificationTypes.WARNING,
                 title: "Atención: Pago Requerido",
                 html: "Para que la compra se pueda procesar correctamente, deberá ingresar los datos relacionados a los métodos de pago utilizados y al monto pagado por cada método de pago.<br><br>¿Desea continuar?",
                 confirmButtonText: "Sí, ingresar pagos",
@@ -418,7 +426,7 @@ const bindMainFormSubmission = () => {
                     return;
                 }
                 values.payment_details = paymentInfo.paymentDetails;
-                await submitPurchaseFormHandler(url, token, httpMethod, values);
+                await submitPurchaseFormHandler(url, token, httpMethod, values, paymentInfo?.shouldPrint || false);
             } else {
                 SwalToast.fire({ icon: "info", title: "Operación cancelada." });
                 setLoadingState(FORM_ID, false);
@@ -430,6 +438,7 @@ const bindMainFormSubmission = () => {
 		if (totalChanged && !statusChanged && !detailsChanged) {
             if (currentTotal > oldTotal) {
                 const confirm = await SwalConfirmation.fire({
+					icon: SwalNotificationTypes.WARNING,
                     title: "Cambio de valor detectado",
                     html: "El valor de la compra cambió aunque no se han realizado cambios que justifiquen este cambio.<br><br>¿Desea continuar?",
                     confirmButtonText: "Sí, continuar",
@@ -443,13 +452,14 @@ const bindMainFormSubmission = () => {
                         return;
                     }
                     values.payment_details = paymentInfo.paymentDetails;
-                    await submitPurchaseFormHandler(url, token, httpMethod, values);
+                    await submitPurchaseFormHandler(url, token, httpMethod, values, paymentInfo?.shouldPrint || false);
                 } else {
                     SwalToast.fire({ icon: "info", title: "Operación cancelada." });
                     setLoadingState(FORM_ID, false);
                 }
             } else {
                 const confirm = await SwalConfirmation.fire({
+                    icon: SwalNotificationTypes.INFO,
                     title: "Devolución requerida",
                     html: `Usted tiene un pago previo que excede el nuevo total de la compra. Se deberá procesar una devolución por parte del proveedor por un monto de <strong>₡${amountToReturn}</strong>.<br><br>¿Desea continuar con el registro?`,
                     confirmButtonText: "Sí, continuar",
@@ -470,6 +480,7 @@ const bindMainFormSubmission = () => {
 		if (detailsChanged) {
             if (currentTotal > oldTotal && currentStatus === PaymentStatus.PAID) {
                 const confirm = await SwalConfirmation.fire({
+					icon: SwalNotificationTypes.WARNING,
                     title: "Cambios en la compra",
                     html: "Se han detectado cambios en los detalles de la compra que incrementan el total.<br><br>¿Desea continuar y procesar la diferencia del pago?",
                     confirmButtonText: "Sí, continuar",
@@ -483,7 +494,7 @@ const bindMainFormSubmission = () => {
                         return;
                     }
                     values.payment_details = paymentInfo.paymentDetails;
-                    await submitPurchaseFormHandler(url, token, httpMethod, values);
+                    await submitPurchaseFormHandler(url, token, httpMethod, values, paymentInfo?.shouldPrint || false);
                 } else {
                     SwalToast.fire({ icon: "info", title: "Operación cancelada." });
                     setLoadingState(FORM_ID, false);
@@ -493,6 +504,7 @@ const bindMainFormSubmission = () => {
 
             if (currentTotal < oldTotal && currentStatus === PaymentStatus.PAID) {
                 const confirm = await SwalConfirmation.fire({
+                    icon: SwalNotificationTypes.INFO,
                     title: "Devolución requerida",
                     html: `Usted tiene un pago previo que excede el nuevo total de la compra. Se deberá procesar una devolución por parte del proveedor por un monto de <strong>₡${amountToReturn}</strong>.<br><br>¿Desea continuar con el registro?`,
                     confirmButtonText: "Sí, continuar",
