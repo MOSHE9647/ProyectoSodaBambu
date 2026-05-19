@@ -4,6 +4,7 @@ namespace App\Actions\Inventory;
 
 use App\Actions\Finance\ProcessPaymentAction;
 use App\Actions\Finance\UpdatePaymentAction;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Purchase;
 use DB;
@@ -15,8 +16,7 @@ class UpsertPurchaseAction
     public function __construct(
         protected ProcessPaymentAction $createPayment,
         protected UpdatePaymentAction $updatePayment
-    ) {
-    }
+    ) {}
 
     public function execute(array $purchaseData, array $purchaseDetailsData, ?array $purchasePaymentData): Purchase
     {
@@ -25,7 +25,7 @@ class UpsertPurchaseAction
             $purchaseId = $purchaseData['id'] ?? null;
             $purchaseData = Arr::except($purchaseData, ['id', 'created_at', 'updated_at', 'deleted_at']);
 
-            if (!$purchaseId) {
+            if (! $purchaseId) {
                 $purchase = Purchase::create([
                     ...$purchaseData,
                     'user_id' => auth()->id() ?? throw new RuntimeException('No authenticated user found.'),
@@ -39,7 +39,7 @@ class UpsertPurchaseAction
             }
 
             $this->handlePurchaseDetails($purchase, $purchaseDetailsData);
-            $this->handlePaymentDetails($purchase, $purchasePaymentData);
+            $this->processAutomaticRefundOrPayment($purchase, $purchasePaymentData);
 
             return $purchase;
         }, 5);
@@ -61,7 +61,7 @@ class UpsertPurchaseAction
         $incomingDetailIds = collect($purchaseDetailsData)
             ->pluck('id')
             ->filter()
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->all();
 
         // Find and delete details that are not present in the incoming data
@@ -98,6 +98,40 @@ class UpsertPurchaseAction
     }
 
     /**
+     * Process automatic refund or payment based on the updated purchase total and existing payments.
+     * This method handles two scenarios:
+     * 1. If there are new payment details provided, it will synchronize them with the purchase.
+     * 2. If the updated total is less than the amount already paid, it will create a negative payment (refund) for the difference.
+     * @param Purchase $purchase The purchase model instance to process payments for.
+     * @param mixed $paymentDetailsData Array of payment data to upsert, or null if no payments are provided.
+     * @return void
+     */
+    private function processAutomaticRefundOrPayment(Purchase $purchase, ?array $paymentDetailsData): void
+    {
+        $totalValue = (float) $purchase->total;
+        $totalPaid = (float) $purchase->payments()->sum(DB::raw('amount - change_amount'));
+        $pendingBalance = round($totalValue - $totalPaid, 2);
+
+        // CASO 1: Hay pagos nuevos enviados desde el modal (Diferencia positiva)
+        if (! empty($paymentDetailsData)) {
+            $this->handlePaymentDetails($purchase, $paymentDetailsData);
+
+            return;
+        }
+
+        // CASO 2: El nuevo total es menor a lo pagado (Diferencia negativa = Devolución)
+        if ($pendingBalance < 0) {
+            $this->createPayment->execute($purchase, [
+                'amount' => $pendingBalance, // Se envía negativo (ej: -5000)
+                'method' => PaymentMethod::CASH->value, // Las devoluciones suelen ser en efectivo
+                'change_amount' => 0,
+                'reference' => 'Devolución por ajuste de valor de compra',
+                'date' => now(),
+            ]);
+        }
+    }
+
+    /**
      * Handle the upsert (update or insert) and deletion of payment details for a given purchase.
      *
      * This method synchronizes the purchase payments with the provided data:
@@ -117,7 +151,7 @@ class UpsertPurchaseAction
         $incomingPaymentIds = collect($purchasePaymentData)
             ->pluck('id')
             ->filter()
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->all();
 
         // Find and delete payments that are not present in the incoming data

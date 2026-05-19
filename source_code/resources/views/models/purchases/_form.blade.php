@@ -1,20 +1,28 @@
 @php
     use App\Enums\PaymentStatus;
 
-    $pageTitle = isset($purchase) ? 'Editar Compra' : 'Nueva Compra';
-    $pageSubtitle = isset($purchase) ? 'Modifica la información de la compra existente' : 'Registra una nueva compra a un proveedor';
+    $isEditing = isset($purchase);
+    $pageTitle = $isEditing ? 'Editar Compra' : 'Nueva Compra';
+    $pageSubtitle = $isEditing ? 'Modifica la información de la compra existente' : 'Registra una nueva compra a un proveedor';
 
-    $formId = isset($purchase) ? 'edit-purchase-form' : 'create-purchase-form';
-    $actionUrl = isset($purchase) ? route('purchases.update', $purchase) : route('purchases.store');
+    $formId = $isEditing ? 'edit-purchase-form' : 'create-purchase-form';
+    $actionUrl = $isEditing ? route('purchases.update', $purchase) : route('purchases.store');
     $paymentStatuses = [PaymentStatus::PENDING, PaymentStatus::PAID];
+
+    $amountPaid = 0;
+    if ($isEditing && $purchase->payments) {
+        $amountPaid = $purchase->payments->sum(fn ($payment) => $payment->amount - $payment->change_amount);
+    }
 @endphp
+
+<div id="show-opening-cash-modal" data-show-modal="{{ $showOpeningCashModal ?? false }}" class="d-none"></div>
 
 <x-header title="{{ $pageTitle }}" subtitle="{{ $pageSubtitle }}" />
 
 <form id="{{ $formId }}" action="{{ $actionUrl }}" method="POST" class="d-flex flex-column gap-3" style="width: 80%;">
 
     @csrf
-    @if(isset($purchase))
+    @if($isEditing)
         @method('PUT')
     @endif
 
@@ -57,7 +65,7 @@
                     :class="'border-secondary w-auto'"
                     :max="Carbon\Carbon::now()->timezone('America/Costa_Rica')->format('Y-m-d')"
                     :inputClass="$errors->has('date') ? 'is-invalid' : ''"
-                    :value="old('date', isset($purchase) 
+                    :value="old('date', $isEditing 
                         ? $purchase->date->format('Y-m-d') 
                         : Carbon\Carbon::now()->timezone('America/Costa_Rica')->format('Y-m-d')
                     )"
@@ -275,7 +283,7 @@
                                         :errorMessage="$errors->first('quantity') ?? ''" 
                                         :value="old('quantity', $purchaseDetail->quantity)" 
                                         :min="1" 
-                                        :step="0.5"
+                                        :step="1"
                                         required
                                     >
                                         Cantidad <span class="text-danger">*</span>
@@ -297,7 +305,7 @@
                                     :inputStyle="'width: 135px; background-color: transparent;'" 
                                     :errorMessage="$errors->first('unit-price') ?? ''" 
                                     :value="old('unit-price', $purchaseDetail->unit_price)" 
-                                    :min="1"
+                                    :min="5"
                                     :step="5"
                                     :required="true" 
                                 >
@@ -352,10 +360,10 @@
                 Cancelar
             </a>
 
-            <x-form.button :id="isset($purchase) ? 'edit-purchase-form-button' : 'create-purchase-form-button'" :class="'btn-primary px-4'" :spinnerId="isset($purchase) ? 'edit-purchase-form-spinner' : 'create-purchase-form-spinner'" :loadingMessage="isset($purchase) ? 'Actualizando...' : 'Guardando...'">
-                <div id="{{ isset($purchase) ? 'edit-purchase-form-button-text' : 'create-purchase-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
+            <x-form.button :id="$isEditing ? 'edit-purchase-form-button' : 'create-purchase-form-button'" :class="'btn-primary px-4'" :spinnerId="$isEditing ? 'edit-purchase-form-spinner' : 'create-purchase-form-spinner'" :loadingMessage="$isEditing ? 'Actualizando...' : 'Guardando...'">
+                <div id="{{ $isEditing ? 'edit-purchase-form-button-text' : 'create-purchase-form-button-text' }}" class="d-flex flex-row align-items-center justify-content-center">
                     <i class="bi bi-check-circle me-2"></i>
-                    {{ isset($purchase) ? 'Actualizar' : 'Guardar' }}
+                    {{ $isEditing ? 'Actualizar' : 'Guardar' }}
                 </div>
             </x-form.button>
         </div>
@@ -381,6 +389,8 @@
     <script type="text/javascript">
         // Global JS variables for the purchase form
         window.purchaseFormData = {
+            originalPurchase: @json($purchase ?? null),
+            amountPaid: @json($amountPaid ?? 0),
             purchasableTypes: {
                 product: @json(App\Models\Product::class),
                 supply: @json(App\Models\Supply::class),

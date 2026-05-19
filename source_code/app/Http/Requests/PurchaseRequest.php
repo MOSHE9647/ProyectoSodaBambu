@@ -64,7 +64,7 @@ class PurchaseRequest extends FormRequest
             'purchase_details' => ['required', 'array', 'min:1'],
             'purchase_details.*.id' => ['sometimes', 'integer', 'exists:purchase_details,id'],
             'purchase_details.*.quantity' => ['required', 'integer', 'min:1'],
-            'purchase_details.*.unit_price' => ['required', 'numeric', 'min:0.01'],
+            'purchase_details.*.unit_price' => ['required', 'numeric', 'min:0'],
             'purchase_details.*.sub_total' => ['required', 'numeric', 'min:0'],
             'purchase_details.*.purchasable_type' => ['required', 'string', Rule::in(array_keys(self::PURCHASABLE_TYPES))],
             'purchase_details.*.purchasable_id' => ['required', 'integer'],
@@ -73,7 +73,7 @@ class PurchaseRequest extends FormRequest
             'payment_details' => ['sometimes', 'array'],
             'payment_details.*.id' => ['sometimes', 'integer', 'exists:payments,id'],
             'payment_details.*.method' => ['required', new Enum(PaymentMethod::class)],
-            'payment_details.*.amount' => ['required', 'numeric', 'min:0.01'],
+            'payment_details.*.amount' => ['required', 'numeric', 'min:0'],
             'payment_details.*.change_amount' => ['numeric', 'min:0'],
             'payment_details.*.reference' => ['nullable', 'string'],
         ];
@@ -101,13 +101,13 @@ class PurchaseRequest extends FormRequest
             'invoice_number.unique' => 'El número de factura ya existe. Por favor, ingresa uno diferente.',
 
             'payment_status.required' => 'El estado de pago es obligatorio.',
-            'payment_status.enum' => 'El estado de pago debe ser uno de los siguientes: ' . implode(', ', array_map(fn($case) => $case->value, PaymentStatus::cases())),
+            'payment_status.enum' => 'El estado de pago debe ser uno de los siguientes: '.implode(', ', array_map(fn ($case) => $case->value, PaymentStatus::cases())),
 
             'date.required' => 'La fecha de la compra es obligatoria.',
             'date.before_or_equal' => 'La fecha de la compra no puede ser futura.',
 
             'total.required' => 'El total de la compra es obligatorio.',
-            'total.numeric' => 'El total debe ser un número.',
+            'total.numeric' => 'El total debe ser un número entero.',
             'total.min' => 'El total no puede ser negativo.',
 
             'notes.string' => 'Las notas deben ser una cadena de texto.',
@@ -125,16 +125,16 @@ class PurchaseRequest extends FormRequest
             'purchase_details.*.quantity.min' => 'La cantidad debe ser al menos 1.',
 
             'purchase_details.*.unit_price.required' => 'El precio unitario es obligatorio en cada detalle.',
-            'purchase_details.*.unit_price.numeric' => 'El precio unitario debe ser un número.',
+            'purchase_details.*.unit_price.numeric' => 'El precio unitario debe ser un número entero.',
             'purchase_details.*.unit_price.min' => 'El precio unitario no puede ser negativo.',
 
             'purchase_details.*.sub_total.required' => 'El subtotal es obligatorio en cada detalle.',
-            'purchase_details.*.sub_total.numeric' => 'El subtotal debe ser un número.',
+            'purchase_details.*.sub_total.numeric' => 'El subtotal debe ser un número entero.',
             'purchase_details.*.sub_total.min' => 'El subtotal no puede ser negativo.',
 
             'purchase_details.*.purchasable_type.required' => 'El tipo de producto o suministro es obligatorio en cada detalle.',
             'purchase_details.*.purchasable_type.string' => 'El tipo de producto o suministro debe ser una cadena de texto.',
-            'purchase_details.*.purchasable_type.in' => 'El tipo de producto o suministro debe ser uno de los siguientes: ' . implode(', ', array_keys(self::PURCHASABLE_TYPES)) . '.',
+            'purchase_details.*.purchasable_type.in' => 'El tipo de producto o suministro debe ser uno de los siguientes: '.implode(', ', array_keys(self::PURCHASABLE_TYPES)).'.',
 
             'purchase_details.*.purchasable_id.required' => 'El ID del producto o suministro es obligatorio en cada detalle.',
             'purchase_details.*.purchasable_id.integer' => 'El ID del producto o suministro debe ser un número entero.',
@@ -142,7 +142,7 @@ class PurchaseRequest extends FormRequest
             'payment_details.array' => 'Los detalles de pago deben ser un arreglo.',
 
             'payment_details.*.method.required' => 'El método de pago es obligatorio en cada detalle de pago.',
-            'payment_details.*.method.enum' => 'El método de pago debe ser uno de los siguientes: ' . implode(', ', array_map(fn($case) => $case->value, PaymentMethod::cases())),
+            'payment_details.*.method.enum' => 'El método de pago debe ser uno de los siguientes: '.implode(', ', array_map(fn ($case) => $case->value, PaymentMethod::cases())),
 
             'payment_details.*.change_amount.numeric' => 'El monto de cambio debe ser un número.',
             'payment_details.*.change_amount.min' => 'El monto de cambio no puede ser negativo.',
@@ -180,12 +180,18 @@ class PurchaseRequest extends FormRequest
      */
     private function validateTotalMatchesDetails(Validator $validator): void
     {
-        $total = round((float) $this->input('total', 0), 2);
-        $detailsTotal = round(collect($this->input('purchase_details', []))
-            ->sum(fn($d) => (float) ($d['sub_total'] ?? 0)), 2);
+        $totalFromFrontend = (int) $this->input('total', 0);
+        $purchaseDetails = collect($this->input('purchase_details', []));
 
-        if ($total !== $detailsTotal) {
-            $validator->errors()->add('total', "El total ($total) no coincide con la suma de los productos ($detailsTotal).");
+        $exactDetailsTotal = $purchaseDetails->sum(function ($detail) {
+            return (float) ($detail['sub_total'] ?? 0);
+        });
+
+        // Redondeamos el gran total exacto al múltiplo de 5 (igual que en JS)
+        $roundedCalculatedTotal = (int) (round($exactDetailsTotal / 5) * 5);
+
+        if ($totalFromFrontend !== $roundedCalculatedTotal) {
+            $validator->errors()->add('total', "El total (₡ $totalFromFrontend) no coincide con la suma calculada de los productos (₡ $roundedCalculatedTotal).");
         }
     }
 
@@ -212,21 +218,23 @@ class PurchaseRequest extends FormRequest
     private function validatePaymentIntegrity(Validator $validator): void
     {
         $status = $this->input('payment_status');
-        $total = (float) $this->input('total', 0);
+        $total = (int) $this->input('total', 0);
         $payments = collect($this->input('payment_details', []));
-        $paidAmount = round($payments->sum('amount'), 2);
+        $paidAmount = (int) $payments->sum('amount');
 
         // If the status is PAID, the total must be covered by the payments
         if ($status === PaymentStatus::PAID->value) {
             if ($payments->isEmpty()) {
                 $validator->errors()->add('payment_details', 'Debe registrar al menos un pago para marcar la compra como Completa.');
             } elseif ($paidAmount < $total) {
-                $validator->errors()->add('payment_details', "Monto insuficiente para completar la compra (Pagado: $paidAmount, Total: $total).");
+                $totalFormatted = format_crc($total);
+                $paidAmountFormatted = format_crc($paidAmount);
+                $validator->errors()->add('payment_details', "Monto insuficiente para completar la venta (Pagado: $paidAmountFormatted, Total: $totalFormatted).");
             }
         }
 
         // If the status is PENDING, there should be no payments recorded yet
-        if ($status === PaymentStatus::PENDING->value && !$payments->isEmpty()) {
+        if ($status === PaymentStatus::PENDING->value && ! $payments->isEmpty()) {
             $validator->errors()->add('payment_details', 'Una compra PENDIENTE no debería tener pagos registrados aún.');
         }
     }
@@ -250,7 +258,7 @@ class PurchaseRequest extends FormRequest
 
             if ($type && $id) {
                 $table = self::PURCHASABLE_TYPES[$type] ?? null;
-                if ($table && !\DB::table($table)->where('id', $id)->exists()) {
+                if ($table && ! \DB::table($table)->where('id', $id)->exists()) {
                     $capitalizedType = ucfirst($type);
                     $validator->errors()->add("purchase_details.$index.purchasable_id", "El ID del {$capitalizedType} con valor {$id} no existe. (Fila: $index)");
                 }
@@ -271,10 +279,10 @@ class PurchaseRequest extends FormRequest
     private function validatePurchasableUniqueness(Validator $validator): void
     {
         collect($this->input('purchase_details', []))
-            ->filter(fn($d) => filled($d['purchasable_type'] ?? null) && filled($d['purchasable_id'] ?? null))
-            ->map(fn($d) => $d['purchasable_type'] . '_' . $d['purchasable_id'])
+            ->filter(fn ($d) => filled($d['purchasable_type'] ?? null) && filled($d['purchasable_id'] ?? null))
+            ->map(fn ($d) => $d['purchasable_type'].'_'.$d['purchasable_id'])
             ->duplicates()
-            ->each(fn($val, $index) => $validator->errors()->add(
+            ->each(fn ($val, $index) => $validator->errors()->add(
                 "purchase_details.$index.purchasable_id",
                 'Este producto/suministro está duplicado. Por favor, combina las cantidades en una sola fila.'
             ));
@@ -293,17 +301,12 @@ class PurchaseRequest extends FormRequest
     {
         foreach ($this->input('payment_details', []) as $index => $payment) {
             $method = $payment['method'] ?? null;
-            $amount = (float) ($payment['amount'] ?? 0);
-            $change = (float) ($payment['change_amount'] ?? 0);
+            $amount = (int) ($payment['amount'] ?? 0);
+            $change = (int) ($payment['change_amount'] ?? 0);
 
             // Obligatory Reference for electronic payments (SINPE/Card)
             $requiresRef = [PaymentMethod::SINPE->value, PaymentMethod::CARD->value];
-            if (in_array($method, $requiresRef) && empty($payment['reference'])) {
-                $validator->errors()->add("payment_details.$index.reference", 'La referencia es obligatoria para este método de pago.');
-            }
-
-            // Reference for electronic payments must be between 4 and 12 characters if provided
-            if (in_array($method, $requiresRef) && !empty($payment['reference'])) {
+            if (in_array($method, $requiresRef) && ! empty($payment['reference'])) {
                 $refLength = strlen($payment['reference']);
                 if ($method === PaymentMethod::SINPE->value && ($refLength < 8 || $refLength > 12)) {
                     $validator->errors()->add("payment_details.$index.reference", 'El número de comprobante debe tener entre 8 y 12 caracteres.');

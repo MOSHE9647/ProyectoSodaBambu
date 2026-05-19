@@ -1,290 +1,244 @@
 import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation";
-import { getLaravelFirstError, setLoadingState } from "../../utils/utils";
-import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { getLaravelFirstError, setLoadingState, printReceipt } from "../../utils/utils";
+import { SwalConfirmation, SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 import { bindPurchaseFormEvents } from "./items.js";
 import { bindOffcanvasEvents } from "../../utils/offcanvas.js";
 import { showPaymentDetailsFormModal } from "../payment/main.js";
+import { initializeCashRegister } from "../../pages/sales/cash-register.js";
 
 // ==================== Environment Checks ====================
 
-if (typeof $ === 'undefined') {
-    throw new Error('This script requires jQuery');
-}
+if (typeof $ === 'undefined') throw new Error('This script requires jQuery');
 
 // ======================== Constants =========================
 
 const PURCHASE_DATA = window.purchaseFormData || [];
 const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
 const FORM_ID = IS_EDITING ? 'edit-purchase-form' : 'create-purchase-form';
-const PAYMENT_METHODS = { CASH: 'cash', CARD: 'card', SINPE: 'sinpe' };
+
+const PaymentStatus = {
+	PAID: PURCHASE_DATA.paymentStatuses?.find(s => s.value === 'paid')?.value || 'paid',
+	PENDING: PURCHASE_DATA.paymentStatuses?.find(s => s.value === 'pending')?.value || 'pending',
+};
+
+let initialPurchaseState = null;
 
 // =========================== Helpers ==========================
 
-function showFieldErrorInAlert(fieldId, errorMessage) {
+const parseFormattedNumber = (text) => {
+	if (!text) return 0;
+	return parseInt(text.replace(/[^0-9,-]+/g, "").replace(",", ".")) || 0;
+};
+
+const showFieldErrorInAlert = (fieldId, errorMessage) => {
 	const $alert = $("#form-error-alert");
 	$alert.removeClass("d-none").html(`
         <i class="bi bi-exclamation-triangle me-2"></i>
         <span>${errorMessage}</span>
     `);
 
-	if (fieldId) {
-		$(`#${fieldId}`).focus();
-	}
+	const targetFieldId = fieldId instanceof $ ? fieldId.attr("id") : fieldId;
+	if (targetFieldId) $(`#${targetFieldId}`).focus();
 
 	window.scrollTo({ top: $alert.offset()?.top - 100, behavior: "smooth" });
-}
+};
 
-function clearFieldErrorInAlert() {
-    const $alert = $("#form-error-alert");
-    $alert.addClass("d-none").html("");
-}
+const clearFieldErrorInAlert = () => $("#form-error-alert").addClass("d-none").empty();
 
-function getFormFields() {
-    const purchase = {
-		invoice_number: $("#invoice_number").val()?.trim() || '',
-		supplier_id: parseInt($("#supplier_id").val()) || null,
-		payment_status: $("#payment_status").val(),
-		date: $("#date").val(),
-        total: parseInt($("#total").text()),
-		notes: $("#notes").val()?.trim() || '',
-	};
-
-    purchase.purchase_details = $("#purchase-details-table")
-		.find("tbody tr:not(#empty-row)")
+const getFormFields = () => {
+    const purchaseDetails = $("#purchase-details-table tbody tr:not(#empty-row)")
 		.map((_, row) => {
 			const $row = $(row);
 			return {
 				id: $row.data("id") || null,
 				quantity: parseInt($row.find('[name="quantity"]').val()) || 0,
-				unit_price: parseInt($row.find('[name="unit-price"]').val()),
-				sub_total: parseInt($row.find(".sub-total").text()),
+				unit_price: parseFormattedNumber($row.find('[name="unit-price"]').val()),
+				sub_total: parseFormattedNumber($row.find(".sub-total").text()),
 				purchasable_id: parseInt($row.find('[name="purchasable_id"]').val()) || null,
 				purchasable_type: $row.data("purchasable-type"),
 			};
-		})
-		.get();
+		}).get();
 
-    return purchase;
-}
+    return {
+		invoice_number: $("#invoice_number").val()?.trim() || '',
+		supplier_id: parseInt($("#supplier_id").val()) || null,
+		payment_status: $("#payment_status").val(),
+		date: $("#date").val(),
+        total: parseFormattedNumber($("#total").text()),
+		notes: $("#notes").val()?.trim() || '',
+        purchase_details: purchaseDetails
+	};
+};
 
 // ===================== Validation Helpers =====================
 
 const rules = {
 	isNum: (v) => v !== "" && !isNaN(v) && v !== null,
-	isInt: (v) => /^\d+$/.test(v),
+	isPositiveMultipleOf5: (v) => rules.isNum(v) && parseInt(v) >= 0 && parseInt(v) % 5 === 0,
 	isString: (v) => typeof v === "string" && v.trim().length > 0,
 	isValidId: (v) => /^\d+$/.test(v) && v !== "-1",
     inList: (v, list, key = 'value') => list.some(item => String(item[key]) === String(v))
 };
 
-// ===================== Field Validators =====================
 const baseFieldValidators = {
-	supplier_id: {
-		validate: (v) => rules.isValidId(v),
-		message: "Debe seleccionar un proveedor válido.",
+	supplier_id: { 
+		validate: v => rules.isValidId(v), 
+		message: "Debe seleccionar un proveedor válido." 
 	},
-	invoice_number: {
-		validate: (v) => rules.isString(v) && v.length >= 2 && v.length <= 255,
-		message: "El número de factura es obligatorio (2-255 caracteres).",
+	invoice_number: { 
+		validate: v => rules.isString(v) && v.length >= 2 && v.length <= 255, 
+		message: "El número de factura es obligatorio (2-255 caracteres)." 
 	},
-	payment_status: {
-		validate: (v) => rules.inList(v, PURCHASE_DATA.paymentStatuses || []),
-		message: "Debe seleccionar un estado de pago válido.",
+	payment_status: { 
+		validate: v => rules.inList(v, PURCHASE_DATA.paymentStatuses || []), 
+		message: "Debe seleccionar un estado de pago válido." 
 	},
 	date: {
 		validate: (v) => {
 			if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
-			const date = new Date(v);
-			return !isNaN(date) && date <= new Date().setHours(23, 59, 59);
+			const formatter = new Intl.DateTimeFormat('en-CA', { 
+				timeZone: 'America/Costa_Rica', 
+				year: 'numeric', 
+				month: '2-digit', 
+				day: '2-digit' 
+			});
+			return v <= formatter.format(new Date());
 		},
 		message: "La fecha es obligatoria y no puede ser futura.",
 	},
-	total: {
-		validate: (v) => rules.isNum(v) && parseInt(v) >= 0,
-		message: "El total de la compra no puede ser negativo.",
+	total: { 
+		validate: v => rules.isPositiveMultipleOf5(v), 
+		message: "El total de la compra no puede ser negativo y debe ser múltiplo de 5." 
 	},
 	purchase_details: {
-		validate: (arr) => {
-			if (!Array.isArray(arr) || arr.length === 0) return false;
-			return arr.every(
-				(i) =>
-					rules.isValidId(i.purchasable_id) &&
-					i.quantity > 0 &&
-					i.unit_price >= 0,
-			);
-		},
-		message:
-			"Debe agregar al menos un producto válido (con cantidad y precio).",
+		validate: (arr) => Array.isArray(arr) && arr.length > 0 && arr.every(
+			i => rules.isValidId(i.purchasable_id) && i.quantity > 0 && 
+				rules.isPositiveMultipleOf5(i.unit_price) && 
+				rules.isPositiveMultipleOf5(i.sub_total)
+		),
+		message: "Debe agregar al menos un producto válido (con cantidad mayor a cero y precios múltiplos de 5).",
 	},
 	payment_details: {
-		validate: (v) => {
-			if (!v) return true; // Opcional
-			const payments = rules.isValidJSON(v);
-			if (!Array.isArray(payments)) return false;
-			return payments.every((p) =>
-				rules.inList(
-					p.method,
-					PURCHASE_DATA.paymentMethods || [],
-					"label",
-				),
-			);
-		},
-		message: "Los métodos de pago seleccionados no son válidos.",
+		validate: (v) => !v || (Array.isArray(v) && v.every(
+			p => rules.inList(p.method, PURCHASE_DATA.paymentMethods || [], "label") && 
+				rules.isPositiveMultipleOf5(p.amount ?? p.change_amount ?? 0))
+		),
+		message: "Los detalles de pago seleccionados no son válidos o incluyen valores no múltiplos de 5.",
 	},
-	notes: {
-		validate: (v) => !v || (typeof v === "string" && v.length <= 1000), // En Blade pusiste maxlength="1000"
-		message: "Las notas no pueden exceder los 1000 caracteres.",
-	},
+	notes: { 
+		validate: v => !v || (typeof v === "string" && v.length <= 1000), 
+		message: "Las notas no pueden exceder los 1000 caracteres." },
 };
 
-// Purchase detail validators (for each item in purchase_details)
 const purchaseDetailValidators = {
-	id: (v) => v === null || rules.isValidId(v),
-	quantity: (v) => rules.isNum(v) && parseInt(v) > 0,
-	unit_price: (v) => rules.isNum(v) && parseInt(v) >= 0,
-	sub_total: (v) => rules.isNum(v) && parseInt(v) >= 0,
-	purchasable_id: (v) => rules.isValidId(v),
-	purchasable_type: (v) =>
-		Object.values(PURCHASE_DATA.purchasableTypes || {}).includes(v),
+	id: v => v === null || rules.isValidId(v),
+	quantity: v => rules.isNum(v) && parseInt(v) > 0,
+	unit_price: v => rules.isPositiveMultipleOf5(v),
+	sub_total: v => rules.isPositiveMultipleOf5(v),
+	purchasable_id: v => rules.isValidId(v),
+	purchasable_type: v => Object.values(PURCHASE_DATA.purchasableTypes || {}).includes(v),
 };
 
-// Payment detail validators (for each item in payment_details)
 const paymentDetailValidators = {
-    method: (v) => rules.inList(v, PURCHASE_DATA.paymentMethods || [], 'label'),
-    change_amount: (v) => rules.isNum(v) && parseInt(v) > 0,
-    reference: (v) => !v || (typeof v === 'string' && v.length >= 4 && v.length <= 12)
+    method: v => rules.inList(v, PURCHASE_DATA.paymentMethods || [], 'label'),
+    change_amount: v => rules.isPositiveMultipleOf5(v),
+    reference: v => !v || (typeof v === 'string' && v.length >= 4 && v.length <= 12)
 };
 
 // ==================== Validation Functions ====================
 
-function getActiveFieldValidators() {
-    const validators = {...baseFieldValidators};
-
-    // Remove Notes validator if not provided
-    if (!$('#notes').val().trim()) {
-        delete validators.notes;
-    }
-
-    // Remove Payment Details validator if payment status is not 'paid'
-    if ($('#payment_status').val() !== 'paid') {
-        delete validators.payment_details;
-    }
-
+const getActiveFieldValidators = () => {
+    const validators = { ...baseFieldValidators };
+    if (!$('#notes').val().trim()) delete validators.notes;
+    if ($('#payment_status').val() !== PaymentStatus.PAID) delete validators.payment_details;
     return validators;
-}
+};
 
-function validatePurchaseForm(values, fieldValidators) {
-	// Get current form values and details
+const validatePurchaseForm = (values, fieldValidators) => {
 	const { purchase_details = [], payment_details = [], ...purchase } = values;
-	let errors = []; // Array to store validation errors
+	const errors = [];
 
-	// Validate main purchase fields
+	// Exclude certain fields from real-time validation error clearing to preserve their state during submission
+	const filteredValidators = Object.fromEntries(
+		Object.entries(fieldValidators).filter(([key]) => !['total', 'purchase_details', 'payment_details'].includes(key))
+	);
+
+	clearAllFieldErrors(filteredValidators);
+
 	Object.entries(fieldValidators).forEach(([fieldId, config]) => {
-		const value =
-			purchase[fieldId] !== undefined
-				? purchase[fieldId]
-				: values[fieldId];
-
-		// Skip purchase_details and payment_details here, they are validated separately
-		if (fieldId !== "purchase_details" && fieldId !== "payment_details") {
+		const value = purchase[fieldId] !== undefined ? purchase[fieldId] : values[fieldId];
+		if (!["purchase_details", "payment_details"].includes(fieldId)) {
 			if (!config.validate(value)) {
 				if (fieldId !== 'total') showFieldError(fieldId, config.message);
 				errors.push([false, fieldId, config.message]);
-			} else {
-				if (fieldId !== 'total') clearFieldError(fieldId);
-			}
+			} else if (fieldId !== 'total') {
+                clearFieldError(fieldId);
+            }
 		}
 	});
 
-    // Validate purchase_details array is not empty and has valid items
     if (!fieldValidators.purchase_details.validate(purchase_details)) {
         errors.push([false, 'form-error-alert', fieldValidators.purchase_details.message]);
     }
 
-	// Validate purchase_details
 	purchase_details.forEach((detail, index) => {
 		Object.entries(purchaseDetailValidators).forEach(([key, validator]) => {
 			if (!validator(detail[key])) {
-				const fieldName = `Detalle ${index + 1}: ${key}`;
-				errors.push([
-					false,
-					null,
-					`Item ${index + 1}: Compruebe que el producto, cantidad y precio sean válidos.`,
-				]);
+				errors.push([false, null, `Item ${index + 1}: Compruebe que el producto, cantidad y precio sean válidos.`]);
 			}
 		});
 	});
 
-	// Validate payment_details if payment status is 'paid'
-	if (
-		purchase.payment_status === "paid" &&
-		typeof payment_details !== "undefined"
-	) {
+	if (purchase.payment_status === PaymentStatus.PAID && typeof payment_details !== "undefined") {
 		payment_details.forEach((payment, index) => {
 			Object.entries(paymentDetailValidators).forEach(([key, validator]) => {
-				if (!validator(payment[key])) {
-					errors.push([
-						false,
-						null,
-						`Pago ${index + 1}: Campo ${key} inválido.`,
-					]);
-				}
+				if (!validator(payment[key])) errors.push([false, null, `Pago ${index + 1}: Campo ${key} inválido.`]);
 			});
 		});
 	}
 
 	return errors.length > 0 ? errors[0] : [true, "", ""];
-}
+};
+
+const purchaseDetailsHasChanges = () => {
+	return false;
+};
 
 // ==================== Real-Time Validation Handler ====================
 
-function bindRealTimeValidation() {
-    // Real-time validation for main fields
-    const mainFields = ['invoice_number', 'supplier_id', 'payment_status', 'date', 'notes'];
-
-    mainFields.forEach(fieldId => {
+const bindRealTimeValidation = () => {
+    ['invoice_number', 'supplier_id', 'payment_status', 'date', 'notes'].forEach(fieldId => {
         const $element = $(`#${fieldId}`);
         if (!$element.length) return;
 
-        // Infer event type based on element type (selects and date inputs use 'change', others use 'input' and 'focusout')
         const eventType = $element.is('select, input[type="date"]') ? 'change' : 'input focusout';
 
         $element.on(eventType, function() {
             const config = baseFieldValidators[fieldId];
             const value = $(this).val();
 
-            // Special exception for 'notes' field: if it's empty, we clear errors instead of showing them
-            if (fieldId === 'notes' && (!value || !value.trim())) {
+            if (fieldId === 'notes' && !value.trim()) {
                 clearFieldError(fieldId);
                 return;
             }
 
             if (config) {
-                if (!config.validate(value)) {
-                    showFieldError(fieldId, config.message);
-                } else {
-                    clearFieldError(fieldId);
-                }
+                config.validate(value) ? clearFieldError(fieldId) : showFieldError(fieldId, config.message);
             }
         });
     });
 
-    // Delegated real-time validation for purchase details (quantity and unit price)
-	// We use delegation (.on on the table ID) so it works with newly added rows
-    $('#purchase-details-table').on('input focusout', 'input[name="quantity"], input[name="unit-price"]', function() {
+    const $table = $('#purchase-details-table');
+    
+    $table.on('input focusout', 'input[name="quantity"], input[name="unit-price"]', function() {
         const $input = $(this);
-        const name = $input.attr('name');
-        // Map 'unit-price' to rule name 'unit_price' for validation
-        const key = name === 'unit-price' ? 'unit_price' : name; 
+        const key = $input.attr('name') === 'unit-price' ? 'unit_price' : $input.attr('name'); 
         const validator = purchaseDetailValidators[key];
 
         if (validator) {
             if (!validator($input.val())) {
                 $input.addClass('is-invalid');
-                showFieldErrorInAlert(
-					$(this),
-					`Compruebe que la ${key === "unit_price" ? "cantidad y el precio unitario sean válidos" : "cantidad se válida"}  para cada producto agregado.`,
-				);
+                showFieldErrorInAlert($(this), `Compruebe que la ${key === "unit_price" ? "cantidad y el precio unitario" : "cantidad"} sean válidos para cada producto agregado.`);
             } else {
                 $input.removeClass('is-invalid');
                 clearFieldErrorInAlert();
@@ -292,12 +246,10 @@ function bindRealTimeValidation() {
         }
     });
 
-    $('#purchase-details-table').on('change', 'select[name="purchasable_id"]', function() {
+    $table.on('change', 'select[name="purchasable_id"]', function() {
         const $select = $(this);
-        const validator = purchaseDetailValidators.purchasable_id;
-
-        if (validator) {
-            if (!validator($select.val())) {
+        if (purchaseDetailValidators.purchasable_id) {
+            if (!purchaseDetailValidators.purchasable_id($select.val())) {
                 $select.addClass('is-invalid');
                 showFieldErrorInAlert($(this), `Debe seleccionar un producto válido para cada detalle de compra.`);
             } else {
@@ -306,129 +258,338 @@ function bindRealTimeValidation() {
             }
         }
     });
-}
+};
 
 // ==================== Form Submission Handler ====================
 
-async function submitPurchaseFormHandler(event, validationResult) {
-	const form = this;
-	const url = form.action;
-	const token = $(form).find('input[name="_token"]').val();
-	const method = $(form).find('input[name="_method"]').val();
-	const httpMethod = method ? method.toUpperCase() : 'POST';
-	const [__, fieldId, message, values] = validationResult;
-	
-	if (httpMethod === 'PUT') {
-		const purchaseId = httpMethod === 'PUT' ? url.split('/').pop() : null; // Extract ID from URL for editing
-		values.id = purchaseId; // Include ID in payload for updates
-	}
+const submitPurchaseFormHandler = async (url, token, method, values, shouldPrint) => {
+	if (method === 'PUT') values.id = url.split('/').pop();
 
-	// Delete all null IDs from purchase_details 
 	if (Array.isArray(values.purchase_details)) {
-		values.purchase_details = values.purchase_details.map(detail => {
-			if (detail.id === null) {
-				const { id, ...rest } = detail;
-				return rest;
-			}
-			return detail;
-		});
+		values.purchase_details = values.purchase_details.map(({ id, ...rest }) => id === null ? rest : { id, ...rest });
 	}
-
-	console.log("Submitting form with values:", values);
 
 	try {
 		const response = await fetch(url, {
-			method: httpMethod,
+			method,
 			headers: {
-				'Content-Type': 'application/json',
-				'Accept': 'application/json',
-				'X-CSRF-TOKEN': token
+				"X-CSRF-TOKEN": token,
+				"Accept": "application/json",
+				"Content-Type": "application/json",
 			},
-			body: JSON.stringify(values)
+			body: JSON.stringify(values),
 		});
 
-		if (response.ok) {
-			const data = await response.json();
-			window.location.href = data.redirect || route('purchases.index');
-		} else {
-			const errorData = await response.json();
-			console.error('Error en la respuesta del servidor:', errorData);
-
-			const { field: firstField, message: firstMessage } = getLaravelFirstError(errorData);
-			showFieldError(firstField, firstMessage);
-			showFieldErrorInAlert(null, errorData.message || 'Error al enviar el formulario. Por favor, inténtelo de nuevo.');
-		}
-	} catch (error) {
-		SwalToast.fire({
-			icon: SwalNotificationTypes.ERROR,
-			title: "Error al enviar el formulario"
-		});
-	} finally {
-		setLoadingState(FORM_ID, false);
-	}
-}
-
-function submitPurchaseForm() {
-    const fieldValidators = getActiveFieldValidators();
-    const values = getFormFields();
-
-	// Exclude fields 'total', 'purchase_details' y 'payment_details' from error clearing since they are validated separately
-	const filteredValidators = Object.fromEntries(
-		Object.entries(fieldValidators).filter(
-			([key]) => !['total', 'purchase_details', 'payment_details'].includes(key)
-		)
-	);
-
-	clearAllFieldErrors(filteredValidators);
-    const validationResult = validatePurchaseForm(values, fieldValidators);
-
-    return [...validationResult, values];
-}
-
-$(document).on('submit', `#${FORM_ID}`, async function(e) {
-    // Prevent default form submission
-    e.preventDefault();
-    setLoadingState(FORM_ID, true);
-
-    // Validate and submit form
-    const [isValid, fieldId, message, values] = submitPurchaseForm();
-
-	// If valid, submit the form
-	if (isValid) {
-		// Hide any previous error alert
-		$("#form-error-alert").addClass("d-none");
-		
-		let paymentDetails = null;
-		
-		// If payment status is 'paid', show the payment details form modal and get the payment details from the user before submitting the purchase form
-		const status = $('#payment_status').val();
-		if (status === 'paid') {
-			// Get the total amount from the form to pass to the payment details modal
-			const totalAmount = parseInt($("#total").text() || 0);
-			paymentDetails = await showPaymentDetailsFormModal(totalAmount);
-
-			if (!paymentDetails || paymentDetails.length === 0) {
-				setLoadingState(FORM_ID, false);
-				return;
+		const data = await response.json();
+		if (! response.ok) {
+			if (response.status === 422) {
+				const { field, message } = getLaravelFirstError(data);
+				if (field) showFieldError(field, message);
+				showFieldErrorInAlert(null, data.message || "Error al enviar el formulario. Por favor, revise los campos e inténtelo de nuevo.");
+			} else {
+				throw new Error(data.message || "Error al enviar el formulario. Por favor, inténtelo de nuevo.");
 			}
 		}
 
-		if (paymentDetails) {
-			values.payment_details = paymentDetails;
-		}
-		
-		await submitPurchaseFormHandler.call(this, e, [isValid, fieldId, message, values]);
-	}
-	else {
-		// Show error message in alert and focus the first invalid field
+		SwalToast.fire({ icon: SwalNotificationTypes.SUCCESS, title: data.message || "Compra guardada exitosamente" });
+		if (shouldPrint && data.data?.id) await printReceipt(route('receipts.show', { model: 'purchases', id: data.data.id }));
+		if (data.redirect) window.location.href = data.redirect;
+	} catch (error) {
+		console.error("Error submitting form:", error);
+		SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: error.message || "Error de conexión con el servidor." });
+	} finally {
 		setLoadingState(FORM_ID, false);
-		showFieldErrorInAlert(fieldId, message);
 	}
-});
+};
 
-// Initialize real-time validation when the document is ready
+// async function submitPurchaseFormHandlerBackup(url, token, method, values, shouldPrint) {
+// 	if (method === 'PUT') values.id = url.split('/').pop();
+
+// 	if (Array.isArray(values.purchase_details)) {
+// 		values.purchase_details = values.purchase_details.map(({ id, ...rest }) => id === null ? rest : { id, ...rest });
+// 	}
+
+// 	try {
+// 		const response = await fetch(url, {
+// 			method,
+// 			headers: {
+// 				'X-CSRF-TOKEN': token,
+// 				'Accept': 'application/json',
+// 				'Content-Type': 'application/json',
+// 			},
+// 			body: JSON.stringify(values)
+// 		});
+
+// 		if (response.ok) {
+// 			const data = await response.json();
+// 			if (shouldPrint && data.data?.id) {
+// 				await printReceipt(route('receipts.show', { model: 'purchases', id: data.data.id }));
+// 			}
+// 			window.location.href = data.redirect || route('purchases.index');
+// 		} else {
+// 			const errorData = await response.json();
+// 			const { field, message } = getLaravelFirstError(errorData);
+// 			if (field) showFieldError(field, message);
+// 			showFieldErrorInAlert(null, errorData.message || 'Error al enviar el formulario. Por favor, inténtelo de nuevo.');
+// 		}
+// 	} catch (error) {
+// 		SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: "Error al enviar el formulario" });
+// 	} finally {
+// 		setLoadingState(FORM_ID, false);
+// 	}
+// }
+
+const bindMainFormSubmission = () => {
+	const $form = $(`#${FORM_ID}`);
+	if (!$form.length) return;
+
+	$form.off('submit').on('submit', async function(e) {
+		e.preventDefault();
+		setLoadingState(FORM_ID, true);
+
+		// Validate form before showing payment modal to avoid unnecessary modals if there are basic validation errors
+		const fieldValidators = getActiveFieldValidators();
+		const values = getFormFields();
+		const [isValid, fieldId, message] = validatePurchaseForm(values, fieldValidators);
+
+		if (!isValid) {
+			setLoadingState(FORM_ID, false);
+			showFieldErrorInAlert(fieldId, message);
+			return;
+		}
+
+		$("#form-error-alert").addClass("d-none");
+
+		// Extract current amounts and status
+        const currentTotal = parseInt($("#total_amount").val()) || 0;
+        const currentStatus = $("#payment_status").val() || values.payment_status || PaymentStatus.PENDING;
+        const amountPaid = parseFloat(PURCHASE_DATA.amountPaid) || 0; 
+        let pendingBalance = currentTotal - amountPaid;
+
+		// Case 1: Creating a new purchase and user selects "Paid" - show payment modal with full amount
+		if (!IS_EDITING) {
+            if (currentStatus === PaymentStatus.PAID) {
+                const paymentInfo = await showPaymentDetailsFormModal(currentTotal);
+                
+                if (!paymentInfo || Object.keys(paymentInfo).length === 0) {
+                    setLoadingState(FORM_ID, false);
+                    return;
+                }
+                values.payment_details = paymentInfo.paymentDetails;
+            }
+            
+            await submitPurchaseFormHandler(url, token, httpMethod, values);
+            return;
+        }
+
+		// Case 2: Editing an existing purchase - determine if payment modal is needed based on changes
+		const original = PURCHASE_DATA.originalPurchase || {};
+		const oldTotal = parseInt(original.total) || 0;
+		const oldStatus = original.payment_status || PaymentStatus.PENDING;
+
+		const totalChanged = currentTotal !== oldTotal;
+		const statusChanged = currentStatus !== oldStatus;
+		const detailsChanged = purchaseDetailsHasChanges();
+
+		const difference = currentTotal - oldTotal;
+		const amountToReturn = oldTotal - currentTotal;
+
+		// If there'n no changes that would affect payment, submit directly without showing modal
+		if (!totalChanged && !statusChanged && !detailsChanged) {
+			await submitPurchaseFormHandler(url, token, httpMethod, values);
+			return;
+		}
+
+		// If payment status changed from pending to paid, or if total increased while already paid, show payment modal to capture additional payment details
+		if (oldStatus === PaymentStatus.PENDING && currentStatus === PaymentStatus.PAID) {
+            const confirm = await SwalConfirmation.fire({
+                title: "Atención: Pago Requerido",
+                html: "Para que la compra se pueda procesar correctamente, deberá ingresar los datos relacionados a los métodos de pago utilizados y al monto pagado por cada método de pago.<br><br>¿Desea continuar?",
+                confirmButtonText: "Sí, ingresar pagos",
+                cancelButtonText: "No, cancelar"
+            }).then(r => r.isConfirmed);
+
+            if (confirm) {
+                const amountToCharge = pendingBalance > 0 ? pendingBalance : currentTotal;
+                const paymentInfo = await showPaymentDetailsFormModal(amountToCharge);
+                
+                if (!paymentInfo || Object.keys(paymentInfo).length === 0) {
+                    setLoadingState(FORM_ID, false);
+                    return;
+                }
+                values.payment_details = paymentInfo.paymentDetails;
+                await submitPurchaseFormHandler(url, token, httpMethod, values);
+            } else {
+                SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+                setLoadingState(FORM_ID, false);
+            }
+            return;
+        }
+
+		// Only the total value changed
+		if (totalChanged && !statusChanged && !detailsChanged) {
+            if (currentTotal > oldTotal) {
+                const confirm = await SwalConfirmation.fire({
+                    title: "Cambio de valor detectado",
+                    html: "El valor de la compra cambió aunque no se han realizado cambios que justifiquen este cambio.<br><br>¿Desea continuar?",
+                    confirmButtonText: "Sí, continuar",
+                    cancelButtonText: "No, cancelar"
+                }).then(r => r.isConfirmed);
+
+                if (confirm) {
+                    const paymentInfo = await showPaymentDetailsFormModal(difference);
+                    if (!paymentInfo || Object.keys(paymentInfo).length === 0) {
+                        setLoadingState(FORM_ID, false);
+                        return;
+                    }
+                    values.payment_details = paymentInfo.paymentDetails;
+                    await submitPurchaseFormHandler(url, token, httpMethod, values);
+                } else {
+                    SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+                    setLoadingState(FORM_ID, false);
+                }
+            } else {
+                const confirm = await SwalConfirmation.fire({
+                    title: "Devolución requerida",
+                    html: `Usted tiene un pago previo que excede el nuevo total de la compra. Se deberá procesar una devolución por parte del proveedor por un monto de <strong>₡${amountToReturn}</strong>.<br><br>¿Desea continuar con el registro?`,
+                    confirmButtonText: "Sí, continuar",
+                    cancelButtonText: "No, cancelar"
+                }).then(r => r.isConfirmed);
+
+                if (confirm) {
+                    await submitPurchaseFormHandler(url, token, httpMethod, values);
+                } else {
+                    SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+                    setLoadingState(FORM_ID, false);
+                }
+            }
+            return;
+        }
+
+		// Purchase Details were changed
+		if (detailsChanged) {
+            if (currentTotal > oldTotal && currentStatus === PaymentStatus.PAID) {
+                const confirm = await SwalConfirmation.fire({
+                    title: "Cambios en la compra",
+                    html: "Se han detectado cambios en los detalles de la compra que incrementan el total.<br><br>¿Desea continuar y procesar la diferencia del pago?",
+                    confirmButtonText: "Sí, continuar",
+                    cancelButtonText: "No, cancelar"
+                }).then(r => r.isConfirmed);
+
+                if (confirm) {
+                    const paymentInfo = await showPaymentDetailsFormModal(difference);
+                    if (!paymentInfo || Object.keys(paymentInfo).length === 0) {
+                        setLoadingState(FORM_ID, false);
+                        return;
+                    }
+                    values.payment_details = paymentInfo.paymentDetails;
+                    await submitPurchaseFormHandler(url, token, httpMethod, values);
+                } else {
+                    SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+                    setLoadingState(FORM_ID, false);
+                }
+                return;
+            }
+
+            if (currentTotal < oldTotal && currentStatus === PaymentStatus.PAID) {
+                const confirm = await SwalConfirmation.fire({
+                    title: "Devolución requerida",
+                    html: `Usted tiene un pago previo que excede el nuevo total de la compra. Se deberá procesar una devolución por parte del proveedor por un monto de <strong>₡${amountToReturn}</strong>.<br><br>¿Desea continuar con el registro?`,
+                    confirmButtonText: "Sí, continuar",
+                    cancelButtonText: "No, cancelar"
+                }).then(r => r.isConfirmed);
+
+                if (confirm) {
+                    await submitPurchaseFormHandler(url, token, httpMethod, values);
+                } else {
+                    SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+                    setLoadingState(FORM_ID, false);
+                }
+                return;
+            }
+        }
+
+		// Fallback for any other valid scenario
+        await submitPurchaseFormHandler(url, token, httpMethod, values);
+	});
+};
+
+// $(document).on('submit', `#${FORM_ID}`, async function(e) {
+//     e.preventDefault();
+//     setLoadingState(FORM_ID, true);
+
+//     const fieldValidators = getActiveFieldValidators();
+//     const values = getFormFields();
+
+// 	const filteredValidators = Object.fromEntries(
+// 		Object.entries(fieldValidators).filter(([key]) => !['total', 'purchase_details', 'payment_details'].includes(key))
+// 	);
+
+// 	clearAllFieldErrors(filteredValidators);
+//     const [isValid, fieldId, message] = validatePurchaseForm(values, fieldValidators);
+
+// 	if (!isValid) {
+// 		setLoadingState(FORM_ID, false);
+// 		showFieldErrorInAlert(fieldId, message);
+//         return;
+// 	}
+
+//     $("#form-error-alert").addClass("d-none");
+    
+//     let paymentInfo = null;
+//     const status = values.payment_status;
+//     const totalAmount = values.total;
+    
+//     let shouldShowPaymentModal = false;
+//     let amountForModal = totalAmount;
+//     let isRefund = false;
+
+//     if (!IS_EDITING) {
+//         if (status === PaymentStatus.PAID) {
+//             shouldShowPaymentModal = true;
+//         }
+//     } else if (initialPurchaseState) {
+//         const wasPending = initialPurchaseState.payment_status !== PaymentStatus.PAID;
+//         const isNowPaid = status === PaymentStatus.PAID;
+//         const pendingBalance = totalAmount - initialPurchaseState.total;
+
+//         if (wasPending && isNowPaid) {
+//             shouldShowPaymentModal = true;
+//             amountForModal = totalAmount; 
+//         } else if (isNowPaid && pendingBalance !== 0) {
+//             shouldShowPaymentModal = true;
+//             amountForModal = Math.abs(pendingBalance); // Always extract the absolute value for the modal
+//             isRefund = pendingBalance < 0; // If negative, it's a refund; if positive, it's an additional payment
+//         }
+//     }
+
+//     // Payment Modal Trigger
+//     if (shouldShowPaymentModal) {
+//         paymentInfo = await showPaymentDetailsFormModal(amountForModal, isRefund);
+
+//         if (!paymentInfo || Object.keys(paymentInfo).length === 0) {
+//             setLoadingState(FORM_ID, false);
+//             return;
+//         }
+//         values.payment_details = paymentInfo.paymentDetails;
+//     }
+    
+//     const url = this.action;
+//     const token = $(this).find('input[name="_token"]').val();
+//     const httpMethod = $(this).find('input[name="_method"]').val()?.toUpperCase() || 'POST';
+
+//     await submitPurchaseFormHandler(url, token, httpMethod, values, paymentInfo?.shouldPrint || false);
+// });
+
+// ==================== Initialization ====================
 $(() => {
-	bindRealTimeValidation();
-	bindPurchaseFormEvents();
-	bindOffcanvasEvents("create-offcanvas");
+	initializeCashRegister(); 
+	bindRealTimeValidation(); 
+	bindPurchaseFormEvents(); 
+	bindMainFormSubmission();
+	bindOffcanvasEvents("create-offcanvas"); 
+
+	if (IS_EDITING) {
+		initialPurchaseState = getFormFields();
+	}
 });

@@ -107,7 +107,7 @@ const createItemRowHtml = (type) => {
                 </div>
             </td>
             <td class="text-end">
-                <input name="unit-price" type="number" class="form-control border-secondary-subtle text-end fw-semibold text-body px-1 py-1 border-1" style="width: 135px; background-color: transparent;" value="0" min="0" step="5" required>
+                <input name="unit-price" type="number" class="form-control border-secondary-subtle text-end fw-semibold text-body px-1 py-1 border-1" style="width: 135px; background-color: transparent;" value="0" min="5" step="5" required>
             </td>
             <td class="fw-bold text-end">
                 ₡ <span class="sub-total">0</span>

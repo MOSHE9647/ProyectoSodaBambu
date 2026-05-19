@@ -128,7 +128,7 @@ class Purchase extends Model implements Receipable
             return $this->receiptItemsCache;
         }
 
-        $results = $this->details->map(fn($detail) => [
+        $results = $this->details->map(fn ($detail) => [
             'name' => $detail->purchasable?->name ?? "Item #{$detail->purchasable_id}",
             'quantity' => $detail->quantity,
             'unit_price' => $detail->unit_price,
@@ -146,7 +146,7 @@ class Purchase extends Model implements Receipable
      */
     public function getReceiptPayments(): array
     {
-        return $this->payments()->get()->map(fn($payment) => [
+        return $this->payments()->get()->map(fn ($payment) => [
             'amount' => $payment->amount,
             'method_label' => $payment->method->label(),
             'change_amount' => $payment->change_amount,

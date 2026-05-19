@@ -1,11 +1,11 @@
-import { SwalModal, SwalToast, SwalNotificationTypes } from "../../utils/sweetalert.js";
+import { SwalModal, SwalToast, SwalNotificationTypes, SwalConfirmation } from "../../utils/sweetalert.js";
 
 /**
  * Reusable SweetAlert2 custom class mappings used to keep modal styling
  * consistent across the sales page dialogs.
  */
 const SweetAlertModalOptions = {
-	popup: 'swal-popup opening-cash-swal w-auto h-auto',
+	popup: 'swal-popup opening-cash-swal w-50 h-auto',
 	title: 'justify-content-center border-bottom pb-3 mb-3',
 	closeButton: 'swal-close-btn fs-3',
 	htmlContainer: 'w-auto h-auto p-1 overflow-x-hidden',
@@ -65,8 +65,6 @@ const saveInitialCashRegisterAmount = async (amount) => {
 
 		// Parse JSON response and validate HTTP status.
 		const responseData = await response.json();
-		console.log("Response from saving initial cash register amount:", responseData);
-
 		if (!response.ok) throw new Error(
 			responseData.message || "Error al guardar el monto.",
 			{ cause: responseData.errors ? 'Error de validación' : 'Error de servidor' }
@@ -92,11 +90,10 @@ const saveInitialCashRegisterAmount = async (amount) => {
 		
 		if (error.cause === 'Error de validación') {
 			// Validation errors: let user retry by reopening the modal.
-			SwalModal.fire({
+			SwalConfirmation.fire({
 				icon: SwalNotificationTypes.ERROR,
-				text: `${error.message} \nPor favor, ingresa un monto válido e intenta nuevamente.`,
-				customClass: SweetAlertModalOptions,
 				title: "Error al guardar el monto inicial en caja",
+				html: `${error.message} <br>Por favor, ingresa un monto válido e intenta nuevamente.`,
 				confirmButtonText: "Reintentar",
 				allowEscapeKey: false,
 				allowOutsideClick: false,
@@ -107,15 +104,12 @@ const saveInitialCashRegisterAmount = async (amount) => {
 			});
 		} else {
 			// Unexpected/server errors: keep the same retry flow.
-			SwalModal.fire({
+			SwalConfirmation.fire({
 				icon: SwalNotificationTypes.ERROR,
 				title: "Ocurrió un error al guardar el monto inicial en caja.",
-				customClass: SweetAlertModalOptions,
 				allowEscapeKey: false,
 				allowOutsideClick: false,
-				text:
-					error.message ||
-					"Ocurrió un error inesperado. Por favor, intenta nuevamente.",
+				html: error.message || "Ocurrió un error inesperado. Por favor, intenta nuevamente.",
 				confirmButtonText: "Reintentar",
 			}).then((result) => {
 				if (result.isConfirmed) {
@@ -141,14 +135,14 @@ const showOpeningCashModal = async () => {
 	// Request the initial cash amount required to open the register.
 	SwalModal.fire({
 		title: "Abriendo caja...",
-		text: "Por favor, ingresa el monto inicial de dinero en caja para comenzar a registrar ventas.",
+		text: "Por favor, ingresa el monto inicial de dinero en caja para comenzar a registrar movimientos de caja.",
 		customClass: SweetAlertModalOptions,
 		didOpen: ensureOpeningCashStyles,
 		didDestroy: removeOpeningCashStyles,
 		allowEscapeKey: false,
 		allowOutsideClick: false,
 		input: "number",
-		inputAttributes: { min: 0, step: 1 },
+		inputAttributes: { min: 0, step: 5 },
 		showCancelButton: true,
 		reverseButtons: true,
 		confirmButtonText: "Aceptar",
@@ -157,16 +151,17 @@ const showOpeningCashModal = async () => {
 			if (!value) return "Por favor, ingresa un monto válido.";
 			if (isNaN(value)) return "El monto debe ser un número.";
 			if (!Number.isInteger(Number(value))) return "El monto debe ser un número entero.";
+			if ((Number(value) * 5) % 5 !== 0) return "El monto debe ser un múltiplo de 5.";
 			if (Number(value) < 0) return "El monto no puede ser negativo.";
 		}
 	}).then((result) => {
 		// If the modal is dismissed, block sales flow and return to dashboard.
 		if (result.isDismissed) {
-			SwalModal.fire({
+			SwalConfirmation.fire({
 				icon: SwalNotificationTypes.WARNING,
 				title: "Caja cerrada",
-				text: "No se ha ingresado un monto inicial. La caja permanecerá cerrada y no podrás registrar ventas.",
-				customClass: SweetAlertModalOptions,
+				html: `No se ha ingresado un monto inicial. <br>La caja permanecerá cerrada y no podrás registrar movimientos de caja.`,
+				// customClass: SweetAlertModalOptions,
 				confirmButtonText: "Entendido",
 				allowEscapeKey: false,
 				allowOutsideClick: false,

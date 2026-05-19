@@ -25,10 +25,10 @@ class PurchaseController extends Controller
                 $supplier = Supplier::findOrFail($request->supplier_id);
 
                 $items = PurchaseDetail::query()
-                    ->whereHas('purchase', fn($q) => $q->where('supplier_id', $supplier->id))
+                    ->whereHas('purchase', fn ($q) => $q->where('supplier_id', $supplier->id))
                     ->with('purchasable')
                     ->get()
-                    ->groupBy(fn($d) => $d->purchasable_type . '|' . $d->purchasable_id)
+                    ->groupBy(fn ($d) => $d->purchasable_type.'|'.$d->purchasable_id)
                     ->map(function ($group) {
                         $first = $group->first();
 
@@ -82,7 +82,7 @@ class PurchaseController extends Controller
                         ->orderBy('suppliers.name', $orderDir)
                         ->select('purchases.*');
                 } else {
-                    $query->orderBy('purchases.' . $orderCol, $orderDir);
+                    $query->orderBy('purchases.'.$orderCol, $orderDir);
                 }
             } else {
                 $query->orderBy('purchases.id', 'desc');
@@ -140,7 +140,7 @@ class PurchaseController extends Controller
         $purchaseDetailsData = $validatedData['purchase_details'] ?? [];
         $purchasePaymentData = $validatedData['payment_details'] ?? null;
 
-        $upsertPurchaseAction->execute(
+        $purchase = $upsertPurchaseAction->execute(
             $purchaseData,
             $purchaseDetailsData,
             $purchasePaymentData
@@ -151,6 +151,7 @@ class PurchaseController extends Controller
         return response()->json([
             'redirect' => route('purchases.index'),
             'message' => 'Datos de compra validados correctamente.',
+            'data' => $purchase,
         ], HttpStatus::CREATED);
     }
 
@@ -180,7 +181,7 @@ class PurchaseController extends Controller
         $purchaseDetailsData = $validatedData['purchase_details'] ?? [];
         $purchasePaymentData = $validatedData['payment_details'] ?? null;
 
-        $upsertPurchaseAction->execute(
+        $purchase = $upsertPurchaseAction->execute(
             $purchaseData,
             $purchaseDetailsData,
             $purchasePaymentData
@@ -191,6 +192,7 @@ class PurchaseController extends Controller
         return response()->json([
             'redirect' => route('purchases.index'),
             'message' => 'Datos de compra validados correctamente.',
+            'data' => $purchase,
         ], HttpStatus::OK);
     }
 
