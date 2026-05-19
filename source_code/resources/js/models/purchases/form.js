@@ -319,43 +319,6 @@ const submitPurchaseFormHandler = async (url, token, method, values, shouldPrint
 	}
 };
 
-// async function submitPurchaseFormHandlerBackup(url, token, method, values, shouldPrint) {
-// 	if (method === 'PUT') values.id = url.split('/').pop();
-
-// 	if (Array.isArray(values.purchase_details)) {
-// 		values.purchase_details = values.purchase_details.map(({ id, ...rest }) => id === null ? rest : { id, ...rest });
-// 	}
-
-// 	try {
-// 		const response = await fetch(url, {
-// 			method,
-// 			headers: {
-// 				'X-CSRF-TOKEN': token,
-// 				'Accept': 'application/json',
-// 				'Content-Type': 'application/json',
-// 			},
-// 			body: JSON.stringify(values)
-// 		});
-
-// 		if (response.ok) {
-// 			const data = await response.json();
-// 			if (shouldPrint && data.data?.id) {
-// 				await printReceipt(route('receipts.show', { model: 'purchases', id: data.data.id }));
-// 			}
-// 			window.location.href = data.redirect || route('purchases.index');
-// 		} else {
-// 			const errorData = await response.json();
-// 			const { field, message } = getLaravelFirstError(errorData);
-// 			if (field) showFieldError(field, message);
-// 			showFieldErrorInAlert(null, errorData.message || 'Error al enviar el formulario. Por favor, inténtelo de nuevo.');
-// 		}
-// 	} catch (error) {
-// 		SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: "Error al enviar el formulario" });
-// 	} finally {
-// 		setLoadingState(FORM_ID, false);
-// 	}
-// }
-
 const bindMainFormSubmission = () => {
 	const $form = $(`#${FORM_ID}`);
 	if (!$form.length) return;
@@ -521,17 +484,15 @@ const bindMainFormSubmission = () => {
 
             if (currentTotal < oldTotal && currentStatus === PaymentStatus.PAID) {
                 const confirm = await SwalConfirmation.fire({
-                    icon: SwalNotificationTypes.INFO,
+                    icon: SwalNotificationTypes.ERROR,
                     title: "Devolución requerida",
-                    html: `Usted tiene un pago previo que excede el nuevo total de la compra. Se deberá procesar una devolución por parte del proveedor por un monto de <strong>₡${amountToReturn}</strong>.<br><br>¿Desea continuar con el registro?`,
-                    confirmButtonText: "Sí, continuar",
-                    cancelButtonText: "No, cancelar"
+                    html: `Usted tiene un pago previo que excede el nuevo total de la compra. Lamentablemente, la función de devolución aún no está disponible para el módulo de compras, por lo que no podrá continuar con el registro de esta compra hasta que se implementen las devoluciones.`,
+                    confirmButtonText: "Entendido",
+                    showCancelButton: false,
                 }).then(r => r.isConfirmed);
 
                 if (confirm) {
-                    await submitPurchaseFormHandler(url, token, httpMethod, values);
-                } else {
-                    SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+					SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: "Devolución no disponible." });
                     setLoadingState(FORM_ID, false);
                 }
                 return;
@@ -543,74 +504,6 @@ const bindMainFormSubmission = () => {
 	});
 };
 
-// $(document).on('submit', `#${FORM_ID}`, async function(e) {
-//     e.preventDefault();
-//     setLoadingState(FORM_ID, true);
-
-//     const fieldValidators = getActiveFieldValidators();
-//     const values = getFormFields();
-
-// 	const filteredValidators = Object.fromEntries(
-// 		Object.entries(fieldValidators).filter(([key]) => !['total', 'purchase_details', 'payment_details'].includes(key))
-// 	);
-
-// 	clearAllFieldErrors(filteredValidators);
-//     const [isValid, fieldId, message] = validatePurchaseForm(values, fieldValidators);
-
-// 	if (!isValid) {
-// 		setLoadingState(FORM_ID, false);
-// 		showFieldErrorInAlert(fieldId, message);
-//         return;
-// 	}
-
-//     $("#form-error-alert").addClass("d-none");
-    
-//     let paymentInfo = null;
-//     const status = values.payment_status;
-//     const totalAmount = values.total;
-    
-//     let shouldShowPaymentModal = false;
-//     let amountForModal = totalAmount;
-//     let isRefund = false;
-
-//     if (!IS_EDITING) {
-//         if (status === PaymentStatus.PAID) {
-//             shouldShowPaymentModal = true;
-//         }
-//     } else if (initialPurchaseState) {
-//         const wasPending = initialPurchaseState.payment_status !== PaymentStatus.PAID;
-//         const isNowPaid = status === PaymentStatus.PAID;
-//         const pendingBalance = totalAmount - initialPurchaseState.total;
-
-//         if (wasPending && isNowPaid) {
-//             shouldShowPaymentModal = true;
-//             amountForModal = totalAmount; 
-//         } else if (isNowPaid && pendingBalance !== 0) {
-//             shouldShowPaymentModal = true;
-//             amountForModal = Math.abs(pendingBalance); // Always extract the absolute value for the modal
-//             isRefund = pendingBalance < 0; // If negative, it's a refund; if positive, it's an additional payment
-//         }
-//     }
-
-//     // Payment Modal Trigger
-//     if (shouldShowPaymentModal) {
-//         paymentInfo = await showPaymentDetailsFormModal(amountForModal, isRefund);
-
-//         if (!paymentInfo || Object.keys(paymentInfo).length === 0) {
-//             setLoadingState(FORM_ID, false);
-//             return;
-//         }
-//         values.payment_details = paymentInfo.paymentDetails;
-//     }
-    
-//     const url = this.action;
-//     const token = $(this).find('input[name="_token"]').val();
-//     const httpMethod = $(this).find('input[name="_method"]').val()?.toUpperCase() || 'POST';
-
-//     await submitPurchaseFormHandler(url, token, httpMethod, values, paymentInfo?.shouldPrint || false);
-// });
-
-// ==================== Initialization ====================
 $(() => {
 	initializeCashRegister(); 
 	bindRealTimeValidation(); 
