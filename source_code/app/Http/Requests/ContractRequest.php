@@ -264,13 +264,13 @@ class ContractRequest extends FormRequest
         // If the status is PAID, the total must be covered by the payments
         if ($status === PaymentStatus::PAID->value) {
             if ($totalPaid < $total) {
-                $validator->errors()->add('payment_details', "Monto insuficiente para completar la venta (Pagado: ₡$totalPaid, Total: ₡$total).");
+                $validator->errors()->add('payment_details', "Monto insuficiente para completar el pago (Pagado: ₡$totalPaid, Total: ₡$total).");
             }
         }
 
         // If the status is PENDING, there should be no NEW payments recorded
         if ($status === PaymentStatus::PENDING->value && ! $newPayments->isEmpty()) {
-            $validator->errors()->add('payment_details', 'Una venta PENDIENTE no debería tener pagos nuevos registrados.');
+            $validator->errors()->add('payment_details', 'Un contrato PENDIENTE no debería tener pagos nuevos registrados.');
         }
     }
 
@@ -287,16 +287,11 @@ class ContractRequest extends FormRequest
     {
         foreach ($this->input('payment_details', []) as $index => $payment) {
             $method = $payment['method'] ?? null;
-            $amount = (float) ($payment['amount'] ?? 0);
-            $change = (float) ($payment['change_amount'] ?? 0);
+            $amount = (int) ($payment['amount'] ?? 0);
+            $change = (int) ($payment['change_amount'] ?? 0);
 
-            // Obligatory Reference for electronic payments (SINPE/Card)
+            // Reference for electronic payments (SINPE/Card)
             $requiresRef = [PaymentMethod::SINPE->value, PaymentMethod::CARD->value];
-            if (in_array($method, $requiresRef) && empty($payment['reference'])) {
-                $validator->errors()->add("payment_details.$index.reference", 'La referencia es obligatoria para este método de pago.');
-            }
-
-            // Reference for electronic payments must be between 4 and 12 characters if provided
             if (in_array($method, $requiresRef) && ! empty($payment['reference'])) {
                 $refLength = strlen($payment['reference']);
                 if ($method === PaymentMethod::SINPE->value && ($refLength < 8 || $refLength > 12)) {
