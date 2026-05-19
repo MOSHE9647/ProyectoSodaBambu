@@ -27,6 +27,7 @@ let initialPurchaseState = null;
 
 const parseFormattedNumber = (text) => {
 	if (!text) return 0;
+	if (typeof text === "number") return text;
 	return parseInt(text.replace(/[^0-9,-]+/g, "").replace(",", ".")) || 0;
 };
 
@@ -201,7 +202,23 @@ const validatePurchaseForm = (values, fieldValidators) => {
 };
 
 const purchaseDetailsHasChanges = () => {
-	return false;
+	const originalDetails = PURCHASE_DATA.originalPurchase?.details || [];
+	const currentDetails = getFormFields().purchase_details || [];
+
+	let hasChanges = false;
+	if (originalDetails.length !== currentDetails.length) hasChanges = true;
+	else {
+		for (let i = 0; i < originalDetails.length; i++) {
+			if (originalDetails[i].id !== currentDetails[i].id ||
+				originalDetails[i].quantity !== currentDetails[i].quantity ||
+				originalDetails[i].unit_price !== currentDetails[i].unit_price ||
+				originalDetails[i].purchasable_id !== currentDetails[i].purchasable_id) {
+				hasChanges = true;
+				break;
+			}
+		}
+	}
+	return hasChanges;
 };
 
 // ==================== Real-Time Validation Handler ====================

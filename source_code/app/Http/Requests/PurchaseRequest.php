@@ -6,6 +6,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Models\Product;
+use App\Models\Purchase;
 use App\Models\Supply;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
@@ -219,23 +220,41 @@ class PurchaseRequest extends FormRequest
     {
         $status = $this->input('payment_status');
         $total = (int) $this->input('total', 0);
-        $payments = collect($this->input('payment_details', []));
-        $paidAmount = (int) $payments->sum('amount');
+
+        $newPayments = collect($this->input('payment_details', []));
+        $newPaidAmount = (int) $newPayments->sum('amount');
+
+        // Intentamos obtener la compra desde la ruta o el input de forma segura
+        $purchaseParam = $this->route('purchase') ?? $this->route('id') ?? $this->input('id');
+
+        $purchase = null;
+        if ($purchaseParam) {
+            $purchase = ($purchaseParam instanceof Purchase)
+                ? $purchaseParam->loadMissing('payments')
+                : Purchase::withTrashed()->with('payments')->find($purchaseParam);
+        }
+
+        $historicalPaidAmount = 0;
+        if ($purchase?->payments) {
+            $historicalPaidAmount = (int) $purchase->payments->sum('amount');
+        }
+
+        $totalPaid = $historicalPaidAmount + $newPaidAmount;
 
         // If the status is PAID, the total must be covered by the payments
         if ($status === PaymentStatus::PAID->value) {
-            if ($payments->isEmpty()) {
+            if ($totalPaid <= 0 && $newPayments->isEmpty()) {
                 $validator->errors()->add('payment_details', 'Debe registrar al menos un pago para marcar la compra como Completa.');
-            } elseif ($paidAmount < $total) {
+            } elseif ($totalPaid < $total) {
                 $totalFormatted = format_crc($total);
-                $paidAmountFormatted = format_crc($paidAmount);
-                $validator->errors()->add('payment_details', "Monto insuficiente para completar la venta (Pagado: $paidAmountFormatted, Total: $totalFormatted).");
+                $paidAmountFormatted = format_crc($totalPaid);
+                $validator->errors()->add('payment_details', "Monto insuficiente para completar la compra (Pagado: $paidAmountFormatted, Total: $totalFormatted).");
             }
         }
 
-        // If the status is PENDING, there should be no payments recorded yet
-        if ($status === PaymentStatus::PENDING->value && ! $payments->isEmpty()) {
-            $validator->errors()->add('payment_details', 'Una compra PENDIENTE no debería tener pagos registrados aún.');
+        // If the status is PENDING, there should be no NEW payments recorded yet
+        if ($status === PaymentStatus::PENDING->value && ! $newPayments->isEmpty()) {
+            $validator->errors()->add('payment_details', 'Una compra PENDIENTE no debería tener pagos nuevos registrados aún.');
         }
     }
 
