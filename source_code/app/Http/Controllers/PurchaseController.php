@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PaymentStatus;
+use Amp\Http\HttpStatus;
+use App\Actions\Inventory\UpsertPurchaseAction;
 use App\Enums\ProductType;
+use App\Http\Requests\PurchaseRequest;
 use App\Models\Product;
-use App\Models\ProductStock;
 use App\Models\Purchase;
 use App\Models\PurchaseDetail;
 use App\Models\Supplier;
 use App\Models\Supply;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
 
 class PurchaseController extends Controller
 {
@@ -26,10 +25,10 @@ class PurchaseController extends Controller
                 $supplier = Supplier::findOrFail($request->supplier_id);
 
                 $items = PurchaseDetail::query()
-                    ->whereHas('purchase', fn ($q) => $q->where('supplier_id', $supplier->id))
+                    ->whereHas('purchase', fn($q) => $q->where('supplier_id', $supplier->id))
                     ->with('purchasable')
                     ->get()
-                    ->groupBy(fn ($d) => $d->purchasable_type.'|'.$d->purchasable_id)
+                    ->groupBy(fn($d) => $d->purchasable_type . '|' . $d->purchasable_id)
                     ->map(function ($group) {
                         $first = $group->first();
 
@@ -83,7 +82,7 @@ class PurchaseController extends Controller
                         ->orderBy('suppliers.name', $orderDir)
                         ->select('purchases.*');
                 } else {
-                    $query->orderBy('purchases.'.$orderCol, $orderDir);
+                    $query->orderBy('purchases.' . $orderCol, $orderDir);
                 }
             } else {
                 $query->orderBy('purchases.id', 'desc');
@@ -126,50 +125,33 @@ class PurchaseController extends Controller
     public function create()
     {
         $suppliers = Supplier::all(['id', 'name']);
-        $products = Product::all(['id', 'name', 'sale_price', 'reference_cost', 'type']);
+        $products = Product::whereIn('type', [ProductType::MERCHANDISE, ProductType::PACKAGED])
+            ->get(['id', 'name', 'sale_price', 'reference_cost', 'type']);
         $supplies = Supply::all(['id', 'name', 'measure_unit', 'unit_price']);
 
         return view('models.purchases.create', compact('suppliers', 'products', 'supplies'));
     }
 
-    public function store(Request $request)
+    public function store(PurchaseRequest $purchaseRequest, UpsertPurchaseAction $upsertPurchaseAction)
     {
-        $paymentValues = implode(',', array_column(PaymentStatus::cases(), 'value'));
+        $validatedData = $purchaseRequest->validated();
 
-        $validated = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
-            'invoice_number' => 'required|string|max:255|unique:purchases,invoice_number',
-            'date' => 'required|date',
-            'payment_status' => 'required|string|in:'.$paymentValues,
-            'total' => 'required|integer|min:0',
-            'details' => 'required|array|min:1',
-            'details.*.purchasable_type' => 'required|in:product,supply',
-            'details.*.purchasable_id' => 'required|integer',
-            'details.*.subtotal' => 'required|integer|min:0',
-        ]);
+        $purchaseData = Arr::except($validatedData, ['purchase_details', 'payment_details']);
+        $purchaseDetailsData = $validatedData['purchase_details'] ?? [];
+        $purchasePaymentData = $validatedData['payment_details'] ?? null;
 
-        DB::transaction(function () use ($validated) {
-            $purchase = Purchase::create([
-                'supplier_id' => $validated['supplier_id'],
-                'invoice_number' => $validated['invoice_number'],
-                'date' => $validated['date'],
-                'payment_status' => $validated['payment_status'],
-                'total' => $validated['total'],
-            ]);
+        $upsertPurchaseAction->execute(
+            $purchaseData,
+            $purchaseDetailsData,
+            $purchasePaymentData
+        );
 
-            foreach ($validated['details'] as $detail) {
-                $modelClass = $detail['purchasable_type'] === 'product' ? Product::class : Supply::class;
-                $purchasable = $modelClass::findOrFail($detail['purchasable_id']);
+        session()->flash('success', 'Compra registrada exitosamente.');
 
-                $purchase->details()->create([
-                    'purchasable_type' => $modelClass,
-                    'purchasable_id' => $purchasable->id,
-                    'subtotal' => $detail['subtotal'],
-                ]);
-            }
-        });
-
-        return redirect()->route('purchases.index')->with('success', 'Compra creada correctamente.');
+        return response()->json([
+            'redirect' => route('purchases.index'),
+            'message' => 'Datos de compra validados correctamente.',
+        ], HttpStatus::CREATED);
     }
 
     public function show(Purchase $purchase)
@@ -183,129 +165,33 @@ class PurchaseController extends Controller
     {
         $purchase->load('details.purchasable');
         $suppliers = Supplier::all(['id', 'name']);
-        $products = Product::all(['id', 'name', 'sale_price', 'reference_cost', 'type']);
+        $products = Product::whereIn('type', [ProductType::MERCHANDISE, ProductType::PACKAGED])
+            ->get(['id', 'name', 'sale_price', 'reference_cost', 'type']);
         $supplies = Supply::all(['id', 'name', 'measure_unit', 'unit_price']);
 
         return view('models.purchases.edit', compact('purchase', 'suppliers', 'products', 'supplies'));
     }
 
-    public function update(Request $request, Purchase $purchase)
+    public function update(PurchaseRequest $purchaseRequest, UpsertPurchaseAction $upsertPurchaseAction)
     {
-        $paymentValues = implode(',', array_column(PaymentStatus::cases(), 'value'));
+        $validatedData = $purchaseRequest->validated();
 
-        $validated = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
-            'invoice_number' => 'required|string|max:255|unique:purchases,invoice_number,'.$purchase->id,
-            'date' => 'required|date',
-            'payment_status' => 'required|string|in:'.$paymentValues,
-            'total' => 'required|numeric|min:0',
-            'details' => 'required|array|min:1',
-            'details.*.id' => 'nullable|exists:purchase_details,id',
-            'details.*.purchasable_type' => 'required|in:product,supply',
-            'details.*.purchasable_id' => 'required|integer',
-            'details.*.subtotal' => 'required|numeric|min:0',
-        ]);
+        $purchaseData = Arr::except($validatedData, ['purchase_details', 'payment_details']);
+        $purchaseDetailsData = $validatedData['purchase_details'] ?? [];
+        $purchasePaymentData = $validatedData['payment_details'] ?? null;
 
-        DB::transaction(function () use ($validated, $purchase) {
-            $purchase->update([
-                'supplier_id' => $validated['supplier_id'],
-                'invoice_number' => $validated['invoice_number'],
-                'date' => $validated['date'],
-                'payment_status' => $validated['payment_status'],
-                'total' => $validated['total'],
-            ]);
+        $upsertPurchaseAction->execute(
+            $purchaseData,
+            $purchaseDetailsData,
+            $purchasePaymentData
+        );
 
-            $existingIds = $purchase->details()->pluck('id')->toArray();
-            $updatedIds = [];
-
-            foreach ($validated['details'] as $detail) {
-                $modelClass = $detail['purchasable_type'] === 'product' ? Product::class : Supply::class;
-                $purchasable = $modelClass::findOrFail($detail['purchasable_id']);
-
-                $data = [
-                    'purchasable_type' => $modelClass,
-                    'purchasable_id' => $purchasable->id,
-                    'subtotal' => $detail['subtotal'],
-                ];
-
-                if (isset($detail['id']) && in_array($detail['id'], $existingIds)) {
-                    $purchase->details()->where('id', $detail['id'])->update($data);
-                    $updatedIds[] = $detail['id'];
-                } else {
-                    $newDetail = $purchase->details()->create($data);
-                    $updatedIds[] = $newDetail->id;
-                }
-            }
-
-            $toDelete = array_diff($existingIds, $updatedIds);
-            $purchase->details()->whereIn('id', $toDelete)->delete();
-        });
-
-        return redirect()->route('purchases.index')->with('success', 'Compra actualizada correctamente.');
-    }
-
-    /**
-     * EIF-170: quickStoreProduct solo guarda minimum_stock.
-     * current_stock se omite intencionalmente en la creación.
-     */
-    public function quickStoreProduct(Request $request): JsonResponse
-    {
-        $rules = [
-            'category_id' => 'required|integer|exists:categories,id',
-            'barcode' => 'nullable|string',
-            'name' => 'required|string|max:255',
-            'type' => 'required|string|in:'.implode(',', array_column(ProductType::cases(), 'value')),
-            'has_inventory' => 'required|boolean',
-            'reference_cost' => 'required|integer|min:0',
-            'tax_percentage' => 'required|integer|min:0',
-            'margin_percentage' => 'required|integer|min:0',
-            'sale_price' => 'required|integer|min:0',
-        ];
-
-        // EIF-170: Solo se valida stock_minimo; stock_actual no se procesa en creación
-        if ($request->boolean('has_inventory')) {
-            $rules['stock_minimo'] = 'required|integer|min:0';
-        } else {
-            $rules['stock_minimo'] = 'nullable|integer|min:0';
-        }
-
-        $validator = Validator::make($request->all(), $rules);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $product = DB::transaction(function () use ($request, $validator) {
-            $product = Product::create($validator->validated());
-
-            // EIF-170: Al crear, current_stock arranca en 0 (se actualiza vía inventario)
-            if ($request->boolean('has_inventory')) {
-                ProductStock::create([
-                    'product_id' => $product->id,
-                    'current_stock' => 0,
-                    'minimum_stock' => (int) $request->input('stock_minimo', 0),
-                ]);
-            }
-
-            return $product;
-        });
+        session()->flash('success', 'Compra actualizada exitosamente.');
 
         return response()->json([
-            'success' => true,
-            'message' => 'Producto creado exitosamente.',
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'sale_price' => $product->sale_price,
-                'reference_cost' => $product->reference_cost,
-                'type' => $product->type instanceof ProductType
-                    ? $product->type->value
-                    : $product->type,
-            ],
-        ]);
+            'redirect' => route('purchases.index'),
+            'message' => 'Datos de compra validados correctamente.',
+        ], HttpStatus::OK);
     }
 
     public function destroy(Purchase $purchase)

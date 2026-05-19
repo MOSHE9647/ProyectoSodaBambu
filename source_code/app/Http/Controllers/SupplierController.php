@@ -63,7 +63,7 @@ class SupplierController extends Controller
             $supplier = Supplier::create($supplierData);
         }
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'message' => $message,
