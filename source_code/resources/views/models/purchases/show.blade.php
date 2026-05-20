@@ -64,10 +64,10 @@
             <thead class="table-subtle text-secondary-emphasis">
                 <tr>
                     <th style="width:115px">Tipo</th>
-                        <th>Nombre</th>
-                        <th style="width:125px; text-align:center">Cantidad</th>
-                        <th style="width:135px; text-align:right">Precio Unit. (₡)</th>
-                        <th style="width:120px; text-align:right">Subtotal</th>
+                    <th>Nombre</th>
+                    <th style="width:125px; text-align:center">Cantidad</th>
+                    <th style="width:135px; text-align:right">Precio Unit. (₡)</th>
+                    <th style="width:120px; text-align:right">Subtotal</th>
                 </tr>
             </thead>
             <tbody>

@@ -1,7 +1,7 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
 import { capitalizeSentence, formatCurrency, formatDate, toggleLoadingState } from "../../utils/utils.js";
-import { SwalConfirmation, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 // ======================== Constants ========================
 
@@ -43,19 +43,25 @@ window.deletePurchase = function (e) {
 window.showSupplierItems = async function (supplierId, supplierName) {
     try {
         // Trigger a native clean loading sequence inside SweetAlert
-        SwalConfirmation.fire({
-            title: `<i class="bi bi-truck me-2"></i> Productos/Insumos de <span class="text-primary">${supplierName}</span>`,
-            html: `
-                <div class="text-center py-4" id="swal-loader-container">
-                    <div class="spinner-border text-primary" role="status"></div>
+        SwalModal.fire({
+			title: `<i class="bi bi-truck me-2"></i> Productos/Insumos de <span class="ms-2" style="color: var(--bambu-logo-bg);">${supplierName}</span>`,
+			html: `
+                <div class="text-center py-4 h-100 my-auto" id="swal-loader-container">
+                    <div class="spinner-border" style="color: var(--bambu-logo-bg);" role="status"></div>
                     <p class="mt-2 text-muted">Cargando catálogo suministrado...</p>
                 </div>
             `,
-            showConfirmButton: false,
-            showCloseButton: true,
-            width: '750px',
-            customClass: { popup: 'p-4 rounded-3 text-start' }
-        });
+			showConfirmButton: false,
+			showCloseButton: true,
+			width: "750px",
+			customClass: {
+				popup: "swal-popup w-50 h-auto",
+				title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
+				closeButton: "swal-close-btn fs-3",
+				cancelButton: "btn btn-danger mx-1",
+				icon: "mb-4",
+			},
+		});
 
         const response = await fetch(`${MODEL_ROUTES.index}?report=true&supplier_id=${supplierId}`, {
             headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" }
@@ -74,23 +80,38 @@ window.showSupplierItems = async function (supplierId, supplierName) {
         }
 
         // Build elegant template using the point-of-sale layout scheme
-        let tableRows = items.map(item => `
-            <tr>
-                <td><span class="badge ${item.type === 'Producto' ? 'bg-info text-dark' : 'bg-warning text-dark'}">${item.type}</span></td>
-                <td class="fw-semibold">${item.name}</td>
-                <td class="text-center bg-light text-primary fw-bold">${item.times}</td>
-            </tr>
-        `).join('');
+        let tableRows = items
+			.map(
+				(item) => {
+                    const itemTheme = item.type === "Producto"
+                        ? { color: 'info', icon: 'bi-box-seam' }
+                        : { color: 'warning', icon: 'bi-basket' };
+                    const itemTypeLabel = item.type === "Producto" ? "Producto" : "Insumo";
+                    return `
+                        <tr>
+                            <td class="text-start">
+                                <span class="badge bg-${itemTheme.color} text-${itemTheme.color}-emphasis border border-${itemTheme.color} bg-${itemTheme.color}-subtle rounded-pill px-3 py-2">
+                                    <i class="bi ${itemTheme.icon} me-1"></i>
+                                    ${itemTypeLabel}
+                                </span>
+                            </td>
+                            <td class="text-start fw-semibold">${item.name}</td>
+                            <td class="text-center fw-bold" style="color: var(--bambu-logo-bg);">${item.times}</td>
+                        </tr>
+                    `;
+                },
+			)
+			.join("");
 
         $htmlContainer.html(`
-            <p class="text-muted small mb-3">Historial de suministros provistos detectados en inventario:</p>
-            <div class="table-responsive rounded-2 border" style="max-height: 400px; overflow-y: auto;">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light position-sticky top-0">
+            <p class="text-start text-muted mb-3">Historial de suministros provistos detectados en inventario:</p>
+            <div class="table-responsive p-0" style="font-size: 1rem; max-height: 700px; overflow-y: auto;">
+                <table class="init-datatable table table-hover align-middle" style="min-width: 600px;">
+                    <thead class="table-subtle text-secondary-emphasis">
                         <tr>
-                            <th>Tipo</th>
-                            <th>Nombre del Ítem</th>
-                            <th class="text-center">Suministros Totales</th>
+                            <th style="width: 25%;">Tipo</th>
+                            <th style="width: 50%;">Nombre del Ítem</th>
+                            <th class="text-center" style="width: 25%;">Suministros Totales</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,6 +120,21 @@ window.showSupplierItems = async function (supplierId, supplierName) {
                 </table>
             </div>
         `);
+
+        const $tables = $(".swal2-popup .init-datatable");
+		if ($tables.length) {
+			$tables.each(function () {
+				$(this).DataTable({
+					pageLength: 10,
+					lengthMenu: [5, 10, 25, 50],
+					searching: false,
+                    ordering: false,
+					layout: {
+						topStart: null,
+					},
+				});
+			});
+		}
     } catch (error) {
         console.error("Error building supplier dynamic context modal:", error);
         SwalToast.fire({ icon: 'error', title: 'Error al recuperar información del proveedor.' });
