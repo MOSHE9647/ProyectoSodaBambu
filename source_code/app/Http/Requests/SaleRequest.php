@@ -45,6 +45,9 @@ class SaleRequest extends FormRequest
             'payment_status' => ['required', new Enum(PaymentStatus::class)],
             'date' => ['required', 'date', 'after_or_equal:today', 'before:tomorrow'],
             'total' => ['required', 'integer', 'min:0'],
+            'start_date' => ['sometimes', 'nullable', 'date', 'before_or_equal:today', 'required_with:end_date'],
+            'end_date'   => ['sometimes', 'nullable', 'date', 'required_with:start_date'],
+
 
             // Sale details array
             'sale_details' => ['required', 'array', 'min:1'],
@@ -129,6 +132,12 @@ class SaleRequest extends FormRequest
             'payment_details.*.change_amount.min' => 'El monto de cambio no puede ser negativo.',
 
             'payment_details.*.reference.string' => 'La referencia debe ser una cadena de texto.',
+
+            'start_date.before_or_equal' => 'La fecha de inicio no puede ser mayor a la fecha de hoy.',
+            'start_date.required_with'   => 'Debe ingresar tanto la fecha de inicio como la fecha de fin.',
+            'end_date.required_with'     => 'Debe ingresar tanto la fecha de inicio como la fecha de fin.',
+            'start_date.date'            => 'La fecha de inicio debe ser una fecha válida.',
+            'end_date.date'              => 'La fecha de fin debe ser una fecha válida.',
         ];
     }
 

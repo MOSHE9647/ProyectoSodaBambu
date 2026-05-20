@@ -40,11 +40,60 @@ class SaleController extends Controller implements HasMiddleware
     }
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource (Historial de Ventas).
      */
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        //
+        if ($request->ajax()) {
+            // Consulta base cargando las relaciones necesarias para el modal y los tiquetes
+            $query = \App\Models\Sale::with(['saleDetails.product', 'payments']);
+
+            // 1. Filtro personalizado por rango de fechas (Criterio HU)
+            if ($request->filled('start_date') && $request->filled('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                $query->whereBetween('date', [$startDate, $endDate]);
+            }
+
+            // 2. Filtro personalizado por número de factura (Criterio HU)
+            if ($request->filled('invoice_number')) {
+                $query->where('invoice_number', 'like', '%' . $request->input('invoice_number') . '%');
+            }
+
+            return \Yajra\DataTables\DataTables::of($query)
+                ->editColumn('date', function ($sale) {
+                    return $sale->date ? $sale->date->format('d/m/Y h:i A') : 'N/A';
+                })
+                ->editColumn('total', function ($sale) {
+                    return '₡ ' . number_format($sale->total, 0);
+                })
+                ->addColumn('payment_status', function ($sale) {
+                    // Renderizar un badge estético según si tiene pagos asociados
+                    return $sale->payments->isNotEmpty() 
+                        ? '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Pagado</span>'
+                        : '<span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2">Pendiente</span>';
+                })
+                ->addColumn('actions', function ($sale) {
+                    // Validar si el usuario autenticado tiene rol de Administrador
+                    // Nota: Si en tu sistema usan un método diferente como $user->isAdmin(), lo adaptas.
+                    $isAdmin = auth()->user()->hasRole(\App\Enums\UserRole::ADMIN->value);
+
+                    $btnVer = '<button type="button" class="btn btn-info btn-sm btn-view-sale me-1 text-white" data-id="' . $sale->id . '" title="Ver Información"><i class="bi bi-eye"></i></button>';
+                    $btnPrint = '<button type="button" class="btn btn-primary btn-sm btn-print-sale me-1" data-id="' . $sale->id . '" title="Reimprimir Tiquete"><i class="bi bi-printer"></i></button>';
+                    
+                    // Si es admin se activa el botón de borrar, si no, se muestra deshabilitado gris
+                    $btnDelete = $isAdmin 
+                        ? '<button type="button" class="btn btn-danger btn-sm btn-delete-sale" data-id="' . $sale->id . '" title="Eliminar"><i class="bi bi-trash"></i></button>'
+                        : '<button type="button" class="btn btn-secondary btn-sm opacity-50" disabled title="Solo administradores pueden eliminar"><i class="bi bi-trash"></i></button>';
+
+                    return '<div class="d-flex justify-content-start align-items-center">' . $btnVer . $btnPrint . $btnDelete . '</div>';
+                })
+                ->rawColumns(['payment_status', 'actions'])
+                ->toJson();
+        }
+
+        // Si no es un llamado AJAX, simplemente renderiza la vista que creamos en el paso anterior
+        return view('pages.sales.index');
     }
 
     /**
@@ -118,9 +167,30 @@ class SaleController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Sale $sale)
+    public function destroy(\App\Models\Sale $sale)
     {
-        //
+        // Criterio de Aceptación: Validar estrictamente en backend que solo el admin pueda borrar
+        if (!auth()->user()->hasRole(\App\Enums\UserRole::ADMIN->value)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Acceso denegado. Solo los administradores pueden eliminar registros del historial.'
+            ], 403);
+        }
+
+        try {
+            // Eliminar la venta de forma segura
+            $sale->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'La venta ha sido eliminada del historial correctamente.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ocurrió un error interno al intentar eliminar la venta.'
+            ], 500);
+        }
     }
 
     private function getProductsList(Request $request)
