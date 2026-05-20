@@ -100,7 +100,11 @@ const getExtractedPaymentDetails = () => {
         });
     });
 
-    return { paymentDetails, shouldPrint };
+    return { 
+        paymentDetails, 
+        shouldPrint,
+        cancelled:false // This field is set to true if the user closes the modal without submitting, so the caller can explicitly handle that case.
+     };
 };
 
 // ===================== UI Updaters ==========================
@@ -392,7 +396,11 @@ const bindEvents = () => {
 export async function showPaymentDetailsFormModal(purchaseTotalAmount, loadingButtonId) {
     setLoadingState(loadingButtonId, true);
     const html = await fetchPaymentDetailsModalContent(purchaseTotalAmount);
-    if (!html) return;
+    
+    if (!html) {
+        setLoadingState(loadingButtonId, false);
+        return { paymentDetails: [], shouldPrint: false };
+    }
 
     const modal = showBootstrapModal('payment-details-modal','Procesar Pago', html, {
         modalClass: 'text-start',
@@ -416,11 +424,17 @@ export async function showPaymentDetailsFormModal(purchaseTotalAmount, loadingBu
     return new Promise((resolve) => {
         const interval = setInterval(() => {
             if (finalDetails) {
-                modal.hide();
-                setLoadingState(loadingButtonId, false);
                 clearInterval(interval);
-                resolve(finalDetails);
+                modal.hide();
             }
-        }, 300);
+        }, 100);
+
+        // This listener ensures that the loading state is ALWAYS cleaned up when the modal closes
+        container.addEventListener('hidden.bs.modal', function () {
+            clearInterval(interval);
+            setLoadingState(loadingButtonId, false);
+            // If there are no details (closed without submitting), we return a safe object to avoid destructuring errors
+            resolve(finalDetails || { paymentDetails: [], shouldPrint: false, cancelled: true });
+        }, { once: true });
     });
 }
