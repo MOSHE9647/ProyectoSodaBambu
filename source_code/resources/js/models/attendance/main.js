@@ -318,6 +318,8 @@ function initHistoryTab() {
 				views.*/
 				data: "total_hours",
 				name: "total_hours",
+				type: "string",
+				className: "text-center",
 				render: (val, type, row) => {
 					if (!val || val === '0h')
 						return '<span class="text-muted px-4 py-2">&mdash;</span>';

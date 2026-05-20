@@ -62,6 +62,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::group(['prefix' => 'attendance'], function () {
         Route::get('/tabs/{tab}', [AttendanceController::class, 'tab'])->name('attendance.tabs');
         Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
+        Route::post('/salary/pdf', [AttendanceController::class, 'generateSalaryPdf'])->name('attendance.salary.pdf');
     });
 
     // Routes for Cash Register management

@@ -24,7 +24,7 @@ class EmployeeFactory extends Factory
             'phone' => $this->faker->phoneNumber(),
             'status' => $this->faker->randomElement(EmployeeStatus::cases()),
             'payment_frequency' => $this->faker->randomElement(PaymentFrequency::cases()),
-            'hourly_wage' => $this->faker->randomFloat(2, 1600, 2300),
+            'hourly_wage' => $this->faker->numberBetween(320, 460) * 5, // Random wage between 1600 and 2300 colones (in multiples of 5)
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ];

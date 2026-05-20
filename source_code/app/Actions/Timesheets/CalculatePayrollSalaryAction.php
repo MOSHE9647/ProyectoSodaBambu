@@ -32,7 +32,8 @@ class CalculatePayrollSalaryAction
      */
     public function execute(Employee $employee, Collection $timesheets): array
     {
-        $hourlyWageCents = $this->toCents($employee->hourly_wage_raw);
+        $hourlyWageCents = $this->roundToNearestFiveCRC($this->toCents($employee->hourly_wage_raw));
+        $hourlyWageRoundedLabel = $this->formatCurrencyFromCents($hourlyWageCents).'/hr';
 
         $timesheetRows = $timesheets->map(function (Timesheet $timesheet) use ($hourlyWageCents): array {
             $hours = $timesheet->total_hours_raw;
@@ -69,6 +70,8 @@ class CalculatePayrollSalaryAction
             'total_salary_amount_cents' => $totalSalaryCents,
             'total_salary_amount_label' => $this->formatCurrencyFromCents($totalSalaryCents),
             'includes_holiday_days' => $timesheetRows->contains(fn (array $row) => $row['is_holiday']),
+            'hourly_wage_rounded' => $hourlyWageCents / 100,
+            'hourly_wage_rounded_label' => $hourlyWageRoundedLabel,
         ];
     }
 
@@ -90,8 +93,9 @@ class CalculatePayrollSalaryAction
     private function calculateDailySalaryCents(int $hourlyWageCents, float $hours, int $multiplier): int
     {
         $hoursHundredths = (int) round($hours * 100);
+        $rawCents = (int) round(($hourlyWageCents * $hoursHundredths * $multiplier) / 100);
 
-        return (int) round(($hourlyWageCents * $hoursHundredths * $multiplier) / 100);
+        return $this->roundToNearestFiveCRC($rawCents);
     }
 
     /**
@@ -181,5 +185,11 @@ class CalculatePayrollSalaryAction
         $normalized = rtrim(rtrim(number_format($hours, 2, '.', ''), '0'), '.');
 
         return str_replace('.', ',', $normalized).'h';
+    }
+
+    private function roundToNearestFiveCRC(int $cents): int
+    {
+        // 5 colones = 500 cents, so we round to the nearest multiple of 500 cents
+        return (int) round($cents / 500) * 500;
     }
 }

@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Http\Requests\TimesheetRequest;
 use App\Models\Employee;
 use App\Models\Timesheet;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -295,6 +296,7 @@ class AttendanceController extends Controller implements HasMiddleware
                 'name' => $t->employee?->user?->name,
                 'email' => $t->employee?->user?->email,
             ])
+            ->editColumn('total_hours', fn (Timesheet $t) => $t->total_hours_label)
             ->with(['employee_filters' => $employeeFilters])
             ->toJson();
     }
@@ -320,5 +322,31 @@ class AttendanceController extends Controller implements HasMiddleware
         );
 
         return view('models.attendance.tabs.salary', $salaryData);
+    }
+
+    /**
+     * Generate and stream a PDF payroll report for the selected employee and period.
+     */
+    public function generateSalaryPdf(Request $request, BuildSalaryTabDataAction $buildSalaryTabDataAction)
+    {
+        $salaryData = $buildSalaryTabDataAction->execute(
+            $request->integer('employee_id'),
+            $request->input('payroll_period'),
+            $request->input('payroll_half'),
+        );
+
+        abort_if(! $salaryData['employee'], 404, 'No se encontraron datos para generar el reporte.');
+
+        $employee = $salaryData['employee'];
+        $generatedAt = Carbon::now(self::TZ);
+
+        $pdf = Pdf::loadView('models.attendance.pdf.salary', compact('employee', 'generatedAt'))
+            ->setPaper('a4', 'portrait');
+
+        $safeName = preg_replace('/[^a-z0-9]+/', '_', strtolower($employee['name'] ?? 'colaborador'));
+        $period = $employee['payroll_period'] ?? $generatedAt->format('Y-m');
+        $half = $employee['payroll_half'] ? "_{$employee['payroll_half']}" : '';
+
+        return $pdf->download("nomina_{$safeName}_{$period}{$half}.pdf");
     }
 }

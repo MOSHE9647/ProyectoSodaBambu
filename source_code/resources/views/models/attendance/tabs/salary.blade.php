@@ -202,6 +202,34 @@
         </div>
         @endif
     </div>
+
+    <form id="salary-pdf-form" action="{{ route('attendance.salary.pdf') }}" method="POST" class="d-flex flex-row justify-content-between align-items-center gap-3 mt-4" target="_blank">
+        @csrf
+        <input type="hidden" name="employee_id" value="{{ data_get($employee, 'id') }}">
+        <input type="hidden" name="payroll_period" value="{{ data_get($employee, 'payroll_period') }}">
+        @if(data_get($employee, 'payroll_half'))
+            <input type="hidden" name="payroll_half" value="{{ data_get($employee, 'payroll_half') }}">
+        @endif
+
+        <span class="text-muted">
+            Última actualización: 
+            {{ Carbon\Carbon::now()->timezone('America/Costa_Rica')->translatedFormat('d \d\e F \d\e Y \a \l\a\s h:i A') }}
+        </span>
+        <x-form.button
+            :id="'generate-pdf-button'"
+            :class="'btn btn-outline-primary rounded-3 px-4 py-2'"
+            :spinnerId="'generate-pdf-spinner'"
+            :loadingMessage="'Generando PDF...'"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            title="Generar PDF con el desglose del salario calculado para este colaborador y periodo seleccionado."
+        >
+            <div id="generate-pdf-button-text" class="d-flex flex-row align-items-center justify-content-center">
+                <i class="bi bi-file-earmark-pdf me-2"></i>
+                Generar PDF
+            </div>
+        </x-form.button>
+    </form>
 </div>
 @else
 <div id="salary-calculation-result-empty" class="card-container rounded-3 p-3 p-lg-4 mt-4">
