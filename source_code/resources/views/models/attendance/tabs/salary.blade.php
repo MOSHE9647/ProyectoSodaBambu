@@ -203,7 +203,9 @@
         @endif
     </div>
 
-    <form id="salary-pdf-form" action="{{ route('attendance.salary.pdf') }}" method="POST" class="d-flex flex-row justify-content-between align-items-center gap-3 mt-4" target="_blank">
+    <form id="salary-pdf-form" action="{{ route('attendance.salary.pdf') }}" method="POST" 
+        class="d-flex flex-row justify-content-{{ $timesheets->isNotEmpty() ? 'between' : 'center' }} align-items-center gap-3 mt-4" target="_blank"
+    >
         @csrf
         <input type="hidden" name="employee_id" value="{{ data_get($employee, 'id') }}">
         <input type="hidden" name="payroll_period" value="{{ data_get($employee, 'payroll_period') }}">
@@ -215,6 +217,8 @@
             Última actualización: 
             {{ Carbon\Carbon::now()->timezone('America/Costa_Rica')->translatedFormat('d \d\e F \d\e Y \a \l\a\s h:i A') }}
         </span>
+
+        @if ($timesheets->isNotEmpty())
         <x-form.button
             :id="'generate-pdf-button'"
             :class="'btn btn-outline-primary rounded-3 px-4 py-2'"
@@ -229,6 +233,7 @@
                 Generar PDF
             </div>
         </x-form.button>
+        @endif
     </form>
 </div>
 @else
