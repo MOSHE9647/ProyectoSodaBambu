@@ -3,7 +3,6 @@
 use App\Actions\Timesheets\CalculatePayrollSalaryAction;
 use App\Enums\EmployeeStatus;
 use App\Enums\PaymentFrequency;
-use App\Enums\UserRole;
 use App\Models\Employee;
 use App\Models\Timesheet;
 use App\Models\User;
@@ -11,10 +10,22 @@ use Illuminate\Support\Collection;
 
 beforeEach(function () {
     app()->bind('Illuminate\Foundation\Vite', function () {
-        return new class {
-            public function __invoke(...$args) { return ''; }
-            public function __call($name, $args) { return ''; }
-            public static function __callStatic($name, $args) { return ''; }
+        return new class
+        {
+            public function __invoke(...$args)
+            {
+                return '';
+            }
+
+            public function __call($name, $args)
+            {
+                return '';
+            }
+
+            public static function __callStatic($name, $args)
+            {
+                return '';
+            }
         };
     });
 });
@@ -30,8 +41,8 @@ beforeEach(function () {
 function createEmployeeWithHourlyWage(int $hourlyWage = 2000): Employee
 {
     return Employee::factory()->create([
-        'hourly_wage'       => $hourlyWage,
-        'status'            => EmployeeStatus::ACTIVE,
+        'hourly_wage' => $hourlyWage,
+        'status' => EmployeeStatus::ACTIVE,
         'payment_frequency' => PaymentFrequency::MONTHLY,
     ]);
 }
@@ -43,11 +54,11 @@ function createTimesheetForEmployee(Employee $employee, float $totalHours, bool 
 {
     return Timesheet::factory()->create([
         'employee_id' => $employee->id,
-        'work_date'   => '2026-05-01',
-        'start_time'  => '2026-05-01 08:00:00',
-        'end_time'    => '2026-05-01 08:00:00',
+        'work_date' => '2026-05-01',
+        'start_time' => '2026-05-01 08:00:00',
+        'end_time' => '2026-05-01 08:00:00',
         'total_hours' => $totalHours,
-        'is_holiday'  => $isHoliday,
+        'is_holiday' => $isHoliday,
     ]);
 }
 
@@ -171,7 +182,7 @@ test('CP-07_HU-SALARY - salary_amount_cents in payroll result is always an integ
     $timesheets = Collection::make([$timesheet]);
 
     // When: se ejecuta la Action
-    $action = new CalculatePayrollSalaryAction();
+    $action = new CalculatePayrollSalaryAction;
     $result = $action->execute($employee, $timesheets);
 
     // Then: total_salary_amount_cents y salary por fila son enteros
@@ -182,7 +193,6 @@ test('CP-07_HU-SALARY - salary_amount_cents in payroll result is always an integ
     }
 });
 
-
 /**
  * Criterio 1: En días feriados el multiplicador es 2, por lo que
  * el salario se duplica. El resultado debe seguir siendo entero.
@@ -190,12 +200,12 @@ test('CP-07_HU-SALARY - salary_amount_cents in payroll result is always an integ
  */
 test('CP-08_HU-SALARY - holiday day doubles salary amount and result remains integer', function () {
     // Given: empleado con ₡2000/hr y 8 horas en día feriado
-    $employee  = createEmployeeWithHourlyWage(2000);
+    $employee = createEmployeeWithHourlyWage(2000);
     $timesheet = createTimesheetForEmployee($employee, 8.0, isHoliday: true);
     $timesheets = Collection::make([$timesheet]);
 
     // When: se calcula la nómina
-    $action = new CalculatePayrollSalaryAction();
+    $action = new CalculatePayrollSalaryAction;
     $result = $action->execute($employee, $timesheets);
 
     // Then: el salario se duplicó y sigue siendo entero
@@ -211,12 +221,12 @@ test('CP-08_HU-SALARY - holiday day doubles salary amount and result remains int
  */
 test('CP-09_HU-SALARY - total_salary_amount_label contains CRC symbol and no decimal noise', function () {
     // Given: empleado con ₡2000/hr y 8 horas
-    $employee  = createEmployeeWithHourlyWage(2000);
+    $employee = createEmployeeWithHourlyWage(2000);
     $timesheet = createTimesheetForEmployee($employee, 8.0);
     $timesheets = Collection::make([$timesheet]);
 
     // When: se calcula la nómina
-    $action = new CalculatePayrollSalaryAction();
+    $action = new CalculatePayrollSalaryAction;
     $result = $action->execute($employee, $timesheets);
 
     // Then: el label de salario tiene ₡ y no muestra ".00" innecesario
@@ -239,7 +249,7 @@ test('CP-10_HU-SALARY - accumulated salary across multiple days remains integer 
     ]);
 
     // When: se calcula la nómina consolidada
-    $action = new CalculatePayrollSalaryAction();
+    $action = new CalculatePayrollSalaryAction;
     $result = $action->execute($employee, $timesheets);
 
     // Then: centavos total es entero y coincide con la suma esperada
@@ -264,7 +274,7 @@ test('CP-11_HU-SALARY - worked_days count is an integer and excludes zero-hour e
     ]);
 
     // When: se ejecuta la Action
-    $action = new CalculatePayrollSalaryAction();
+    $action = new CalculatePayrollSalaryAction;
     $result = $action->execute($employee, $timesheets);
 
     // Then: solo 3 días cuentan y el resultado es int
@@ -300,14 +310,13 @@ test('CP-12_HU-SALARY - total_hours_label uses comma as decimal separator and h 
     }
 });
 
-
 /**
  * El accessor total_hours_label no debe mostrar ceros de relleno innecesarios.
  * "8,00h" es incorrecto; "8h" es correcto.
  */
 test('CP-13_HU-SALARY - total_hours_label trims trailing zeros for whole hour values', function () {
     // Given: timesheet con exactamente 8 horas
-    $employee  = createEmployeeWithHourlyWage(2000);
+    $employee = createEmployeeWithHourlyWage(2000);
     $timesheet = createTimesheetForEmployee($employee, 8.0);
 
     // Then: sin ceros residuales
@@ -315,18 +324,16 @@ test('CP-13_HU-SALARY - total_hours_label trims trailing zeros for whole hour va
         ->and($timesheet->total_hours_label)->not->toContain('00');
 });
 
-
 /**
  * total_hours_raw devuelve float con el valor exacto almacenado en BD,
  * sin que el cast de modelo lo redondee o modifique.
  */
 test('CP-14_HU-SALARY - total_hours_raw returns exact float value from database without rounding', function () {
     // Given: timesheet con 3.75 horas precisas
-    $employee  = createEmployeeWithHourlyWage(2000);
+    $employee = createEmployeeWithHourlyWage(2000);
     $timesheet = createTimesheetForEmployee($employee, 3.75);
 
     // Then: raw preserva el valor exacto
     expect($timesheet->total_hours_raw)->toBeFloat()
         ->and($timesheet->total_hours_raw)->toBe(3.75);
 });
-
