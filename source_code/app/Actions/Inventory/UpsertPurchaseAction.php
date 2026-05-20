@@ -102,9 +102,9 @@ class UpsertPurchaseAction
      * This method handles two scenarios:
      * 1. If there are new payment details provided, it will synchronize them with the purchase.
      * 2. If the updated total is less than the amount already paid, it will create a negative payment (refund) for the difference.
-     * @param Purchase $purchase The purchase model instance to process payments for.
-     * @param mixed $paymentDetailsData Array of payment data to upsert, or null if no payments are provided.
-     * @return void
+     *
+     * @param  Purchase  $purchase  The purchase model instance to process payments for.
+     * @param  mixed  $paymentDetailsData  Array of payment data to upsert, or null if no payments are provided.
      */
     private function processAutomaticRefundOrPayment(Purchase $purchase, ?array $paymentDetailsData): void
     {

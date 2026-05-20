@@ -3,8 +3,10 @@
 namespace App\Observers;
 
 use App\Actions\Inventory\GetProductsAboutToExpireCount;
+use App\Enums\ProductType;
 use App\Models\Product;
 use App\Models\PurchaseDetail;
+use App\Models\Supply;
 
 class PurchaseDetailObserver
 {
@@ -16,7 +18,7 @@ class PurchaseDetailObserver
     public function created(PurchaseDetail $purchaseDetail): void
     {
         $this->adjustStock($purchaseDetail, $purchaseDetail->quantity, 'increment');
-        
+
         // Actualizamos el costo maestro del producto o insumo al precio de esta compra
         $this->updateMasterCost($purchaseDetail);
 
@@ -40,7 +42,7 @@ class PurchaseDetailObserver
 
             // Incrementamos el stock del nuevo producto
             $this->adjustStock($purchaseDetail, $purchaseDetail->quantity, 'increment');
-            
+
             // Actualizamos el costo maestro del nuevo producto/insumo
             $this->updateMasterCost($purchaseDetail);
         } elseif ($purchaseDetail->isDirty('quantity')) {
@@ -91,7 +93,7 @@ class PurchaseDetailObserver
     private function adjustStock(PurchaseDetail $purchaseDetail, int $quantity, string $method): void
     {
         $product = $purchaseDetail->purchasable()->withTrashed()->first();
-        
+
         if ($product instanceof Product && $product->has_inventory) {
             $product->stock()->$method('current_stock', $quantity);
         }
@@ -110,9 +112,9 @@ class PurchaseDetailObserver
         }
 
         if ($item instanceof Product) {
-            if ($item->type !== \App\Enums\ProductType::MERCHANDISE) {
+            if ($item->type !== ProductType::MERCHANDISE) {
                 // Updates Product's Sale Price.
-                // Since no Merchandise products don't have a reference cost, 
+                // Since no Merchandise products don't have a reference cost,
                 // they use the unit price of the last purchase as their sale price
                 $item->update(['sale_price' => $purchaseDetail->unit_price]);
             } else {
@@ -124,7 +126,7 @@ class PurchaseDetailObserver
                     $item->margin_percentage
                 )]);
             }
-        } elseif ($item instanceof \App\Models\Supply) {
+        } elseif ($item instanceof Supply) {
             // Updates Supply's Unit Price.
             $item->update(['unit_price' => $purchaseDetail->unit_price]);
         }

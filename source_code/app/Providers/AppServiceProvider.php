@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Models\Contract;
 use App\Models\Product;
 use App\Models\ProductStock;
-use App\Models\Purchase;
 use App\Models\PurchaseDetail;
 use App\Models\Sale;
 use App\Models\SaleDetail;
