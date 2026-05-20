@@ -1,11 +1,15 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
-import { capitalizeSentence, toggleLoadingState } from "../../utils/utils.js";
+import { capitalizeSentence, formatCurrency, toggleLoadingState } from "../../utils/utils.js";
 import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
+// ======================== Constants ========================
+
+// Model Configuration
 const MODEL_NAME = 'compra';
 const BTN_CLASS_PRIMARY = 'btn-primary';
 
+// Routes Configuration
 const MODEL_ROUTES = {
     index: route('purchases.index'),
     create: route('purchases.create'),
@@ -14,9 +18,13 @@ const MODEL_ROUTES = {
     delete: route('purchases.destroy', { purchase: ':id' }),
 };
 
+// ==================== Global Functions ====================
+
 window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
+
+// ==================== Helper Functions ====================
 
 window.showPurchaseInfo = function (url, anchor) {
     return showModelInfo(url, anchor, MODEL_NAME);
@@ -82,6 +90,44 @@ window.showSupplierItems = function (supplierId, supplierName) {
     );
 };
 
+/**
+ * Create an HTML badge element and return its outer HTML as a string.
+ * Uses semantic "type" to build Bootstrap-like utility classes.
+ *
+ * @param {string} text - Text to display inside the badge.
+ * @param {string} [type='secondary'] - Semantic type (e.g. 'success', 'danger').
+ * @returns {string} Outer HTML of the created badge element.
+ */
+const createStatusBadge = (text, type = 'secondary') => {
+    const badge = document.createElement('span');
+    badge.className = `badge border rounded-pill text-${type}-emphasis bg-${type}-subtle px-3 py-2`;
+    badge.style.minWidth = '90px';
+    badge.style.minHeight = '30px';
+    badge.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'x-circle'} me-2"></i> ${text}`;
+    return badge.outerHTML;
+};
+
+/**
+ * Map a purchase status key to a styled badge HTML string.
+ *
+ * @param {string|null|undefined} status - Status identifier for the purchase.
+ * @returns {string} HTML string of the corresponding status badge.
+ */
+const getStatusBadge = (status) => {
+    if (status == null) {
+        return createStatusBadge('Desconocido');
+    }
+
+    switch (status) {
+        case 'paid':
+            return createStatusBadge('Completo', 'success');
+        case 'pending':
+            return createStatusBadge('Pendiente', 'warning');
+        default:
+            return createStatusBadge('Desconocido');
+    }
+};
+
 // Limpiar DataTable al cerrar el modal
 $('#supplierItemsModal').on('hidden.bs.modal', function () {
     if (supplierItemsTable) {
@@ -120,30 +166,14 @@ $(() => {
         },
         {
             data: 'total', name: 'total', title: 'Total',
-            render: (data) => `₡${parseFloat(data).toFixed(2)}`
+            render: (data) => formatCurrency(data)
         },
         {
             data: 'payment_status',
             name: 'payment_status',
             title: 'Estado de Pago',
             render: (data) => {
-                const badgeClass = {
-                    'paid': 'bg-success',
-                    'partial': 'bg-info text-dark',
-                    'pending': 'bg-warning text-dark',
-                    'cancelled': 'bg-danger',
-                    'void': 'bg-danger'
-                }[data] || 'bg-light text-dark';
-
-                const labels = {
-                    'paid': 'Completo',
-                    'partial': 'Parcial',
-                    'pending': 'Pendiente',
-                    'cancelled': 'Anulado',
-                    'void': 'Anulado'
-                };
-
-                return `<span class="badge ${badgeClass}">${labels[data] ?? data}</span>`;
+                return getStatusBadge(data);
             }
         }
     ];
