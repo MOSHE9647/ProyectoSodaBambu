@@ -2,8 +2,8 @@
 
 use App\Actions\Finance\ProcessPaymentAction;
 use App\Actions\Finance\RegisterTransactionAction;
-use App\Actions\Inventory\UpsertPurchaseAction;
 use App\Actions\Finance\UpdatePaymentAction;
+use App\Actions\Inventory\UpsertPurchaseAction;
 use App\Enums\CashRegisterStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -18,10 +18,22 @@ use App\Models\User;
 
 beforeEach(function () {
     app()->bind('Illuminate\Foundation\Vite', function () {
-        return new class {
-            public function __invoke(...$args) { return ''; }
-            public function __call($name, $args) { return ''; }
-            public static function __callStatic($name, $args) { return ''; }
+        return new class
+        {
+            public function __invoke(...$args)
+            {
+                return '';
+            }
+
+            public function __call($name, $args)
+            {
+                return '';
+            }
+
+            public static function __callStatic($name, $args)
+            {
+                return '';
+            }
         };
     });
 });
@@ -37,7 +49,7 @@ beforeEach(function () {
 function createOpenCashRegister(): CashRegister
 {
     return CashRegister::factory()->create([
-        'status'    => CashRegisterStatus::OPEN,
+        'status' => CashRegisterStatus::OPEN,
         'opened_at' => now('America/Costa_Rica')->setTimezone('UTC'),
     ]);
 }
@@ -56,7 +68,7 @@ function createAdminForPurchases(): User
 function buildUpsertPurchaseAction(): UpsertPurchaseAction
 {
     return new UpsertPurchaseAction(
-        new ProcessPaymentAction(new RegisterTransactionAction()),
+        new ProcessPaymentAction(new RegisterTransactionAction),
         app(UpdatePaymentAction::class),
     );
 }
@@ -70,18 +82,18 @@ function purchasePayload(int $total = 10000): array
 
     return [
         'purchaseData' => [
-            'supplier_id'    => $supplier->id,
+            'supplier_id' => $supplier->id,
             'invoice_number' => 'INV-TEST-001',
-            'date'           => now()->toDateTimeString(),
-            'total'          => $total,
+            'date' => now()->toDateTimeString(),
+            'total' => $total,
             'payment_status' => PaymentStatus::PAID->value,
         ],
         'detailsData' => [],
         'paymentData' => [[
-            'amount'        => $total,
-            'method'        => PaymentMethod::CASH->value,
+            'amount' => $total,
+            'method' => PaymentMethod::CASH->value,
             'change_amount' => 0,
-            'date'          => now()->toDateTimeString(),
+            'date' => now()->toDateTimeString(),
         ]],
     ];
 }
@@ -102,12 +114,12 @@ function purchasePayload(int $total = 10000): array
  */
 test('CP-01_HU-PURCHASE - creating a purchase with payment registers one transaction in the open cash register', function () {
     // Given: admin autenticado y una caja abierta hoy
-    $admin        = createAdminForPurchases();
+    $admin = createAdminForPurchases();
     $cashRegister = createOpenCashRegister();
     $this->actingAs($admin);
 
     $payload = purchasePayload(10000);
-    $action  = buildUpsertPurchaseAction();
+    $action = buildUpsertPurchaseAction();
 
     // When: se ejecuta la acción de creación de compra
     $purchase = $action->execute(
@@ -119,7 +131,7 @@ test('CP-01_HU-PURCHASE - creating a purchase with payment registers one transac
     // Then: existe exactamente una transacción asociada a la caja abierta.
     // Se busca el pago por polimorfismo porque morphOne no se recarga
     // automáticamente en el mismo ciclo que lo crea ProcessPaymentAction.
-    $payment     = Payment::where('origin_type', Purchase::class)
+    $payment = Payment::where('origin_type', Purchase::class)
         ->where('origin_id', $purchase->id)
         ->firstOrFail();
     $transaction = Transaction::where('cash_register_id', $cashRegister->id)->first();
@@ -140,7 +152,7 @@ test('CP-02_HU-PURCHASE - purchase payment transaction is recorded as expense ty
     $this->actingAs($admin);
 
     $payload = purchasePayload(15000);
-    $action  = buildUpsertPurchaseAction();
+    $action = buildUpsertPurchaseAction();
 
     // When: se crea la compra
     $purchase = $action->execute(
@@ -151,7 +163,7 @@ test('CP-02_HU-PURCHASE - purchase payment transaction is recorded as expense ty
 
     // Then: el tipo de la transacción es EXPENSE (egreso).
     // Se recarga el pago desde BD para obtener la relación transaction.
-    $payment     = Payment::where('origin_type', Purchase::class)
+    $payment = Payment::where('origin_type', Purchase::class)
         ->where('origin_id', $purchase->id)
         ->firstOrFail();
     $transaction = $payment->transaction;
@@ -171,8 +183,8 @@ test('CP-03_HU-PURCHASE - editing a purchase with lower total auto-creates refun
     createOpenCashRegister();
     $this->actingAs($admin);
 
-    $payload  = purchasePayload(20000);
-    $action   = buildUpsertPurchaseAction();
+    $payload = purchasePayload(20000);
+    $action = buildUpsertPurchaseAction();
     $purchase = $action->execute(
         $payload['purchaseData'],
         $payload['detailsData'],
@@ -184,7 +196,7 @@ test('CP-03_HU-PURCHASE - editing a purchase with lower total auto-creates refun
     // When: se edita la compra bajando el total a 15 000 (devolución de 5 000)
     $action->execute(
         array_merge($payload['purchaseData'], [
-            'id'    => $purchase->id,
+            'id' => $purchase->id,
             'total' => 15000,
         ]),
         [],
@@ -209,14 +221,14 @@ test('CP-04_HU-PURCHASE - creating a purchase without an open cash register thro
     CashRegister::query()->update(['status' => CashRegisterStatus::CLOSED]);
 
     $payload = purchasePayload(10000);
-    $action  = buildUpsertPurchaseAction();
+    $action = buildUpsertPurchaseAction();
 
     // Then: la Action lanza excepción al intentar registrar sin caja
     expect(fn () => $action->execute(
         $payload['purchaseData'],
         $payload['detailsData'],
         $payload['paymentData'],
-    ))->toThrow(\Exception::class, 'No hay una caja abierta para registrar la transacción.');
+    ))->toThrow(Exception::class, 'No hay una caja abierta para registrar la transacción.');
 });
 
 /**
@@ -230,9 +242,9 @@ test('CP-05_HU-PURCHASE - expense transaction amount matches purchase total exac
     createOpenCashRegister();
     $this->actingAs($admin);
 
-    $total   = 25000;
+    $total = 25000;
     $payload = purchasePayload($total);
-    $action  = buildUpsertPurchaseAction();
+    $action = buildUpsertPurchaseAction();
 
     // When: se crea la compra
     $purchase = $action->execute(
@@ -243,7 +255,7 @@ test('CP-05_HU-PURCHASE - expense transaction amount matches purchase total exac
 
     // Then: el monto de la transacción es el valor absoluto del total.
     // Se recarga el pago desde BD para obtener la relación transaction.
-    $payment     = Payment::where('origin_type', Purchase::class)
+    $payment = Payment::where('origin_type', Purchase::class)
         ->where('origin_id', $purchase->id)
         ->firstOrFail();
     $transaction = $payment->transaction;
