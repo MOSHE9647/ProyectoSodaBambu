@@ -1,7 +1,7 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
-import { capitalizeSentence, formatCurrency, toggleLoadingState } from "../../utils/utils.js";
-import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { capitalizeSentence, formatCurrency, formatDate, toggleLoadingState } from "../../utils/utils.js";
+import { SwalConfirmation, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
 // ======================== Constants ========================
 
@@ -34,60 +34,75 @@ window.deletePurchase = function (e) {
     return deleteModel(e, MODEL_NAME);
 };
 
-// DataTable del modal de proveedor — se destruye y recrea en cada apertura
-let supplierItemsTable = null;
+/**
+ * Renders an optimized itemized breakdown modal for the supplier utilizing 
+ * robust SweetAlert2 structures instead of traditional Bootstrap models.
+ * @param {number} supplierId - ID of the target supplier
+ * @param {string} supplierName - Display text for header titles
+ */
+window.showSupplierItems = async function (supplierId, supplierName) {
+    try {
+        // Trigger a native clean loading sequence inside SweetAlert
+        SwalConfirmation.fire({
+            title: `<i class="bi bi-truck me-2"></i> Productos/Insumos de <span class="text-primary">${supplierName}</span>`,
+            html: `
+                <div class="text-center py-4" id="swal-loader-container">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Cargando catálogo suministrado...</p>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCloseButton: true,
+            width: '750px',
+            customClass: { popup: 'p-4 rounded-3 text-start' }
+        });
 
-window.showSupplierItems = function (supplierId, supplierName) {
-    const modal = new bootstrap.Modal(document.getElementById('supplierItemsModal'));
-    const $loading = $('#supplier-items-loading');
-    const $content = $('#supplier-items-content');
-    const $empty = $('#supplier-items-empty');
-    const $modalName = $('#modal-supplier-name');
+        const response = await fetch(`${MODEL_ROUTES.index}?report=true&supplier_id=${supplierId}`, {
+            headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" }
+        });
+        const items = await response.json();
+        const $htmlContainer = $('#swal2-html-container');
 
-    // Limpiar estado anterior
-    if (supplierItemsTable) {
-        supplierItemsTable.destroy();
-        supplierItemsTable = null;
-        $('#supplier-items-table').empty(); // Limpiar DOM del table si DataTables lo modificó
+        if (!items || items.length === 0) {
+            $htmlContainer.html(`
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                    <p>Este proveedor no tiene ítems registrados en el sistema actualmente.</p>
+                </div>
+            `);
+            return;
+        }
+
+        // Build elegant template using the point-of-sale layout scheme
+        let tableRows = items.map(item => `
+            <tr>
+                <td><span class="badge ${item.type === 'Producto' ? 'bg-info text-dark' : 'bg-warning text-dark'}">${item.type}</span></td>
+                <td class="fw-semibold">${item.name}</td>
+                <td class="text-center bg-light text-primary fw-bold">${item.times}</td>
+            </tr>
+        `).join('');
+
+        $htmlContainer.html(`
+            <p class="text-muted small mb-3">Historial de suministros provistos detectados en inventario:</p>
+            <div class="table-responsive rounded-2 border" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light position-sticky top-0">
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Nombre del Ítem</th>
+                            <th class="text-center">Suministros Totales</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            </div>
+        `);
+    } catch (error) {
+        console.error("Error building supplier dynamic context modal:", error);
+        SwalToast.fire({ icon: 'error', title: 'Error al recuperar información del proveedor.' });
     }
-    
-    // Ocultar spinners/vacio manuales que ya no se ocupan porque DataTable se encarga
-    $loading.addClass('d-none');
-    $empty.addClass('d-none');
-    $content.removeClass('d-none');
-    
-    $modalName.text(supplierName);
-    modal.show();
-
-    const columns = [
-        {
-            data: 'type', name: 'type', title: 'Tipo', orderable: false,
-            render: (data) => {
-                const badgeClass = data === 'Producto' ? 'bg-success' : 'bg-info text-dark';
-                return `<span class="badge ${badgeClass}">${data}</span>`;
-            }
-        },
-        { data: 'name', name: 'name', title: 'Nombre' },
-        { 
-            data: 'times', name: 'times', title: 'Veces Suministrado', 
-            className: 'text-center fw-semibold' 
-        }
-    ];
-
-    supplierItemsTable = CreateNewDataTable(
-        'supplier-items-table',
-        MODEL_ROUTES.index,
-        columns,
-        {},
-        [],
-        {
-            serverSide: false, // Es una consulta que retorna {items: [...]}
-            ajax: {
-                data: { supplier_id: supplierId, report: 1 },
-                dataSrc: 'items'
-            },
-        }
-    );
 };
 
 /**
@@ -140,43 +155,44 @@ $('#supplierItemsModal').on('hidden.bs.modal', function () {
 
 $(() => {
     const columns = [
-        { data: 'invoice_number', name: 'invoice_number', title: 'N° Factura' },
-        {
-            data: 'supplier',
-            name: 'supplier.name',
-            title: 'Proveedor',
-            render: (data, type, row) => {
-                if (!data?.name) return 'N/A';
-                return `<a href="javascript:void(0)"
-                           class="purchase-supplier-link fw-semibold"
-                           onclick="showSupplierItems(${row.supplier_id}, '${data.name.replace(/'/g, "\\'")}')"
-                           title="Ver productos/insumos de este proveedor">
-                           <i class="bi bi-truck me-1"></i>${data.name}
-                        </a>`;
-            }
-        },
-        {
-            data: 'date', name: 'date', title: 'Fecha',
-            render: (data) => {
-                if (!data) return '';
-                const d = new Date(data + 'T00:00:00');
-                return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
-                    .replace(/(\d+) de (\w+) de (\d+)/, '$1 de $2 del $3');
-            }
-        },
-        {
-            data: 'total', name: 'total', title: 'Total',
-            render: (data) => formatCurrency(data)
-        },
-        {
-            data: 'payment_status',
-            name: 'payment_status',
-            title: 'Estado de Pago',
-            render: (data) => {
-                return getStatusBadge(data);
-            }
-        }
-    ];
+		{
+			data: "invoice_number",
+			name: "invoice_number",
+			title: "N° Factura",
+			render: (data) =>
+				`<span class="font-monospace">${data}</span>`,
+		},
+		{
+			data: "supplier.name",
+			name: "supplier.name",
+			title: "Proveedor",
+			render: (data, type, row) => `
+                <a href="javascript:void(0)" class="fw-bold text-decoration-none" onclick="showSupplierItems(${row.supplier_id}, '${escape(data)}')" style="color: var(--bambu-logo-bg);">
+                    <i class="bi bi-box-seam me-1"></i>${data}
+                </a>
+            `,
+		},
+		{
+			data: "date",
+			name: "date",
+			title: "Fecha",
+			render: (data) => formatDate(data),
+		},
+		{
+			data: "total",
+			name: "total",
+			title: "Total",
+			render: (data) => formatCurrency(data),
+		},
+		{
+			data: "payment_status",
+			name: "payment_status",
+			title: "Estado de Pago",
+			render: (data) => {
+				return getStatusBadge(data);
+			},
+		},
+	];
 
     const actions = {
         show: {

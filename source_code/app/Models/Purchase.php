@@ -128,17 +128,16 @@ class Purchase extends Model implements Receipable
             return $this->receiptItemsCache;
         }
 
-        $results = $this->details->map(fn ($detail) => [
-            'name' => $detail->purchasable?->name ?? "Item #{$detail->purchasable_id}",
+        // Use relation mapping instead of manual looping for efficiency
+        $this->receiptItemsCache = $this->details->map(fn ($detail) => [
+            'name' => $detail->purchasable->name ?? 'N/A',
             'quantity' => $detail->quantity,
             'unit_price' => $detail->unit_price,
             'sub_total' => $detail->sub_total,
-            'applied_tax' => 0, // Tax is not applied to purchases, you can calculate it if needed
+            'applied_tax' => 0,
         ])->toArray();
 
-        $this->receiptItemsCache = $results;
-
-        return $results;
+        return $this->receiptItemsCache;
     }
 
     /**
@@ -146,7 +145,7 @@ class Purchase extends Model implements Receipable
      */
     public function getReceiptPayments(): array
     {
-        return $this->payments()->get()->map(fn ($payment) => [
+        return $this->payments->map(fn ($payment) => [
             'amount' => $payment->amount,
             'method_label' => $payment->method->label(),
             'change_amount' => $payment->change_amount,
@@ -178,6 +177,6 @@ class Purchase extends Model implements Receipable
      */
     public function canGenerateReceipt(): bool
     {
-        return $this->invoice_number && $this->details->count() > 0;
+        return ! empty($this->invoice_number) && $this->details()->exists();
     }
 }
