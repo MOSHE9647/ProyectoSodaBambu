@@ -118,6 +118,11 @@ class PurchaseDetailObserver
             } else {
                 // Updates Merchandise's Reference Cost.
                 $item->update(['reference_cost' => $purchaseDetail->unit_price]);
+                $item->update(['sale_price' => Product::calculateSalePrice(
+                    $purchaseDetail->unit_price,
+                    $item->tax_percentage,
+                    $item->margin_percentage
+                )]);
             }
         } elseif ($item instanceof \App\Models\Supply) {
             // Updates Supply's Unit Price.

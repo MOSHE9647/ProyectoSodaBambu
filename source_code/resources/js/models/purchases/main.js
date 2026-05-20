@@ -69,7 +69,8 @@ window.showSupplierItems = async function (supplierId, supplierName) {
         const items = await response.json();
         const $htmlContainer = $('#swal2-html-container');
 
-        if (!items || items.length === 0) {
+        if (!
+            items || items.length === 0) {
             $htmlContainer.html(`
                 <div class="text-center py-5 text-muted">
                     <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
@@ -125,7 +126,7 @@ window.showSupplierItems = async function (supplierId, supplierName) {
 		if ($tables.length) {
 			$tables.each(function () {
 				$(this).DataTable({
-					pageLength: 10,
+					pageLength: 5,
 					lengthMenu: [5, 10, 25, 50],
 					searching: false,
                     ordering: false,
@@ -195,8 +196,7 @@ $(() => {
 			data: "invoice_number",
 			name: "invoice_number",
 			title: "N° Factura",
-			render: (data) =>
-				`<span class="font-monospace">${data}</span>`,
+			render: (data) => `<span class="font-monospace">${data}</span>`,
 		},
 		{
 			data: "supplier.name",
@@ -212,7 +212,7 @@ $(() => {
 			data: "date",
 			name: "date",
 			title: "Fecha",
-			render: (data) => formatDate(data),
+			render: (data) => formatDate(data.slice(0, 10)),
 		},
 		{
 			data: "total",

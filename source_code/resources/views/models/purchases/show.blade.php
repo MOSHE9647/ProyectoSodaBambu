@@ -54,6 +54,19 @@
                 Total
             </x-form.input.floating-label>
         </div>
+        
+        <div class="col-12">
+            <x-form.textarea.floating-label
+                :id="'notes'"
+                :readonly="true"
+                :height="'50'"
+                :value="$purchase->notes ?? 'No hay notas adicionales para esta compra.'"
+                :iconLeft="'bi bi-card-text'"
+                :placeholder="'Notas adicionales sobre la compra...'"
+            >
+                Notas
+            </x-form.textarea.floating-label>
+        </div>
     </div>
 
     <hr class="my-3" />
