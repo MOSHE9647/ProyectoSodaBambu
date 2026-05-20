@@ -1,7 +1,12 @@
 import { SwalConfirmation, SwalToast } from "../../utils/sweetalert.js";
 import { printReceipt } from "../../utils/utils.js";
 
-// Forzamos la ejecución directa apenas el DOM esté listo
+// 1. Forzamos a Vite a registrar e importar DataTables de manera local en el módulo
+import 'datatables.net-bs5'; 
+
+// 2. Nos aseguramos de capturar la instancia correcta de jQuery
+const $ = window.$ || window.jQuery;
+
 $(function () {
     const tableElement = $('#history-sales-table');
     const invoiceInput = $('#search-invoice');
@@ -10,21 +15,28 @@ $(function () {
     const filterButton = $('#btn-filter');
     const clearButton = $('#btn-clear');
 
-    console.log("¡Script de historial detectado y ejecutándose!"); // Esto saldrá en tu consola fija para saber que entró
+    console.log("¡Script de historial detectado y ejecutándose con el módulo DataTables!");
 
     if (!tableElement.length) {
         console.log("Error: No se encontró la tabla con ID #history-sales-table");
         return;
     }
 
-    // 1. Inicializar el DataTable rompiendo cualquier bloqueo previo
+    // Inicializar el DataTable con corrección visual completa para Bootstrap 5
     const dt = tableElement.DataTable({
         processing: true,
         serverSide: true,
         searching: false,
         ordering: false,
+        responsive: false, 
+        autoWidth: false,  
+        width: "100%",     // Fuerza el estiramiento horizontal completo de la tabla
+        pagingType: 'simple_numbers', // Usa la paginación estilizada de Bootstrap
+        // El parámetro 'dom' redistribuye los elementos nativos eliminando los estilos viejos
+        dom: "<'row'<'col-sm-12'tr>>" +
+             "<'row mt-3 align-items-center'<'col-sm-12 col-md-5 small text-muted'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
         ajax: {
-            url: route('sales.index'), // Si da error por Ziggy, usaremos la URL nativa '/sales'
+            url: route('sales.index'),
             data: function (d) {
                 d.invoice_number = invoiceInput.val();
                 d.start_date = startDateInput.val();
@@ -40,16 +52,20 @@ $(function () {
         ],
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+        },
+        initComplete: function() {
+            // Reajusta las celdas automáticamente al renderizar por primera vez
+            this.api().columns.adjust();
         }
     });
 
-    // 2. Acción del Botón Filtrar
+    // Acción del Botón Filtrar
     filterButton.on('click', function (e) {
         e.preventDefault();
         dt.ajax.reload();
     });
 
-    // 3. Acción del Botón Limpiar
+    // Acción del Botón Limpiar
     clearButton.on('click', function (e) {
         e.preventDefault();
         invoiceInput.val('');
@@ -59,17 +75,23 @@ $(function () {
         SwalToast.fire({ icon: 'success', title: 'Filtros restaurados correctamente.' });
     });
 
-    // 4. ACCIÓN: Reimprimir Tiquete
-    tableElement.on('click', '.btn-print-sale', function () {
-        const saleId = $(this).data('id');
-        printReceipt(route('receipts.show', { model: 'sales', id: saleId }));
-        SwalToast.fire({ icon: 'success', title: 'Enviando tiquete a la impresora...' });
-    });
+    // =========================================================================
+    // ACCIONES DE LA TABLA CORREGIDAS CON DELEGACIÓN DE EVENTOS (tbody.on)
+    // =========================================================================
 
-    // 5. ACCIÓN: Visualizar Información (Modal Detalle)
-    tableElement.on('click', '.btn-view-sale', function () {
-        const rowData = dt.row($(this).closest('tr')).data();
-        if (!rowData) return;
+    // ACCIÓN: Visualizar Información (Modal Detalle)
+    tableElement.find('tbody').on('click', '.btn-view-sale', function (e) {
+        e.preventDefault();
+        
+        const tr = $(this).closest('tr');
+        const rowData = dt.row(tr).data();
+        
+        console.log("Datos de la fila seleccionada:", rowData);
+
+        if (!rowData) {
+            SwalToast.fire({ icon: 'error', title: 'No se pudieron precargar los datos de esta venta.' });
+            return;
+        }
 
         let detailsHtml = `
             <div class="row mb-3 pb-2 border-bottom">
@@ -90,17 +112,25 @@ $(function () {
                     <tbody>
         `;
 
-        rowData.sale_details.forEach(detail => {
-            const productName = detail.product ? detail.product.name : 'Producto No Disponible';
-            detailsHtml += `
-                <tr>
-                    <td>${productName}</td>
-                    <td class="text-center">${detail.quantity}</td>
-                    <td class="text-end">₡ ${Number(detail.unit_price).toLocaleString('es-CR')}</td>
-                    <td class="text-end fw-semibold">₡ ${Number(detail.sub_total).toLocaleString('es-CR')}</td>
-                </tr>
-            `;
-        });
+        if (rowData.sale_details && rowData.sale_details.length > 0) {
+            rowData.sale_details.forEach(detail => {
+                const productName = detail.product ? detail.product.name : 'Producto No Disponible';
+                const quantity = detail.quantity ?? 0;
+                const unitPrice = Number(detail.unit_price ?? 0).toLocaleString('es-CR');
+                const subTotal = Number(detail.sub_total ?? 0).toLocaleString('es-CR');
+
+                detailsHtml += `
+                    <tr>
+                        <td>${productName}</td>
+                        <td class="text-center">${quantity}</td>
+                        <td class="text-end">₡ ${unitPrice}</td>
+                        <td class="text-end fw-semibold">₡ ${subTotal}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            detailsHtml += `<tr><td colspan="4" class="text-center text-muted">No hay productos registrados en esta transacción.</td></tr>`;
+        }
 
         detailsHtml += `
                     </tbody>
@@ -113,11 +143,23 @@ $(function () {
         `;
 
         $('#sale-modal-content').html(detailsHtml);
-        $('#viewSaleModal').modal('show');
+        
+        // Inicializamos y levantamos el modal usando la instancia nativa de Bootstrap 5 para entornos con Vite
+        const myModal = new bootstrap.Modal(document.getElementById('viewSaleModal'));
+        myModal.show();
     });
 
-    // 6. ACCIÓN: Eliminar Venta
-    tableElement.on('click', '.btn-delete-sale', function () {
+    // ACCIÓN: Reimprimir Tiquete
+    tableElement.find('tbody').on('click', '.btn-print-sale', function (e) {
+        e.preventDefault();
+        const saleId = $(this).data('id');
+        printReceipt(route('receipts.show', { model: 'sales', id: saleId }));
+        SwalToast.fire({ icon: 'success', title: 'Enviando tiquete a la impresora...' });
+    });
+
+    // ACCIÓN: Eliminar Venta
+    tableElement.find('tbody').on('click', '.btn-delete-sale', function (e) {
+        e.preventDefault();
         const saleId = $(this).data('id');
 
         SwalConfirmation.fire({
