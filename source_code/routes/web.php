@@ -74,11 +74,4 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // Shared offcanvas form endpoint used by purchases, contracts, and other modules.
     Route::get('/offcanvas-form/{type}', OffcanvasFormController::class)->name('offcanvas-form');
-
-    Route::get('/test/{id}', function ($id) {
-        $purchase = Purchase::findOrFail($id);
-        $purchase->load('supplier', 'details.purchasable');
-
-        return view('models.purchases.show', compact('purchase'));
-    })->name('test');
 });
