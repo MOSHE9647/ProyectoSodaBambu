@@ -5,10 +5,22 @@ use App\Models\User;
 
 beforeEach(function () {
     app()->bind('Illuminate\Foundation\Vite', function () {
-        return new class {
-            public function __invoke(...$args) { return ''; }
-            public function __call($name, $args) { return ''; }
-            public static function __callStatic($name, $args) { return ''; }
+        return new class
+        {
+            public function __invoke(...$args)
+            {
+                return '';
+            }
+
+            public function __call($name, $args)
+            {
+                return '';
+            }
+
+            public static function __callStatic($name, $args)
+            {
+                return '';
+            }
         };
     });
 });
