@@ -8,8 +8,8 @@
     </div>
 
     {{-- Main Content --}}
-    <div class="d-flex flex-column flex-grow-1 mt-3 gap-4">
-        
+    <div class="d-flex flex-column flex-grow-1">
+       
         {{-- Bloque de Filtros --}}
         <div class="card shadow-sm border-0 p-4 rounded-2">
             <h5 class="fw-bold mb-3 d-flex align-items-center justify-content-between">
@@ -17,7 +17,7 @@
                 <i class="bi bi-funnel text-muted"></i>
             </h5>
             <hr class="mt-0 mb-3">
-            
+           
             <form id="filter-sales-form" class="row g-3 align-items-end">
                 <div class="col-md-4">
                     <label for="search-invoice" class="form-label fw-bold small text-muted mb-1">N° Factura / Comprobante</label>
@@ -48,20 +48,20 @@
             </form>
         </div>
 
-        {{-- Bloque de la Tabla - Idéntico en jerarquía a la sección de Insumos --}}
-        <div class="table-container rounded-2 p-4">
-            <table id="history-sales-table" class="table table-hover rounded-2 w-100">
+        {{-- Bloque de la Tabla - Idéntico en jerarquía y envoltura flex a tu módulo de Ventas e Insumos --}}
+        <div class="table-container rounded-2 p-4 shadow-sm">
+            <table id="history-sales-table" class="table table-hover align-middle rounded-2" style="width: 100%">
                 <thead>
                     <tr>
-                        <th scope="col">N° Factura</th>
-                        <th scope="col">Fecha</th>
-                        <th scope="col">Total</th>
-                        <th scope="col" class="text-center">Estado de Pago</th>
-                        <th scope="col">Acciones</th> 
+                        <th>N° Factura</th>
+                        <th>Fecha</th>
+                        <th>Total</th>
+                        <th>Estado de Pago</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {{-- Controlado por CreateNewDataTable --}}
+                    {{-- Controlado dinámicamente por DataTables sin congelar la renderización --}}
                 </tbody>
             </table>
         </div>

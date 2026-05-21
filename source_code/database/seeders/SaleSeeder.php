@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\Sale;
 use App\Models\User;
 use Carbon\Carbon;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use Generator;
 use Illuminate\Database\Seeder;
 
@@ -13,31 +15,77 @@ class SaleSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    public function run(): void
-    {
-        $timezone = 'America/Costa_Rica';
-        $nowLocal = Carbon::now($timezone);
+ public function run(): void
+{
+    $timezone = 'America/Costa_Rica';
+    $userId = User::value('id') ?? User::factory()->create()->id;
 
-        // Optimization: value('id') avoids hydrating the entire User model
-        $userId = User::value('id') ?? User::factory()->create()->id;
+    $dates = [
+        Carbon::create(2026, 5, 1,  8,  15, 0, $timezone),
+        Carbon::create(2026, 5, 2,  9,  0,  0, $timezone),
+        Carbon::create(2026, 5, 3,  11, 45, 0, $timezone),
+        Carbon::create(2026, 5, 4,  10, 0,  0, $timezone),
+        Carbon::create(2026, 5, 5,  13, 20, 0, $timezone),
+        Carbon::create(2026, 5, 6,  16, 0,  0, $timezone),
+        Carbon::create(2026, 5, 7,  8,  30, 0, $timezone),
+        Carbon::create(2026, 5, 8,  12, 0,  0, $timezone),
+        Carbon::create(2026, 5, 9,  15, 10, 0, $timezone),
+        Carbon::create(2026, 5, 10, 9,  0,  0, $timezone),
+        Carbon::create(2026, 5, 11, 11, 0,  0, $timezone),
+        Carbon::create(2026, 5, 12, 14, 0,  0, $timezone),
+        Carbon::create(2026, 5, 13, 10, 30, 0, $timezone),
+        Carbon::create(2026, 5, 14, 17, 0,  0, $timezone),
+        Carbon::create(2026, 5, 15, 8,  0,  0, $timezone),
+        Carbon::create(2026, 5, 15, 13, 0,  0, $timezone),
+        Carbon::create(2026, 5, 16, 9,  45, 0, $timezone),
+        Carbon::create(2026, 5, 17, 12, 0,  0, $timezone),
+        Carbon::create(2026, 5, 18, 10, 0,  0, $timezone),
+        Carbon::create(2026, 5, 19, 14, 30, 0, $timezone),
+        Carbon::create(2026, 5, 19, 18, 0,  0, $timezone),
+        Carbon::create(2026, 5, 20, 9,  0,  0, $timezone),
+        Carbon::create(2026, 5, 20, 15, 0,  0, $timezone),
+        Carbon::create(2026, 5, 21, 8,  30, 0, $timezone),
+        Carbon::create(2026, 5, 21, 11, 0,  0, $timezone),
+        Carbon::create(2026, 5, 21, 14, 0,  0, $timezone),
+        Carbon::create(2026, 5, 21, 16, 30, 0, $timezone),
+        Carbon::create(2026, 5, 21, 18, 0,  0, $timezone),
+        Carbon::create(2026, 5, 21, 19, 0,  0, $timezone),
+        Carbon::create(2026, 5, 21, 19, 45, 0, $timezone),
+    ];
 
-        $chunk = [];
-
-        // Go through the generator and group in chunks of 500
-        foreach ($this->generateSales($userId, $nowLocal) as $saleData) {
-            $chunk[] = $saleData;
-
-            if (\count($chunk) === 500) {
-                Sale::insert($chunk);
-                $chunk = []; // Empty the chunk after inserting
-            }
-        }
-
-        // Insert any remaining records that didn't reach the chunk size of 500
-        if (! empty($chunk)) {
-            Sale::insert($chunk);
-        }
+    $chunk = [];
+    foreach ($dates as $i => $date) {
+        $num = str_pad($i + 1, 10, '0', STR_PAD_LEFT);
+        $utcString = $date->copy()->timezone('UTC')->toDateTimeString();
+        $chunk[] = [
+            'user_id'        => $userId,
+            'invoice_number' => "FAC-{$num}",
+            'payment_status' => PaymentStatus::PAID->value,
+            'date'           => $utcString,
+            'total'          => rand(1500, 25000),
+            'created_at'     => $utcString,
+            'updated_at'     => $utcString,
+        ];
     }
+
+    Sale::insert($chunk);
+
+    $this->call(SaleDetailSeeder::class);
+
+    // Crear un pago para cada venta insertada
+    $vendasInsertadas = Sale::whereIn('invoice_number', array_column($chunk, 'invoice_number'))->get();
+
+    foreach ($vendasInsertadas as $sale) {
+        \App\Models\Payment::create([
+            'amount'       => $sale->total,
+            'method'       => \App\Enums\PaymentMethod::CASH->value,
+            'change_amount'=> 0,
+            'date'         => $sale->date,
+            'origin_id'    => $sale->id,
+            'origin_type'  => \App\Models\Sale::class,
+        ]);
+    }
+}
 
     /**
      * Generate sales data for a user within the current month.

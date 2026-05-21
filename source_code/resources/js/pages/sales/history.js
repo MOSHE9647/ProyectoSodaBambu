@@ -1,11 +1,18 @@
 import { SwalConfirmation, SwalToast } from "../../utils/sweetalert.js";
-import { printReceipt } from "../../utils/utils.js";
+import { formatDate, printReceipt } from "../../utils/utils.js";
 
-// 1. Forzamos a Vite a registrar e importar DataTables de manera local en el módulo
+
 import 'datatables.net-bs5'; 
 
-// 2. Nos aseguramos de capturar la instancia correcta de jQuery
+
 const $ = window.$ || window.jQuery;
+
+
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || document.querySelector('input[name="_token"]')?.value
+    }
+});
 
 $(function () {
     const tableElement = $('#history-sales-table');
@@ -15,24 +22,15 @@ $(function () {
     const filterButton = $('#btn-filter');
     const clearButton = $('#btn-clear');
 
-    console.log("¡Script de historial detectado y ejecutándose con el módulo DataTables!");
+    if (!tableElement.length) return;
 
-    if (!tableElement.length) {
-        console.log("Error: No se encontró la tabla con ID #history-sales-table");
-        return;
-    }
-
-    // Inicializar el DataTable con corrección visual completa para Bootstrap 5
     const dt = tableElement.DataTable({
         processing: true,
         serverSide: true,
         searching: false,
         ordering: false,
         responsive: false, 
-        autoWidth: false,  
-        width: "100%",     // Fuerza el estiramiento horizontal completo de la tabla
-        pagingType: 'simple_numbers', // Usa la paginación estilizada de Bootstrap
-        // El parámetro 'dom' redistribuye los elementos nativos eliminando los estilos viejos
+        pagingType: 'simple_numbers', 
         dom: "<'row'<'col-sm-12'tr>>" +
              "<'row mt-3 align-items-center'<'col-sm-12 col-md-5 small text-muted'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
         ajax: {
@@ -44,127 +42,220 @@ $(function () {
             }
         },
         columns: [
-            { data: 'invoice_number', name: 'invoice_number' },
-            { data: 'date', name: 'date' },
-            { data: 'total', name: 'total', className: 'fw-bold text-success' },
-            { data: 'payment_status', name: 'payment_status', className: 'text-center' },
-            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+            { 
+                data: 'invoice_number', 
+                name: 'invoice_number',
+                className: 'align-middle text-start px-3'
+            },
+            { 
+                data: 'date', 
+                name: 'date',
+                className: 'align-middle text-start px-3',
+                render: function (data) {
+                    if (!data) return 'N/A';
+                    const datePart = data.split(' ')[0];
+                    return formatDate(datePart + 'T00:00:00');
+                }
+            },
+            { 
+                data: 'total', 
+                name: 'total', 
+                className: 'align-middle text-start fw-bold text-success px-3' 
+            },
+            { 
+                data: 'payment_status', 
+                name: 'payment_status',
+                className: 'align-middle text-start px-3'
+            },
+            { 
+                data: 'actions', 
+                name: 'actions', 
+                orderable: false, 
+                searchable: false,
+                width: '140px',
+                className: 'align-middle text-center px-3'
+            }
         ],
         language: {
-            url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            processing: "Procesando...",
+            lengthMenu: "Mostrar _MENU_ registros",
+            zeroRecords: "No se encontraron resultados",
+            emptyTable: "Ningún dato disponible en esta tabla",
+            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            infoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+            infoFiltered: "(filtrado de un total de _MAX_ registros)",
+            search: "Buscar:",
+            loadingRecords: "Cargando...",
+            paginate: {
+                first: "Primero",
+                last: "Último",
+                next: "Siguiente",
+                previous: "Anterior"
+            }
         },
-        initComplete: function() {
-            // Reajusta las celdas automáticamente al renderizar por primera vez
+        drawCallback: function() {
             this.api().columns.adjust();
         }
     });
 
-    // Acción del Botón Filtrar
+    // Control de Filtros
     filterButton.on('click', function (e) {
         e.preventDefault();
+        const startVal = startDateInput.val();
+        const endVal = endDateInput.val();
+
+        if ((startVal && !endVal) || (!startVal && endVal)) {
+            SwalToast.fire({ icon: 'warning', title: 'Para filtrar por fecha debe ingresar tanto la fecha de inicio como la de fin.' });
+            return;
+        }
         dt.ajax.reload();
     });
 
-    // Acción del Botón Limpiar
     clearButton.on('click', function (e) {
         e.preventDefault();
         invoiceInput.val('');
         startDateInput.val('');
         endDateInput.val('');
         dt.ajax.reload();
-        SwalToast.fire({ icon: 'success', title: 'Filtros restaurados correctamente.' });
     });
 
-    // =========================================================================
-    // ACCIONES DE LA TABLA CORREGIDAS CON DELEGACIÓN DE EVENTOS (tbody.on)
-    // =========================================================================
-
-    // ACCIÓN: Visualizar Información (Modal Detalle)
     tableElement.find('tbody').on('click', '.btn-view-sale', function (e) {
         e.preventDefault();
-        
-        const tr = $(this).closest('tr');
-        const rowData = dt.row(tr).data();
-        
-        console.log("Datos de la fila seleccionada:", rowData);
+        const saleId = $(this).data('id');
 
-        if (!rowData) {
-            SwalToast.fire({ icon: 'error', title: 'No se pudieron precargar los datos de esta venta.' });
-            return;
-        }
+        $.ajax({
+            url: route('receipts.show', { model: 'sales', id: saleId }),
+            type: 'GET',
+            success: function (response) {
+                if (!response.data) return;
+                const receipt = response.data;
+                const formatCurrency = (value) => '₡ ' + Number(value).toLocaleString('es-CR', { minimumFractionDigits: 0 });
 
-        let detailsHtml = `
-            <div class="row mb-3 pb-2 border-bottom">
-                <div class="col-md-6 mb-2"><strong>N° Factura:</strong> <span class="text-muted">${rowData.invoice_number}</span></div>
-                <div class="col-md-6 mb-2"><strong>Fecha Emisión:</strong> <span class="text-muted">${rowData.date}</span></div>
-            </div>
-            <h6 class="fw-bold mb-2"><i class="bi bi-box-seam me-1"></i> Productos incluidos:</h6>
-            <div class="table-responsive">
-                <table class="table table-sm table-striped table-bordered align-middle">
-                    <thead>
-                        <tr class="table-light">
-                            <th>Producto</th>
-                            <th class="text-center">Cant.</th>
-                            <th class="text-end">Precio Unitario</th>
-                            <th class="text-end">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
+                // ── Fecha formateada ──
+                const fechaVenta = receipt.date
+                    ? formatDate(receipt.date.split('T')[0] + 'T00:00:00')
+                    : 'N/A';
 
-        if (rowData.sale_details && rowData.sale_details.length > 0) {
-            rowData.sale_details.forEach(detail => {
-                const productName = detail.product ? detail.product.name : 'Producto No Disponible';
-                const quantity = detail.quantity ?? 0;
-                const unitPrice = Number(detail.unit_price ?? 0).toLocaleString('es-CR');
-                const subTotal = Number(detail.sub_total ?? 0).toLocaleString('es-CR');
+                // ── Badge estado de pago ──
+                const pagosBadge = receipt.payments && receipt.payments.length > 0
+                    ? '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Pagado</span>'
+                    : '<span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2">Pendiente</span>';
 
+                // ── Encabezado ──
+                let detailsHtml = `
+                    <div class="row g-3 mb-3 pb-3 border-bottom">
+                        <div class="col-6 col-md-4">
+                            <div class="small text-muted mb-1">N° Factura</div>
+                            <div class="fw-semibold">${receipt.receipt_number}</div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="small text-muted mb-1">Fecha</div>
+                            <div class="fw-semibold">${fechaVenta}</div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="small text-muted mb-1">Estado</div>
+                            <div>${pagosBadge}</div>
+                        </div>
+                    </div>`;
+
+                // ── Tabla de productos ──
                 detailsHtml += `
-                    <tr>
-                        <td>${productName}</td>
-                        <td class="text-center">${quantity}</td>
-                        <td class="text-end">₡ ${unitPrice}</td>
-                        <td class="text-end fw-semibold">₡ ${subTotal}</td>
-                    </tr>
-                `;
-            });
-        } else {
-            detailsHtml += `<tr><td colspan="4" class="text-center text-muted">No hay productos registrados en esta transacción.</td></tr>`;
-        }
+                    <h6 class="fw-bold text-muted small text-uppercase mb-2">Productos</h6>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-striped table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cant.</th>
+                                    <th class="text-end">Precio Unit.</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
 
-        detailsHtml += `
-                    </tbody>
-                </table>
-            </div>
-            <div class="d-flex justify-content-end align-items-center mt-3 pt-2 border-top">
-                <span class="fs-5 fw-bold text-dark me-2">Monto Total:</span>
-                <span class="fs-4 fw-bold text-success">${rowData.total}</span>
-            </div>
-        `;
+                receipt.items.forEach(item => {
+                    detailsHtml += `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td class="text-center">${item.quantity}</td>
+                            <td class="text-end">${formatCurrency(item.unit_price)}</td>
+                            <td class="text-end">${formatCurrency(item.sub_total)}</td>
+                        </tr>`;
+                });
 
-        $('#sale-modal-content').html(detailsHtml);
-        
-        // Inicializamos y levantamos el modal usando la instancia nativa de Bootstrap 5 para entornos con Vite
-        const myModal = new bootstrap.Modal(document.getElementById('viewSaleModal'));
-        myModal.show();
+                detailsHtml += `</tbody></table></div>`;
+
+                // ── Resumen de totales (idéntico al tiquete) ──
+                detailsHtml += `
+                    <div class="row justify-content-end mb-3">
+                        <div class="col-12 col-md-5">
+                            <table class="table table-sm mb-0">
+                                <tr>
+                                    <td class="text-muted">Subtotal</td>
+                                    <td class="text-end">${formatCurrency(receipt.subtotal)}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Impuestos</td>
+                                    <td class="text-end">${formatCurrency(receipt.tax_total)}</td>
+                                </tr>
+                                <tr class="fw-bold">
+                                    <td>Total</td>
+                                    <td class="text-end text-success">${formatCurrency(receipt.total)}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>`;
+
+                // ── Detalle de pagos ──
+                if (receipt.payments && receipt.payments.length > 0) {
+                    detailsHtml += `
+                        <h6 class="fw-bold text-muted small text-uppercase mb-2">Detalle de Pago</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Método</th>
+                                        <th class="text-end">Monto</th>
+                                        <th class="text-end">Vuelto</th>
+                                        <th>Referencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+
+                    receipt.payments.forEach(payment => {
+                        const referencia = payment.reference ?? '—';
+                        detailsHtml += `
+                            <tr>
+                                <td>${payment.method_label ?? payment.method ?? 'N/A'}</td>
+                                <td class="text-end">${formatCurrency(payment.amount)}</td>
+                                <td class="text-end">${formatCurrency(payment.change_amount ?? 0)}</td>
+                                <td>${referencia}</td>
+                            </tr>`;
+                    });
+
+                    detailsHtml += `</tbody></table></div>`;
+                }
+
+                $('#sale-modal-content').html(detailsHtml);
+                new bootstrap.Modal(document.getElementById('viewSaleModal')).show();
+            }
+        });
     });
 
-    // ACCIÓN: Reimprimir Tiquete
+    // Reimprimir Tiquete
     tableElement.find('tbody').on('click', '.btn-print-sale', function (e) {
         e.preventDefault();
         const saleId = $(this).data('id');
         printReceipt(route('receipts.show', { model: 'sales', id: saleId }));
-        SwalToast.fire({ icon: 'success', title: 'Enviando tiquete a la impresora...' });
     });
 
-    // ACCIÓN: Eliminar Venta
+    // Eliminar Venta
     tableElement.find('tbody').on('click', '.btn-delete-sale', function (e) {
         e.preventDefault();
         const saleId = $(this).data('id');
 
         SwalConfirmation.fire({
             title: '¿Estás seguro de eliminar esta venta?',
-            text: "Esta acción removerá el registro de forma permanente del historial.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, eliminar',
@@ -174,13 +265,9 @@ $(function () {
                 $.ajax({
                     url: route('sales.destroy', { sale: saleId }),
                     type: 'DELETE',
-                    data: { _token: $('meta[name="csrf-token"]').attr('content') },
-                    success: function (response) {
+                    success: function () {
                         dt.ajax.reload();
-                        SwalToast.fire({ icon: 'success', title: response.message });
-                    },
-                    error: function (xhr) {
-                        SwalToast.fire({ icon: 'error', title: xhr.responseJSON?.message || 'Error al procesar la solicitud.' });
+                        SwalToast.fire({ icon: 'success', title: 'Registro eliminado correctamente.' });
                     }
                 });
             }
