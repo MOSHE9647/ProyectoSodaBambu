@@ -48,6 +48,17 @@ const MODEL_ROUTES = {
 	destroy: route("attendance.destroy", { timesheet: ":id" }),
 };
 
+window.setPDFButtonLoadingState = (event, formSelector) => {
+	event.preventDefault();
+	setLoadingState(formSelector, true);
+
+	$(`#${formSelector}`).submit();
+
+	setTimeout(() => {
+		setLoadingState(formSelector, false);
+	}, 5000);
+};
+
 const loadedTabs = new Set();
 
 /**

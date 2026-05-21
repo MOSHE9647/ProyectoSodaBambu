@@ -204,7 +204,7 @@
     </div>
 
     <form id="salary-pdf-form" action="{{ route('attendance.salary.pdf') }}" method="POST" 
-        class="d-flex flex-row justify-content-{{ $timesheets->isNotEmpty() ? 'between' : 'center' }} align-items-center gap-3 mt-4" target="_blank"
+        class="d-flex flex-row justify-content-{{ $timesheets->isNotEmpty() ? 'between' : 'center' }} align-items-center gap-3 mt-4" target="_parent"
     >
         @csrf
         <input type="hidden" name="employee_id" value="{{ data_get($employee, 'id') }}">
@@ -220,15 +220,16 @@
 
         @if ($timesheets->isNotEmpty())
         <x-form.button
-            :id="'generate-pdf-button'"
+            :id="'salary-pdf-form-button'"
             :class="'btn btn-outline-primary rounded-3 px-4 py-2'"
-            :spinnerId="'generate-pdf-spinner'"
+            :spinnerId="'salary-pdf-form-spinner'"
             :loadingMessage="'Generando PDF...'"
             data-bs-toggle="tooltip"
             data-bs-placement="top"
             title="Generar PDF con el desglose del salario calculado para este colaborador y periodo seleccionado."
+            onclick="setPDFButtonLoadingState(event, 'salary-pdf-form');"
         >
-            <div id="generate-pdf-button-text" class="d-flex flex-row align-items-center justify-content-center">
+            <div id="salary-pdf-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
                 <i class="bi bi-file-earmark-pdf me-2"></i>
                 Generar PDF
             </div>
