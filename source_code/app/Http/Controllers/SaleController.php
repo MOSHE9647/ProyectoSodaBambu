@@ -8,11 +8,13 @@ use App\Http\Requests\SaleRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Sale;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Arr;
 use Spatie\Permission\Middleware\RoleMiddleware;
+use Yajra\DataTables\DataTables;
 
 class SaleController extends Controller implements HasMiddleware
 {
@@ -39,60 +41,59 @@ class SaleController extends Controller implements HasMiddleware
         return view('pages.sales.sales', compact('products', 'categories', 'lastSale'));
     }
 
-   /**
+    /**
      * Display a listing of the resource (Historial de Ventas).
      */
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Request $request)
     {
         if ($request->ajax()) {
-            
+
             if ($request->filled('start_date')) {
-                $startDateInput = \Carbon\Carbon::parse($request->input('start_date'));
-                $now = \Carbon\Carbon::now()->endOfDay(); // Fin del día actual para permitir consultas de hoy
+                $startDateInput = Carbon::parse($request->input('start_date'));
+                $now = Carbon::now()->endOfDay(); // Fin del día actual para permitir consultas de hoy
 
                 if ($startDateInput->greaterThan($now)) {
                     return response()->json([
-                        'message' => 'La fecha de inicio no puede ser mayor a la fecha actual.'
+                        'message' => 'La fecha de inicio no puede ser mayor a la fecha actual.',
                     ], 422);
                 }
             }
 
-
-            $query = \App\Models\Sale::with(['payments']);
+            $query = Sale::with(['payments']);
 
             if ($request->filled('start_date') && $request->filled('end_date')) {
-                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
-                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
                 $query->whereBetween('date', [$startDate, $endDate]);
             }
 
             if ($request->filled('invoice_number')) {
-                $query->where('invoice_number', 'like', '%' . $request->input('invoice_number') . '%');
+                $query->where('invoice_number', 'like', '%'.$request->input('invoice_number').'%');
             }
 
-            return \Yajra\DataTables\DataTables::of($query)
-              ->editColumn('date', function ($sale) {
+            return DataTables::of($query)
+                ->editColumn('date', function ($sale) {
                     return $sale->date ? $sale->date->toDateString() : 'N/A';
                 })
                 ->editColumn('total', function ($sale) {
-                    return '₡ ' . number_format($sale->total, 0);
+                    return '₡ '.number_format($sale->total, 0);
                 })
                 ->addColumn('payment_status', function ($sale) {
-                    return $sale->payments->isNotEmpty() 
+                    return $sale->payments->isNotEmpty()
                         ? '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Pagado</span>'
                         : '<span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2">Pendiente</span>';
                 })
                 ->addColumn('actions', function ($sale) {
-                    $isAdmin = auth()->user()->hasRole(\App\Enums\UserRole::ADMIN->value);
+                    $isAdmin = auth()->user()->hasRole(UserRole::ADMIN->value);
 
-                    $btnVer = '<button type="button" class="btn btn-info btn-sm btn-view-sale me-1 text-white" data-id="' . $sale->id . '" title="Ver Información"><i class="bi bi-eye"></i></button>';
-                    $btnPrint = '<button type="button" class="btn btn-primary btn-sm btn-print-sale me-1" data-id="' . $sale->id . '" title="Reimprimir Tiquete"><i class="bi bi-printer"></i></button>';
-                    
-                    $btnDelete = $isAdmin 
-                        ? '<button type="button" class="btn btn-danger btn-sm btn-delete-sale" data-id="' . $sale->id . '" title="Eliminar"><i class="bi bi-trash"></i></button>'
+                    $btnVer = '<button type="button" class="btn btn-info btn-sm btn-view-sale me-1 text-white" data-id="'.$sale->id.'" title="Ver Información"><i class="bi bi-eye"></i></button>';
+                    $btnPrint = '<button type="button" class="btn btn-primary btn-sm btn-print-sale me-1" data-id="'.$sale->id.'" title="Reimprimir Tiquete"><i class="bi bi-printer"></i></button>';
+
+                    $btnDelete = $isAdmin
+                        ? '<button type="button" class="btn btn-danger btn-sm btn-delete-sale" data-id="'.$sale->id.'" title="Eliminar"><i class="bi bi-trash"></i></button>'
                         : '<button type="button" class="btn btn-secondary btn-sm opacity-50" disabled title="Solo administradores pueden eliminar"><i class="bi bi-trash"></i></button>';
 
-                    return '<div class="d-flex justify-content-start align-items-center">' . $btnVer . $btnPrint . $btnDelete . '</div>';
+                    return '<div class="d-flex justify-content-start align-items-center">'.$btnVer.$btnPrint.$btnDelete.'</div>';
                 })
                 ->rawColumns(['payment_status', 'actions'])
                 ->toJson();
@@ -108,7 +109,7 @@ class SaleController extends Controller implements HasMiddleware
     {
         return response()->json([
             'success' => true,
-            'data' => $sale->load(['saleDetails.product', 'payments'])
+            'data' => $sale->load(['saleDetails.product', 'payments']),
         ]);
     }
 
@@ -175,13 +176,13 @@ class SaleController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(\App\Models\Sale $sale)
+    public function destroy(Sale $sale)
     {
         // Criterio de Aceptación: Validar estrictamente en backend que solo el admin pueda borrar
-        if (!auth()->user()->hasRole(\App\Enums\UserRole::ADMIN->value)) {
+        if (! auth()->user()->hasRole(UserRole::ADMIN->value)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Acceso denegado. Solo los administradores pueden eliminar registros del historial.'
+                'message' => 'Acceso denegado. Solo los administradores pueden eliminar registros del historial.',
             ], 403);
         }
 
@@ -191,12 +192,12 @@ class SaleController extends Controller implements HasMiddleware
 
             return response()->json([
                 'success' => true,
-                'message' => 'La venta ha sido eliminada del historial correctamente.'
+                'message' => 'La venta ha sido eliminada del historial correctamente.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ocurrió un error interno al intentar eliminar la venta.'
+                'message' => 'Ocurrió un error interno al intentar eliminar la venta.',
             ], 500);
         }
     }

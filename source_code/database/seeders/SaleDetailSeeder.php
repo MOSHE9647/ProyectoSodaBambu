@@ -26,20 +26,20 @@ class SaleDetailSeeder extends Seeder
             // random() with a number will return a collection of random non-repeating items
             $randomProducts = $products->random($numberOfDetails);
 
-        foreach ($randomProducts as $product) {
-            $quantity  = rand(1, 3);
-            $unitPrice = $product->sale_price;
-            $subTotal  = $quantity * $unitPrice;
+            foreach ($randomProducts as $product) {
+                $quantity = rand(1, 3);
+                $unitPrice = $product->sale_price;
+                $subTotal = $quantity * $unitPrice;
 
-            SaleDetail::create([
-                'sale_id'      => $sale->id,
-                'product_id'   => $product->id,
-                'quantity'     => $quantity,
-                'unit_price'   => $unitPrice,
-                'applied_tax'  => $product->tax_percentage,
-                'sub_total'    => $subTotal,
-            ]);
-        }
+                SaleDetail::create([
+                    'sale_id' => $sale->id,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'applied_tax' => $product->tax_percentage,
+                    'sub_total' => $subTotal,
+                ]);
+            }
         }
     }
 }
