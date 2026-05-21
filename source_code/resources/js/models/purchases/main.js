@@ -1,11 +1,15 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
-import { capitalizeSentence, toggleLoadingState } from "../../utils/utils.js";
-import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { capitalizeSentence, formatCurrency, formatDate, toggleLoadingState } from "../../utils/utils.js";
+import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 
+// ======================== Constants ========================
+
+// Model Configuration
 const MODEL_NAME = 'compra';
 const BTN_CLASS_PRIMARY = 'btn-primary';
 
+// Routes Configuration
 const MODEL_ROUTES = {
     index: route('purchases.index'),
     create: route('purchases.create'),
@@ -14,9 +18,13 @@ const MODEL_ROUTES = {
     delete: route('purchases.destroy', { purchase: ':id' }),
 };
 
+// ==================== Global Functions ====================
+
 window.SwalToast = SwalToast;
 window.SwalNotificationTypes = SwalNotificationTypes;
 window.toggleLoadingState = toggleLoadingState;
+
+// ==================== Helper Functions ====================
 
 window.showPurchaseInfo = function (url, anchor) {
     return showModelInfo(url, anchor, MODEL_NAME);
@@ -26,60 +34,150 @@ window.deletePurchase = function (e) {
     return deleteModel(e, MODEL_NAME);
 };
 
-// DataTable del modal de proveedor — se destruye y recrea en cada apertura
-let supplierItemsTable = null;
+/**
+ * Renders an optimized itemized breakdown modal for the supplier utilizing 
+ * robust SweetAlert2 structures instead of traditional Bootstrap models.
+ * @param {number} supplierId - ID of the target supplier
+ * @param {string} supplierName - Display text for header titles
+ */
+window.showSupplierItems = async function (supplierId, supplierName) {
+    try {
+        // Trigger a native clean loading sequence inside SweetAlert
+        SwalModal.fire({
+			title: `<i class="bi bi-truck me-2"></i> Productos/Insumos de <span class="ms-2" style="color: var(--bambu-logo-bg);">${supplierName}</span>`,
+			html: `
+                <div class="text-center py-4 h-100 my-auto" id="swal-loader-container">
+                    <div class="spinner-border" style="color: var(--bambu-logo-bg);" role="status"></div>
+                    <p class="mt-2 text-muted">Cargando catálogo suministrado...</p>
+                </div>
+            `,
+			showConfirmButton: false,
+			showCloseButton: true,
+			width: "750px",
+			customClass: {
+				popup: "swal-popup w-50 h-auto",
+				title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
+				closeButton: "swal-close-btn fs-3",
+				cancelButton: "btn btn-danger mx-1",
+				icon: "mb-4",
+			},
+		});
 
-window.showSupplierItems = function (supplierId, supplierName) {
-    const modal = new bootstrap.Modal(document.getElementById('supplierItemsModal'));
-    const $loading = $('#supplier-items-loading');
-    const $content = $('#supplier-items-content');
-    const $empty = $('#supplier-items-empty');
-    const $modalName = $('#modal-supplier-name');
+        const response = await fetch(`${MODEL_ROUTES.index}?report=true&supplier_id=${supplierId}`, {
+            headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" }
+        });
+        const items = await response.json();
+        const $htmlContainer = $('#swal2-html-container');
 
-    // Limpiar estado anterior
-    if (supplierItemsTable) {
-        supplierItemsTable.destroy();
-        supplierItemsTable = null;
-        $('#supplier-items-table').empty(); // Limpiar DOM del table si DataTables lo modificó
+        if (!
+            items || items.length === 0) {
+            $htmlContainer.html(`
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                    <p>Este proveedor no tiene ítems registrados en el sistema actualmente.</p>
+                </div>
+            `);
+            return;
+        }
+
+        // Build elegant template using the point-of-sale layout scheme
+        let tableRows = items
+			.map(
+				(item) => {
+                    const itemTheme = item.type === "Producto"
+                        ? { color: 'info', icon: 'bi-box-seam' }
+                        : { color: 'warning', icon: 'bi-basket' };
+                    const itemTypeLabel = item.type === "Producto" ? "Producto" : "Insumo";
+                    return `
+                        <tr>
+                            <td class="text-start">
+                                <span class="badge bg-${itemTheme.color} text-${itemTheme.color}-emphasis border border-${itemTheme.color} bg-${itemTheme.color}-subtle rounded-pill px-3 py-2">
+                                    <i class="bi ${itemTheme.icon} me-1"></i>
+                                    ${itemTypeLabel}
+                                </span>
+                            </td>
+                            <td class="text-start fw-semibold">${item.name}</td>
+                            <td class="text-center fw-bold" style="color: var(--bambu-logo-bg);">${item.times}</td>
+                        </tr>
+                    `;
+                },
+			)
+			.join("");
+
+        $htmlContainer.html(`
+            <p class="text-start text-muted mb-3">Historial de suministros provistos detectados en inventario:</p>
+            <div class="table-responsive p-0" style="font-size: 1rem; max-height: 700px; overflow-y: auto;">
+                <table class="init-datatable table table-hover align-middle" style="min-width: 600px;">
+                    <thead class="table-subtle text-secondary-emphasis">
+                        <tr>
+                            <th style="width: 25%;">Tipo</th>
+                            <th style="width: 50%;">Nombre del Ítem</th>
+                            <th class="text-center" style="width: 25%;">Suministros Totales</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            </div>
+        `);
+
+        const $tables = $(".swal2-popup .init-datatable");
+		if ($tables.length) {
+			$tables.each(function () {
+				$(this).DataTable({
+					pageLength: 5,
+					lengthMenu: [5, 10, 25, 50],
+					searching: false,
+                    ordering: false,
+					layout: {
+						topStart: null,
+					},
+				});
+			});
+		}
+    } catch (error) {
+        console.error("Error building supplier dynamic context modal:", error);
+        SwalToast.fire({ icon: 'error', title: 'Error al recuperar información del proveedor.' });
     }
-    
-    // Ocultar spinners/vacio manuales que ya no se ocupan porque DataTable se encarga
-    $loading.addClass('d-none');
-    $empty.addClass('d-none');
-    $content.removeClass('d-none');
-    
-    $modalName.text(supplierName);
-    modal.show();
+};
 
-    const columns = [
-        {
-            data: 'type', name: 'type', title: 'Tipo', orderable: false,
-            render: (data) => {
-                const badgeClass = data === 'Producto' ? 'bg-success' : 'bg-info text-dark';
-                return `<span class="badge ${badgeClass}">${data}</span>`;
-            }
-        },
-        { data: 'name', name: 'name', title: 'Nombre' },
-        { 
-            data: 'times', name: 'times', title: 'Veces Suministrado', 
-            className: 'text-center fw-semibold' 
-        }
-    ];
+/**
+ * Create an HTML badge element and return its outer HTML as a string.
+ * Uses semantic "type" to build Bootstrap-like utility classes.
+ *
+ * @param {string} text - Text to display inside the badge.
+ * @param {string} [type='secondary'] - Semantic type (e.g. 'success', 'danger').
+ * @returns {string} Outer HTML of the created badge element.
+ */
+const createStatusBadge = (text, type = 'secondary') => {
+    const badge = document.createElement('span');
+    badge.className = `badge border rounded-pill text-${type}-emphasis bg-${type}-subtle px-3 py-2`;
+    badge.style.minWidth = '90px';
+    badge.style.minHeight = '30px';
+    badge.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'x-circle'} me-2"></i> ${text}`;
+    return badge.outerHTML;
+};
 
-    supplierItemsTable = CreateNewDataTable(
-        'supplier-items-table',
-        MODEL_ROUTES.index,
-        columns,
-        {},
-        [],
-        {
-            serverSide: false, // Es una consulta que retorna {items: [...]}
-            ajax: {
-                data: { supplier_id: supplierId, report: 1 },
-                dataSrc: 'items'
-            },
-        }
-    );
+/**
+ * Map a purchase status key to a styled badge HTML string.
+ *
+ * @param {string|null|undefined} status - Status identifier for the purchase.
+ * @returns {string} HTML string of the corresponding status badge.
+ */
+const getStatusBadge = (status) => {
+    if (status == null) {
+        return createStatusBadge('Desconocido');
+    }
+
+    switch (status) {
+        case 'paid':
+            return createStatusBadge('Completo', 'success');
+        case 'pending':
+            return createStatusBadge('Pendiente', 'warning');
+        default:
+            return createStatusBadge('Desconocido');
+    }
 };
 
 // Limpiar DataTable al cerrar el modal
@@ -94,59 +192,43 @@ $('#supplierItemsModal').on('hidden.bs.modal', function () {
 
 $(() => {
     const columns = [
-        { data: 'invoice_number', name: 'invoice_number', title: 'N° Factura' },
-        {
-            data: 'supplier',
-            name: 'supplier.name',
-            title: 'Proveedor',
-            render: (data, type, row) => {
-                if (!data?.name) return 'N/A';
-                return `<a href="javascript:void(0)"
-                           class="purchase-supplier-link fw-semibold"
-                           onclick="showSupplierItems(${row.supplier_id}, '${data.name.replace(/'/g, "\\'")}')"
-                           title="Ver productos/insumos de este proveedor">
-                           <i class="bi bi-truck me-1"></i>${data.name}
-                        </a>`;
-            }
-        },
-        {
-            data: 'date', name: 'date', title: 'Fecha',
-            render: (data) => {
-                if (!data) return '';
-                const d = new Date(data + 'T00:00:00');
-                return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
-                    .replace(/(\d+) de (\w+) de (\d+)/, '$1 de $2 del $3');
-            }
-        },
-        {
-            data: 'total', name: 'total', title: 'Total',
-            render: (data) => `₡${parseFloat(data).toFixed(2)}`
-        },
-        {
-            data: 'payment_status',
-            name: 'payment_status',
-            title: 'Estado de Pago',
-            render: (data) => {
-                const badgeClass = {
-                    'paid': 'bg-success',
-                    'partial': 'bg-info text-dark',
-                    'pending': 'bg-warning text-dark',
-                    'cancelled': 'bg-danger',
-                    'void': 'bg-danger'
-                }[data] || 'bg-light text-dark';
-
-                const labels = {
-                    'paid': 'Completo',
-                    'partial': 'Parcial',
-                    'pending': 'Pendiente',
-                    'cancelled': 'Anulado',
-                    'void': 'Anulado'
-                };
-
-                return `<span class="badge ${badgeClass}">${labels[data] ?? data}</span>`;
-            }
-        }
-    ];
+		{
+			data: "invoice_number",
+			name: "invoice_number",
+			title: "N° Factura",
+			render: (data) => `<span class="font-monospace">${data}</span>`,
+		},
+		{
+			data: "supplier.name",
+			name: "supplier.name",
+			title: "Proveedor",
+			render: (data, type, row) => `
+                <a href="javascript:void(0)" class="fw-bold text-decoration-none" onclick="showSupplierItems(${row.supplier_id}, '${escape(data)}')" style="color: var(--bambu-logo-bg);">
+                    <i class="bi bi-box-seam me-1"></i>${data}
+                </a>
+            `,
+		},
+		{
+			data: "date",
+			name: "date",
+			title: "Fecha",
+			render: (data) => formatDate(data.slice(0, 10)),
+		},
+		{
+			data: "total",
+			name: "total",
+			title: "Total",
+			render: (data) => formatCurrency(data),
+		},
+		{
+			data: "payment_status",
+			name: "payment_status",
+			title: "Estado de Pago",
+			render: (data) => {
+				return getStatusBadge(data);
+			},
+		},
+	];
 
     const actions = {
         show: {

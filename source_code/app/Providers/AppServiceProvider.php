@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Models\Contract;
 use App\Models\Product;
 use App\Models\ProductStock;
-use App\Models\Purchase;
 use App\Models\PurchaseDetail;
 use App\Models\Sale;
 use App\Models\SaleDetail;
@@ -16,7 +15,6 @@ use App\Observers\ContractObserver;
 use App\Observers\ProductObserver;
 use App\Observers\ProductStockObserver;
 use App\Observers\PurchaseDetailObserver;
-use App\Observers\PurchaseObserver;
 use App\Observers\SaleDetailObserver;
 use App\Observers\SaleObserver;
 use App\Observers\SupplyObserver;
@@ -49,7 +47,6 @@ class AppServiceProvider extends ServiceProvider
         Supply::observe(SupplyObserver::class);
         Sale::observe(SaleObserver::class);
         SaleDetail::observe(SaleDetailObserver::class);
-        Purchase::observe(PurchaseObserver::class);
         Contract::observe(ContractObserver::class);
         Transaction::observe(TransactionObserver::class);
 

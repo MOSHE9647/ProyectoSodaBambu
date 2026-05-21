@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Contracts\Receipable;
 use App\Enums\UserRole;
 use App\Models\Contract;
+use App\Models\Purchase;
 use App\Models\Sale;
 use App\Services\Receipt\ReceiptBuilder;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -110,6 +110,8 @@ class ReceiptController extends Controller implements HasMiddleware
             'sale' => Sale::class,
             'contracts' => Contract::class,
             'contract' => Contract::class,
+            'purchases' => Purchase::class,
+            'purchase' => Purchase::class,
         ];
 
         return $modelMap[strtolower($model)] ?? null;

@@ -235,9 +235,10 @@
     </form>
 </div>
 
-@section('scripts')
+@once
     <script type="text/javascript">
         window.SUPPLY_FORM_DATA = {
+            isOffcanvas: @json($isOffcanvas),
             measureUnits: @json(
                 collect(MeasureUnit::cases())->map(fn($m) => [
                     'value' => $m->value, 'label' => $m->label()
@@ -247,4 +248,4 @@
     </script>
 
     @vite(['resources/js/models/supplies/form.js'])
-@endsection
+@endonce
