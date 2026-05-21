@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Casts\CostaRicaDatetime;
-use App\Casts\DecimalFormat;
 use Carbon\Carbon;
 use Database\Factories\TimesheetFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,7 +39,7 @@ class Timesheet extends Model
      */
     protected $casts = [
         'is_holiday' => 'boolean',
-        'total_hours' => DecimalFormat::class,
+        'total_hours' => 'float',
         'end_time' => CostaRicaDatetime::class,
         'start_time' => CostaRicaDatetime::class,
         'work_date' => CostaRicaDatetime::class,
@@ -118,11 +117,16 @@ class Timesheet extends Model
     }
 
     /**
-     * Total hours label for UI.
+     * Updated the total_hours_label accessor to retrieve the raw decimal
+     * value from the database and format it for the UI without rounding. The
+     * implementation uses number_format to ensure two-decimal precision, trims
+     * unnecessary trailing zeros, and replaces the decimal point with a comma to
+     * comply with Costa Rican localization standards (e.g., "1,5h").
      */
     public function getTotalHoursLabelAttribute(): string
     {
-        $normalized = rtrim(rtrim(number_format($this->total_hours_raw, 2, '.', ''), '0'), '.');
+        $hours = (float) $this->getRawOriginal('total_hours');
+        $normalized = rtrim(rtrim(number_format($hours, 2, '.', ''), '0'), '.');
 
         return str_replace('.', ',', $normalized).'h';
     }

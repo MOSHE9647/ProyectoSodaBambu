@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Casts\DecimalFormat;
 use App\Enums\EmployeeStatus;
 use App\Enums\PaymentFrequency;
 use Database\Factories\EmployeeFactory;
@@ -49,7 +48,7 @@ class Employee extends Model
      */
     protected $casts = [
         'status' => EmployeeStatus::class,
-        'hourly_wage' => DecimalFormat::class,
+        'hourly_wage' => 'integer',
         'payment_frequency' => PaymentFrequency::class,
     ];
 
@@ -132,7 +131,7 @@ class Employee extends Model
      */
     public function getHourlyWageLabelAttribute(): string
     {
-        return '₡'.number_format($this->hourly_wage_raw, 2, ',', ' ').'/hr';
+        return format_crc($this->hourly_wage_raw).'/hr';
     }
 
     /**
