@@ -1135,7 +1135,9 @@
                 "ext-curl": "*",
                 "guzzle/client-integration-tests": "3.0.2",
                 "guzzlehttp/test-server": "^0.3.2",
+                "guzzlehttp/test-server": "^0.3.2",
                 "php-http/message-factory": "^1.1",
+                "phpunit/phpunit": "^8.5.52 || ^9.6.34",
                 "phpunit/phpunit": "^8.5.52 || ^9.6.34",
                 "psr/log": "^1.1 || ^2.0 || ^3.0"
             },
@@ -1252,6 +1254,7 @@
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.2",
                 "phpunit/phpunit": "^8.5.52 || ^9.6.34"
+                "phpunit/phpunit": "^8.5.52 || ^9.6.34"
             },
             "type": "library",
             "extra": {
@@ -1342,7 +1345,9 @@
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.2",
                 "http-interop/http-factory-tests": "1.1.0",
+                "http-interop/http-factory-tests": "1.1.0",
                 "jshttp/mime-db": "1.54.0.1",
+                "phpunit/phpunit": "^8.5.52 || ^9.6.34"
                 "phpunit/phpunit": "^8.5.52 || ^9.6.34"
             },
             "suggest": {
@@ -1807,13 +1812,17 @@
         {
             "name": "laravel/passkeys",
             "version": "v0.2.1",
+            "version": "v0.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/passkeys-server.git",
                 "reference": "a76656ada41b2b4a591f075eddae5ddc67e8ab9c"
+                "reference": "a76656ada41b2b4a591f075eddae5ddc67e8ab9c"
             },
             "dist": {
                 "type": "zip",
+                "url": "https://api.github.com/repos/laravel/passkeys-server/zipball/a76656ada41b2b4a591f075eddae5ddc67e8ab9c",
+                "reference": "a76656ada41b2b4a591f075eddae5ddc67e8ab9c",
                 "url": "https://api.github.com/repos/laravel/passkeys-server/zipball/a76656ada41b2b4a591f075eddae5ddc67e8ab9c",
                 "reference": "a76656ada41b2b4a591f075eddae5ddc67e8ab9c",
                 "shasum": ""
@@ -1871,17 +1880,22 @@
                 "source": "https://github.com/laravel/passkeys-server"
             },
             "time": "2026-05-18T16:26:00+00:00"
+            "time": "2026-05-18T16:26:00+00:00"
         },
         {
             "name": "laravel/prompts",
+            "version": "v0.3.18",
             "version": "v0.3.18",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/prompts.git",
                 "reference": "a19af51bb144bf87f08397921fa619f85c7d4e72"
+                "reference": "a19af51bb144bf87f08397921fa619f85c7d4e72"
             },
             "dist": {
                 "type": "zip",
+                "url": "https://api.github.com/repos/laravel/prompts/zipball/a19af51bb144bf87f08397921fa619f85c7d4e72",
+                "reference": "a19af51bb144bf87f08397921fa619f85c7d4e72",
                 "url": "https://api.github.com/repos/laravel/prompts/zipball/a19af51bb144bf87f08397921fa619f85c7d4e72",
                 "reference": "a19af51bb144bf87f08397921fa619f85c7d4e72",
                 "shasum": ""
@@ -1928,7 +1942,9 @@
             "support": {
                 "issues": "https://github.com/laravel/prompts/issues",
                 "source": "https://github.com/laravel/prompts/tree/v0.3.18"
+                "source": "https://github.com/laravel/prompts/tree/v0.3.18"
             },
+            "time": "2026-05-19T00:47:18+00:00"
             "time": "2026-05-19T00:47:18+00:00"
         },
         {
@@ -8528,13 +8544,17 @@
         {
             "name": "web-auth/webauthn-lib",
             "version": "5.3.3",
+            "version": "5.3.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/web-auth/webauthn-lib.git",
                 "reference": "e6f656d6c6b29fa305382fe6a0a3be8177d177df"
+                "reference": "e6f656d6c6b29fa305382fe6a0a3be8177d177df"
             },
             "dist": {
                 "type": "zip",
+                "url": "https://api.github.com/repos/web-auth/webauthn-lib/zipball/e6f656d6c6b29fa305382fe6a0a3be8177d177df",
+                "reference": "e6f656d6c6b29fa305382fe6a0a3be8177d177df",
                 "url": "https://api.github.com/repos/web-auth/webauthn-lib/zipball/e6f656d6c6b29fa305382fe6a0a3be8177d177df",
                 "reference": "e6f656d6c6b29fa305382fe6a0a3be8177d177df",
                 "shasum": ""
@@ -8598,6 +8618,7 @@
             ],
             "support": {
                 "source": "https://github.com/web-auth/webauthn-lib/tree/5.3.3"
+                "source": "https://github.com/web-auth/webauthn-lib/tree/5.3.3"
             },
             "funding": [
                 {
@@ -8609,6 +8630,7 @@
                     "type": "patreon"
                 }
             ],
+            "time": "2026-05-17T19:04:30+00:00"
             "time": "2026-05-17T19:04:30+00:00"
         },
         {
@@ -9132,13 +9154,17 @@
         {
             "name": "yajra/laravel-datatables-oracle",
             "version": "v12.7.2",
+            "version": "v12.7.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/yajra/laravel-datatables.git",
                 "reference": "af48ca6c9f05ee4b67353c630a8f2cae0f2a8a46"
+                "reference": "af48ca6c9f05ee4b67353c630a8f2cae0f2a8a46"
             },
             "dist": {
                 "type": "zip",
+                "url": "https://api.github.com/repos/yajra/laravel-datatables/zipball/af48ca6c9f05ee4b67353c630a8f2cae0f2a8a46",
+                "reference": "af48ca6c9f05ee4b67353c630a8f2cae0f2a8a46",
                 "url": "https://api.github.com/repos/yajra/laravel-datatables/zipball/af48ca6c9f05ee4b67353c630a8f2cae0f2a8a46",
                 "reference": "af48ca6c9f05ee4b67353c630a8f2cae0f2a8a46",
                 "shasum": ""
@@ -9209,6 +9235,7 @@
             "support": {
                 "issues": "https://github.com/yajra/laravel-datatables/issues",
                 "source": "https://github.com/yajra/laravel-datatables/tree/v12.7.2"
+                "source": "https://github.com/yajra/laravel-datatables/tree/v12.7.2"
             },
             "funding": [
                 {
@@ -9216,6 +9243,7 @@
                     "type": "github"
                 }
             ],
+            "time": "2026-05-16T02:08:01+00:00"
             "time": "2026-05-16T02:08:01+00:00"
         }
     ],
@@ -9671,13 +9699,17 @@
         {
             "name": "amphp/http-client",
             "version": "v5.3.6",
+            "version": "v5.3.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/http-client.git",
                 "reference": "ca155026acafa74a612d776a97202d53077fee86"
+                "reference": "ca155026acafa74a612d776a97202d53077fee86"
             },
             "dist": {
                 "type": "zip",
+                "url": "https://api.github.com/repos/amphp/http-client/zipball/ca155026acafa74a612d776a97202d53077fee86",
+                "reference": "ca155026acafa74a612d776a97202d53077fee86",
                 "url": "https://api.github.com/repos/amphp/http-client/zipball/ca155026acafa74a612d776a97202d53077fee86",
                 "reference": "ca155026acafa74a612d776a97202d53077fee86",
                 "shasum": ""
@@ -9756,6 +9788,7 @@
             "support": {
                 "issues": "https://github.com/amphp/http-client/issues",
                 "source": "https://github.com/amphp/http-client/tree/v5.3.6"
+                "source": "https://github.com/amphp/http-client/tree/v5.3.6"
             },
             "funding": [
                 {
@@ -9763,6 +9796,7 @@
                     "type": "github"
                 }
             ],
+            "time": "2026-05-15T23:29:38+00:00"
             "time": "2026-05-15T23:29:38+00:00"
         },
         {
@@ -12073,13 +12107,17 @@
         {
             "name": "laravel/boost",
             "version": "v2.4.8",
+            "version": "v2.4.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/boost.git",
                 "reference": "d11d720cf9537f8d236a11d973e99563a598ec9c"
+                "reference": "d11d720cf9537f8d236a11d973e99563a598ec9c"
             },
             "dist": {
                 "type": "zip",
+                "url": "https://api.github.com/repos/laravel/boost/zipball/d11d720cf9537f8d236a11d973e99563a598ec9c",
+                "reference": "d11d720cf9537f8d236a11d973e99563a598ec9c",
                 "url": "https://api.github.com/repos/laravel/boost/zipball/d11d720cf9537f8d236a11d973e99563a598ec9c",
                 "reference": "d11d720cf9537f8d236a11d973e99563a598ec9c",
                 "shasum": ""
@@ -12090,6 +12128,7 @@
                 "illuminate/contracts": "^11.45.3|^12.41.1|^13.0",
                 "illuminate/routing": "^11.45.3|^12.41.1|^13.0",
                 "illuminate/support": "^11.45.3|^12.41.1|^13.0",
+                "laravel/mcp": "^0.5.1|^0.6.0|~0.7.0,<0.7.1",
                 "laravel/mcp": "^0.5.1|^0.6.0|~0.7.0,<0.7.1",
                 "laravel/prompts": "^0.3.10",
                 "laravel/roster": "^0.5.0",
@@ -12134,6 +12173,7 @@
                 "issues": "https://github.com/laravel/boost/issues",
                 "source": "https://github.com/laravel/boost"
             },
+            "time": "2026-05-19T20:09:50+00:00"
             "time": "2026-05-19T20:09:50+00:00"
         },
         {
@@ -12421,13 +12461,17 @@
         {
             "name": "laravel/sail",
             "version": "v1.60.0",
+            "version": "v1.60.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/sail.git",
                 "reference": "2a1538ed22eed4210ac1e17904235032571bd89c"
+                "reference": "2a1538ed22eed4210ac1e17904235032571bd89c"
             },
             "dist": {
                 "type": "zip",
+                "url": "https://api.github.com/repos/laravel/sail/zipball/2a1538ed22eed4210ac1e17904235032571bd89c",
+                "reference": "2a1538ed22eed4210ac1e17904235032571bd89c",
                 "url": "https://api.github.com/repos/laravel/sail/zipball/2a1538ed22eed4210ac1e17904235032571bd89c",
                 "reference": "2a1538ed22eed4210ac1e17904235032571bd89c",
                 "shasum": ""
@@ -12479,6 +12523,7 @@
                 "issues": "https://github.com/laravel/sail/issues",
                 "source": "https://github.com/laravel/sail"
             },
+            "time": "2026-05-14T17:29:51+00:00"
             "time": "2026-05-14T17:29:51+00:00"
         },
         {
@@ -13903,13 +13948,17 @@
         {
             "name": "revolt/event-loop",
             "version": "v1.0.9",
+            "version": "v1.0.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/revoltphp/event-loop.git",
                 "reference": "44061cf513e53c6200372fc935ac42271566295d"
+                "reference": "44061cf513e53c6200372fc935ac42271566295d"
             },
             "dist": {
                 "type": "zip",
+                "url": "https://api.github.com/repos/revoltphp/event-loop/zipball/44061cf513e53c6200372fc935ac42271566295d",
+                "reference": "44061cf513e53c6200372fc935ac42271566295d",
                 "url": "https://api.github.com/repos/revoltphp/event-loop/zipball/44061cf513e53c6200372fc935ac42271566295d",
                 "reference": "44061cf513e53c6200372fc935ac42271566295d",
                 "shasum": ""
@@ -13921,6 +13970,7 @@
                 "ext-json": "*",
                 "jetbrains/phpstorm-stubs": "^2019.3",
                 "phpunit/phpunit": "^9",
+                "psalm/phar": "6.16.*"
                 "psalm/phar": "6.16.*"
             },
             "type": "library",
@@ -13969,19 +14019,25 @@
             "support": {
                 "issues": "https://github.com/revoltphp/event-loop/issues",
                 "source": "https://github.com/revoltphp/event-loop/tree/v1.0.9"
+                "source": "https://github.com/revoltphp/event-loop/tree/v1.0.9"
             },
+            "time": "2026-05-16T17:55:38+00:00"
             "time": "2026-05-16T17:55:38+00:00"
         },
         {
             "name": "sebastian/cli-parser",
             "version": "4.2.1",
+            "version": "4.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/cli-parser.git",
                 "reference": "7d05781b13f7dec9043a629a21d086ed74582a15"
+                "reference": "7d05781b13f7dec9043a629a21d086ed74582a15"
             },
             "dist": {
                 "type": "zip",
+                "url": "https://api.github.com/repos/sebastianbergmann/cli-parser/zipball/7d05781b13f7dec9043a629a21d086ed74582a15",
+                "reference": "7d05781b13f7dec9043a629a21d086ed74582a15",
                 "url": "https://api.github.com/repos/sebastianbergmann/cli-parser/zipball/7d05781b13f7dec9043a629a21d086ed74582a15",
                 "reference": "7d05781b13f7dec9043a629a21d086ed74582a15",
                 "shasum": ""
@@ -13990,6 +14046,7 @@
                 "php": ">=8.3"
             },
             "require-dev": {
+                "phpunit/phpunit": "^12.5.25"
                 "phpunit/phpunit": "^12.5.25"
             },
             "type": "library",
@@ -14020,6 +14077,7 @@
                 "issues": "https://github.com/sebastianbergmann/cli-parser/issues",
                 "security": "https://github.com/sebastianbergmann/cli-parser/security/policy",
                 "source": "https://github.com/sebastianbergmann/cli-parser/tree/4.2.1"
+                "source": "https://github.com/sebastianbergmann/cli-parser/tree/4.2.1"
             },
             "funding": [
                 {
@@ -14039,6 +14097,7 @@
                     "type": "tidelift"
                 }
             ],
+            "time": "2026-05-17T05:29:34+00:00"
             "time": "2026-05-17T05:29:34+00:00"
         },
         {
@@ -14501,22 +14560,28 @@
         {
             "name": "sebastian/lines-of-code",
             "version": "4.0.1",
+            "version": "4.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/lines-of-code.git",
+                "reference": "d543b8ef219dcd8da262cbb958639a96bedba10e"
                 "reference": "d543b8ef219dcd8da262cbb958639a96bedba10e"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/lines-of-code/zipball/d543b8ef219dcd8da262cbb958639a96bedba10e",
                 "reference": "d543b8ef219dcd8da262cbb958639a96bedba10e",
+                "url": "https://api.github.com/repos/sebastianbergmann/lines-of-code/zipball/d543b8ef219dcd8da262cbb958639a96bedba10e",
+                "reference": "d543b8ef219dcd8da262cbb958639a96bedba10e",
                 "shasum": ""
             },
             "require": {
                 "nikic/php-parser": "^5.7.0",
+                "nikic/php-parser": "^5.7.0",
                 "php": ">=8.3"
             },
             "require-dev": {
+                "phpunit/phpunit": "^12.5.25"
                 "phpunit/phpunit": "^12.5.25"
             },
             "type": "library",
@@ -14547,6 +14612,7 @@
                 "issues": "https://github.com/sebastianbergmann/lines-of-code/issues",
                 "security": "https://github.com/sebastianbergmann/lines-of-code/security/policy",
                 "source": "https://github.com/sebastianbergmann/lines-of-code/tree/4.0.1"
+                "source": "https://github.com/sebastianbergmann/lines-of-code/tree/4.0.1"
             },
             "funding": [
                 {
@@ -14564,8 +14630,21 @@
                 {
                     "url": "https://tidelift.com/funding/github/packagist/sebastian/lines-of-code",
                     "type": "tidelift"
+                },
+                {
+                    "url": "https://liberapay.com/sebastianbergmann",
+                    "type": "liberapay"
+                },
+                {
+                    "url": "https://thanks.dev/u/gh/sebastianbergmann",
+                    "type": "thanks_dev"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/sebastian/lines-of-code",
+                    "type": "tidelift"
                 }
             ],
+            "time": "2026-05-19T16:22:07+00:00"
             "time": "2026-05-19T16:22:07+00:00"
         },
         {

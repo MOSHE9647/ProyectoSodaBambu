@@ -35,9 +35,14 @@ export async function showModelInfo(url, anchor, modelName) {
                     if ($tables.length) {
                         $tables.each(function() {
                             $(this).DataTable({
-                                pageLength: 5,
-                                lengthMenu: [5, 10, 25, 50],
-                            });
+								pageLength: 10,
+								lengthMenu: [5, 10, 25, 50],
+								searching: false,
+								ordering: false,
+								layout: {
+									topStart: null,
+								},
+							});
                         });
                     }
                 }

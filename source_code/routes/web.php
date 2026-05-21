@@ -16,6 +16,7 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\UserController;
+use App\Models\Purchase;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -74,5 +75,4 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // Shared offcanvas form endpoint used by purchases, contracts, and other modules.
     Route::get('/offcanvas-form/{type}', OffcanvasFormController::class)->name('offcanvas-form');
-
 });

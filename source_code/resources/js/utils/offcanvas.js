@@ -2,9 +2,9 @@ import { SwalToast } from "./sweetalert.js";
 import { fetchWithErrorHandling } from "./error-handling.js";
 import { enableBootstrapTooltips, toggleLoadingState } from "./utils.js";
 import { initClientEvents } from "../models/contracts/offcanvas/clients.js";
-// import { initSupplyEvents } from "../models/purchases/offcanvas/supplies.js";
-// import { initProductEvents } from "../models/purchases/offcanvas/products.js";
-// import { initSupplierEvents } from "../models/purchases/offcanvas/suppliers.js";
+import { initSupplyEvents } from "../models/purchases/offcanvas/supplies.js";
+import { initProductEvents } from "../models/purchases/offcanvas/products.js";
+import { initSupplierEvents } from "../models/purchases/offcanvas/suppliers.js";
 
 // ===================== Environment Checks =====================
 
@@ -69,13 +69,13 @@ const bindSpecificOffcanvasEvents = (type, offcanvasInstance) => {
 
 	switch (type) {
 		case "supplier":
-			// initSupplierEvents(offcanvasInstance);
+			initSupplierEvents(offcanvasInstance);
 			break;
 		case "product":
-			// initProductEvents(offcanvasInstance);
+			initProductEvents(offcanvasInstance);
 			break;
 		case "supply":
-			// initSupplyEvents(offcanvasInstance);
+			initSupplyEvents(offcanvasInstance);
 			break;
         case "client":
 			initClientEvents(offcanvasInstance);

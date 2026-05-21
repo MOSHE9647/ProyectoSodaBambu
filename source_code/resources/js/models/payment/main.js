@@ -2,6 +2,7 @@ import { fetchWithErrorHandling } from "../../utils/error-handling";
 import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert";
 import { enableBootstrapTooltips, formatCurrency, setLoadingState } from "../../utils/utils";
 import { clearFieldError, showFieldError, validateMultipleOf5 } from "../../utils/validation";
+import { showBootstrapModal } from "../../utils/bootstrap";
 
 // ==================== Environment Checks ====================
 
@@ -99,7 +100,11 @@ const getExtractedPaymentDetails = () => {
         });
     });
 
-    return { paymentDetails, shouldPrint };
+    return { 
+        paymentDetails, 
+        shouldPrint,
+        cancelled:false // This field is set to true if the user closes the modal without submitting, so the caller can explicitly handle that case.
+     };
 };
 
 // ===================== UI Updaters ==========================
@@ -391,29 +396,15 @@ const bindEvents = () => {
 export async function showPaymentDetailsFormModal(purchaseTotalAmount, loadingButtonId) {
     setLoadingState(loadingButtonId, true);
     const html = await fetchPaymentDetailsModalContent(purchaseTotalAmount);
-    if (!html) return;
+    
+    if (!html) {
+        setLoadingState(loadingButtonId, false);
+        return { paymentDetails: [], shouldPrint: false };
+    }
 
-    const modal = SwalModal.fire({
-        title: "Procesar Pago",
-        html: `
-        <div id="payment-details-modal" class="d-flex flex-column flex-grow-1 text-start" style="min-width: 50rem; max-width: 50rem; width: 100%;">
-            ${html}
-        </div>
-        `,
-        showCloseButton: true,
-        showCancelButton: false,
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        customClass: {
-            popup: "swal-popup w-auto h-auto",
-            title: "d-flex justify-content-start align-items-center border-bottom pb-3 mb-3",
-            closeButton: "swal-close-btn fs-3",
-            htmlContainer: "pb-0 overflow-x-hidden text-start",
-        },
-        didClose: () => { 
-            setLoadingState(loadingButtonId, false);
-        },
+    const modal = showBootstrapModal('payment-details-modal','Procesar Pago', html, {
+        modalClass: 'text-start',
+        modalStyle: 'max-width: 50rem; width: 100%;',
     });
     
     bindEvents();
@@ -433,11 +424,17 @@ export async function showPaymentDetailsFormModal(purchaseTotalAmount, loadingBu
     return new Promise((resolve) => {
         const interval = setInterval(() => {
             if (finalDetails) {
-                modal.close();
-                setLoadingState(loadingButtonId, false);
                 clearInterval(interval);
-                resolve(finalDetails);
+                modal.hide();
             }
-        }, 300);
+        }, 100);
+
+        // This listener ensures that the loading state is ALWAYS cleaned up when the modal closes
+        container.addEventListener('hidden.bs.modal', function () {
+            clearInterval(interval);
+            setLoadingState(loadingButtonId, false);
+            // If there are no details (closed without submitting), we return a safe object to avoid destructuring errors
+            resolve(finalDetails || { paymentDetails: [], shouldPrint: false, cancelled: true });
+        }, { once: true });
     });
 }
