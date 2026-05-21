@@ -69,7 +69,13 @@ $(() => {
     if (finalizeSaleButton.length) {
         finalizeSaleButton.on("click", async () => {
 			const saleTotal = getActiveSaleData().total;
-			const { paymentDetails, shouldPrint } = await showPaymentDetailsFormModal(saleTotal, 'finalize-sale');
+
+			// Modifications integrating cancelled to handle modal closure without sending
+			const { paymentDetails, shouldPrint, cancelled } = await showPaymentDetailsFormModal(saleTotal, 'finalize-sale');
+
+			if (cancelled) {
+				return;
+			}
 
 			const saleResult = await processSale(paymentDetails);
 			if (saleResult?.success) {
