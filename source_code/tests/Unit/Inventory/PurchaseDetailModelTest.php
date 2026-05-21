@@ -79,12 +79,12 @@ test('CP-03_EIF-35 - purchase detail morphs to purchasable model', function () {
 test('CP-04_EIF-35 - purchase detail casts subtotal correctly', function () {
     // Given: a purchase detail with explicit subtotal value.
     $purchaseDetail = PurchaseDetail::factory()->create([
-        'subtotal' => 617,
+        'sub_total' => 617,
     ]);
 
     // When: reading the model attributes.
     // Then: subtotal is normalized as decimal string.
-    expect((string) $purchaseDetail->subtotal)->toBe('617');
+    expect((string) $purchaseDetail->sub_total)->toBe('617');
 });
 
 /**
@@ -99,9 +99,13 @@ test('CP-05_EIF-35 - purchase detail model is mass-assignable for fillable attri
         'purchase_id' => Purchase::factory()->create()->id,
         'purchasable_id' => Product::factory()->create()->id,
         'purchasable_type' => Product::class,
-        'subtotal' => 1750,
+        'quantity' => 1,
+        'unit_price' => 1750,
+        'sub_total' => 1750,
     ]);
 
     // Then: the attributes are persisted correctly.
-    expect((string) $purchaseDetail->subtotal)->toBe('1750');
+    expect($purchaseDetail->quantity)->toBe(1);
+    expect($purchaseDetail->unit_price)->toBe(1750);
+    expect((string) $purchaseDetail->sub_total)->toBe('1750');
 });
