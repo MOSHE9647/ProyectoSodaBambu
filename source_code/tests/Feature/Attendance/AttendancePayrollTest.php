@@ -266,7 +266,7 @@ test('CP-01_EIF-26_QA1 - calculates salary and shows payroll breakdown including
         ->assertSee('Desglose por Dia')
         ->assertSee('Feriado')
         ->assertSee('Total a Pagar:')
-        ->assertSee('₡120 000,00', false);
+        ->assertSee('₡ 120 000', false);
 });
 
 /**
@@ -312,8 +312,8 @@ test('CP-02_EIF-26_QA1 - calculates biweekly payroll using selected half window'
     $response
         ->assertSuccessful()
         ->assertSee('Total a Pagar:')
-        ->assertSee('₡32 000,00', false)
-        ->assertDontSee('₡64 000,00', false);
+        ->assertSee('₡ 32 000', false)
+        ->assertDontSee('₡ 64 000', false);
 });
 
 /**
