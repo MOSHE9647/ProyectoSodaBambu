@@ -363,6 +363,7 @@
                 <div class="col-12">
                     <x-form.input
                         :id="'sale_price'"
+                        :name="'sale-price'"
                         :type="'number'"
                         :step="'5'"
                         :min="'0'"

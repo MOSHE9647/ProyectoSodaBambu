@@ -119,7 +119,7 @@ const updatePaymentStatusUI = (saleData) => {
     }
 
     // Ensure elements are visible if they were hidden when there were no previous sales
-    $("#no-transactions-msg").hide();
+    $("#no-transactions-msg").toggleClass('d-none', true);
     lastSalePaymentMethodElement.removeClass("d-none");
     lastSalePaymentAmountElement.removeClass("d-none");
 
