@@ -167,7 +167,7 @@
                                     &RightArrow; 
                                     {{ data_get($ts, 'end_time_label', 'N/A') }}
                                 </span>
-                                <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2" style="min-width: 60px;">
+                                <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2" style="min-width: 70px;">
                                     <i class="bi bi-stopwatch"></i> {{ data_get($ts, 'total_hours_label', '0h') }}
                                 </span>
                             @endif

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Comprobante de Nomina</title>
+    <title>Comprobante de N&oacute;mina</title>
     <style>
         * { margin: 0; padding: 0; }
 
@@ -93,8 +93,8 @@
     );
 
     $halfLabel = match(data_get($employee, 'payroll_half')) {
-        'first_half'  => 'Primera Quincena (Dias 1-15)',
-        'second_half' => 'Segunda Quincena (Dias 16-31)',
+        'first_half'  => 'Primera Quincena (Días 1-15)',
+        'second_half' => 'Segunda Quincena (Días 16-31)',
         default       => null,
     };
 
@@ -124,12 +124,12 @@
                     Soda El Bambu
                 </div>
                 <div style="font-size: 8.5pt; color: #bbf7d0;">
-                    Sistema de Gestion Interna
+                    Sistema de Gesti&oacute;n Interna
                 </div>
             </td>
             <td style="padding: 18pt 22pt; vertical-align: middle; text-align: right;">
                 <div style="font-size: 13pt; font-weight: bold; color: #ffffff; margin-bottom: 3pt;">
-                    Comprobante de Nomina
+                    Comprobante de N&oacute;mina
                 </div>
                 <div style="font-size: 8.5pt; color: #bbf7d0;">
                     {{ $periodLabel }}{{ $halfLabel ? '  |  ' . $halfLabel : '' }}
@@ -145,7 +145,7 @@
             {{-- Columna izquierda: colaborador --}}
             <td style="width: 57%; vertical-align: top; padding-right: 14pt;">
 
-                <div class="section-title">Informacion del Colaborador</div>
+                <div class="section-title">Informaci&oacute;n del Colaborador</div>
 
                 <div style="font-size: 13pt; font-weight: bold; color: #111827; margin-bottom: 2pt;">
                     {{ data_get($employee, 'name', 'Colaborador sin nombre') }}
@@ -186,11 +186,11 @@
                  padding: 14pt 16pt;">
 
                 <div class="section-title" style="border-bottom-color: #bbf7d0;">
-                    Periodo de Pago
+                    Per&iacute;odo de Pago
                 </div>
 
                 <div style="margin-bottom: 9pt;">
-                    <div class="label-sm">Periodo</div>
+                    <div class="label-sm">Per&iacute;odo</div>
                     <div style="font-size: 11pt; font-weight: bold; color: #111827;">
                         {{ $periodLabel }}
                     </div>
@@ -220,7 +220,7 @@
     <table style="width: 100%; border: 1pt solid #e5e7eb; background-color: #f9fafb; margin-bottom: 20pt;">
         <tr>
             <td style="padding: 12pt 14pt; text-align: center; border-right: 1pt solid #e5e7eb;">
-                <div class="label-sm" style="margin-bottom: 4pt;">Dias Trabajados</div>
+                <div class="label-sm" style="margin-bottom: 4pt;">D&iacute;as Trabajados</div>
                 <div style="font-size: 19pt; font-weight: bold; color: #111827;">
                     {{ data_get($employee, 'worked_days', 0) }}
                 </div>
@@ -255,7 +255,7 @@
 
     {{-- ═══════════════════════════════════ DESGLOSE POR DIA ═══════════════════════════════════ --}}
 
-    <div class="section-title">Desglose por Dia</div>
+    <div class="section-title">Desglose por D&iacute;a</div>
 
     @if($timesheets->isEmpty())
         <table style="width: 100%; border: 1pt solid #e5e7eb; margin-bottom: 12pt;">
@@ -270,7 +270,7 @@
             <thead>
                 <tr>
                     <th class="ts-th" style="width: 18%;">Fecha</th>
-                    <th class="ts-th" style="width: 14%;">Tipo de Dia</th>
+                    <th class="ts-th" style="width: 14%;">Tipo de D&iacute;a</th>
                     <th class="ts-th" style="width: 14%;">Entrada</th>
                     <th class="ts-th" style="width: 14%;">Salida</th>
                     <th class="ts-th" style="width: 12%; text-align: center;">Horas</th>
@@ -326,11 +326,11 @@
     <table style="width: 100%; background-color: #f0fdf4; border: 1pt solid #bbf7d0; margin-bottom: 30pt;">
         <tr>
             <td style="padding: 11pt 14pt; font-size: 8.5pt; color: #6b7280; vertical-align: middle;">
-                {{ data_get($employee, 'worked_days', 0) }} dias trabajados
+                {{ data_get($employee, 'worked_days', 0) }} d&iacute;as trabajados
                 &nbsp;&middot;&nbsp;
                 {{ data_get($employee, 'total_worked_hours_label', '0h') }} totales
                 @if($includesFeriado)
-                    &nbsp;&middot;&nbsp; Incluye dias feriados (x2)
+                    &nbsp;&middot;&nbsp; Incluye d&iacute;as feriados (x2)
                 @endif
             </td>
             <td style="padding: 11pt 14pt; text-align: right; white-space: nowrap; vertical-align: middle;">
@@ -379,7 +379,7 @@
             {{ $generatedAt->translatedFormat('d \d\e F \d\e Y \a \l\a\s h:i A') }}
             (hora de Costa Rica)
             {{-- &nbsp;&middot;&nbsp; --}}<br>
-            Soda El Bambu &mdash; Sistema de Gestion Interna
+            Soda El Bambu &mdash; Sistema de Gesti&oacute;n Interna
             &nbsp;&middot;&nbsp;
             Documento confidencial de uso interno.
         </div>

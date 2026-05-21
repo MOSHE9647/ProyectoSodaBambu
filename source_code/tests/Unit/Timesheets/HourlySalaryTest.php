@@ -5,7 +5,6 @@ use App\Enums\EmployeeStatus;
 use App\Enums\PaymentFrequency;
 use App\Models\Employee;
 use App\Models\Timesheet;
-use App\Models\User;
 use Illuminate\Support\Collection;
 
 beforeEach(function () {

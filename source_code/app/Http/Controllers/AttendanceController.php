@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Timesheets\BuildSalaryTabDataAction;
 use App\Actions\Timesheets\StoreAttendanceAction;
+use App\Enums\EmployeeStatus;
 use App\Enums\UserRole;
 use App\Http\Requests\TimesheetRequest;
 use App\Models\Employee;
@@ -216,7 +217,9 @@ class AttendanceController extends Controller implements HasMiddleware
         return Employee::with([
             'user',
             'timesheets' => fn ($q) => $q->whereDate('work_date', $this->today()),
-        ])->get();
+        ])
+            ->where('status', EmployeeStatus::ACTIVE->value)
+            ->get();
     }
 
     /**
@@ -329,6 +332,11 @@ class AttendanceController extends Controller implements HasMiddleware
      */
     public function generateSalaryPdf(Request $request, BuildSalaryTabDataAction $buildSalaryTabDataAction)
     {
+        $request->validate([
+            'employee_id' => 'required|integer|exists:employees,id',
+            'payroll_period' => ['required', 'string', 'regex:/^\d{4}-(0[1-9]|1[0-2])$/'],
+        ]);
+
         $salaryData = $buildSalaryTabDataAction->execute(
             $request->integer('employee_id'),
             $request->input('payroll_period'),
@@ -336,6 +344,11 @@ class AttendanceController extends Controller implements HasMiddleware
         );
 
         abort_if(! $salaryData['employee'], 404, 'No se encontraron datos para generar el reporte.');
+
+        // Ensure the resolved employee matches the requested ID to avoid silent fallbacks
+        if ((int) $salaryData['employee']['id'] !== $request->integer('employee_id')) {
+            abort(404, 'El colaborador solicitado no coincide con los datos procesados.');
+        }
 
         $employee = $salaryData['employee'];
         $generatedAt = Carbon::now(self::TZ);

@@ -152,12 +152,12 @@ class CalculatePayrollSalaryAction
      *
      * Converts cents back to decimal format and applies Costa Rican currency
      * formatting conventions, including the '₡' symbol and space as thousand
-     * separator. Ensures that all salary amounts are displayed in a consistent
-     * and user-friendly format in the UI.
+     * separator with no decimal places. Ensures that all salary amounts are
+     * displayed in a consistent and user-friendly format in the UI.
      *
-     * Example: 1050 → "₡ 1 050"
+     * Example: 105000 → "₡ 1 050"
      *
-     * @param  int  $cents  Amount in cents (e.g., 1050 for ₡10.50)
+     * @param  int  $cents  Amount in cents (centavos) (e.g., 100 cents = ₡1)
      * @return string Formatted currency string (e.g., "₡ 1 050")
      */
     public function formatCurrencyFromCents(int $cents): string
