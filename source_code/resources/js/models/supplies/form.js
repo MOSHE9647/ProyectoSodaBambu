@@ -12,7 +12,7 @@ if (typeof $ === 'undefined') {
 
 const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
 const FORM_ID = IS_EDITING ? 'edit-supply-form' : 'create-supply-form';
-const MEASURE_UNITS = window.SUPPLY_FORM_DATA?.measureUnits || [];
+const getMeasureUnits = () => window.SUPPLY_FORM_DATA?.measureUnits || [];
 
 // ========================= Helpers ==========================
 
@@ -68,7 +68,7 @@ const baseFieldValidators = {
         message: 'La cantidad del insumo es obligatoria, debe ser numérica y mayor a 0.',
     },
     "measure_unit_selector-value": {
-        validate: (v) => rules.isInList(v, MEASURE_UNITS),
+        validate: (v) => rules.isInList(v, getMeasureUnits()),
         message: 'Por favor, seleccione una unidad de medida del desplegable.',
     },
     unit_price: {
@@ -157,26 +157,7 @@ export const bindRealTimeValidation = () => {
     });
 };
 
-const bindEventListeners = () => {
-    $(`#${FORM_ID}`).on('submit', async function (e) {
-        e.preventDefault();
-        setLoadingState(FORM_ID, true);
-
-        // Llamamos a la función modular (Misma estructura que contract-form.js)
-        const [isValid, fieldId, message, values] = validateSupplyForm();
-        if (!isValid) {
-            SwalToast.fire({
-                icon: "error",
-                title: message || "Por favor, corrija los errores en el formulario antes de enviar.",
-            });
-            setLoadingState(FORM_ID, false);
-            return;
-        }
-
-        // Validate and submit form
-        e.currentTarget.submit();
-    });
-
+export const bindEventListeners = () => {
     $('#expiration_date').on('change', function () {
         const alertDate = calculateAlertDate();
         $('#expiration-alert-date').text(alertDate || "");
@@ -190,8 +171,38 @@ const bindEventListeners = () => {
     });
 };
 
+const handleFormSubmit = () => {
+    // Si el formulario está dentro de un offcanvas (indicado por la variable),
+    // no asignamos aquí el submit nativo para evitar colisiones con supplies.js
+    if (window.SUPPLY_FORM_DATA?.isOffcanvas) {
+        return;
+    }
+
+    $(`#${FORM_ID}`).on("submit", async function (e) {
+		e.preventDefault();
+		setLoadingState(FORM_ID, true);
+
+		// Llamamos a la función modular (Misma estructura que contract-form.js)
+		const [isValid, fieldId, message, values] = validateSupplyForm();
+		if (!isValid) {
+			SwalToast.fire({
+				icon: "error",
+				title:
+					message ||
+					"Por favor, corrija los errores en el formulario antes de enviar.",
+			});
+			setLoadingState(FORM_ID, false);
+			return;
+		}
+
+		// Validate and submit form
+		e.currentTarget.submit();
+	});
+};
+
 // ====================== Initialization ======================
 $(() => {
     bindRealTimeValidation();
     bindEventListeners();
+    handleFormSubmit();
 });

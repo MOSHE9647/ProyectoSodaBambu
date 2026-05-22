@@ -44,6 +44,13 @@ interface Receipable
     public function getReceiptItems(): array;
 
     /**
+     * Get the payments associated with this receipt.
+     *
+     * @return array Array of payments with details (amount, method, date)
+     */
+    public function getReceiptPayments(): array;
+
+    /**
      * Get the subtotal (sum of item subtotals before tax).
      *
      * @return int The subtotal in currency units
@@ -56,13 +63,6 @@ interface Receipable
      * @return int The tax total in currency units
      */
     public function getReceiptTaxTotal(): int;
-
-    /**
-     * Get the type/label for the receipt (e.g., "Comprobante de venta", "Comprobante de contrato").
-     *
-     * @return string The receipt type label
-     */
-    public function getReceiptType(): string;
 
     /**
      * Get the payments relationship for this receipt.

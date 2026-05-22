@@ -62,6 +62,14 @@ function formatCurrentStock(currentValue, minimumValue) {
 
 // ==================== Helper Functions ====================
 
+window.showProduct = function (url, anchor) {
+	return showModelInfo(url, anchor, MODEL_NAME);
+};
+
+window.deleteProduct = function (e) {
+	return deleteModel(e, MODEL_NAME);
+};
+
 window.toggleLowStockFilter = function () {
 	showLowStockOnly = !showLowStockOnly;
 

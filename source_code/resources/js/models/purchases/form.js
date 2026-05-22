@@ -1,632 +1,517 @@
-import {
-    clearAllFieldErrors,
-    showFieldError,
-    clearFieldError,
-    validateAndDisplayField
-} from '../../utils/validation.js';
-import { setLoadingState } from '../../utils/utils.js';
-import { fetchWithErrorHandling } from '../../utils/error-handling.js';
-import { SwalNotificationTypes, SwalToast } from '../../utils/sweetalert.js';
+import { clearAllFieldErrors, clearFieldError, showFieldError } from "../../utils/validation";
+import { getLaravelFirstError, setLoadingState, printReceipt } from "../../utils/utils";
+import { SwalConfirmation, SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { bindPurchaseFormEvents } from "./items.js";
+import { bindOffcanvasEvents } from "../../utils/offcanvas.js";
+import { showPaymentDetailsFormModal } from "../payment/main.js";
+import { initializeCashRegister } from "../../pages/sales/cash-register.js";
 
-let detailIndex  = window.detailIndex || 0;
-let productsList = window.products    || [];
-let suppliesList = window.supplies    || [];
+// ==================== Environment Checks ====================
 
-const TYPE_LABELS = {
-    product: 'Producto',
-    supply:  'Insumo',
+if (typeof $ === 'undefined') throw new Error('This script requires jQuery');
+
+// ======================== Constants =========================
+
+const PURCHASE_DATA = window.purchaseFormData || [];
+const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
+const FORM_ID = IS_EDITING ? 'edit-purchase-form' : 'create-purchase-form';
+
+const PaymentStatus = {
+	PAID: PURCHASE_DATA.paymentStatuses?.find(s => s.value === 'paid')?.value || 'paid',
+	PENDING: PURCHASE_DATA.paymentStatuses?.find(s => s.value === 'pending')?.value || 'pending',
 };
 
-// ─────────────────────────────────────────────
-//  Helpers
-// ─────────────────────────────────────────────
+let initialPurchaseState = null;
 
-/** Formatea un número como moneda costarricense */
-function formatCRC(value) {
-    return '₡' + parseFloat(value || 0).toLocaleString('es-CR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 0,
-    });
-}
+// =========================== Helpers ==========================
 
-/**
- * Recalcula el subtotal de una fila (cantidad × precio unitario),
- * actualiza su display y el hidden input de subtotal.
- */
-function recalcRowSubtotal($row) {
-    const qty       = parseFloat($row.find('.quantity-input').val())  || 0;
-    const unitPrice = parseFloat($row.find('.unit-price-input').val()) || 0;
-    const subtotal  = qty * unitPrice;
+const parseFormattedNumber = (text) => {
+	if (!text) return 0;
+	if (typeof text === "number") return text;
+	return parseInt(text.replace(/[^0-9,-]+/g, "").replace(",", ".")) || 0;
+};
 
-    $row.find('.subtotal-display').text(formatCRC(subtotal));
-    $row.find('.subtotal-input').val(Math.round(subtotal) ); 
-}
+const showFieldErrorInAlert = (fieldId, errorMessage) => {
+	const $alert = $("#form-error-alert");
+	$alert.removeClass("d-none").html(`
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span>${errorMessage}</span>
+    `);
 
-/**
- * Recalcula el total de la compra sumando los subtotales de todas las filas.
- * Actualiza el hidden #total y el display #total-display.
- */
-function recalcTotal() {
-    let total = 0;
-    $('#details-container .detail-row').each(function () {
-        total += parseFloat($(this).find('.subtotal-input').val()) || 0;
-    });
-    $('#total').val(total);
-    $('#total-display').text(formatCRC(total));
-}
+	const targetFieldId = fieldId instanceof $ ? fieldId.attr("id") : fieldId;
+	if (targetFieldId) $(`#${targetFieldId}`).focus();
 
-/**
- * Poblar el select de producto/insumo según el tipo seleccionado.
- * Devuelve el jQuery del select para encadenamiento.
- */
-function populateSelect(selectElement, type) {
-    const list = type === 'product' ? productsList : suppliesList;
-    // Marcar para suprimir el listener change durante la repoblación
-    selectElement.data('populating', true);
-    selectElement.empty().append('<option value="">Seleccionar</option>');
-    list.forEach(item => {
-        selectElement.append(`<option value="${item.id}">${item.name}</option>`);
-    });
-    selectElement.data('populating', false);
-    return selectElement;
-}
+	window.scrollTo({ top: $alert.offset()?.top - 100, behavior: "smooth" });
+};
 
-/**
- * FIX #2: Aplica el unit_price del item seleccionado a la fila.
- * Se llama tanto al cambiar el select de tipo como al cambiar el select de item.
- */
-function applyUnitPrice($row) {
-    const type = $row.find('.purchasable-type').val();
-    const idVal = $row.find('.purchasable-id').val();
+const clearFieldErrorInAlert = () => $("#form-error-alert").addClass("d-none").empty();
 
-    // Si no hay item seleccionado, no hacer nada
-    if (!idVal) return;
+const getFormFields = () => {
+    const purchaseDetails = $("#purchase-details-table tbody tr:not(#empty-row)")
+		.map((_, row) => {
+			const $row = $(row);
+			return {
+				id: $row.data("id") || null,
+				quantity: parseInt($row.find('[name="quantity"]').val()) || 0,
+				unit_price: parseFormattedNumber($row.find('[name="unit-price"]').val()),
+				sub_total: parseFormattedNumber($row.find(".sub-total").text()),
+				purchasable_id: parseInt($row.find('[name="purchasable_id"]').val()) || null,
+				purchasable_type: $row.data("purchasable-type"),
+			};
+		}).get();
 
-    const id   = parseInt(idVal, 10);
-    const list = type === 'product' ? productsList : suppliesList;
-    const item = list.find(i => i.id === id);
+    return {
+		invoice_number: $("#invoice_number").val()?.trim() || '',
+		supplier_id: parseInt($("#supplier_id").val()) || null,
+		payment_status: $("#payment_status").val(),
+		date: $("#date").val(),
+        total: parseFormattedNumber($("#total").text()),
+		notes: $("#notes").val()?.trim() || '',
+        purchase_details: purchaseDetails
+	};
+};
 
-    const price = (item && item.unit_price != null) ? item.unit_price : 0;
-    $row.find('.unit-price-input').val(price.toFixed(2));
-    recalcRowSubtotal($row);
-    recalcTotal();
-}
+// ===================== Validation Helpers =====================
 
-/**
- * FIX #1: Refresca todos los selects del tipo dado y conserva la selección actual.
- * Se usa cuando se crea un producto/insumo desde el offcanvas.
- */
-function refreshAllSelectsOfType(type) {
-    $('.detail-row').each(function () {
-        if ($(this).find('.purchasable-type').val() === type) {
-            const select  = $(this).find('.purchasable-id');
-            const current = select.val();
-            populateSelect(select, type);
-            select.val(current);
-        }
-    });
-}
+const rules = {
+	isNum: (v) => v !== "" && !isNaN(v) && v !== null,
+	isPositiveMultipleOf5: (v) => rules.isNum(v) && parseInt(v) >= 0 && parseInt(v) % 5 === 0,
+	isString: (v) => typeof v === "string" && v.trim().length > 0,
+	isValidId: (v) => /^\d+$/.test(v) && v !== "-1",
+    inList: (v, list, key = 'value') => list.some(item => String(item[key]) === String(v))
+};
 
-function toggleEmptyRow() {
-    const hasRows = $('#details-container .detail-row').length > 0;
-    $('#empty-details-row').toggle(!hasRows);
-}
+const baseFieldValidators = {
+	supplier_id: { 
+		validate: v => rules.isValidId(v), 
+		message: "Debe seleccionar un proveedor válido." 
+	},
+	invoice_number: { 
+		validate: v => rules.isString(v) && v.length >= 2 && v.length <= 255, 
+		message: "El número de factura es obligatorio (2-255 caracteres)." 
+	},
+	payment_status: { 
+		validate: v => rules.inList(v, PURCHASE_DATA.paymentStatuses || []), 
+		message: "Debe seleccionar un estado de pago válido." 
+	},
+	date: {
+		validate: (v) => {
+			if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+			const formatter = new Intl.DateTimeFormat('en-CA', { 
+				timeZone: 'America/Costa_Rica', 
+				year: 'numeric', 
+				month: '2-digit', 
+				day: '2-digit' 
+			});
+			return v <= formatter.format(new Date());
+		},
+		message: "La fecha es obligatoria y no puede ser futura.",
+	},
+	total: { 
+		validate: v => rules.isPositiveMultipleOf5(v), 
+		message: "El total de la compra no puede ser negativo y debe ser múltiplo de 5." 
+	},
+	purchase_details: {
+		validate: (arr) => Array.isArray(arr) && arr.length > 0 && arr.every(
+			i => rules.isValidId(i.purchasable_id) && i.quantity > 0 && 
+				rules.isPositiveMultipleOf5(i.unit_price) && 
+				rules.isPositiveMultipleOf5(i.sub_total)
+		),
+		message: "Debe agregar al menos un producto válido (con cantidad mayor a cero y precios múltiplos de 5).",
+	},
+	payment_details: {
+		validate: (v) => !v || (Array.isArray(v) && v.every(
+			p => rules.inList(p.method, PURCHASE_DATA.paymentMethods || [], "label") && 
+				rules.isPositiveMultipleOf5(p.amount ?? p.change_amount ?? 0))
+		),
+		message: "Los detalles de pago seleccionados no son válidos o incluyen valores no múltiplos de 5.",
+	},
+	notes: { 
+		validate: v => !v || (typeof v === "string" && v.length <= 1000), 
+		message: "Las notas no pueden exceder los 1000 caracteres." },
+};
 
-function buildTypeSelect(name, selectedValue = 'product') {
-    const options = Object.entries(TYPE_LABELS)
-        .map(([val, label]) => `<option value="${val}" ${val === selectedValue ? 'selected' : ''}>${label}</option>`)
-        .join('');
-    return `<select name="${name}" class="form-select form-select-sm purchasable-type" required>${options}</select>`;
-}
+const purchaseDetailValidators = {
+	id: v => v === null || rules.isValidId(v),
+	quantity: v => rules.isNum(v) && parseInt(v) > 0,
+	unit_price: v => rules.isPositiveMultipleOf5(v),
+	sub_total: v => rules.isPositiveMultipleOf5(v),
+	purchasable_id: v => rules.isValidId(v),
+	purchasable_type: v => Object.values(PURCHASE_DATA.purchasableTypes || {}).includes(v),
+};
 
-/**
- * FIX #1: Agrega una nueva fila a la tabla preseleccionando el item recién creado.
- * type = 'product' | 'supply'
- * item = { id, name, unit_price }
- */
-function addDetailRowForNewItem(type, item) {
-    const index = detailIndex++;
+const paymentDetailValidators = {
+    method: v => rules.inList(v, PURCHASE_DATA.paymentMethods || [], 'label'),
+    change_amount: v => rules.isPositiveMultipleOf5(v),
+    reference: v => !v || (typeof v === 'string' && v.length >= 4 && v.length <= 12)
+};
 
-    const template = `
-        <tr class="detail-row" data-index="${index}">
-            <td>${buildTypeSelect(`details[${index}][purchasable_type]`, type)}</td>
-            <td>
-                <select name="details[${index}][purchasable_id]" class="form-select form-select-sm purchasable-id" required>
-                    <option value="">Seleccionar</option>
-                </select>
-            </td>
-            <td>
-                <input type="number" name="details[${index}][quantity]"
-                       class="form-control form-control-sm quantity-input"
-                       value="1" min="0.0001" step="1" required>
-            </td>
-            <td>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text">₡</span>
-                    <input type="number" name="details[${index}][unit_price]"
-                           class="form-control form-control-sm unit-price-input"
-                           value="${item.unit_price ? item.unit_price : '0'}"
-                           min="0" step="1" required>
-                </div>
-            </td>
-            <td class="align-middle">
-                <span class="subtotal-display fw-semibold text-success">₡0</span>
-                <input type="hidden" name="details[${index}][subtotal]" class="subtotal-input" value="0">
-            </td>
-            <td>
-                <button type="button" class="btn btn-sm btn-danger remove-detail">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-        </tr>
-    `;
+// ==================== Validation Functions ====================
 
-    $('#details-container').append(template);
-    const $newRow = $('#details-container tr').last();
+const getActiveFieldValidators = () => {
+    const validators = { ...baseFieldValidators };
+    if (!$('#notes').val().trim()) delete validators.notes;
+    if ($('#payment_status').val() !== PaymentStatus.PAID) delete validators.payment_details;
+    return validators;
+};
 
-    // Poblar el select con todos los items del tipo y preseleccionar el recién creado
-    populateSelect($newRow.find('.purchasable-id'), type).val(item.id);
+const validatePurchaseForm = (values, fieldValidators) => {
+	const { purchase_details = [], payment_details = [], ...purchase } = values;
+	const errors = [];
 
-    // Calcular subtotal inicial (qty=1 × unit_price)
-    recalcRowSubtotal($newRow);
-    toggleEmptyRow();
-    recalcTotal();
-}
+	// Exclude certain fields from real-time validation error clearing to preserve their state during submission
+	const filteredValidators = Object.fromEntries(
+		Object.entries(fieldValidators).filter(([key]) => !['total', 'purchase_details', 'payment_details'].includes(key))
+	);
 
-// ─────────────────────────────────────────────
-//  Tabla de detalles — botón "Agregar"
-// ─────────────────────────────────────────────
+	clearAllFieldErrors(filteredValidators);
 
-$('#add-detail').on('click', function () {
-    const index = detailIndex++;
+	Object.entries(fieldValidators).forEach(([fieldId, config]) => {
+		const value = purchase[fieldId] !== undefined ? purchase[fieldId] : values[fieldId];
+		if (!["purchase_details", "payment_details"].includes(fieldId)) {
+			if (!config.validate(value)) {
+				if (fieldId !== 'total') showFieldError(fieldId, config.message);
+				errors.push([false, fieldId, config.message]);
+			} else if (fieldId !== 'total') {
+                clearFieldError(fieldId);
+            }
+		}
+	});
 
-    const template = `
-        <tr class="detail-row" data-index="${index}">
-            <td>${buildTypeSelect(`details[${index}][purchasable_type]`)}</td>
-            <td>
-                <select name="details[${index}][purchasable_id]" class="form-select form-select-sm purchasable-id" required>
-                    <option value="">Seleccionar</option>
-                </select>
-            </td>
-            <td>
-                <input type="number" name="details[${index}][quantity]"
-                       class="form-control form-control-sm quantity-input"
-                       value="1" min="0.0001" step="0.0001" required>
-            </td>
-            <td>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text">₡</span>
-                    <input type="number" name="details[${index}][unit_price]"
-                           class="form-control form-control-sm unit-price-input"
-                           value="0" min="0" step="1" required>
-                </div>
-            </td>
-            <td class="align-middle">
-                <span class="subtotal-display fw-semibold text-success">₡0</span>
-                <input type="hidden" name="details[${index}][subtotal]" class="subtotal-input" value="0">
-            </td>
-            <td>
-                <button type="button" class="btn btn-sm btn-danger remove-detail">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-        </tr>
-    `;
-
-    $('#details-container').append(template);
-    const $newRow = $('#details-container tr').last();
-    populateSelect($newRow.find('.purchasable-id'), 'product');
-    toggleEmptyRow();
-    recalcTotal();
-});
-
-$(document).on('click', '.remove-detail', function () {
-    $(this).closest('tr').remove();
-    toggleEmptyRow();
-    recalcTotal();
-});
-
-// FIX #2: Al cambiar el tipo (producto/insumo), repoblar el select y resetear precio
-$(document).on('change', '.purchasable-type', function () {
-    const $row = $(this).closest('tr');
-    populateSelect($row.find('.purchasable-id'), $(this).val());
-    // Resetear precio al cambiar tipo ya que no hay item seleccionado
-    $row.find('.unit-price-input').val('0.00');
-    recalcRowSubtotal($row);
-    recalcTotal();
-});
-
-// FIX #2: Al seleccionar un item del select, autocompletar el precio unitario
-// Usamos un flag para ignorar el change disparado por populateSelect(.empty())
-$(document).on('change', '.purchasable-id', function () {
-    if ($(this).data('populating')) return;
-    applyUnitPrice($(this).closest('tr'));
-});
-
-// Recalcular subtotal de fila y total global al editar cantidad o precio unitario
-$(document).on('input change', '.quantity-input, .unit-price-input', function () {
-    recalcRowSubtotal($(this).closest('tr'));
-    recalcTotal();
-});
-
-// ─────────────────────────────────────────────
-//  Cálculo de precio de venta (producto rápido)
-// ─────────────────────────────────────────────
-
-function calcSalePrice() {
-    const cost   = parseInt($('#quick-product-reference-cost').val()) || 0;
-    const tax    = parseInt($('#quick-product-tax-percentage').val())  || 0;
-    const margin = parseInt($('#quick-product-margin-percentage').val()) || 0;
-    
-    if (cost > 0) {
-        const taxFactor = tax / 100;
-        const marginFactor = margin / 100;
-        const basePrice = cost + (cost * taxFactor);
-        const salePrice = basePrice + (basePrice * marginFactor);
-        
-        // IMPORTANTE: Redondear para eliminar decimales
-        $('#quick-product-sale-price').val(Math.round(salePrice));
-    }
-}
-
-$('#quick-product-reference-cost, #quick-product-tax-percentage, #quick-product-margin-percentage')
-    .on('input change', calcSalePrice);
-
-// ─────────────────────────────────────────────
-//  Validación y envío del formulario principal
-// ─────────────────────────────────────────────
-
-function submitPurchaseForm() {
-    if (!$('#invoice_number').val().trim()) {
-        SwalToast.fire({ icon: 'error', text: 'El número de factura es obligatorio.' });
-        return false;
-    }
-    if (!$('#date').val()) {
-        SwalToast.fire({ icon: 'error', text: 'La fecha es obligatoria.' });
-        return false;
-    }
-    if (!$('#supplier_id').val()) {
-        SwalToast.fire({ icon: 'error', text: 'Debe seleccionar un proveedor.' });
-        return false;
-    }
-    if (!$('#payment_status').val()) {
-        SwalToast.fire({ icon: 'error', text: 'Debe seleccionar un estado de pago.' });
-        return false;
-    }
-    if ($('#details-container .detail-row').length === 0) {
-        SwalToast.fire({ icon: 'error', text: 'Debe agregar al menos un producto/insumo.' });
-        return false;
+    if (!fieldValidators.purchase_details.validate(purchase_details)) {
+        errors.push([false, 'form-error-alert', fieldValidators.purchase_details.message]);
     }
 
-    let valid = true;
-    $('#details-container .detail-row').each(function () {
-        const $purchasableId = $(this).find('.purchasable-id');
-        const $qty           = $(this).find('.quantity-input');
-        const $price         = $(this).find('.unit-price-input');
+	purchase_details.forEach((detail, index) => {
+		Object.entries(purchaseDetailValidators).forEach(([key, validator]) => {
+			if (!validator(detail[key])) {
+				errors.push([false, null, `Item ${index + 1}: Compruebe que el producto, cantidad y precio sean válidos.`]);
+			}
+		});
+	});
 
-        if (!$purchasableId.val()) {
-            $purchasableId.addClass('is-invalid');
-            valid = false;
-        } else {
-            $purchasableId.removeClass('is-invalid');
-        }
+	if (purchase.payment_status === PaymentStatus.PAID && typeof payment_details !== "undefined") {
+		payment_details.forEach((payment, index) => {
+			Object.entries(paymentDetailValidators).forEach(([key, validator]) => {
+				if (!validator(payment[key])) errors.push([false, null, `Pago ${index + 1}: Campo ${key} inválido.`]);
+			});
+		});
+	}
 
-        if (!$qty.val() || parseFloat($qty.val()) <= 0) {
-            $qty.addClass('is-invalid');
-            valid = false;
-        } else {
-            $qty.removeClass('is-invalid');
-        }
+	return errors.length > 0 ? errors[0] : [true, "", ""];
+};
 
-        if ($price.val() === '' || parseFloat($price.val()) < 0) {
-            $price.addClass('is-invalid');
-            valid = false;
-        } else {
-            $price.removeClass('is-invalid');
-        }
-    });
+const purchaseDetailsHasChanges = () => {
+	const originalDetails = PURCHASE_DATA.originalPurchase?.details || [];
+	const currentDetails = getFormFields().purchase_details || [];
 
-    if (valid) recalcTotal();
+	let hasChanges = false;
+	if (originalDetails.length !== currentDetails.length) hasChanges = true;
+	else {
+		for (let i = 0; i < originalDetails.length; i++) {
+			if (originalDetails[i].id !== currentDetails[i].id ||
+				originalDetails[i].quantity !== currentDetails[i].quantity ||
+				originalDetails[i].unit_price !== currentDetails[i].unit_price ||
+				originalDetails[i].purchasable_id !== currentDetails[i].purchasable_id) {
+				hasChanges = true;
+				break;
+			}
+		}
+	}
+	return hasChanges;
+};
 
-    return valid;
-}
+// ==================== Real-Time Validation Handler ====================
 
-$(document).on('submit', 'form[id$="-purchase-form"]', (e) => {
-    e.preventDefault();
-    const formId = e.currentTarget.id;
-    setLoadingState(formId, true);
-    if (submitPurchaseForm()) {
-        e.currentTarget.submit();
-    } else {
-        setLoadingState(formId, false);
-    }
-});
+const bindRealTimeValidation = () => {
+    ['invoice_number', 'supplier_id', 'payment_status', 'date', 'notes'].forEach(fieldId => {
+        const $element = $(`#${fieldId}`);
+        if (!$element.length) return;
 
-// ─────────────────────────────────────────────
-//  Quick supplier
-// ─────────────────────────────────────────────
+        const eventType = $element.is('select, input[type="date"]') ? 'change' : 'input focusout';
 
-$('#quick-phone').on('input', function () {
-    this.value = this.value.replace(/\D/g, '').slice(0, 8);
-});
+        $element.on(eventType, function() {
+            const config = baseFieldValidators[fieldId];
+            const value = $(this).val();
 
-function clearSupplierErrors() {
-    ['name', 'phone', 'email'].forEach(field => {
-        $(`#quick-${field}`).removeClass('is-invalid');
-        $(`#quick-${field}-error`).addClass('d-none').text('');
-    });
-}
+            if (fieldId === 'notes' && !value.trim()) {
+                clearFieldError(fieldId);
+                return;
+            }
 
-$(document).on('submit', '#quick-supplier-form', async function (e) {
-    e.preventDefault();
-
-    const $form      = $(this);
-    const $submitBtn = $('#quick-supplier-submit');
-    const $spinner   = $('#quick-supplier-spinner');
-    const url        = $form.attr('action');
-
-    clearSupplierErrors();
-    $submitBtn.prop('disabled', true);
-    $spinner.removeClass('d-none');
-
-    try {
-        const response = await fetch(url, {
-            method:  'POST',
-            body:    new FormData($form[0]),
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept':           'application/json',
-            },
+            if (config) {
+                config.validate(value) ? clearFieldError(fieldId) : showFieldError(fieldId, config.message);
+            }
         });
+    });
 
-        const data = await response.json();
+    const $table = $('#purchase-details-table');
+    
+    $table.on('input focusout', 'input[name="quantity"], input[name="unit-price"]', function() {
+        const $input = $(this);
+        const key = $input.attr('name') === 'unit-price' ? 'unit_price' : $input.attr('name'); 
+        const validator = purchaseDetailValidators[key];
 
-        if (response.ok && data.success) {
-            const $select = $('#supplier_id');
-            $select.append(`<option value="${data.supplier.id}">${data.supplier.name}</option>`);
-            $select.val(data.supplier.id);
-
-            const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasSupplier'));
-            if (offcanvas) offcanvas.hide();
-            $form[0].reset();
-
-            SwalToast.fire({ icon: 'success', text: data.message || 'Proveedor creado correctamente.' });
-        } else {
-            if (data.errors) {
-                Object.entries(data.errors).forEach(([field, messages]) => {
-                    $(`#quick-${field}`).addClass('is-invalid');
-                    $(`#quick-${field}-error`).removeClass('d-none').text(messages[0]);
-                });
+        if (validator) {
+            if (!validator($input.val())) {
+                $input.addClass('is-invalid');
+                showFieldErrorInAlert($(this), `Compruebe que la ${key === "unit_price" ? "cantidad y el precio unitario" : "cantidad"} sean válidos para cada producto agregado.`);
             } else {
-                SwalToast.fire({ icon: 'error', text: data.message || 'Error al crear el proveedor.' });
+                $input.removeClass('is-invalid');
+                clearFieldErrorInAlert();
             }
         }
-    } catch (error) {
-        console.error('Error creando proveedor:', error);
-        SwalToast.fire({ icon: 'error', text: 'Ocurrió un error inesperado.' });
-    } finally {
-        $submitBtn.prop('disabled', false);
-        $spinner.addClass('d-none');
-    }
-});
-
-// ─────────────────────────────────────────────
-//  Quick product
-// ─────────────────────────────────────────────
-
-$('#quick-product-has-inventory').on('change', function () {
-    if ($(this).is(':checked')) {
-        $('#quick-product-stock-fields').slideDown();
-        $('#quick-product-stock-minimo').prop('required', true);
-    } else {
-        $('#quick-product-stock-fields').slideUp();
-        $('#quick-product-stock-minimo').prop('required', false).val('');
-    }
-});
-
-function loadCategories() {
-    const $cat = $('#quick-product-category');
-    $cat.prop('disabled', true).empty().append('<option value="">Cargando categorías...</option>');
-
-    $.ajax({
-        url:      window.categoriesIndexUrl,
-        method:   'GET',
-        data:     { simple: 1 },
-        dataType: 'json',
-        headers:  { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-        success:  (data) => {
-            $cat.empty().append('<option value="">Seleccionar categoría</option>');
-            data.forEach(cat => $cat.append(`<option value="${cat.id}">${cat.name}</option>`));
-        },
-        error: (xhr) => {
-            console.error('Error cargando categorías:', xhr.status, xhr.responseText);
-            $cat.empty().append('<option value="">Error al cargar</option>');
-            SwalToast.fire({ icon: 'error', text: 'No se pudieron cargar las categorías.' });
-        },
-        complete: () => $cat.prop('disabled', false),
     });
-}
 
-document.addEventListener('show.bs.offcanvas', (e) => {
-    if (e.target?.id === 'offcanvasProduct') loadCategories();
-});
+    $table.on('change', 'select[name="purchasable_id"]', function() {
+        const $select = $(this);
+        if (purchaseDetailValidators.purchasable_id) {
+            if (!purchaseDetailValidators.purchasable_id($select.val())) {
+                $select.addClass('is-invalid');
+                showFieldErrorInAlert($(this), `Debe seleccionar un producto válido para cada detalle de compra.`);
+            } else {
+                $select.removeClass('is-invalid');
+                clearFieldErrorInAlert();
+            }
+        }
+    });
+};
 
-$('#quick-product-form').on('submit', async function (e) {
-    e.preventDefault();
+// ==================== Form Submission Handler ====================
 
-    const $form      = $(this);
-    const $submitBtn = $('#quick-product-submit');
-    const $spinner   = $('#quick-product-spinner');
+const submitPurchaseFormHandler = async (url, token, method, values, shouldPrint = false) => {
+	if (method === 'PUT') values.id = url.split('/').pop();
 
-    $form.find('.is-invalid').removeClass('is-invalid');
-    $form.find('.invalid-feedback').text('');
+	if (Array.isArray(values.purchase_details)) {
+		values.purchase_details = values.purchase_details.map(({ id, ...rest }) => id === null ? rest : { id, ...rest });
+	}
 
-    if ($('#quick-product-has-inventory').is(':checked')) {
-        const stockMin = $('#quick-product-stock-minimo').val();
-        if (stockMin === '' || stockMin < 0) {
-            $('#quick-product-stock-minimo').addClass('is-invalid');
-            $('#quick-product-stock-minimo-error').text('El stock mínimo es obligatorio y debe ser ≥ 0.');
+	try {
+		const response = await fetch(url, {
+			method,
+			headers: {
+				"X-CSRF-TOKEN": token,
+				"Accept": "application/json",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(values),
+		});
+
+		const data = await response.json();
+		if (! response.ok) {
+			if (response.status === 422) {
+				const { field, message } = getLaravelFirstError(data);
+				if (field) showFieldError(field, message);
+				showFieldErrorInAlert(null, data.message || "Error al enviar el formulario. Por favor, revise los campos e inténtelo de nuevo.");
+			} else {
+				throw new Error(data.message || "Error al enviar el formulario. Por favor, inténtelo de nuevo.");
+			}
+		}
+
+		SwalToast.fire({ icon: SwalNotificationTypes.SUCCESS, title: data.message || "Compra guardada exitosamente" });
+		if (shouldPrint && data.data?.id) await printReceipt(route('receipts.show', { model: 'purchases', id: data.data.id }));
+		if (data.redirect) window.location.href = data.redirect;
+	} catch (error) {
+		console.error("Error submitting form:", error);
+		SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: error.message || "Error de conexión con el servidor." });
+	} finally {
+		setLoadingState(FORM_ID, false);
+	}
+};
+
+const bindMainFormSubmission = () => {
+	const $form = $(`#${FORM_ID}`);
+	if (!$form.length) return;
+
+	$form.off('submit').on('submit', async function(e) {
+		e.preventDefault();
+		setLoadingState(FORM_ID, true);
+
+		// Validate form before showing payment modal to avoid unnecessary modals if there are basic validation errors
+		const fieldValidators = getActiveFieldValidators();
+		const values = getFormFields();
+		const [isValid, fieldId, message] = validatePurchaseForm(values, fieldValidators);
+
+		if (!isValid) {
+			setLoadingState(FORM_ID, false);
+			showFieldErrorInAlert(fieldId, message);
+			return;
+		}
+
+		$("#form-error-alert").addClass("d-none");
+
+		const url = this.action;
+		const token = $(this).find('input[name="_token"]').val();
+		const httpMethod = $(this).find('input[name="_method"]').val()?.toUpperCase() || 'POST';
+
+		// Extract current amounts and status
+		const total = $("#total").text() || 0;
+        const currentTotal = parseFormattedNumber(total) || 0;
+        const currentStatus = $("#payment_status").val() || values.payment_status || PaymentStatus.PENDING;
+        const amountPaid = parseFormattedNumber(PURCHASE_DATA.amountPaid) || 0; 
+        let pendingBalance = currentTotal - amountPaid;
+
+		// Case 1: Creating a new purchase and user selects "Paid" - show payment modal with full amount
+		if (!IS_EDITING) {
+			let shouldPrint = false;
+            if (currentStatus === PaymentStatus.PAID) {
+                const paymentInfo = await showPaymentDetailsFormModal(currentTotal);
+                
+                if (!paymentInfo || Object.keys(paymentInfo).length === 0) {
+                    setLoadingState(FORM_ID, false);
+                    return;
+                }
+                values.payment_details = paymentInfo.paymentDetails;
+				shouldPrint = paymentInfo.shouldPrint || false;
+            }
+            
+            await submitPurchaseFormHandler(url, token, httpMethod, values, shouldPrint);
             return;
         }
-    }
 
-    $submitBtn.prop('disabled', true);
-    $spinner.removeClass('d-none');
+		// Case 2: Editing an existing purchase - determine if payment modal is needed based on changes
+		const original = PURCHASE_DATA.originalPurchase || {};
+		const oldTotal = parseInt(original.total) || 0;
+		const oldStatus = original.payment_status || PaymentStatus.PENDING;
 
-    try {
-        const formData = new FormData($form[0]);
-        if (!formData.has('has_inventory'))    formData.set('has_inventory', '0');
-        if (!formData.has('barcode'))           formData.set('barcode', '');
-        if (!formData.get('reference_cost'))    formData.set('reference_cost', '0');
-        if (!formData.get('tax_percentage'))    formData.set('tax_percentage', '0');
-        if (!formData.get('margin_percentage')) formData.set('margin_percentage', '0');
-        if (!formData.get('sale_price'))        formData.set('sale_price', '0');
-        formData.delete('stock_actual');
+		const totalChanged = currentTotal !== oldTotal;
+		const statusChanged = currentStatus !== oldStatus;
+		const detailsChanged = purchaseDetailsHasChanges();
 
-        const response = await fetch($form.attr('action'), {
-            method:  'POST',
-            body:    formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-        });
+		const difference = currentTotal - oldTotal;
+		const amountToReturn = oldTotal - currentTotal;
 
-        const data = await response.json();
+		// If there'n no changes that would affect payment, submit directly without showing modal
+		if (!totalChanged && !statusChanged && !detailsChanged) {
+			await submitPurchaseFormHandler(url, token, httpMethod, values);
+			return;
+		}
 
-        if (data.success) {
-            // FIX #1 + #2: incluir unit_price (reference_cost) para el autocomplete
-            const newItem = {
-                id:         data.product.id,
-                name:       data.product.name,
-                type:       data.product.type || '',
-                unit_price: parseFloat(data.product.reference_cost ?? 0),
-            };
-            productsList.push(newItem);
-            refreshAllSelectsOfType('product');
+		// If payment status changed from pending to paid, or if total increased while already paid, show payment modal to capture additional payment details
+		if (oldStatus === PaymentStatus.PENDING && currentStatus === PaymentStatus.PAID) {
+            const confirm = await SwalConfirmation.fire({
+				icon: SwalNotificationTypes.WARNING,
+                title: "Atención: Pago Requerido",
+                html: "Para que la compra se pueda procesar correctamente, deberá ingresar los datos relacionados a los métodos de pago utilizados y al monto pagado por cada método de pago.<br><br>¿Desea continuar?",
+                confirmButtonText: "Sí, ingresar pagos",
+                cancelButtonText: "No, cancelar"
+            }).then(r => r.isConfirmed);
 
-            // FIX #1: agregar automáticamente a la tabla de detalles
-            addDetailRowForNewItem('product', newItem);
-
-            const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasProduct'));
-            if (offcanvas) offcanvas.hide();
-
-            $form[0].reset();
-            $('#quick-product-stock-fields').hide();
-            SwalToast.fire({ icon: 'success', text: 'Producto creado correctamente.' });
-        } else {
-            if (data.errors) {
-                Object.entries(data.errors).forEach(([field, messages]) => {
-                    const key = field.replace(/_/g, '-');
-                    $(`#quick-product-${key}`).addClass('is-invalid');
-                    $(`#quick-product-${key}-error`).text(messages[0]);
-                });
+            if (confirm) {
+                const amountToCharge = pendingBalance > 0 ? pendingBalance : currentTotal;
+                const paymentInfo = await showPaymentDetailsFormModal(amountToCharge);
+                
+                if (!paymentInfo || Object.keys(paymentInfo).length === 0) {
+                    setLoadingState(FORM_ID, false);
+                    return;
+                }
+                values.payment_details = paymentInfo.paymentDetails;
+                await submitPurchaseFormHandler(url, token, httpMethod, values, paymentInfo?.shouldPrint || false);
             } else {
-                SwalToast.fire({ icon: 'error', text: data.message || 'Error al crear el producto.' });
+                SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+                setLoadingState(FORM_ID, false);
+            }
+            return;
+        }
+
+		// Only the total value changed
+		if (totalChanged && !statusChanged && !detailsChanged) {
+            if (currentTotal > oldTotal) {
+                const confirm = await SwalConfirmation.fire({
+					icon: SwalNotificationTypes.WARNING,
+                    title: "Cambio de valor detectado",
+                    html: "El valor de la compra cambió aunque no se han realizado cambios que justifiquen este cambio.<br><br>¿Desea continuar?",
+                    confirmButtonText: "Sí, continuar",
+                    cancelButtonText: "No, cancelar"
+                }).then(r => r.isConfirmed);
+
+                if (confirm) {
+                    const paymentInfo = await showPaymentDetailsFormModal(difference);
+                    if (!paymentInfo || Object.keys(paymentInfo).length === 0) {
+                        setLoadingState(FORM_ID, false);
+                        return;
+                    }
+                    values.payment_details = paymentInfo.paymentDetails;
+                    await submitPurchaseFormHandler(url, token, httpMethod, values, paymentInfo?.shouldPrint || false);
+                } else {
+                    SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+                    setLoadingState(FORM_ID, false);
+                }
+            } else {
+                const confirm = await SwalConfirmation.fire({
+                    icon: SwalNotificationTypes.INFO,
+                    title: "Devolución requerida",
+                    html: `Usted tiene un pago previo que excede el nuevo total de la compra. Se deberá procesar una devolución por parte del proveedor por un monto de <strong>₡${amountToReturn}</strong>.<br><br>¿Desea continuar con el registro?`,
+                    confirmButtonText: "Sí, continuar",
+                    cancelButtonText: "No, cancelar"
+                }).then(r => r.isConfirmed);
+
+                if (confirm) {
+                    await submitPurchaseFormHandler(url, token, httpMethod, values);
+                } else {
+                    SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+                    setLoadingState(FORM_ID, false);
+                }
+            }
+            return;
+        }
+
+		// Purchase Details were changed
+		if (detailsChanged) {
+            if (currentTotal > oldTotal && currentStatus === PaymentStatus.PAID) {
+                const confirm = await SwalConfirmation.fire({
+					icon: SwalNotificationTypes.WARNING,
+                    title: "Cambios en la compra",
+                    html: "Se han detectado cambios en los detalles de la compra que incrementan el total.<br><br>¿Desea continuar y procesar la diferencia del pago?",
+                    confirmButtonText: "Sí, continuar",
+                    cancelButtonText: "No, cancelar"
+                }).then(r => r.isConfirmed);
+
+                if (confirm) {
+                    const paymentInfo = await showPaymentDetailsFormModal(difference);
+                    if (!paymentInfo || Object.keys(paymentInfo).length === 0) {
+                        setLoadingState(FORM_ID, false);
+                        return;
+                    }
+                    values.payment_details = paymentInfo.paymentDetails;
+                    await submitPurchaseFormHandler(url, token, httpMethod, values, paymentInfo?.shouldPrint || false);
+                } else {
+                    SwalToast.fire({ icon: "info", title: "Operación cancelada." });
+                    setLoadingState(FORM_ID, false);
+                }
+                return;
+            }
+
+            if (currentTotal < oldTotal && currentStatus === PaymentStatus.PAID) {
+                const confirm = await SwalConfirmation.fire({
+                    icon: SwalNotificationTypes.ERROR,
+                    title: "Devolución requerida",
+                    html: `Usted tiene un pago previo que excede el nuevo total de la compra. Lamentablemente, la función de devolución aún no está disponible para el módulo de compras, por lo que no podrá continuar con el registro de esta compra hasta que se implementen las devoluciones.`,
+                    confirmButtonText: "Entendido",
+                    showCancelButton: false,
+                }).then(r => r.isConfirmed);
+
+                if (confirm) {
+					SwalToast.fire({ icon: SwalNotificationTypes.ERROR, title: "Devolución no disponible." });
+                    setLoadingState(FORM_ID, false);
+                }
+                return;
             }
         }
-    } catch (err) {
-        console.error(err);
-        SwalToast.fire({ icon: 'error', text: 'Ocurrió un error inesperado.' });
-    } finally {
-        $submitBtn.prop('disabled', false);
-        $spinner.addClass('d-none');
-    }
-});
 
-$('#offcanvasProduct').on('hidden.bs.offcanvas', function () {
-    $('#quick-product-form')[0].reset();
-    $('#quick-product-stock-fields').hide();
-    $('#quick-product-stock-minimo').prop('required', false);
-    $('#quick-product-form').find('.is-invalid').removeClass('is-invalid');
-    $('#quick-product-form').find('.invalid-feedback').text('');
-    $('#quick-product-sale-price').val('');
-});
+		// Fallback for any other valid scenario
+        await submitPurchaseFormHandler(url, token, httpMethod, values);
+	});
+};
 
-// ─────────────────────────────────────────────
-//  Quick supply
-// ─────────────────────────────────────────────
+$(() => {
+	initializeCashRegister(); 
+	bindRealTimeValidation(); 
+	bindPurchaseFormEvents(); 
+	bindMainFormSubmission();
+	bindOffcanvasEvents("create-offcanvas"); 
 
-$('#quick-supply-form').on('submit', async function (e) {
-    e.preventDefault();
-
-    const $form      = $(this);
-    const $submitBtn = $('#quick-supply-submit');
-    const $spinner   = $('#quick-supply-spinner');
-
-    $form.find('.is-invalid').removeClass('is-invalid');
-    $form.find('.invalid-feedback').text('');
-
-    $submitBtn.prop('disabled', true);
-    $spinner.removeClass('d-none');
-
-    try {
-        const formData = new FormData($form[0]);
-        if (!formData.get('quantity'))              formData.set('quantity', '0');
-        if (!formData.get('unit_price'))            formData.set('unit_price', '0');
-        if (!formData.get('expiration_alert_days')) formData.set('expiration_alert_days', '7');
-
-        const response = await fetch($form.attr('action'), {
-            method:  'POST',
-            body:    formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // FIX #1 + #2: incluir unit_price para el autocomplete
-            const newItem = {
-                id:         data.supply.id,
-                name:       data.supply.name,
-                unit_price: parseFloat(data.supply.unit_price ?? 0),
-            };
-            suppliesList.push(newItem);
-            refreshAllSelectsOfType('supply');
-
-            // FIX #1: agregar automáticamente a la tabla de detalles
-            addDetailRowForNewItem('supply', newItem);
-
-            const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasSupply'));
-            if (offcanvas) offcanvas.hide();
-
-            $form[0].reset();
-            SwalToast.fire({ icon: 'success', text: 'Insumo creado correctamente.' });
-        } else {
-            if (data.errors) {
-                Object.entries(data.errors).forEach(([field, messages]) => {
-                    const key = field.replace(/_/g, '-');
-                    $(`#quick-supply-${key}`).addClass('is-invalid');
-                    $(`#quick-supply-${key}-error`).text(messages[0]);
-                });
-            } else {
-                SwalToast.fire({ icon: 'error', text: data.message || 'Error al crear el insumo.' });
-            }
-        }
-    } catch (err) {
-        console.error(err);
-        SwalToast.fire({ icon: 'error', text: 'Ocurrió un error inesperado.' });
-    } finally {
-        $submitBtn.prop('disabled', false);
-        $spinner.addClass('d-none');
-    }
-});
-
-// Limpiar offcanvas al cerrar
-$('#offcanvasProduct, #offcanvasSupply, #offcanvasSupplier').on('hidden.bs.offcanvas', function () {
-    let formId;
-    if      (this.id === 'offcanvasProduct')  formId = '#quick-product-form';
-    else if (this.id === 'offcanvasSupply')   formId = '#quick-supply-form';
-    else                                       formId = '#quick-supplier-form';
-
-    $(formId)[0].reset();
-    $(formId).find('.is-invalid').removeClass('is-invalid');
-    $(formId).find('.invalid-feedback').text('');
-});
-
-// ─────────────────────────────────────────────
-//  Init: calcular total en modo edición
-// ─────────────────────────────────────────────
-$(function () {
-    $('#details-container .detail-row').each(function () {
-        recalcRowSubtotal($(this));
-    });
-    recalcTotal();
+	if (IS_EDITING) {
+		initialPurchaseState = getFormFields();
+	}
 });

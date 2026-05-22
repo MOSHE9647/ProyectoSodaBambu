@@ -144,22 +144,21 @@ class CalculatePayrollSalaryAction
     }
 
     /**
-     * Format an amount in cents as a Costa Rican currency display string.
+     * Format a cent amount into a currency string with CRC formatting.
      *
-     * Converts cent-based amounts back to decimal representation and formats with:
-     * - Currency symbol (₡)
-     * - Exactly 2 decimal places
-     * - Space as thousands separator
-     * - Comma as decimal separator (following Costa Rican locale conventions)
+     * Converts cents back to decimal format and applies Costa Rican currency
+     * formatting conventions, including the '₡' symbol and space as thousand
+     * separator. Ensures that all salary amounts are displayed in a consistent
+     * and user-friendly format in the UI.
      *
-     * Example: 1050 cents → "₡10,50"
+     * Example: 1050 → "₡ 1 050"
      *
      * @param  int  $cents  Amount in cents (e.g., 1050 for ₡10.50)
-     * @return string Formatted currency display (e.g., "₡10,50" or "₡1 234,56")
+     * @return string Formatted currency string (e.g., "₡ 1 050")
      */
     public function formatCurrencyFromCents(int $cents): string
     {
-        return '₡'.number_format($cents / 100, 2, ',', ' ');
+        return format_crc($cents / 100);
     }
 
     /**

@@ -325,7 +325,9 @@ export function format12h(timeInput) {
 export function calcWorkedHours(startTime, endTime) {
 	const s = parseTimeToMinutes(startTime);
 	const e = parseTimeToMinutes(endTime);
-	return s === null || e === null || e <= s ? 0 : Math.floor((e - s) / 60);
+	//Changed from Math.floor to parseFloat with 2 decimal places to support partial hours.
+	const hours = (e - s) / 60;
+	return parseFloat(hours.toFixed(2));
 }
 
 /**
@@ -429,11 +431,13 @@ export const roundToNearestFive = (value) => {
  * @param {number|string} amount - Monto a formatear.
  * @returns {string} Monto formateado.
  */
-export const formatCurrency = (amount) => {
+export const formatCurrency = (amount, showCurrencySymbol = true) => {
 	const roundedAmount = roundToNearestFive(amount);
 	// Expresión regular para separar miles con espacios en blanco
-	const formattedNumber = roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-	return `₡ ${formattedNumber}`;
+	const formattedNumber = roundedAmount
+		.toString()
+		.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+	return showCurrencySymbol ? `₡ ${formattedNumber}` : formattedNumber;
 };
 
 export function getLaravelFirstError(errorData) {
@@ -453,3 +457,15 @@ export function getLaravelFirstError(errorData) {
 	}
 	return { field: firstField, message: firstMessage };
 }
+
+export const printReceipt = (url) => {
+	const printWindow = window.open(url, "_blank", "width=450,height=600");
+	if (!printWindow) {
+		SwalToast.fire({
+			icon: SwalNotificationTypes.WARNING,
+			title: "El bloqueador de ventanas emergentes impidió abrir el tiquete.",
+		});
+		return;
+	}
+	printWindow.focus();
+};

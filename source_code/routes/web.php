@@ -16,6 +16,7 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\UserController;
+use App\Models\Purchase;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -43,13 +44,12 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // Generic receipt routes for any model implementing Receipable interface
     Route::prefix('receipts')->name('receipts.')->group(function () {
+        Route::get('/payment-modal/{paymentTotal}', [ReceiptController::class, 'paymentModal'])->name('payment-modal');
         Route::get('/{model}/{id}', [ReceiptController::class, 'show'])->name('show');
-        Route::get('/{model}/{id}/payment-modal/{paymentTotal}', [ReceiptController::class, 'paymentModal'])->name('payment-modal');
     });
 
     // Sales routes with role-based access control defined in the controller
     Route::get('sales/sell', [SaleController::class, 'sales'])->name('sales.sell');
-    Route::get('sales/payment-modal/{paymentTotal}', [SaleController::class, 'showPaymentModal'])->name('sales.payment-modal');
     Route::resource('sales', SaleController::class)->names('sales');
 
     // Purchase routes with an additional route for quick product creation during purchase entry
@@ -74,5 +74,4 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // Shared offcanvas form endpoint used by purchases, contracts, and other modules.
     Route::get('/offcanvas-form/{type}', OffcanvasFormController::class)->name('offcanvas-form');
-
 });

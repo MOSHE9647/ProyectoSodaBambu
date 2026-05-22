@@ -19,6 +19,11 @@ class Contract extends Model implements Receipable
     use HasFactory, SoftDeletes;
 
     /**
+     * Cache for receipt items to avoid redundant calculations during a single request lifecycle.
+     */
+    private ?array $receiptItemsCache = null;
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -76,8 +81,8 @@ class Contract extends Model implements Receipable
     public function getPeriodAttribute(): string
     {
         if ($this->start_date && $this->end_date) {
-            $start = $this->start_date->locale('es')->isoFormat('D MMM YYYY');
-            $end = $this->end_date->locale('es')->isoFormat('D MMM YYYY');
+            $start = Carbon::parse($this->start_date)->locale('es')->isoFormat('D MMM YYYY');
+            $end = Carbon::parse($this->end_date)->locale('es')->isoFormat('D MMM YYYY');
 
             return "$start - $end";
         }
@@ -136,7 +141,9 @@ class Contract extends Model implements Receipable
      */
     public function getReceiptNumber(): string
     {
-        return "CONTRATO-{$this->id}";
+        $contractId = str_pad($this->id, 10, '0', STR_PAD_LEFT);
+
+        return "CONTRATO-{$contractId}";
     }
 
     /**
@@ -148,35 +155,64 @@ class Contract extends Model implements Receipable
     }
 
     /**
-     * Get the total value of this contract.
-     */
-    public function getReceiptTotal(): int
-    {
-        return $this->total_value ?? 0;
-    }
-
-    /**
      * Get the contract details as receipt items.
      */
     public function getReceiptItems(): array
     {
-        return $this->details->map(function ($detail) {
+        if ($this->receiptItemsCache !== null) {
+            return $this->receiptItemsCache;
+        }
+
+        $results = $this->details->groupBy('product_id')->map(function ($group) {
+            $firstDetail = $group->first();
+            $product = $firstDetail->product;
+
+            // Handle case where product might have been deleted after contract creation
+            if (! $product) {
+                return [
+                    'name' => "Producto #{$firstDetail->product_id}",
+                    'quantity' => $group->count(),
+                    'unit_price' => 0,
+                    'sub_total' => 0,
+                    'applied_tax' => 0,
+                ];
+            }
+
+            // Count total quantity for this product across all contract details
+            $quantity = $group->count() * $firstDetail->contract->portions_per_day;
+
+            // Use the product's sale price as the unit price for receipt purposes
+            $unitPrice = $product->sale_price;
+
+            // Subtotal (base_price sum for all quantities)
+            $subTotal = $quantity * $unitPrice;
+
             return [
-                'name' => $detail->product?->name ?? "Producto #{$detail->product_id}",
-                'quantity' => $detail->quantity ?? 1,
-                'unit_price' => $detail->unit_price ?? 0,
-                'sub_total' => $detail->subtotal ?? 0,
-                'applied_tax' => $detail->applied_tax ?? 0,
+                'name' => $product->name,
+                'quantity' => $quantity,
+                'unit_price' => (int) $unitPrice,
+                'sub_total' => (int) $subTotal,
+                'applied_tax' => 0, // No tax applied for now, but can be calculated if needed
             ];
-        })->toArray();
+        })->values()->toArray();
+
+        $this->receiptItemsCache = $results;
+
+        return $results;
     }
 
     /**
-     * Get the contract subtotal (sum of all details before tax).
+     * Get the payments associated with this contract.
      */
-    public function getReceiptSubtotal(): int
+    public function getReceiptPayments(): array
     {
-        return $this->details->sum('subtotal') ?? 0;
+        return $this->payments()->get()->map(fn ($payment) => [
+            'amount' => $payment->amount,
+            'method_label' => $payment->method->label(),
+            'change_amount' => $payment->change_amount,
+            'reference' => $payment->reference,
+            'date' => $payment->created_at,
+        ])->toArray();
     }
 
     /**
@@ -184,19 +220,29 @@ class Contract extends Model implements Receipable
      */
     public function getReceiptTaxTotal(): int
     {
-        return collect($this->getReceiptItems())->reduce(function ($carry, $item) {
-            $taxAmount = (int) round($item['sub_total'] * ($item['applied_tax'] / 100));
-
-            return $carry + $taxAmount;
-        }, 0);
+        // Since getReceiptItems already calculates the tax amount in 'applied_tax',
+        // we just need to sum it up.
+        return collect($this->getReceiptItems())->sum('applied_tax');
     }
 
     /**
-     * Get the receipt type label.
+     * Get the contract subtotal (sum of all details before tax).
      */
-    public function getReceiptType(): string
+    public function getReceiptSubtotal(): int
     {
-        return 'Comprobante de contrato';
+        return collect($this->getReceiptItems())->sum('sub_total');
+    }
+
+    /**
+     * Get the total value of this contract.
+     */
+    public function getReceiptTotal(): int
+    {
+        $items = collect($this->getReceiptItems());
+        $itemsTotal = $items->sum('sub_total') + $items->sum('applied_tax');
+        $contractTotal = $this->total_value ?? 0;
+
+        return $contractTotal !== $itemsTotal ? $contractTotal : $itemsTotal;
     }
 
     /**

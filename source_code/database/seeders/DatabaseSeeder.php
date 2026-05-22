@@ -19,10 +19,11 @@ class DatabaseSeeder extends Seeder
         $this->call(ProductSeeder::class);
         $this->call(ClientSeeder::class);
         $this->call(SupplySeeder::class);
-        // $this->call(CashRegisterSeeder::class);
+        $this->call(ContractSeeder::class);
+        // $this->call(SupplierSeeder::class);
         // $this->call(PurchaseSeeder::class);
+        // $this->call(CashRegisterSeeder::class);
         // $this->call(SaleSeeder::class);
         // $this->call(SaleDetailSeeder::class);
-        $this->call(ContractSeeder::class);
     }
 }
