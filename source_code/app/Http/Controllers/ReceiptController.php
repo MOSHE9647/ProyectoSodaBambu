@@ -5,9 +5,10 @@ namespace App\Http\Controllers;
 use App\Contracts\Receipable;
 use App\Enums\UserRole;
 use App\Models\Contract;
+use App\Models\Purchase;
 use App\Models\Sale;
 use App\Services\Receipt\ReceiptBuilder;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -39,9 +40,9 @@ class ReceiptController extends Controller implements HasMiddleware
      *
      * @param  string  $model  El nombre del modelo (ej: 'sales', 'contracts')
      * @param  int  $id  El ID del modelo
-     * @return JsonResponse
+     * @return JsonResponse|View Retorna un JSON con los datos del recibo o una vista si se solicita HTML
      */
-    public function show(string $model, int $id)
+    public function show(string $model, int $id): JsonResponse|View
     {
         $modelClass = $this->resolveModelClass($model);
 
@@ -64,22 +65,22 @@ class ReceiptController extends Controller implements HasMiddleware
         // Construye los datos del recibo
         $receiptData = (new ReceiptBuilder($instance))->build();
 
-        return response()->json([
-            'data' => $receiptData,
-        ]);
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json(['data' => $receiptData]);
+        }
+
+        return view('templates.receipt', compact('receiptData'));
     }
 
     /**
      * Obtiene el HTML del modal de pago para cualquier modelo Receipable.
      *
-     * Endpoint: GET /receipts/{model}/{id}/payment-modal
+     * Endpoint: GET /receipts/payment-modal
      *
-     * @param  string  $model  El nombre del modelo (ej: 'sales', 'contracts')
-     * @param  int  $id  El ID del modelo
      * @param  int  $paymentTotal  El total a pagar
      * @return string HTML del modal de pago
      */
-    public function paymentModal(string $model, int $id, int $paymentTotal)
+    public function paymentModal(int $paymentTotal)
     {
         $validatedData = Validator::make(
             ['total' => $paymentTotal],
@@ -91,7 +92,7 @@ class ReceiptController extends Controller implements HasMiddleware
             ]
         )->validate();
 
-        return view('pages.sales._payment-modal', [
+        return view('models.payments._payment-modal', [
             'paymentTotal' => (int) $validatedData['total'],
         ])->render();
     }
@@ -109,6 +110,8 @@ class ReceiptController extends Controller implements HasMiddleware
             'sale' => Sale::class,
             'contracts' => Contract::class,
             'contract' => Contract::class,
+            'purchases' => Purchase::class,
+            'purchase' => Purchase::class,
         ];
 
         return $modelMap[strtolower($model)] ?? null;

@@ -1,6 +1,6 @@
 import { showModelInfo, deleteModel } from '../actions.js';
 import { CreateNewDataTable } from '../../utils/datatables.js';
-import { capitalizeSentence, toggleLoadingState, formatDate, escapeHtml } from "../../utils/utils.js";
+import { capitalizeSentence, toggleLoadingState, formatDate, escapeHtml, formatCurrency } from "../../utils/utils.js";
 import { get } from 'jquery';
 
 // ==================== Constants ====================
@@ -28,31 +28,10 @@ const MODEL_ROUTES = {
     delete: route('contracts.destroy', { contract: ':id' }),
 };
 
-// Currency Formatter for Costa Rican Colón
-const CURRENCY_FORMATTER = new Intl.NumberFormat("es-CR", {
-	style: "currency",
-	currency: "CRC",
-	maximumFractionDigits: 0,
-});
-
 // ==================== Global Functions ====================
 
 // Expose functions globally
 window.toggleLoadingState = toggleLoadingState;
-
-// ======================= Formatters =======================
-
-/**
- * Formats a numeric value as Costa Rican Colón currency.
- * @param {number|string} value - The value to format as currency
- * @returns {string} The formatted currency string
- */
-const formatCurrency = (value) => {
-    const amount = Number.parseInt(value);
-        let formatted = CURRENCY_FORMATTER.format(Number.isNaN(amount) ? 0 : amount);
-        formatted = formatted.replace(/^([₡])(?=\d)/, '$1 ');
-        return formatted;
-};
 
 // ==================== Helper Functions ====================
 

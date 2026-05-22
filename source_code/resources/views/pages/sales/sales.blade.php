@@ -170,20 +170,19 @@
             <span class="text-muted">·</span>
 
             {{-- Payment Method --}}
-            <div class="d-flex align-items-center gap-2">
-                @if($lastSale)
-                    <span id="last-sale-payment-method" class="{{ $paymentStatusClass }} d-flex align-items-center gap-2" title="{{ $paymentText }}">
-                        {!! $paymentIcon !!}
-                        @if(!$paymentMethod) 
-                            <span class="d-none d-sm-inline">Pago Pendiente</span> 
-                            <span class="text-muted">·</span>
-                        @endif
-                    </span>
-                    <span id="last-sale-payment-amount" class="text-success fw-bold">
-                        {{ format_crc($lastSale->total) }}
-                    </span>
-                @else
-                    <span class="text-muted small d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2" id="payment-method-container">
+                <span id="last-sale-payment-method" class="{{ $paymentStatusClass }} d-flex align-items-center gap-2 {{ !$lastSale ? 'd-none' : '' }}" title="{{ $paymentText }}">
+                    {!! $paymentIcon !!}
+                    @if(!$paymentMethod) 
+                        <span class="d-none d-sm-inline">Pago Pendiente</span> 
+                        <span class="text-muted">·</span>
+                    @endif
+                </span>
+                <span id="last-sale-payment-amount" class="text-success fw-bold {{ !$lastSale ? 'd-none' : '' }}">
+                    {{ $lastSale ? format_crc($lastSale->total) : '' }}
+                </span>
+                @if(!$lastSale)
+                    <span id="no-transactions-msg" class="text-muted small d-flex align-items-center gap-2">
                         <i class="bi bi-dash-circle"></i>
                         Sin transacciones
                     </span>
@@ -206,7 +205,6 @@
 
         {{-- Action Buttons --}}
         <div class="d-flex align-items-center gap-2" style="height: 2.2rem;">
-            {{-- TODO: Implement reprint functionality --}}
             <button id="reprint-last-sale" class="btn btn-outline-primary btn-sm d-flex align-items-center action-icon-reveal" title="Reimprimir ticket de la última venta">
                 <i class="bi bi-printer"></i>
                 <span class="action-icon-reveal__label">Reimprimir</span>
@@ -223,5 +221,9 @@
 @endsection
 
 @section('scripts')
+    <script type="text/javascript">
+        // Pass the last sale data to JavaScript for potential use in actions like reprinting the receipt
+        window.lastSaleData = @json($lastSale ?? null);
+    </script>
 	@vite(['resources/js/pages/sales/main.js'])
 @endsection

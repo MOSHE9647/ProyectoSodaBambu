@@ -3,6 +3,7 @@
     'name',
     'value' => '1',
     'class' => '',
+    'style' => '',
     'checkClass' => '',
     'labelClass' => '',
     'checked' => false,
@@ -19,7 +20,7 @@
         @checked($checked)
     >
 
-    <label class="btn btn-outline-primary check-button w-100 {{ $labelClass }} {{ $class }}" for="{{ $id }}">
+    <label class="btn btn-outline-primary check-button w-100 {{ $labelClass }} {{ $class }}" for="{{ $id }}" style="{{ $style }}">
         {{ $slot }}
     </label>
 </div>

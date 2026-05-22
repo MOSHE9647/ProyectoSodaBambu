@@ -118,6 +118,11 @@ const updatePaymentStatusUI = (saleData) => {
         return;
     }
 
+    // Ensure elements are visible if they were hidden when there were no previous sales
+    $("#no-transactions-msg").toggleClass('d-none', true);
+    lastSalePaymentMethodElement.removeClass("d-none");
+    lastSalePaymentAmountElement.removeClass("d-none");
+
     // Update general shared details (Items and Time)
     const totalItems = saleData.sale_details ? saleData.sale_details.length : 0;
     lastSaleItemsElement.text(`${totalItems} ítem(s)`);
@@ -163,7 +168,7 @@ const updatePaymentStatusUI = (saleData) => {
         lastSalePaymentMethodElement.html(methodIcons[paymentMethod] || '<i class="bi bi-question-circle text-muted"></i>');
 		lastSalePaymentMethodElement.attr("title", `Pago vía ${getPaymentMethodLabel(paymentMethod)}`);
 
-        lastSalePaymentAmountElement.text(formatCurrency(paymentAmount));
+        lastSalePaymentAmountElement.text(formatCurrency(saleData.total));
     } else {
         lastSalePaymentMethodElement.html('<i class="bi bi-x-circle text-danger"></i>');
 		lastSalePaymentMethodElement.attr("title", "Sin detalles de pago");
