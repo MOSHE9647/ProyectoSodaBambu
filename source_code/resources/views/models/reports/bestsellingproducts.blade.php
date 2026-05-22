@@ -108,7 +108,7 @@
                             type="button"
                             id="clear-custom-dates"
                             class="btn-outline-danger"
-                            disabled="{{ request('period') !== 'custom' }}"
+                            :disabled="request('period') !== 'custom'"
                         >
                             <i class="bi bi-x-circle me-1"></i>
                             Limpiar
@@ -205,7 +205,8 @@
             <div class="col-md-4">
                 <x-stat-card
                     title="Unidades por Día (promedio)"
-                    color-theme="green"
+                    icon="cart-check"
+                    color-theme="teal"
                     currency="false"
                     trend="{{ ($averageUnitsTrendDirection ?? 'up') === 'down' ? '-' : '+' }}{{ number_format($averageUnitsVariationPercent ?? 0, 1, ',', '.') }}%"
                     trend-context="vs periodo anterior"
@@ -289,6 +290,10 @@
             reportDateInputs.forEach((input) => {
                 input.disabled = period !== 'custom';
             });
+
+              if (clearCustomDatesBtn) {
+                clearCustomDatesBtn.disabled = period !== 'custom';
+            }
         };
 
         const syncPeriodLabels = (activeValue) => {
