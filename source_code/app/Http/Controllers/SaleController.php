@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Sale;
 use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -76,28 +77,17 @@ class SaleController extends Controller implements HasMiddleware
                     return $sale->date ? $sale->date->toDateString() : 'N/A';
                 })
                 ->editColumn('total', function ($sale) {
-                    return '₡ '.number_format($sale->total, 0);
+                    return $sale->total;
                 })
                 ->addColumn('payment_status', function ($sale) {
-                    return $sale->payments->isNotEmpty()
-                        ? '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Pagado</span>'
-                        : '<span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2">Pendiente</span>';
+                    return $sale->payments->isNotEmpty() ? 'paid' : 'pending';
                 })
-                ->addColumn('actions', function ($sale) {
-                    $isAdmin = auth()->user()->hasRole(UserRole::ADMIN->value);
-
-                    $btnVer = '<button type="button" class="btn btn-info btn-sm btn-view-sale me-1 text-white" data-id="'.$sale->id.'" title="Ver Información"><i class="bi bi-eye"></i></button>';
-                    $btnPrint = '<button type="button" class="btn btn-primary btn-sm btn-print-sale me-1" data-id="'.$sale->id.'" title="Reimprimir Tiquete"><i class="bi bi-printer"></i></button>';
-
-                    $btnDelete = $isAdmin
-                        ? '<button type="button" class="btn btn-danger btn-sm btn-delete-sale" data-id="'.$sale->id.'" title="Eliminar"><i class="bi bi-trash"></i></button>'
-                        : '<button type="button" class="btn btn-secondary btn-sm opacity-50" disabled title="Solo administradores pueden eliminar"><i class="bi bi-trash"></i></button>';
-
-                    return '<div class="d-flex justify-content-start align-items-center">'.$btnVer.$btnPrint.$btnDelete.'</div>';
+                ->addColumn('is_admin', function ($sale) {
+                    return auth()->user()->hasRole(\App\Enums\UserRole::ADMIN->value);
                 })
-                ->rawColumns(['payment_status', 'actions'])
+                ->rawColumns([])
                 ->toJson();
-        }
+                    }
 
         return view('pages.sales.index');
     }
@@ -105,12 +95,10 @@ class SaleController extends Controller implements HasMiddleware
     /**
      * Display the specified resource (HU 1: Ver información detallada).
      */
-    public function show(Sale $sale)
+    public function show(Sale $sale): View
     {
-        return response()->json([
-            'success' => true,
-            'data' => $sale->load(['saleDetails.product', 'payments']),
-        ]);
+        $sale->load(['saleDetails.product', 'payments']);
+        return view('pages.sales.show', compact('sale'));
     }
 
     /**

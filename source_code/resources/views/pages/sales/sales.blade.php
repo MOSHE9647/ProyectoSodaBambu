@@ -205,12 +205,6 @@
 
       {{-- Action Buttons --}}
         <div class="d-flex align-items-center gap-2" style="height: 2.2rem;">
-            {{-- Botón del Historial corregido con un ícono compatible y estético --}}
-            <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center action-icon-reveal" title="Ver historial de ventas realizadas" onclick="window.location.href='{{ route('sales.index') }}'">
-                <i class="bi bi-clock-history"></i>
-                <span class="action-icon-reveal__label">Historial</span>
-            </button>
-
             <button id="reprint-last-sale" class="btn btn-outline-primary btn-sm d-flex align-items-center action-icon-reveal" title="Reimprimir ticket de la última venta">
                 <i class="bi bi-printer"></i>
                 <span class="action-icon-reveal__label">Reimprimir</span>
