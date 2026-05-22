@@ -88,6 +88,7 @@
 
                         <x-form.input
                             id="start_date"
+                            name="{{ request('period') === 'custom' ? 'start_date' : '_start_date' }}"
                             type="date"
                             class="border-secondary report-date-input"
                             value="{{ request('start_date') }}"
@@ -98,6 +99,7 @@
 
                         <x-form.input
                             id="end_date"
+                            name="{{ request('period') === 'custom' ? 'end_date' : '_end_date' }}"
                             type="date"
                             class="border-secondary report-date-input"
                             value="{{ request('end_date') }}"
@@ -225,88 +227,125 @@
 @endsection
 
 @section('scripts')
-    <script>
-        const filtersForm = document.getElementById('sales-report-filters');
-        const customDates = document.querySelectorAll('.report-custom-dates');
-        const clearCustomDatesBtn = document.getElementById('clear-custom-dates');
-        const reportDateInputs = document.querySelectorAll('.report-date-input');
-        const periodRadios = document.querySelectorAll('#sales-report-filters input[name="period"]');
+<script>
+    const filtersForm = document.getElementById('sales-report-filters');
+    const customDates = document.querySelectorAll('.report-custom-dates');
+    const clearCustomDatesBtn = document.getElementById('clear-custom-dates');
+    const reportDateInputs = document.querySelectorAll('.report-date-input');
+    const periodRadios = document.querySelectorAll('#sales-report-filters input[name="period"]');
 
-        const toggleCustomDates = (period) => {
-            if (!customDates.length) {
-                return;
-            }
+    const toggleCustomDates = (period) => {
+        if (!customDates.length) {
+            return;
+        }
 
-            customDates.forEach((element) => {
-                element.classList.toggle('d-none', period !== 'custom');
-            });
+        customDates.forEach((element) => {
+            element.classList.toggle('d-none', period !== 'custom');
+        });
 
-            reportDateInputs.forEach((input) => {
-                input.disabled = period !== 'custom';
-            });
-        };
+        reportDateInputs.forEach((input) => {
+            input.disabled = period !== 'custom';
+        });
+    };
 
-        const syncPeriodLabels = (activeValue) => {
-            periodRadios.forEach((radio) => {
-                const label = document.querySelector(`label[for="${radio.id}"]`);
-                if (label) {
-                    label.classList.toggle('active', radio.value === activeValue);
-                }
-            });
-        };
-
+    const syncPeriodLabels = (activeValue) => {
         periodRadios.forEach((radio) => {
-            radio.addEventListener('change', () => {
-                if (radio.value !== 'custom') {
-                    reportDateInputs.forEach((input) => {
-                        input.value = '';
-                    });
-                }
-
-                toggleCustomDates(radio.value);
-                syncPeriodLabels(radio.value);
-
-                if (filtersForm) {
-                    filtersForm.requestSubmit();
-                }
-            });
+            const label = document.querySelector(`label[for="${radio.id}"]`);
+            if (label) {
+                label.classList.toggle('active', radio.value === activeValue);
+            }
         });
+    };
 
-        document.querySelectorAll('#sales-report-filters input[type="date"]').forEach((input) => {
-            input.addEventListener('change', () => {
-                const selectedPeriod = document.querySelector('#sales-report-filters input[name="period"]:checked')?.value ?? 'month';
-                toggleCustomDates(selectedPeriod);
+   
+    const removeDatesFromUrl = () => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('start_date');
+        url.searchParams.delete('end_date');
+        window.history.replaceState({}, '', url);
+        return url;
+    };
 
-                if (selectedPeriod === 'custom' && filtersForm) {
-                    filtersForm.requestSubmit();
-                }
-            });
-        });
+  
+    periodRadios.forEach((radio) => {
+        radio.addEventListener('change', () => {
 
-        if (clearCustomDatesBtn) {
-            clearCustomDatesBtn.addEventListener('click', () => {
+            if (radio.value !== 'custom') {
+
                 reportDateInputs.forEach((input) => {
                     input.value = '';
                 });
 
-                if (filtersForm) {
-                    filtersForm.requestSubmit();
-                }
+                removeDatesFromUrl();
+            }
+
+            toggleCustomDates(radio.value);
+            syncPeriodLabels(radio.value);
+
+            // Enviar el formulario
+            if (filtersForm) {
+                filtersForm.requestSubmit();
+            }
+        });
+    });
+
+
+    document.querySelectorAll('#sales-report-filters input[type="date"]').forEach((input) => {
+        input.addEventListener('change', () => {
+            const selectedPeriod = document.querySelector('#sales-report-filters input[name="period"]:checked')?.value ?? 'month';
+            toggleCustomDates(selectedPeriod);
+
+            if (selectedPeriod === 'custom' && filtersForm) {
+                filtersForm.requestSubmit();
+            }
+        });
+    });
+
+
+    if (clearCustomDatesBtn) {
+        clearCustomDatesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            reportDateInputs.forEach((input) => {
+                input.value = '';
             });
-        }
+            
 
-        const initialPeriod = document.querySelector('#sales-report-filters input[name="period"]:checked')?.value ?? 'month';
-        toggleCustomDates(initialPeriod);
-        syncPeriodLabels(initialPeriod);
+            const cleanUrl = removeDatesFromUrl();
+            
 
-        window.ReportsData = {
-            sales: {
-                container: '#chart-sales-income',
-                labels: @json(collect($dailyReports ?? [])->pluck('date')),
-                values: @json(collect($dailyReports ?? [])->pluck('income')),
-                axisTitle: 'Días del periodo',
-            },
-        };
-    </script>
+            const monthRadio = document.getElementById('month-filter');
+            if (monthRadio) {
+                monthRadio.checked = true;
+            }
+            
+
+            toggleCustomDates('month');
+            syncPeriodLabels('month');
+            
+
+            if (filtersForm) {
+                const formData = new FormData(filtersForm);
+                formData.delete('start_date');
+                formData.delete('end_date');
+                
+                window.location.href = cleanUrl.pathname + '?section=sales&period=month&payment_status=paid';
+            }
+        });
+    }
+
+    const initialPeriod = document.querySelector('#sales-report-filters input[name="period"]:checked')?.value ?? 'month';
+    toggleCustomDates(initialPeriod);
+    syncPeriodLabels(initialPeriod);
+
+    window.ReportsData = {
+        sales: {
+            container: '#chart-sales-income',
+            labels: @json(collect($dailyReports ?? [])->pluck('date')),
+            values: @json(collect($dailyReports ?? [])->pluck('income')),
+            axisTitle: 'Días del periodo',
+        },
+    };
+</script>
     @vite(['resources/js/models/reports/index.js'])
 @endsection

@@ -85,6 +85,7 @@
 
                         <x-form.input
                             id="start_date"
+                            name="{{ request('period') === 'custom' ? 'start_date' : '_start_date' }}"
                             type="date"
                             class="border-secondary report-date-input"
                             value="{{ request('start_date') }}"
@@ -95,6 +96,7 @@
 
                         <x-form.input
                             id="end_date"
+                            name="{{ request('period') === 'custom' ? 'end_date' : '_end_date' }}"
                             type="date"
                             class="border-secondary report-date-input"
                             value="{{ request('end_date') }}"
@@ -102,7 +104,6 @@
                         >
                             Fecha Fin
                         </x-form.input>
-
                         <x-form.button
                             type="button"
                             id="clear-custom-dates"
@@ -192,10 +193,9 @@
 				>
                     @slot('value')
                         <div class="d-flex flex-column justify-content-start align-items-start gap-2" style="margin-bottom: -0.1rem !important;">
-                            <div class="d-flex align-items-baseline gap-2">
-                                <x-icons.colon-icon width="18" height="18" />
-                                {{ number_format($totalSoldUnits ?? 0, 0, ',', '.') }}
-                            </div>
+                        <div class="d-flex align-items-baseline gap-2">
+                            {{ number_format($totalSoldUnits ?? 0, 0, ',', '.') }}
+                        </div>
                             <span class="text-muted fw-normal" style="font-size: 16px;">{{ $periodLabel ?? '' }}</span>
                         </div>
                     @endslot
@@ -300,22 +300,31 @@
             });
         };
 
-        periodRadios.forEach((radio) => {
-            radio.addEventListener('change', () => {
-                if (radio.value !== 'custom') {
-                    reportDateInputs.forEach((input) => {
-                        input.value = '';
-                    });
-                }
+           periodRadios.forEach((radio) => {
+                radio.addEventListener('change', () => {
+                    // Si NO es custom, limpiar TODO
+                    if (radio.value !== 'custom') {
+                        // Limpiar inputs visualmente
+                        reportDateInputs.forEach((input) => {
+                            input.value = '';
+                        });
+                        
+                        // Eliminar fechas de la URL
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('start_date');
+                        url.searchParams.delete('end_date');
+                        window.history.replaceState({}, '', url);
+                    }
 
-                toggleCustomDates(radio.value);
-                syncPeriodLabels(radio.value);
+                    toggleCustomDates(radio.value);
+                    syncPeriodLabels(radio.value);
 
-                if (filtersForm) {
-                    filtersForm.requestSubmit();
-                }
+                    // Enviar el formulario
+                    if (filtersForm) {
+                        filtersForm.requestSubmit();
+                    }
+                });
             });
-        });
 
         document.querySelectorAll('#bestselling-report-filters input[type="date"]').forEach((input) => {
             input.addEventListener('change', () => {
@@ -337,14 +346,33 @@
         });
 
         if (clearCustomDatesBtn) {
-            clearCustomDatesBtn.addEventListener('click', () => {
+            clearCustomDatesBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+
                 reportDateInputs.forEach((input) => {
                     input.value = '';
                 });
+                
 
-                if (filtersForm) {
-                    filtersForm.requestSubmit();
+                const url = new URL(window.location.href);
+                url.searchParams.delete('start_date');
+                url.searchParams.delete('end_date');
+                
+
+                url.searchParams.set('period', 'month');
+                
+
+                if (url.searchParams.get('product_type') === 'all') {
+                    url.searchParams.delete('product_type');
                 }
+                if (url.searchParams.get('category_id') === '') {
+                    url.searchParams.delete('category_id');
+                }
+                
+                window.history.pushState({}, '', url);
+                
+                window.location.href = url.toString();
             });
         }
 
