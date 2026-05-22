@@ -325,7 +325,9 @@ export function format12h(timeInput) {
 export function calcWorkedHours(startTime, endTime) {
 	const s = parseTimeToMinutes(startTime);
 	const e = parseTimeToMinutes(endTime);
-	return s === null || e === null || e <= s ? 0 : Math.floor((e - s) / 60);
+	//Changed from Math.floor to parseFloat with 2 decimal places to support partial hours.
+	const hours = (e - s) / 60;
+	return parseFloat(hours.toFixed(2));
 }
 
 /**

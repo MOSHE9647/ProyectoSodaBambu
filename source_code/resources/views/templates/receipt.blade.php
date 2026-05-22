@@ -67,7 +67,21 @@
 
         <div class="receipt-totals">
             <div class="receipt-row"><span>Subtotal</span><span>{{ format_crc($receiptData['subtotal']) }}</span></div>
-            <div class="receipt-row"><span>Impuestos</span><span>{{ format_crc($receiptData['tax_total']) }}</span></div>
+            <div class="receipt-row">
+                <span>Impuestos</span>
+                <span>
+                    @php
+                        // List of model types that are exempt from taxes when tax_total is 0
+                        $taxExemptModels = [\App\Models\Purchase::class, \App\Models\Contract::class];
+                    @endphp
+
+                    @if(in_array($receiptData['model_type'], $taxExemptModels) && $receiptData['tax_total'] == 0)
+                        <span class="text-muted" style="font-size: 11px;">No aplican impuestos</span>
+                    @else
+                        {{ format_crc($receiptData['tax_total']) }}
+                    @endif
+                </span>
+            </div>
             <div class="receipt-row receipt-total"><span>Total</span><span>{{ format_crc($receiptData['total']) }}</span></div>
         </div>
 

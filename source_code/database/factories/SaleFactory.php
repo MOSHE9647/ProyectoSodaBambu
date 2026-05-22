@@ -28,7 +28,7 @@ class SaleFactory extends Factory
             'invoice_number' => $this->faker->unique()->numerify('FAC-##########'),
             'payment_status' => $this->faker->randomElement($paymentStatuses),
             'date' => $this->faker->dateTimeThisMonth(),
-            'total' => $this->faker->randomFloat(2, 20000, 600000),
+            'total' => $this->faker->randomFloat(0, 20000, 600000),
         ];
     }
 }
