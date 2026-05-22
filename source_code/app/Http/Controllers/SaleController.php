@@ -83,11 +83,11 @@ class SaleController extends Controller implements HasMiddleware
                     return $sale->payments->isNotEmpty() ? 'paid' : 'pending';
                 })
                 ->addColumn('is_admin', function ($sale) {
-                    return auth()->user()->hasRole(\App\Enums\UserRole::ADMIN->value);
+                    return auth()->user()->hasRole(UserRole::ADMIN->value);
                 })
                 ->rawColumns([])
                 ->toJson();
-                    }
+        }
 
         return view('pages.sales.index');
     }
@@ -98,6 +98,7 @@ class SaleController extends Controller implements HasMiddleware
     public function show(Sale $sale): View
     {
         $sale->load(['saleDetails.product', 'payments']);
+
         return view('pages.sales.show', compact('sale'));
     }
 
