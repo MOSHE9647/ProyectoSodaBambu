@@ -25,6 +25,7 @@ class SaleController extends Controller implements HasMiddleware
 
         return [
             new Middleware(RoleMiddleware::using($allowedRoles)),
+            new Middleware(RoleMiddleware::using(UserRole::ADMIN->value), only: ['destroy']),
         ];
     }
 
@@ -69,7 +70,7 @@ class SaleController extends Controller implements HasMiddleware
             })
             ->get(['id', 'name']);
 
-        return view('pages.sales.history', compact('users'));
+        return view('pages.sales.history.index', compact('users'));
     }
 
     /**
@@ -103,15 +104,9 @@ class SaleController extends Controller implements HasMiddleware
      */
     public function show(Sale $sale)
     {
-        //
-    }
+        $sale->load('user', 'saleDetails.product', 'payments');
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Sale $sale)
-    {
-        //
+        return view('pages.sales.history.show', compact('sale'));
     }
 
     /**
@@ -145,7 +140,9 @@ class SaleController extends Controller implements HasMiddleware
      */
     public function destroy(Sale $sale)
     {
-        //
+        $sale->delete();
+
+        return redirect()->route('history.index')->with('success', 'Venta eliminada exitosamente.');
     }
 
     private function getProductsList(Request $request)

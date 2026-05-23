@@ -136,7 +136,7 @@ $(() => {
 			name: "date",
 			title: "Fecha",
             searchable: false,
-			render: (data) => formatDate(data.slice(0, 10)),
+			render: (data) => formatDate(data),
 		},
 		{
 			data: "user.name",
@@ -176,14 +176,17 @@ $(() => {
 			func: window.reprintReceipt,
 			funcName: "reprintReceipt",
 			tooltip: "Reimprimir recibo",
-		},
-		delete: {
+		}
+	};
+
+    if (MODEL_DATA.userCanDelete) {
+        actions.delete = {
 			route: MODEL_ROUTES.delete,
 			tooltip: `Eliminar ${MODEL_NAME}`,
 			func: window.deleteSale,
 			funcName: "deleteSale",
-		},
-	};
+		};
+    }
 
     /**
      * Define custom buttons for the DataTable interface.

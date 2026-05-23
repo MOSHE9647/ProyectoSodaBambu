@@ -1,3 +1,7 @@
+@php
+    use App\Enums\UserRole;
+@endphp
+
 @extends('layouts.app')
 
 @section('content')
@@ -28,6 +32,7 @@
     <script type="text/javascript">
         window.SalesHistoryData = {
             modelName: 'venta',
+            userCanDelete: @json(auth()->user()->hasRole(UserRole::ADMIN)),
             users: @json($users ?? []),
         };
     </script>

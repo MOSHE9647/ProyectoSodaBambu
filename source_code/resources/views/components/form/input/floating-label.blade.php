@@ -20,6 +20,7 @@
 	'autocomplete' => null,
 	'autofocus' => false,
 	'errorMessage' => null,
+	'attributes' => [],
 ])
 
 <div class="input-group has-validation">
@@ -52,6 +53,7 @@
 			{{ $disabled ? 'disabled' : '' }}
 			{{ $autocomplete ? "autocomplete=$autocomplete" : '' }}
 			{{ $autofocus ? 'autofocus' : '' }}
+			{{ $attributes }}
 		>
 
 		{{-- Label --}}
