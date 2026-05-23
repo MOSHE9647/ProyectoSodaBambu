@@ -20,10 +20,10 @@ function makeEmployee(array $overrides = []): Employee
     $user = User::factory()->withRole(UserRole::EMPLOYEE)->create();
 
     return Employee::factory()->create(array_merge([
-        'id'                => $user->id,
-        'status'            => EmployeeStatus::ACTIVE,
+        'id' => $user->id,
+        'status' => EmployeeStatus::ACTIVE,
         'payment_frequency' => PaymentFrequency::MONTHLY,
-        'hourly_wage'       => 5000,
+        'hourly_wage' => 5000,
     ], $overrides));
 }
 
@@ -33,17 +33,17 @@ function makeEmployee(array $overrides = []): Employee
  */
 test('CP-01_EIF-25 - registra asistencia con feriado y la persiste en base de datos', function () {
     // DADO: Un admin autenticado y un empleado activo.
-    $admin    = makeAdminUser();
+    $admin = makeAdminUser();
     $employee = makeEmployee();
-    $today    = now()->toDateString();
+    $today = now()->toDateString();
 
     // CUANDO: Se envía un registro de asistencia válido marcado como feriado.
     $response = $this->actingAs($admin)->post(route('attendance.store'), [
         'employee_id' => $employee->id,
-        'work_date'   => $today,
-        'start_time'  => '08:00',
-        'end_time'    => '17:00',
-        'is_holiday'  => true,
+        'work_date' => $today,
+        'start_time' => '08:00',
+        'end_time' => '17:00',
+        'is_holiday' => true,
     ]);
 
     // ENTONCES: Redirige con éxito y el registro existe en la BD con 9 horas.
@@ -53,9 +53,9 @@ test('CP-01_EIF-25 - registra asistencia con feriado y la persiste en base de da
 
     $this->assertDatabaseHas('timesheets', [
         'employee_id' => $employee->id,
-        'work_date'   => $today,
+        'work_date' => $today,
         'total_hours' => 9.00,
-        'is_holiday'  => 1,
+        'is_holiday' => 1,
     ]);
 });
 
@@ -65,7 +65,7 @@ test('CP-01_EIF-25 - registra asistencia con feriado y la persiste en base de da
  */
 test('CP-02_EIF-25 - rechaza asistencia cuando la hora de salida es anterior a la de entrada', function () {
     // DADO: Un admin autenticado y un empleado válido.
-    $admin    = makeAdminUser();
+    $admin = makeAdminUser();
     $employee = makeEmployee();
 
     // CUANDO: La hora de salida es anterior a la hora de entrada.
@@ -73,10 +73,10 @@ test('CP-02_EIF-25 - rechaza asistencia cuando la hora de salida es anterior a l
         ->from(route('attendance.index'))
         ->post(route('attendance.store'), [
             'employee_id' => $employee->id,
-            'work_date'   => Carbon::now('America/Costa_Rica')->toDateString(),
-            'start_time'  => '14:30',
-            'end_time'    => '10:00',
-            'is_holiday'  => false,
+            'work_date' => Carbon::now('America/Costa_Rica')->toDateString(),
+            'start_time' => '14:30',
+            'end_time' => '10:00',
+            'is_holiday' => false,
         ]);
 
     // ENTONCES: La validación falla en end_time y no se guarda ningún registro.
@@ -103,10 +103,10 @@ test('CP-03_EIF-25 - deniega acceso al módulo de asistencia a usuarios con rol 
     $this->actingAs($employeeUser)
         ->post(route('attendance.store'), [
             'employee_id' => 1,
-            'work_date'   => Carbon::now('America/Costa_Rica')->toDateString(),
-            'start_time'  => '08:00',
-            'end_time'    => '17:00',
-            'is_holiday'  => false,
+            'work_date' => Carbon::now('America/Costa_Rica')->toDateString(),
+            'start_time' => '08:00',
+            'end_time' => '17:00',
+            'is_holiday' => false,
         ])
         ->assertForbidden();
 });
@@ -117,34 +117,34 @@ test('CP-03_EIF-25 - deniega acceso al módulo de asistencia a usuarios con rol 
  */
 test('CP-01_EIF-26 - calcula nómina mensual con feriado y muestra total correcto en colones', function () {
     // DADO: Admin y empleado mensual con ₡5.000/hora, un día normal y uno de feriado.
-    $admin    = makeAdminUser();
+    $admin = makeAdminUser();
     $employee = makeEmployee([
         'payment_frequency' => PaymentFrequency::MONTHLY,
-        'hourly_wage'       => 5000,
+        'hourly_wage' => 5000,
     ]);
 
     Timesheet::factory()->create([
         'employee_id' => $employee->id,
-        'work_date'   => '2026-03-10',
-        'start_time'  => '08:00',
-        'end_time'    => '16:00',
+        'work_date' => '2026-03-10',
+        'start_time' => '08:00',
+        'end_time' => '16:00',
         'total_hours' => 8.00,
-        'is_holiday'  => false,
+        'is_holiday' => false,
     ]);
 
     Timesheet::factory()->create([
         'employee_id' => $employee->id,
-        'work_date'   => '2026-03-15',
-        'start_time'  => '08:00',
-        'end_time'    => '16:00',
+        'work_date' => '2026-03-15',
+        'start_time' => '08:00',
+        'end_time' => '16:00',
         'total_hours' => 8.00,
-        'is_holiday'  => true,
+        'is_holiday' => true,
     ]);
 
     // CUANDO: El admin solicita el cálculo de salario para marzo 2026.
     $response = $this->actingAs($admin)->get(route('attendance.tabs', [
-        'tab'            => 'salary',
-        'employee_id'    => $employee->id,
+        'tab' => 'salary',
+        'employee_id' => $employee->id,
         'payroll_period' => '2026-03',
     ]));
 
