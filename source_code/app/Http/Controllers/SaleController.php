@@ -3,16 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Sale\UpsertSaleAction;
+use App\Enums\EmployeeStatus;
 use App\Enums\UserRole;
 use App\Http\Requests\SaleRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Arr;
 use Spatie\Permission\Middleware\RoleMiddleware;
+use Yajra\DataTables\Facades\DataTables;
 
 class SaleController extends Controller implements HasMiddleware
 {
@@ -42,9 +45,31 @@ class SaleController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        if ($request->wantsJson() || $request->ajax()) {
+            $query = Sale::query()
+                ->when(
+                    $request->filled('user') && $request->user !== 'all', 
+                    fn ($q) => $q->whereHas('user', fn ($q) => $q->where('id', $request->user))
+                )
+                ->when(
+                    $request->filled('date') && $request->date !== null, 
+                    fn ($q) => $q->whereDate('date', $request->date)
+                )
+                ->with('user')
+                ->orderBy('date', 'desc');
+
+            return DataTables::of($query)->toJson();
+        }
+
+        $users = User::whereDoesntHave('employee')
+            ->orWhereHas('employee', function ($query) {
+                $query->where('status', '!=', EmployeeStatus::INACTIVE->value);
+            })
+            ->get(['id', 'name']);
+
+        return view('pages.sales.history', compact('users'));
     }
 
     /**
