@@ -51,11 +51,11 @@ class SaleController extends Controller implements HasMiddleware
         if ($request->wantsJson() || $request->ajax()) {
             $query = Sale::query()
                 ->when(
-                    $request->filled('user') && $request->user !== 'all', 
+                    $request->filled('user') && $request->user !== 'all',
                     fn ($q) => $q->whereHas('user', fn ($q) => $q->where('id', $request->user))
                 )
                 ->when(
-                    $request->filled('date') && $request->date !== null, 
+                    $request->filled('date') && $request->date !== null,
                     fn ($q) => $q->whereDate('date', $request->date)
                 )
                 ->with('user')
