@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\Sale\GetSalesReportDataAction;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CategoryController;
