@@ -156,6 +156,9 @@ const initSalesReportDataTable = () => {
     // Connects the sales income area chart to the data obtained by DataTables and updates it dynamically on each AJAX response
     $(`#${tableId}`).on('xhr.dt', function (e, settings, json) {
         if (json && json.data) {
+            // Update sales charts
+            document.querySelector('#sales-total-orders').textContent = json.data.reduce((sum, row) => sum + row.orders, 0);
+            document.querySelector('#sales-total-income').textContent = formatCurrency(json.data.reduce((sum, row) => sum + row.income, 0), false);
             // Reverse the array so the chart flows chronologically from left to right
             const chartData = [...json.data].reverse();
             const labels = chartData.map((item) => formatDate(item.date));
@@ -236,6 +239,9 @@ const initProductsReportDataTable = () => {
     // Connect the products chart to the data obtained by DataTables
     $(`#${tableId}`).on('xhr.dt', function (e, settings, json) {
         if (json && json.data) {
+             // Update products charts
+            document.querySelector('#products-total-units').textContent = json.data.reduce((sum, row) => sum + row.sold_quantity, 0);
+            document.querySelector('#products-total-income').textContent = formatCurrency(json.data.reduce((sum, row) => sum + Math.round(row.income / 5) * 5, 0), false);
             // Take only the top 10 to prevent the bar chart from becoming visually saturated
             const chartData = json.data.slice(0, 10);
             const labels = chartData.map(item => item.product_name);

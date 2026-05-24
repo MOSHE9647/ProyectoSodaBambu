@@ -121,7 +121,7 @@
                         <div class="d-flex flex-column justify-content-start align-items-start gap-2" style="margin-bottom: -0.1rem !important;">
                             <div class="d-flex align-items-baseline gap-2">
                                 <x-icons.colon-icon width="18" height="18" />
-                                {{ format_crc($totalIncome ?? 0, false) }}
+                                <span id="sales-total-income">{{ format_crc($totalIncome ?? 0, false) }}</span>
                             </div>
                             <span class="text-muted fw-normal" style="font-size: 16px;">{{ $periodLabel ?? 'Periodo No Especificado' }}</span>
                         </div>
@@ -140,7 +140,7 @@
                     @slot('value')
                         <div class="d-flex flex-column justify-content-start align-items-start gap-2" style="margin-bottom: -0.1rem !important;">
                             <div class="d-flex align-items-baseline gap-2">
-                                {{ format_crc($totalOrders ?? 0, false) }}
+                                <span id="sales-total-orders">{{ $totalOrders ?? 0 }}</span>
                             </div>
                             <span class="text-muted fw-normal" style="font-size: 16px;">{{ $periodLabel ?? 'Periodo No Especificado' }}</span>
                         </div>
@@ -315,7 +315,7 @@
         </div>
 
         @php
-            $productsIncomeTotal = collect($topProducts ?? [])->sum('income');
+                $productsIncomeTotal = collect($topProducts ?? [])->sum(fn($p) => round($p['income'] / 5) * 5);
         @endphp
 
         <div class="row row-cols-1 row-cols-lg-3 g-3 mb-3">
@@ -331,7 +331,7 @@
                         <div class="d-flex flex-column justify-content-start align-items-start gap-2" style="margin-bottom: -0.1rem !important;">
                             <div class="d-flex align-items-baseline gap-2">
                                 <x-icons.colon-icon width="18" height="18" />
-                                {{ format_crc($productsIncomeTotal ?? 0, false) }}
+                                <span id="products-total-income">{{ format_crc($productsIncomeTotal ?? 0, false) }}</span>
                             </div>
                             <span class="text-muted fw-normal" style="font-size: 16px;">{{ $periodLabel ?? 'Periodo No Especificado' }}</span>
                         </div>
@@ -350,7 +350,7 @@
                     @slot('value')
                         <div class="d-flex flex-column justify-content-start align-items-start gap-2" style="margin-bottom: -0.1rem !important;">
                             <div class="d-flex align-items-baseline gap-2">
-                                {{ $totalSoldUnits ?? 0 }}
+                                <span id="products-total-units">{{ $totalSoldUnits ?? 0 }}</span>
                             </div>
                             <span class="text-muted fw-normal" style="font-size: 16px;">{{ $periodLabel ?? 'Periodo No Especificado' }}</span>
                         </div>
