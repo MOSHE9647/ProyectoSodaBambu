@@ -80,7 +80,9 @@ class GetSalesReportDataAction
             $income = (int) $salesForDay->sum('total');
             $orders = $salesForDay->count();
 
-             if ($orders === 0) continue;
+            if ($orders === 0) {
+                continue;
+            }
 
             $dailyReports[] = [
                 'date_raw' => $date->format('Y-m-d'),
