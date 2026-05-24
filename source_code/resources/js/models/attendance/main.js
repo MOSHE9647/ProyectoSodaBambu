@@ -48,6 +48,17 @@ const MODEL_ROUTES = {
 	destroy: route("attendance.destroy", { timesheet: ":id" }),
 };
 
+window.setPDFButtonLoadingState = (event, formSelector) => {
+	event.preventDefault();
+	setLoadingState(formSelector, true);
+
+	$(`#${formSelector}`).submit();
+
+	setTimeout(() => {
+		setLoadingState(formSelector, false);
+	}, 5000);
+};
+
 const loadedTabs = new Set();
 
 /**
@@ -310,14 +321,11 @@ function initHistoryTab() {
 						? `<span class="fw-semibold">${escapeHtml(formatTime(val))}</span>`
 						: '<span class="badge border rounded-pill text-warning-emphasis bg-warning-subtle px-2 py-2"><i class="bi bi-hourglass-split me-1"></i>Pendiente</span>',
 			},
-			{	/*The total_hours data source was replaced with total_hours_label in the 
-				DataTable configuration to prevent unintended mathematical rounding (e.g., 
-				showing "4h" instead of "3.5h"). By utilizing the model's accessor directly 
-				from the backend, we preserve decimal precision and ensure UI consistency with 
-				the Costa Rican locale (using commas and the 'h' suffix) across all attendance 
-				views.*/
+			{
 				data: "total_hours",
 				name: "total_hours",
+				type: "string",
+				className: "text-center",
 				render: (val, type, row) => {
 					if (!val || val === '0h')
 						return '<span class="text-muted px-4 py-2">&mdash;</span>';

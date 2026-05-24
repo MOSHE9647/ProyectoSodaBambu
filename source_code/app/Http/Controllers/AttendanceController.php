@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Actions\Timesheets\BuildSalaryTabDataAction;
 use App\Actions\Timesheets\StoreAttendanceAction;
+use App\Enums\EmployeeStatus;
 use App\Enums\UserRole;
 use App\Http\Requests\TimesheetRequest;
 use App\Models\Employee;
 use App\Models\Timesheet;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -215,7 +217,9 @@ class AttendanceController extends Controller implements HasMiddleware
         return Employee::with([
             'user',
             'timesheets' => fn ($q) => $q->whereDate('work_date', $this->today()),
-        ])->get();
+        ])
+            ->where('status', EmployeeStatus::ACTIVE->value)
+            ->get();
     }
 
     /**
@@ -295,6 +299,7 @@ class AttendanceController extends Controller implements HasMiddleware
                 'name' => $t->employee?->user?->name,
                 'email' => $t->employee?->user?->email,
             ])
+            ->editColumn('total_hours', fn (Timesheet $t) => $t->total_hours_label)
             ->with(['employee_filters' => $employeeFilters])
             ->toJson();
     }
@@ -320,5 +325,41 @@ class AttendanceController extends Controller implements HasMiddleware
         );
 
         return view('models.attendance.tabs.salary', $salaryData);
+    }
+
+    /**
+     * Generate and stream a PDF payroll report for the selected employee and period.
+     */
+    public function generateSalaryPdf(Request $request, BuildSalaryTabDataAction $buildSalaryTabDataAction)
+    {
+        $request->validate([
+            'employee_id' => 'required|integer|exists:employees,id',
+            'payroll_period' => ['required', 'string', 'regex:/^\d{4}-(0[1-9]|1[0-2])$/'],
+        ]);
+
+        $salaryData = $buildSalaryTabDataAction->execute(
+            $request->integer('employee_id'),
+            $request->input('payroll_period'),
+            $request->input('payroll_half'),
+        );
+
+        abort_if(! $salaryData['employee'], 404, 'No se encontraron datos para generar el reporte.');
+
+        // Ensure the resolved employee matches the requested ID to avoid silent fallbacks
+        if ((int) $salaryData['employee']['id'] !== $request->integer('employee_id')) {
+            abort(404, 'El colaborador solicitado no coincide con los datos procesados.');
+        }
+
+        $employee = $salaryData['employee'];
+        $generatedAt = Carbon::now(self::TZ);
+
+        $pdf = Pdf::loadView('models.attendance.pdf.salary', compact('employee', 'generatedAt'))
+            ->setPaper('a4', 'portrait');
+
+        $safeName = preg_replace('/[^a-z0-9]+/', '_', strtolower($employee['name'] ?? 'colaborador'));
+        $period = $employee['payroll_period'] ?? $generatedAt->format('Y-m');
+        $half = $employee['payroll_half'] ? "_{$employee['payroll_half']}" : '';
+
+        return $pdf->download("nomina_{$safeName}_{$period}{$half}.pdf");
     }
 }

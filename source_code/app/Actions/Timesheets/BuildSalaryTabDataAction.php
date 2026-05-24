@@ -199,7 +199,7 @@ class BuildSalaryTabDataAction
             'status_label' => $employee->status_label,
             'is_active' => $employee->is_active,
             'hourly_wage_raw' => $employee->hourly_wage_raw,
-            'hourly_wage_label' => $employee->hourly_wage_label,
+            'hourly_wage_label' => $salarySummary['hourly_wage_rounded_label'] ?? $employee->hourly_wage_label,
             'payment_frequency' => $employee->payment_frequency?->value,
             'payment_frequency_label' => $employee->payment_frequency_label,
             ...$salarySummary,
