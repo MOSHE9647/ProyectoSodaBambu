@@ -82,7 +82,7 @@ class GetSalesReportDataAction
 
             $dailyReports[] = [
                 'date_raw' => $date->format('Y-m-d'),
-                'date' => $date->format('d/m/Y'),
+                'date' => $date->format('Y-m-d'),
                 'orders' => $orders,
                 'income' => $income,
                 'avg_ticket' => $orders > 0 ? (int) round($income / $orders) : 0,

@@ -7,19 +7,28 @@ use App\Actions\Sale\GetSalesReportDataAction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Yajra\DataTables\Facades\DataTables;
 
 class ReportsController extends Controller
 {
-    public function reports(Request $request, GetSalesReportDataAction $getSalesReportDataAction)
+    public function index(Request $request, GetSalesReportDataAction $getSalesReportDataAction)
     {
+        if ($request->wantsJson() || $request->ajax()) {
+            $reportData = $getSalesReportDataAction->execute($request->all());
+
+            $section = $request->input('section', 'sales');
+
+            $data = $section === 'products'
+                ? collect($reportData['topProducts'])
+                : collect($reportData['dailyReports']);
+
+            return DataTables::collection($data)->toJson();
+        }
+
         $activeSection = $request->input('section', 'sales');
+        $reportData = $getSalesReportDataAction->execute($request->all());
 
-        $viewName = $activeSection === 'products'
-            ? 'models.reports.bestsellingproducts'
-            : 'models.reports.salesreports';
-
-        return view($viewName, array_merge(
-            $getSalesReportDataAction->execute($request->all()),
+        return view('models.reports.index', array_merge($reportData,
             [
                 'activeSection' => $activeSection,
             ]
