@@ -31,8 +31,6 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
  */
 Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
-    Route::get('reports', [ReportsController::class, 'reports'])->name('reports');
-    Route::get('reports/export', [ReportsController::class, 'exportReports'])->name('reports.export');
     Route::get('help', [HelpController::class, 'index'])->name('help');
     Route::resource('users', UserController::class)->names('users');
     Route::resource('suppliers', SupplierController::class)->names('suppliers');
@@ -41,6 +39,10 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::resource('clients', ClientController::class)->names('clients');
     Route::resource('supplies', SupplyController::class)->names('supplies');
     Route::resource('contracts', ContractController::class)->names('contracts');
+
+    // Reports routes with AJAX handling for DataTables and separate views for sales and products sections
+    Route::get('reports', [ReportsController::class, 'index'])->name('reports');
+    Route::get('reports/export', [ReportsController::class, 'exportReports'])->name('reports.export');
 
     // Generic receipt routes for any model implementing Receipable interface
     Route::prefix('receipts')->name('receipts.')->group(function () {

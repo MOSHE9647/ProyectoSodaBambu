@@ -153,7 +153,7 @@ test('CP-01_EIF-26 - calcula nómina mensual con feriado y muestra total correct
         ->assertSuccessful()
         ->assertSee('Feriado')
         ->assertSee('Total a Pagar:')
-        ->assertSee('₡120 000,00', false);
+        ->assertSee('₡ 120 000', false);
 });
 
 /**

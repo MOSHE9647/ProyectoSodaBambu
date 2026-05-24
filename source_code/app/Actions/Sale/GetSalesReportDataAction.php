@@ -80,9 +80,13 @@ class GetSalesReportDataAction
             $income = (int) $salesForDay->sum('total');
             $orders = $salesForDay->count();
 
+            if ($orders === 0) {
+                continue;
+            }
+
             $dailyReports[] = [
                 'date_raw' => $date->format('Y-m-d'),
-                'date' => $date->format('d/m/Y'),
+                'date' => $date->format('Y-m-d'),
                 'orders' => $orders,
                 'income' => $income,
                 'avg_ticket' => $orders > 0 ? (int) round($income / $orders) : 0,
@@ -110,7 +114,7 @@ class GetSalesReportDataAction
             $activeCategoryId
         );
 
-        $totalIncome = (int) collect($topProducts)->sum('income');
+        $totalIncome = (int) $sales->sum('total');
         $totalSoldUnits = (int) collect($topProducts)->sum('sold_quantity');
         $totalOrders = $sales->count();
         $daysInPeriod = max($startLocal->copy()->startOfDay()->diffInDays($endLocal->copy()->startOfDay()) + 1, 1);
@@ -245,7 +249,7 @@ class GetSalesReportDataAction
 
         $products = $query
             ->groupBy('p.id', 'p.name', 'p.type', 'c.name')
-            ->selectRaw("p.id as product_id, p.name as product_name, p.type as product_type, c.name as category_name, SUM(sd.quantity) as sold_quantity, SUM(sd.{$subtotalColumn}) as income")
+            ->selectRaw("p.id as product_id, p.name as product_name, p.type as product_type, c.name as category_name, SUM(sd.quantity) as sold_quantity, SUM(sd.{$subtotalColumn} * (1 + sd.applied_tax / 100)) as income")
             ->orderByDesc('sold_quantity')
             ->orderByDesc('income')
             ->limit(30)

@@ -94,27 +94,39 @@ test('CA-02 - gráfico mensual excluye egresos', function () {
 });
 
 test('CA-03 - gráfico diario suma ventas y contratos del día y excluye días anteriores', function () {
-    $today = now('America/Costa_Rica')->setTime(10, 0)->toDateTimeString();
-    $yesterday = now('America/Costa_Rica')->subDay()->setTime(10, 0)->toDateTimeString();
+    Carbon::setTestNow(Carbon::create(2026, 5, 24, 16, 0, 0, 'UTC'));
 
-    makeIncome(4000, $today);
-    makeIncome(3000, $today);
-    makeIncome(2000, $yesterday);
+    try {
+        $today = now('America/Costa_Rica')->setTime(10, 0)->toDateTimeString();
+        $yesterday = now('America/Costa_Rica')->subDay()->setTime(10, 0)->toDateTimeString();
 
-    $result = app(GetDailySalesDataAction::class)->execute();
+        makeIncome(4000, $today);
+        makeIncome(3000, $today);
+        makeIncome(2000, $yesterday);
 
-    expect($result['dailyTotal'])->toBe(7000);
+        $result = app(GetDailySalesDataAction::class)->execute();
+
+        expect($result['dailyTotal'])->toBe(7000);
+    } finally {
+        Carbon::setTestNow();
+    }
 });
 
 test('CA-04 - gráfico diario excluye egresos', function () {
-    $today = now('America/Costa_Rica')->setTime(10, 0)->toDateTimeString();
+    Carbon::setTestNow(Carbon::create(2026, 5, 24, 16, 0, 0, 'UTC'));
 
-    makeIncome(5000, $today);
-    makeExpense(99000, $today);
+    try {
+        $today = now('America/Costa_Rica')->setTime(10, 0)->toDateTimeString();
 
-    $result = app(GetDailySalesDataAction::class)->execute();
+        makeIncome(5000, $today);
+        makeExpense(99000, $today);
 
-    expect($result['dailyTotal'])->toBe(5000);
+        $result = app(GetDailySalesDataAction::class)->execute();
+
+        expect($result['dailyTotal'])->toBe(5000);
+    } finally {
+        Carbon::setTestNow();
+    }
 });
 
 // ─── CA-05: Invalidación de caché ─────────────────────────────────────────
