@@ -9,9 +9,10 @@ import { SwalNotificationTypes, SwalToast } from "./sweetalert.js";
 const ACTION_CONFIG = {
 	show: { tooltip: 'Ver Más', icon: 'bi-info-circle', buttonClass: 'btn-info' },
 	edit: { tooltip: 'Editar', icon: 'bi-pencil-square', buttonClass: 'btn-primary' },
+	reprint: { tooltip: 'Reimprimir', icon: 'bi-printer', buttonClass: 'btn-warning' },
 	delete: { tooltip: 'Eliminar', icon: 'bi-trash', buttonClass: 'btn-danger', extraAttrs: 'class="delete-form"' }
 };
-const ACTION_TYPES = Object.keys(ACTION_CONFIG); // ['show', 'edit', 'delete']
+const ACTION_TYPES = Object.keys(ACTION_CONFIG); // ['show', 'edit', 'delete', 'reprint']
 
 /**
  * Initialize a new DataTable on the specified table element with given options.
@@ -51,6 +52,7 @@ function InitNewDataTable(tableId, options = {}) {
  *   - show: { route: string, func: function, disabledIf?: function(row), disabledIfTooltip?: string, tooltip?: string }
  *   - edit: { route: string, disabledIf?: function(row), disabledIfTooltip?: string, tooltip?: string }
  *   - delete: { route: string, disabledIf?: function(row), disabledIfTooltip?: string, tooltip?: string }
+ *   - reprint: { route: string, disabledIf?: function(row), disabledIfTooltip?: string, tooltip?: string }
  * @param {Array<Object>} customButtons - Array of custom button objects { text, href, class, icon, func?, params? }.
  * @param {Object} options - Additional DataTable options to override defaults.
  * @param {boolean} [options.showSearchBar=true] - Whether to render DataTables search bar area.
@@ -164,6 +166,8 @@ function generateActionButton(action, row, type, defaultTooltip, iconClass, butt
 			return buildEditButton(actionRoute, baseClass, baseAttrs, iconClass, action, disabled, extraAttrs);
 		case 'delete':
 			return buildDeleteButton(actionRoute, baseAttrs, iconClass, action, buttonClass, disabled, extraAttrs);
+		case 'reprint':
+			return buildReprintButton(actionRoute, baseClass, baseAttrs, iconClass, action, disabled, extraAttrs);
 		default:
 			console.warn(`Unknown action type: ${type}`);
 			return '';
@@ -569,6 +573,25 @@ function buildDeleteButton(route, baseAttrs, iconClass, action, buttonClass, dis
                 </div>
             </button>
         </form>
+    `;
+}
+
+/**
+ * Build reprint action button HTML.
+ * @private
+ */
+function buildReprintButton(route, baseClass, baseAttrs, iconClass, action, disabled, extraAttrs) {
+	const handlerName = resolveHandlerName(action.func, action.funcName);
+	const onclick = !disabled && handlerName ? `onclick="${handlerName}('${route}');"` : '';
+	return `
+        <a class="reprint-button ${baseClass}" ${onclick} ${baseAttrs} ${extraAttrs}>
+            <div class="reprint-spinner d-none flex-row align-items-center justify-content-center">
+                <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            </div>
+            <div class="reprint-button-text d-flex flex-row align-items-center justify-content-center">
+                <i class="${iconClass}"></i>
+            </div>
+        </a>
     `;
 }
 
