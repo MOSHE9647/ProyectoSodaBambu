@@ -167,7 +167,7 @@
                                     &RightArrow; 
                                     {{ data_get($ts, 'end_time_label', 'N/A') }}
                                 </span>
-                                <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2" style="min-width: 60px;">
+                                <span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2" style="min-width: 70px;">
                                     <i class="bi bi-stopwatch"></i> {{ data_get($ts, 'total_hours_label', '0h') }}
                                 </span>
                             @endif
@@ -202,6 +202,40 @@
         </div>
         @endif
     </div>
+
+    <form id="salary-pdf-form" action="{{ route('attendance.salary.pdf') }}" method="POST" 
+        class="d-flex flex-row justify-content-{{ $timesheets->isNotEmpty() ? 'between' : 'center' }} align-items-center gap-3 mt-4" target="_parent"
+    >
+        @csrf
+        <input type="hidden" name="employee_id" value="{{ data_get($employee, 'id') }}">
+        <input type="hidden" name="payroll_period" value="{{ data_get($employee, 'payroll_period') }}">
+        @if(data_get($employee, 'payroll_half'))
+            <input type="hidden" name="payroll_half" value="{{ data_get($employee, 'payroll_half') }}">
+        @endif
+
+        <span class="text-muted">
+            Última actualización: 
+            {{ Carbon\Carbon::now()->timezone('America/Costa_Rica')->translatedFormat('d \d\e F \d\e Y \a \l\a\s h:i A') }}
+        </span>
+
+        @if ($timesheets->isNotEmpty())
+        <x-form.button
+            :id="'salary-pdf-form-button'"
+            :class="'btn btn-outline-primary rounded-3 px-4 py-2'"
+            :spinnerId="'salary-pdf-form-spinner'"
+            :loadingMessage="'Generando PDF...'"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            title="Generar PDF con el desglose del salario calculado para este colaborador y periodo seleccionado."
+            onclick="setPDFButtonLoadingState(event, 'salary-pdf-form');"
+        >
+            <div id="salary-pdf-form-button-text" class="d-flex flex-row align-items-center justify-content-center">
+                <i class="bi bi-file-earmark-pdf me-2"></i>
+                Generar PDF
+            </div>
+        </x-form.button>
+        @endif
+    </form>
 </div>
 @else
 <div id="salary-calculation-result-empty" class="card-container rounded-3 p-3 p-lg-4 mt-4">

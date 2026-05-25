@@ -8,6 +8,7 @@
 	'iconRight' => null,
 	'textIconRight' => false,
 	'inputClass' => '',
+	'labelClass' => '',
 	'type' => null,
 	'value' => null,
 	'step' => null,
@@ -19,6 +20,7 @@
 	'autocomplete' => null,
 	'autofocus' => false,
 	'errorMessage' => null,
+	'attributes' => [],
 ])
 
 <div class="input-group has-validation">
@@ -51,10 +53,11 @@
 			{{ $disabled ? 'disabled' : '' }}
 			{{ $autocomplete ? "autocomplete=$autocomplete" : '' }}
 			{{ $autofocus ? 'autofocus' : '' }}
+			{{ $attributes }}
 		>
 
 		{{-- Label --}}
-		<label for="{{ $id }}" class="form-label">
+		<label for="{{ $id }}" class="form-label {{ $labelClass }}">
 			{{ $slot ?? ucwords(str_replace('-', ' ', $name ?? $id)) }}
 		</label>
 	</div>

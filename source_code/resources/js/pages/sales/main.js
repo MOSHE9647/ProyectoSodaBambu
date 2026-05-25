@@ -3,10 +3,10 @@ import { initializeSalesCart, getActiveSaleData, clearActiveCart } from "./cart.
 import { initializeCashRegister } from "./cash-register.js";
 import { initializeSalesProducts } from "./products.js";
 import { initializeSalesOrderTabs } from "./orders.js";
-import { setLoadingState } from "../../utils/utils.js";
+import { printReceipt, setLoadingState } from "../../utils/utils.js";
 import { initializeHotkeys } from "./hotkeys.js";
-import { openPaymentModal } from "./payment.js";
-import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { SwalConfirmation, SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
+import { showPaymentDetailsFormModal } from "../../models/payment/main.js";
 
 /**
  * Updates the sales page clock element with the current local time.
@@ -68,69 +68,53 @@ $(() => {
     const finalizeSaleButton = $("#finalize-sale-button");
     if (finalizeSaleButton.length) {
         finalizeSaleButton.on("click", async () => {
-			const saleData = getActiveSaleData();
+			const saleTotal = getActiveSaleData().total;
 
-			let successMessage = "Venta registrada con éxito.";
+			// Modifications integrating cancelled to handle modal closure without sending
+			const { paymentDetails, shouldPrint, cancelled } = await showPaymentDetailsFormModal(saleTotal, 'finalize-sale');
 
-			const { completed, printed } = await openPaymentModal({
-				total: saleData.total,
-				title: "Procesar Venta",
-				loadingId: "finalize-sale",
-				onComplete: async (paymentDetails, totalTendered) => {
-					SwalModal.showLoading();
-					const saleResult = await processSale(paymentDetails);
-					if (saleResult?.success) {
-						if (saleResult.message) {
-							successMessage = saleResult.message;
-						}
-						return saleResult;
-					}
+			if (cancelled) {
+				return;
+			}
 
-					SwalModal.hideLoading();
-					return false;
+			const saleResult = await processSale(paymentDetails);
+			if (saleResult?.success) {
+				window.lastSaleData = saleResult.data;
+
+				if (shouldPrint) {
+					printReceipt(route('receipts.show', {
+						model: 'sales',
+						id: saleResult.data?.id,
+					}));
 				}
-			});
-
-			if (completed && !printed) {
-				SwalToast.fire({
-					icon: SwalNotificationTypes.SUCCESS,
-					title: successMessage,
-				});
 			}
 		});
     }
 
 	const rePrintLastSaleButton = $("#reprint-last-sale");
 	if (rePrintLastSaleButton.length) {
-		const SweetModalCustomClass = {
-			title: "d-flex justify-content-center align-items-center border-bottom pb-3 mb-3",
-			popup: "swal-popup w-auto h-auto",
-			closeButton: "swal-close-btn fs-3",
-			htmlContainer: "w-auto h-auto p-1 overflow-x-hidden",
-			confirmButton: "btn btn-primary mx-1",
-			cancelButton: "btn btn-danger mx-1",
-			icon: "mb-4",
-		};
-
 		rePrintLastSaleButton.on("click", () => {
-			SwalModal.fire({
+			SwalConfirmation.fire({
 				title: "Reimprimir última venta",
 				text: "¿Deseas reimprimir el recibo de la última venta?",
-				icon: "question",
+				icon: SwalNotificationTypes.QUESTION,
 				showCancelButton: true,
-				customClass: SweetModalCustomClass,
 				confirmButtonText: "Sí, reimprimir",
 				cancelButtonText: "No, cancelar",
 			}).then((result) => {
 				if (result.isConfirmed) {
-					// Placeholder for reprint logic; implement actual reprint functionality here.
-					SwalModal.fire({
-						title: "Funcionalidad no implementada",
-						text: "La función de reimprimir la última venta aún no está implementada.",
-						icon: "info",
-						customClass: SweetModalCustomClass,
-					});
-					// Example of triggering a click on the finalize button to simulate reprint; replace with actual reprint logic.
+					if (window.lastSaleData) {
+						printReceipt(route('receipts.show', {
+							model: 'sales',
+							id: window.lastSaleData.id,
+						}));
+					} else {
+						SwalToast.fire({
+							icon: SwalNotificationTypes.INFO,
+							title: "No hay ventas recientes para reimprimir."
+						});
+						console.warn("No last sale data available for reprint.");
+					}
 				}
 			});
 		});

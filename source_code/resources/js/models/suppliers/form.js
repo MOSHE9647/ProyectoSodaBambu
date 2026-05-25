@@ -63,7 +63,7 @@ function validateSupplierForm(values, fieldValidators) {
  * Handles the form submission process.
  * @returns {boolean} True if the form is valid and can be submitted, false otherwise.
  */
-function submitSupplierForm() {
+export function submitSupplierForm() {
     clearAllFieldErrors(fieldValidators);
 
     // Cache DOM elements
@@ -87,7 +87,7 @@ function submitSupplierForm() {
  * Real-time validation and formatting for supplier form fields.
  * @param {Event} e The input or change event.
  */
-$(document).on('input change', `#${FORM_ID}`, function(e) {
+export function realTimeValidationHandler(e) {
     const $target = $(e.target);
     const fieldId = $target.attr('id');
 
@@ -116,6 +116,10 @@ $(document).on('input change', `#${FORM_ID}`, function(e) {
     } else {
         clearFieldError(fieldId);
     }
+};
+
+$(document).on('input change', `#${FORM_ID}`, function(e) {
+    realTimeValidationHandler(e);
 });
 
 /**

@@ -318,14 +318,29 @@ export function format12h(timeInput) {
 
 /**
  * Calculates worked hours between two HH:MM times.
+ * Overnight shifts (where end time is less than start time) are considered invalid and return 0.
+ * 
  * @param {string} startTime - Start time in HH:MM format.
  * @param {string} endTime - End time in HH:MM format.
- * @returns {number} Whole worked hours; 0 when input values are invalid.
+ * @returns {number} Worked hours rounded to 2 decimals; 0 when input values are invalid.
  */
 export function calcWorkedHours(startTime, endTime) {
+	// Restore the null/undefined/empty string guard
+	if (!startTime || !endTime) {
+		return 0;
+	}
+
 	const s = parseTimeToMinutes(startTime);
 	const e = parseTimeToMinutes(endTime);
-	return s === null || e === null || e <= s ? 0 : Math.floor((e - s) / 60);
+
+	// Guard against parsing failures (null/NaN) and ensuring positive duration
+	if (s === null || e === null || isNaN(s) || isNaN(e) || e <= s) {
+		return 0;
+	}
+
+	//Changed from Math.floor to parseFloat with 2 decimal places to support partial hours.
+	const hours = (e - s) / 60;
+	return parseFloat(hours.toFixed(2));
 }
 
 /**
@@ -429,11 +444,13 @@ export const roundToNearestFive = (value) => {
  * @param {number|string} amount - Monto a formatear.
  * @returns {string} Monto formateado.
  */
-export const formatCurrency = (amount) => {
+export const formatCurrency = (amount, showCurrencySymbol = true) => {
 	const roundedAmount = roundToNearestFive(amount);
 	// Expresión regular para separar miles con espacios en blanco
-	const formattedNumber = roundedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-	return `₡ ${formattedNumber}`;
+	const formattedNumber = roundedAmount
+		.toString()
+		.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+	return showCurrencySymbol ? `₡ ${formattedNumber}` : formattedNumber;
 };
 
 export function getLaravelFirstError(errorData) {
@@ -453,3 +470,15 @@ export function getLaravelFirstError(errorData) {
 	}
 	return { field: firstField, message: firstMessage };
 }
+
+export const printReceipt = (url) => {
+	const printWindow = window.open(url, "_blank", "width=450,height=600");
+	if (!printWindow) {
+		SwalToast.fire({
+			icon: SwalNotificationTypes.WARNING,
+			title: "El bloqueador de ventanas emergentes impidió abrir el tiquete.",
+		});
+		return;
+	}
+	printWindow.focus();
+};

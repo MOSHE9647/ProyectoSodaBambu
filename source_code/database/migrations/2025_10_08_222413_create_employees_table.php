@@ -12,7 +12,7 @@ return new class extends Migration
             $table->unsignedBigInteger('id')->primary(); // This is also the foreign key to users table
             $table->foreign('id')->references('id')->on('users'); // Foreign key constraint
             $table->string('phone')->unique();
-            $table->decimal('hourly_wage', 10, 2);
+            $table->integer('hourly_wage')->default(0);
             $table->string('status');
             $table->string('payment_frequency');
             $table->timestamps();

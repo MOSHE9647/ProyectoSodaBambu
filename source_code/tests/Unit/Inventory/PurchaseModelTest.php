@@ -4,6 +4,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Purchase;
 use App\Models\PurchaseDetail;
 use App\Models\Supplier;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 
 /**
@@ -95,6 +96,7 @@ test('CP-04_EIF-35 - purchase casts payment status and date correctly', function
 test('CP-05_EIF-35 - purchase model is mass-assignable for fillable attributes', function () {
     // When: a purchase is created with mass assignment.
     $purchase = Purchase::create([
+        'user_id' => User::factory()->create()->id,
         'supplier_id' => Supplier::factory()->create()->id,
         'invoice_number' => 'INV-10001',
         'payment_status' => PaymentStatus::PENDING,

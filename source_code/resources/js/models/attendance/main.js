@@ -48,6 +48,17 @@ const MODEL_ROUTES = {
 	destroy: route("attendance.destroy", { timesheet: ":id" }),
 };
 
+window.setPDFButtonLoadingState = (event, formSelector) => {
+	event.preventDefault();
+	setLoadingState(formSelector, true);
+
+	$(`#${formSelector}`).submit();
+
+	setTimeout(() => {
+		setLoadingState(formSelector, false);
+	}, 5000);
+};
+
 const loadedTabs = new Set();
 
 /**
@@ -313,16 +324,20 @@ function initHistoryTab() {
 			{
 				data: "total_hours",
 				name: "total_hours",
-				render: (val) => {
-					if (!val)
+				type: "string",
+				className: "text-center",
+				render: (val, type, row) => {
+					if (!val || val === '0h')
 						return '<span class="text-muted px-4 py-2">&mdash;</span>';
-					const hrs = parseFloat(String(val).replace(",", "."));
-					const compact = `${Math.round(isNaN(hrs) ? 0 : hrs)}h`;
+					
+					const hrs = parseFloat(String(row.total_hours).replace(",", "."));
+					
 					if (hrs > 8)
-						return `<span class="badge border rounded-pill text-danger-emphasis bg-danger-subtle px-2 py-2"><i class="bi bi-lightning-charge-fill me-1"></i>${compact}</span>`;
+						return `<span class="badge border rounded-pill text-danger-emphasis bg-danger-subtle px-2 py-2"><i class="bi bi-lightning-charge-fill me-1"></i>${val}</span>`;
 					if (hrs === 0)
-						return `<span class="badge border rounded-pill text-secondary-emphasis bg-secondary-subtle px-2 py-2"><i class="bi bi-x-lg me-1"></i>${compact}</span>`;
-					return `<span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2"><i class="bi bi-check-lg me-1"></i>${compact}</span>`;
+						return `<span class="badge border rounded-pill text-secondary-emphasis bg-secondary-subtle px-2 py-2"><i class="bi bi-x-lg me-1"></i>${val}</span>`;
+					
+					return `<span class="badge border rounded-pill text-success-emphasis bg-success-subtle px-2 py-2"><i class="bi bi-check-lg me-1"></i>${val}</span>`;
 				},
 			},
 		],

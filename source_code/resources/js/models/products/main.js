@@ -8,6 +8,19 @@ import { SwalNotificationTypes, SwalToast } from "../../utils/sweetalert.js";
 const MODEL_NAME = "producto";
 const BTN_CLASS_PRIMARY = "btn-primary";
 
+// Filter Configuration
+const FILTER_QUERY_PARAM = "filter";
+const FILTER_VALUES = new Set(["low_stock", "expiring_soon"]);
+
+const urlParams = new URLSearchParams(window.location.search);
+const requestedFilter = urlParams.get(FILTER_QUERY_PARAM);
+const initialFilter = FILTER_VALUES.has(requestedFilter) ? requestedFilter : null;
+
+let showLowStockOnly = initialFilter === "low_stock";
+let showExpiringOnly = initialFilter === "expiring_soon";
+let productsDataTable = null;
+
+// Routes Configuration
 const MODEL_ROUTES = {
 	index: route("products.index"),
 	create: route("products.create"),
@@ -21,21 +34,6 @@ const PRODUCT_TYPE_LABELS = {
 	dish: "Platillo",
 	drink: "Bebida",
 	packaged: "Empaquetado",
-};
-
-// ==================== State Management ====================
-
-// Centralized state object to manage filters and DataTable instance.
-const urlParams = new URLSearchParams(window.location.search);
-const State = {
-	filter: urlParams.get("filter") || null, // Can be 'low_stock', 'expiring_soon' or null
-	dataTable: null,
-	canCreate:
-		($("#products-table").data("can-create-products") ?? "").toString() ===
-		"1",
-	canManage:
-		($("#products-table").data("can-manage-products") ?? "").toString() ===
-		"1",
 };
 
 // ==================== Global Exports ====================
@@ -62,70 +60,51 @@ function formatCurrentStock(currentValue, minimumValue) {
 		: currentStock;
 }
 
-// ==================== Filter Logic ====================
+// ==================== Helper Functions ====================
 
-function setFilter(filterType) {
-	// If the same filter is clicked again, it toggles off (sets to null), otherwise it sets the new filter
-	State.filter = State.filter === filterType ? null : filterType;
+window.showProduct = function (url, anchor) {
+	return showModelInfo(url, anchor, MODEL_NAME);
+};
 
-	// Update URL
-	const params = new URLSearchParams(window.location.search);
-	if (State.filter) {
-		params.set("filter", State.filter);
-	} else {
-		params.delete("filter");
-	}
+window.deleteProduct = function (e) {
+	return deleteModel(e, MODEL_NAME);
+};
 
-	const nextQuery = params.toString();
-	const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}`;
-	window.history.replaceState({}, "", nextUrl);
+window.toggleLowStockFilter = function () {
+	showLowStockOnly = !showLowStockOnly;
 
-	// Update Buttons and Table
-	updateFilterUI();
-	reloadTable();
-}
-
-function updateFilterUI() {
-	const isLowStock = State.filter === "low_stock";
-	const isExpiring = State.filter === "expiring_soon";
-
-	// Using jQuery strictly for DOM Class and HTML manipulation
-	$(".low-stock-filter-button")
-		.toggleClass("btn-warning", isLowStock)
-		.toggleClass("btn-outline-warning", !isLowStock);
+	const $button = $(".low-stock-filter-button");
+	$button.toggleClass("btn-warning btn-outline-warning");
 	$(".low-stock-filter-button-text").html(
-		`<i class="bi-exclamation-triangle me-2"></i> ${isLowStock ? "Mostrar todos" : "Solo stock bajo"}`,
+		`<i class="bi-exclamation-triangle me-2"></i> ${showLowStockOnly ? "Mostrar todos" : "Solo stock bajo"}`,
 	);
 
-	$(".expiring-soon-filter-button")
-		.toggleClass("btn-danger", isExpiring)
-		.toggleClass("btn-outline-danger", !isExpiring);
-	$(".expiring-soon-filter-button-text").html(
-		`<i class="bi-hourglass-split me-2"></i> ${isExpiring ? "Mostrar todos" : "Próximos a vencer"}`,
-	);
-}
-
-function reloadTable() {
-	if (State.dataTable) {
-		State.dataTable.ajax.reload(null, true);
-		setTimeout(() => {
-			State.dataTable.columns.adjust();
-			if (State.dataTable.responsive) {
-				State.dataTable.responsive.recalc();
-			}
-		}, 0);
+	if (productsDataTable) {
+		productsDataTable.ajax.reload(null, true);
 	}
-}
+};
 
-// Global functions for actions (show, delete) and filters (low stock, expiring soon)
-window.toggleLowStockFilter = () => setFilter("low_stock");
-window.toggleExpiringSoonFilter = () => setFilter("expiring_soon");
-window.showProduct = (url, anchor) => showModelInfo(url, anchor, MODEL_NAME);
-window.deleteProduct = (e) => deleteModel(e, MODEL_NAME);
+window.toggleExpiringSoonFilter = function () {
+	showExpiringOnly = !showExpiringOnly;
+
+	const $button = $(".expiring-soon-filter-button");
+	$button.toggleClass("btn-danger btn-outline-danger");
+	$(".expiring-soon-filter-button-text").html(
+		`<i class="bi-hourglass-split me-2"></i> ${showExpiringOnly ? "Mostrar todos" : "Próximos a vencer"}`,
+	);
+
+	if (productsDataTable) {
+		productsDataTable.ajax.reload(null, true);
+	}
+};
 
 // ==================== DataTable Initialization ====================
 
 $(() => {
+	const $table = $("#products-table");
+	const canCreateProducts = ($table.data("can-create-products") ?? "").toString() === "1";
+	const canManageProducts = ($table.data("can-manage-products") ?? "").toString() === "1";
+
 	const columns = [
 		{
 			data: "barcode",
@@ -178,7 +157,7 @@ $(() => {
 			funcName: "showProduct",
 			tooltip: "Ver detalles",
 		},
-		...(State.canManage && {
+		...(canManageProducts && {
 			edit: {
 				route: MODEL_ROUTES.edit,
 				func: toggleLoadingState,
@@ -215,7 +194,7 @@ $(() => {
 		},
 	];
 
-	if (State.canCreate) {
+	if (canCreateProducts) {
 		customButtons.push({
 			text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
 			href: MODEL_ROUTES.create,
@@ -227,10 +206,27 @@ $(() => {
 		});
 	}
 
-	// Initialize filter UI based on URL parameter on page load
-	updateFilterUI();
+	if (showLowStockOnly) {
+		setTimeout(() => {
+			const $button = $(".low-stock-filter-button");
+			$button.removeClass("btn-outline-warning").addClass("btn-warning");
+			$(".low-stock-filter-button-text").html(
+				`<i class="bi-exclamation-triangle me-2"></i> Mostrar todos`,
+			);
+		}, 100);
+	}
 
-	State.dataTable = CreateNewDataTable(
+	if (showExpiringOnly) {
+		setTimeout(() => {
+			const $button = $(".expiring-soon-filter-button");
+			$button.removeClass("btn-outline-danger").addClass("btn-danger");
+			$(".expiring-soon-filter-button-text").html(
+				`<i class="bi-hourglass-split me-2"></i> Mostrar todos`,
+			);
+		}, 100);
+	}
+
+	productsDataTable = CreateNewDataTable(
 		"products-table",
 		MODEL_ROUTES.index,
 		columns,
@@ -240,16 +236,15 @@ $(() => {
 			ajax: {
 				url: MODEL_ROUTES.index,
 				data: (d) => {
-					d.low_stock = State.filter === "low_stock" ? 1 : 0;
-					d.expiring_soon = State.filter === "expiring_soon" ? 1 : 0;
+					if (showLowStockOnly) {
+						d.low_stock = 1;
+					}
+					if (showExpiringOnly) {
+						d.expiring_soon = 1;
+					}
 				},
 			},
 			columnDefs: [{ target: [-1, -2], columnControl: [] }],
 		},
 	);
-
-	State.dataTable.on("draw.dt", () => {
-		State.dataTable.columns.adjust();
-		if (State.dataTable.responsive) State.dataTable.responsive.recalc();
-	});
 });

@@ -162,17 +162,20 @@ export function validateAndDisplayField(fieldValidators, values, showFieldError,
  * @returns {boolean} - Returns true if the value is an integer and a multiple of 5, false otherwise.
  */
 export const validateMultipleOf5 = (val) => {
-	return Number.isInteger(Number(val)) && Number(val) % 5 === 0;
+	if (val === "" || val === null || isNaN(val)) return false;
+	const num = Number(val);
+	return Number.isInteger(num) && num % 5 === 0;
 };
 
 /**
  * Retrieves the field and its associated error element based on the field ID.
  * @param fieldId
+ * @param errorFieldId
  * @returns {{field: *|jQuery|HTMLElement, errorElement: *|jQuery|[]}}
  */
-export function getFieldElements(fieldId) {
+export function getFieldElements(fieldId, errorFieldId = `${fieldId}-error`) {
 	const field = $(`#${fieldId}`);
-	const errorElement = $(`#${fieldId}-error`).children('strong');
+	const errorElement = $(`#${errorFieldId}`).children('strong');
 	return {field, errorElement};
 }
 
@@ -180,9 +183,10 @@ export function getFieldElements(fieldId) {
  * Displays an error message for a specific field.
  * @param fieldId
  * @param message
+ * @param errorFieldId
  */
-export function showFieldError(fieldId, message) {
-	const {field, errorElement} = getFieldElements(fieldId);
+export function showFieldError(fieldId, message, errorFieldId = `${fieldId}-error`) {
+	const {field, errorElement} = getFieldElements(fieldId, errorFieldId);
 
 	if (field.length && errorElement.length) {
 		field.addClass('is-invalid');
@@ -195,9 +199,10 @@ export function showFieldError(fieldId, message) {
 /**
  * Clears the error message for a specific field.
  * @param fieldId
+ * @param errorFieldId
  */
-export function clearFieldError(fieldId) {
-	const {field, errorElement} = getFieldElements(fieldId);
+export function clearFieldError(fieldId, errorFieldId = `${fieldId}-error`) {
+	const {field, errorElement} = getFieldElements(fieldId, errorFieldId);
 
 	if (field.length && errorElement.length) {
 		field.removeClass('is-invalid');
@@ -211,7 +216,9 @@ export function clearFieldError(fieldId) {
  * Clears all field errors in the form.
  */
 export function clearAllFieldErrors(fieldValidators) {
-	Object.keys(fieldValidators).forEach(clearFieldError);
+	Object.keys(fieldValidators).forEach((fieldId) => {
+		clearFieldError(fieldId);
+	});
 }
 
 // Payment Method Validations

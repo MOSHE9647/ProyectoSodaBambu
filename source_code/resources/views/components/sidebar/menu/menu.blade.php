@@ -31,6 +31,17 @@
 						</svg>
 					',
                 ],
+                'Historial de Ventas' => [
+                    'role' => [UserRole::ADMIN, UserRole::EMPLOYEE],
+                    'route' => 'history.index',
+                    'svg' => '
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock-history" viewBox="0 0 16 16">
+                            <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022zm2.004.45a7 7 0 0 0-.985-.299l.219-.976q.576.129 1.126.342zm1.37.71a7 7 0 0 0-.439-.27l.493-.87a8 8 0 0 1 .979.654l-.615.789a7 7 0 0 0-.418-.302zm1.834 1.79a7 7 0 0 0-.653-.796l.724-.69q.406.429.747.91zm.744 1.352a7 7 0 0 0-.214-.468l.893-.45a8 8 0 0 1 .45 1.088l-.95.313a7 7 0 0 0-.179-.483m.53 2.507a7 7 0 0 0-.1-1.025l.985-.17q.1.58.116 1.17zm-.131 1.538q.05-.254.081-.51l.993.123a8 8 0 0 1-.23 1.155l-.964-.267q.069-.247.12-.501m-.952 2.379q.276-.436.486-.908l.914.405q-.24.54-.555 1.038zm-.964 1.205q.183-.183.35-.378l.758.653a8 8 0 0 1-.401.432z"/>
+                            <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0z"/>
+                            <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5"/>
+                        </svg>
+					',
+                ],
             ],
         ],
         'Inventario' => [
@@ -43,6 +54,17 @@
 				</svg>
 			',
 			'collapsibleItems' => [
+                'Insumos' => [
+                    'role' => [UserRole::ADMIN, UserRole::EMPLOYEE],
+                    'route' => 'supplies.index',
+                    'svg' => '
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-basket2" viewBox="0 0 16 16">
+                            <path d="M4 10a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zm2 1v2h4v-2z"/>
+                            <path d="M4.887 6.258a.5.5 0 0 0-.151.68l1.333 2.133a.5.5 0 0 0 .848-.53L5.566 6.408a.5.5 0 0 0-.679-.15zM11.112 6.258a.5.5 0 0 1 .151.68L9.93 9.071a.5.5 0 0 1-.848-.53l1.333-2.133a.5.5 0 0 1 .679-.15z"/>
+                            <path d="M1 3.5c0-.663.537-1.2 1.2-1.2h11.6c.663 0 1.2.537 1.2 1.2V4a.5.5 0 0 1-.5.5H1.5a.5.5 0 0 1-.5-.5zM.5 5a.5.5 0 0 1 .5.5V12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5.5a.5.5 0 0 1 1 0V12a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3V5.5a.5.5 0 0 1 .5-.5z"/>
+                        </svg>
+                    ',
+                ],
 				'Productos' => [
 					'role' => [UserRole::ADMIN, UserRole::EMPLOYEE],
 					'route' => 'products.index',
@@ -53,7 +75,7 @@
 					',
                 ],
                 'Proveedores' => [
-                    'role' => [UserRole::ADMIN],
+                    'role' => [UserRole::ADMIN, UserRole::EMPLOYEE],
                     'route' => 'suppliers.index',
                     'svg' => '
 						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
@@ -62,7 +84,7 @@
 					',
                 ],
                 'Categorías' => [
-                    'role' => [UserRole::ADMIN],
+                    'role' => [UserRole::ADMIN, UserRole::EMPLOYEE],
                     'route' => 'categories.index',
                     'svg' => '
 						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-fork-knife" viewBox="0 0 16 16">
@@ -71,23 +93,12 @@
 					',
                 ],
                 'Compras' => [
-                    'role' => [UserRole::ADMIN],
+                    'role' => [UserRole::ADMIN, UserRole::EMPLOYEE],
                     'route' => 'purchases.index',
                     'svg' => '
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart-plus" viewBox="0 0 16 16">
                             <path d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z"/>
                             <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
-                        </svg>
-                    ',
-                ],
-                'Insumos' => [
-                    'role' => [UserRole::ADMIN, UserRole::EMPLOYEE],
-                    'route' => 'supplies.index',
-                    'svg' => '
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-basket2" viewBox="0 0 16 16">
-                            <path d="M4 10a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zm2 1v2h4v-2z"/>
-                            <path d="M4.887 6.258a.5.5 0 0 0-.151.68l1.333 2.133a.5.5 0 0 0 .848-.53L5.566 6.408a.5.5 0 0 0-.679-.15zM11.112 6.258a.5.5 0 0 1 .151.68L9.93 9.071a.5.5 0 0 1-.848-.53l1.333-2.133a.5.5 0 0 1 .679-.15z"/>
-                            <path d="M1 3.5c0-.663.537-1.2 1.2-1.2h11.6c.663 0 1.2.537 1.2 1.2V4a.5.5 0 0 1-.5.5H1.5a.5.5 0 0 1-.5-.5zM.5 5a.5.5 0 0 1 .5.5V12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5.5a.5.5 0 0 1 1 0V12a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3V5.5a.5.5 0 0 1 .5-.5z"/>
                         </svg>
                     ',
                 ],

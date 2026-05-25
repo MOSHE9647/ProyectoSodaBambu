@@ -16,6 +16,7 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\UserController;
+use App\Models\Purchase;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -30,8 +31,6 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
  */
 Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
-    Route::get('reports', [ReportsController::class, 'reports'])->name('reports');
-    Route::get('reports/export', [ReportsController::class, 'exportReports'])->name('reports.export');
     Route::get('help', [HelpController::class, 'index'])->name('help');
     Route::resource('users', UserController::class)->names('users');
     Route::resource('suppliers', SupplierController::class)->names('suppliers');
@@ -41,15 +40,19 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::resource('supplies', SupplyController::class)->names('supplies');
     Route::resource('contracts', ContractController::class)->names('contracts');
 
+    // Reports routes with AJAX handling for DataTables and separate views for sales and products sections
+    Route::get('reports', [ReportsController::class, 'index'])->name('reports');
+    Route::get('reports/export', [ReportsController::class, 'exportReports'])->name('reports.export');
+
     // Generic receipt routes for any model implementing Receipable interface
     Route::prefix('receipts')->name('receipts.')->group(function () {
+        Route::get('/payment-modal/{paymentTotal}', [ReceiptController::class, 'paymentModal'])->name('payment-modal');
         Route::get('/{model}/{id}', [ReceiptController::class, 'show'])->name('show');
-        Route::get('/{model}/{id}/payment-modal/{paymentTotal}', [ReceiptController::class, 'paymentModal'])->name('payment-modal');
     });
 
     // Sales routes with role-based access control defined in the controller
     Route::get('sales/sell', [SaleController::class, 'sales'])->name('sales.sell');
-    Route::get('sales/payment-modal/{paymentTotal}', [SaleController::class, 'showPaymentModal'])->name('sales.payment-modal');
+    Route::get('sales/history', [SaleController::class, 'index'])->name('history.index');
     Route::resource('sales', SaleController::class)->names('sales');
 
     // Purchase routes with an additional route for quick product creation during purchase entry
@@ -63,6 +66,7 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::group(['prefix' => 'attendance'], function () {
         Route::get('/tabs/{tab}', [AttendanceController::class, 'tab'])->name('attendance.tabs');
         Route::get('/data/history', [AttendanceController::class, 'historyData'])->name('attendance.history.data');
+        Route::post('/salary/pdf', [AttendanceController::class, 'generateSalaryPdf'])->name('attendance.salary.pdf');
     });
 
     // Routes for Cash Register management
@@ -74,5 +78,4 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // Shared offcanvas form endpoint used by purchases, contracts, and other modules.
     Route::get('/offcanvas-form/{type}', OffcanvasFormController::class)->name('offcanvas-form');
-
 });

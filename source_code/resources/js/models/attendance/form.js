@@ -267,8 +267,15 @@ export function initAttendanceForm() {
 				els.totalHoursStartTime.textContent = format12h(els.startTime.value);
 			if (els.totalHoursEndTime)
 				els.totalHoursEndTime.textContent = format12h(els.endTime.value);
-			if (els.totalHoursValue)
-				els.totalHoursValue.textContent = `${hours}h trabajadas`;
+			// Updated the real-time worked hours display to preserve decimal precision by 
+			// converting the calculated value to a string and replacing the decimal point 
+			// with a comma. This ensures that half-hour increments (e.g., "3,5h") are displayed 
+			// correctly according to the Costa Rican locale, instead of being rounded to the 
+			// nearest whole number.	
+			if (els.totalHoursValue) {
+				const formatted = hours.toString().replace('.', ',');
+				els.totalHoursValue.textContent = `${formatted}h trabajadas`;
+			}
 		}
 	};
 

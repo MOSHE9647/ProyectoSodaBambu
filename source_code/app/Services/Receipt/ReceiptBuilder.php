@@ -27,16 +27,21 @@ class ReceiptBuilder
         $subtotal = $this->getSubtotal($items);
         $taxTotal = $this->getTaxTotal($items);
         $total = $this->receipable->getReceiptTotal();
+        $payments = $this->receipable->getReceiptPayments();
+        $totalTendered = collect($payments)->sum('amount');
+        $changeAmount = $totalTendered - $total;
 
         return [
             'receipt_number' => $this->receipable->getReceiptNumber(),
-            'receipt_type' => $this->receipable->getReceiptType(),
             'date' => $this->receipable->getReceiptDate(),
             'items' => $items,
             'subtotal' => $subtotal,
             'tax_total' => $taxTotal,
             'total' => $total,
             'model_type' => $this->receipable::class,
+            'payments' => $payments,
+            'change_amount' => $changeAmount,
+            'total_tendered' => $totalTendered,
         ];
     }
 
@@ -49,23 +54,21 @@ class ReceiptBuilder
     {
         $items = $this->receipable->getReceiptItems();
 
-        return collect($items)->map(function ($item) {
-            return [
-                'name' => $item['name'] ?? 'Producto desconocido',
-                'quantity' => (int) ($item['quantity'] ?? 0),
-                'unit_price' => (int) ($item['unit_price'] ?? 0),
-                'sub_total' => (int) ($item['sub_total'] ?? 0),
-                'applied_tax' => (int) ($item['applied_tax'] ?? 0),
-                'tax_amount' => $this->calculateTaxAmount(
-                    (int) ($item['sub_total'] ?? 0),
-                    (int) ($item['applied_tax'] ?? 0)
-                ),
-                'total' => $this->calculateItemTotal(
-                    (int) ($item['sub_total'] ?? 0),
-                    (int) ($item['applied_tax'] ?? 0)
-                ),
-            ];
-        })->toArray();
+        return collect($items)->map(fn ($item) => [
+            'name' => $item['name'] ?? 'Producto desconocido',
+            'quantity' => (int) ($item['quantity'] ?? 0),
+            'unit_price' => (int) ($item['unit_price'] ?? 0),
+            'sub_total' => (int) ($item['sub_total'] ?? 0),
+            'applied_tax' => (int) ($item['applied_tax'] ?? 0),
+            'tax_amount' => $this->calculateTaxAmount(
+                (int) ($item['sub_total'] ?? 0),
+                (int) ($item['applied_tax'] ?? 0)
+            ),
+            'total' => $this->calculateItemTotal(
+                (int) ($item['sub_total'] ?? 0),
+                (int) ($item['applied_tax'] ?? 0)
+            ),
+        ])->toArray();
     }
 
     /**

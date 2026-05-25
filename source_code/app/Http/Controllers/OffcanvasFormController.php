@@ -22,8 +22,9 @@ class OffcanvasFormController extends Controller
                 'isOffcanvas' => true,
                 'category' => null,
             ]),
-            'supplier' => view('models.suppliers.form', [
+            'supplier' => view('models.suppliers._form', [
                 'action' => route('suppliers.store'),
+                'isOffcanvas' => true,
                 'supplier' => null,
             ]),
             'product' => view('models.products._form', [

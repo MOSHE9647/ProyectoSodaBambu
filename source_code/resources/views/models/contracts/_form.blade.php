@@ -47,6 +47,13 @@
         'id' => $client->id,
         'full_name' => $client->full_name
     ]);
+    $contractDetailsData = $isEditing && $contract->details ? $contract->details->map(fn($detail) => [
+        'id' => $detail->id,
+        'product_id' => $detail->product_id,
+        'meal_time' => $detail->meal_time,
+        'serve_date' => $detail->serve_date->format('Y-m-d'),
+        'unit_price' => $detail->unit_price
+    ]) : collect();
 @endphp
 
 <div id="show-opening-cash-modal" data-show-modal="{{ $showOpeningCashModal ?? false }}" class="d-none"></div>
@@ -284,7 +291,6 @@
                             :errorMessage="$errors->first('total_value') ?? ''"
                             :textIconLeft="true"
                             :required="true"
-                            {{-- :disabled="!($contract?->details?->isNotEmpty() ?? false)" --}}
                         >
                             <x-slot:iconLeft>
                                 <x-icons.colon-icon width="14" height="14" />
@@ -695,6 +701,8 @@
         window.CONTRACT_FORM_DATA = {
             formId: @json($formId),
             isEditing: @json($isEditing),
+            originalContract: @json($contract ?? null),
+            contractDetails: @json($contractDetailsData),
             paymentStatuses: @json($paymentStatusesData),
             paymentMethods: @json($paymentMethodsData),
             mealTimes: @json($mealTimesData),

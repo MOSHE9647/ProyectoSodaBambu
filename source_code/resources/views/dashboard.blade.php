@@ -15,7 +15,7 @@
 			<div class="col-3">
 				<x-stat-card
 					title="Ventas de Hoy"
-					value="{{ number_format($todaySalesTotal, 0, ',', '.') }} "
+					value="{{ format_crc($todaySalesTotal, false) }} "
 					:currency="true" 
 					icon="cash"
 					color-theme="green"
@@ -101,10 +101,10 @@
 					
 							<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
 								<x-icons.colon-icon width="24" height="24" />
-								{{ number_format($monthlyTotal, 0, ',', '.') }}
+								{{ format_crc($monthlyTotal, false) }}
 							</h2>
 					
-							<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('F Y')) }}</p>
+							<p class="text-muted mb-3">{{ ucfirst(now()->timezone('America/Costa_Rica')->translatedFormat('F Y')) }}</p>
 					
 							<div 
 								id="chart-monthly-income" 
@@ -120,10 +120,10 @@
 					
 							<h2 class="fw-bold text-success mb-0" style="font-size: 2.5rem;">
 								<x-icons.colon-icon width="24" height="24" />
-								{{ number_format($dailyTotal, 0, ',', '.') }}
+								{{ format_crc($dailyTotal, false) }}
 							</h2>
 					
-							<p class="text-muted mb-3">{{ ucfirst(now()->translatedFormat('l, j \d\e F \d\e\l Y')) }}</p>
+							<p class="text-muted mb-3">{{ ucfirst(now()->timezone('America/Costa_Rica')->translatedFormat('l, j \d\e F \d\e\l Y')) }}</p>
 					
 							<div 
 								id="chart-daily-income" 

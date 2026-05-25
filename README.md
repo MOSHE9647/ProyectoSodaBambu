@@ -108,8 +108,6 @@ Esta estructura garantiza el control y la seguridad del acceso al sistema.
 
 En el sistema, las funcionalidades se organizan en módulos según el rol del usuario:
 
-> **Nota:** Muchas de las funcionalidades aún están en desarrollo, por lo que es posible que algunas de las funciones mencionadas a continuación no estén disponibles en la versión actual del sistema. Sin embargo, se espera que estas funcionalidades estén implementadas y operativas en futuras versiones del proyecto.
-
 #### 👤 Para Administradores
 
 1. **Gestión de Usuarios**
@@ -120,24 +118,36 @@ En el sistema, las funcionalidades se organizan en módulos según el rol del us
   - Visualiza métricas clave del sistema
   - Monitorea productos con stock bajo y próximos a vencer
 
-3. **Gestión de Catálogo**
+3. **Gestión de Catálogo e Inventario**
   - Administra productos, categorías, proveedores, clientes e insumos
   - Gestiona inventario con validaciones de negocio
 
-4. **Asistencia y Nómina**
+4. **Compras**
+  - Registra, edita, elimina y consulta compras a proveedores
+  - Revisa detalles por producto o insumo y pagos asociados
+
+5. **Reportes y Analítica**
+  - Consulta históricos y vistas detalladas de compras
+  - Genera reportes operativos para productos, ventas y suministros
+
+6. **Asistencia y Nómina**
   - Registra entradas y salidas del personal
   - Consulta historial por filtros y calcula salarios por periodo
 
-5. **Administración de Datos**
+7. **Administración de Datos y Caja**
   - Opera listados con búsqueda, filtros, ordenamiento y exportación
+  - Gestiona cierres y controles de caja para el flujo operativo
 
 #### 💼 Para Empleados
 
 1. **Punto de Venta**
   - Accede al módulo de ventas según permisos
 
-2. **Consulta de Inventario**
-  - Consulta disponibilidad de productos en el sistema
+2. **Consulta de Inventario y Catálogo**
+  - Consulta disponibilidad de productos, insumos y proveedores relacionados
+
+3. **Historial Operativo**
+  - Visualiza información de ventas y compras según los permisos definidos
   
 > **Nota:** Las funcionalidades disponibles pueden variar según el rol asignado a cada usuario. Asegúrate de iniciar sesión con el rol correcto para acceder a las funciones correspondientes.
 
@@ -554,23 +564,6 @@ Módulo para administrar la información de clientes del restaurante.
 
 ---
 
-### 🏢 Gestión de Proveedores
-
-Administración centralizada de proveedores e información de contacto.
-
-<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
-  <div style="flex: 1; text-align: center;">
-    <h5>Tema Oscuro</h5>
-    <img src="assets/images/screenshots/suppliers_dark.png" alt="Proveedores Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
-  </div>
-  <div style="flex: 1; text-align: center;">
-    <h5>Tema Claro</h5>
-    <img src="assets/images/screenshots/suppliers_light.png" alt="Proveedores Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
-  </div>
-</div>
-
----
-
 ### 👤 Gestión de Usuarios
 
 Control de acceso y administración de cuentas de usuario del sistema.
@@ -583,6 +576,188 @@ Control de acceso y administración de cuentas de usuario del sistema.
   <div style="flex: 1; text-align: center;">
     <h5>Tema Claro</h5>
     <img src="assets/images/screenshots/users_light.png" alt="Usuarios Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 💼 Punto de Venta
+
+Pantalla principal para registrar ventas y operar el punto de venta.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/sales_dark.png" alt="Ventas Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/sales_light.png" alt="Ventas Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 🧾 Gestión de Compras
+
+Módulo para registrar, consultar y analizar compras a proveedores.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/purchases_dark.png" alt="Compras Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/purchases_light.png" alt="Compras Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 📦 Gestión de Inventario
+
+Vista para administrar productos, categorías, insumos y proveedores.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/products_dark.png" alt="Productos Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/products_light.png" alt="Productos Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/categories_dark.png" alt="Categorías Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/categories_light.png" alt="Categorías Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/supplies_dark.png" alt="Insumos Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/supplies_light.png" alt="Insumos Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/suppliers_dark.png" alt="Proveedores Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/suppliers_light.png" alt="Proveedores Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 👥 Asistencia y Nómina
+
+Pantalla para registrar asistencia, consultar historial y calcular salarios.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/attendance_dark.png" alt="Asistencia Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/attendance_light.png" alt="Asistencia Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/attendance_history_dark.png" alt="Historial de Asistencia Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/attendance_history_light.png" alt="Historial de Asistencia Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/salary_dark.png" alt="Cálculo de Salarios Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/salary_light.png" alt="Cálculo de Salarios Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 📈 Reportes
+
+Pantalla para consultar reportes operativos y analítica del sistema.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/sales_reports_dark.png" alt="Reportes de Ventas Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/sales_reports_light.png" alt="Reportes de Ventas Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/products_reports_dark.png" alt="Reportes de Productos Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/products_reports_light.png" alt="Reportes de Productos Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 💳 Cierre y Control de Caja
+
+Vista para gestionar apertura, cierre y seguimiento de caja.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/open-cash-register_dark.png" alt="Apertura de Caja Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/open-cash-register_light.png" alt="Apertura de Caja Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/close-cash-register_dark.png" alt="Cierre de Caja Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <img src="assets/images/screenshots/close-cash-register_light.png" alt="Cierre de Caja Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+</div>
+
+---
+
+### 📄 Generación de Contratos
+
+Vista para generar un nuevo contrato.
+
+<div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start;">
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Oscuro</h5>
+    <img src="assets/images/screenshots/new-contract_dark.png" alt="Nuevo Contrato Oscuro" style="max-width: 100%; height: auto; border-radius: 8px;">
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <h5>Tema Claro</h5>
+    <img src="assets/images/screenshots/new-contract_light.png" alt="Nuevo Contrato Claro" style="max-width: 100%; height: auto; border-radius: 8px;">
   </div>
 </div>
 

@@ -34,7 +34,18 @@ El sistema está diseñado como una aplicación web progresiva (PWA) que permite
 - **Dashboard administrativo**: visualización de indicadores de inventario (stock bajo y productos próximos a vencer).
 - **Ventas**: módulo de ventas disponible para administradores y empleados.
 - **Gestión de catálogo e inventario**: CRUD de productos, categorías, proveedores, clientes e insumos.
+- **Compras**: registro, edición, eliminación y consulta de compras con detalles por producto/insumo, pagos y reporte de suministros por proveedor.
+- **Reporte de compras**: historial de compras con filtros y vista detallada por proveedor para analizar qué productos o insumos han sido adquiridos.
+- **Catálogo de proveedores**: consulta de proveedores y relación directa con compras e insumos suministrados.
+- **Gestión de clientes**: administración de clientes para los módulos de atención y ventas.
+- **Gestión de categorías**: clasificación del catálogo de productos para mejorar búsqueda, inventario y reportes.
+- **Gestión de insumos**: control de insumos con sus unidades, precios y alertas de vencimiento.
 - **Asistencia de personal**: registro de entrada/salida, historial con filtros y cálculo de salario por periodo desde el módulo de asistencia.
+- **Contrataciones**: administración de empleados, contratos y documentación asociada.
+- **Reportes**: generación de reportes operativos y exportaciones para productos y ventas.
+- **Usuarios y permisos**: administración de usuarios, roles y accesos internos del sistema.
+- **Cierre y control de caja**: funcionalidades relacionadas con la apertura y cierre de caja para el flujo operativo del POS.
+- **Recibos y comprobantes**: visualización de recibos y comprobantes de venta/compra desde las pantallas de detalle.
 - **Tablas avanzadas**: listados con búsqueda, filtros, ordenamiento y exportación.
 - **Notificaciones y UX**: alertas del sistema, soporte de estados de conexión y diseño responsive.
 - **PWA**: recursos para instalación como aplicación web progresiva y soporte offline básico.

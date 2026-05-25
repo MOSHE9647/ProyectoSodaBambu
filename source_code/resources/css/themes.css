@@ -23,7 +23,7 @@
 	--bambu-danger-hover: #BB2D3B;
 	--bambu-danger-active: #A71D2A;
 	--bambu-check-border: #22C55E;
-	--bambu-focus-ring-success: 0 0 0 0.2rem rgb(40 167 69 / 25%);
+	--bambu-focus-ring-success: 0 0 0 0.2rem #28a74540;
 	--bambu-focus-ring-danger: 0 0 0 0.2rem rgb(220 53 69 / 25%);
 	--bambu-transition-base: all 0.3s ease;
 	--bambu-scrollbar-size: 8px;
@@ -221,6 +221,19 @@
 .form-check-input:checked {
 	background-color: var(--form-check-input-checked-bg-color);
 	border-color: var(--form-check-input-checked-border-color);
+}
+
+.form-switch .form-check-input {
+	cursor: pointer;
+}
+
+.form-switch .form-check-input:checked {
+	background-color: var(--bambu-logo-bg);
+	border-color: var(--form-check-input-checked-border-color);
+}
+
+.switch:focus:not(:checked) {
+	--bs-form-switch-bg: url("data: image/svg+xml, %3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8' %3e%3ccircle r='3' fill='%2328A745' /%3e%3c/svg%3e") !important;
 }
 
 /* Base Layout */

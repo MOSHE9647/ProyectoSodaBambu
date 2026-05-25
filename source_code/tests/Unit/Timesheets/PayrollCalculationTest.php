@@ -27,7 +27,7 @@ test('CP-01_EIF-26_QA2 - calculates base salary without holiday multiplier', fun
 
     // Then: total salary equals 45 hours × ₡5,000 = ₡225,000.
     expect($result['total_salary_amount_cents'])->toBe(22500000)
-        ->and($result['total_salary_amount_label'])->toContain('225 000,00');
+        ->and($result['total_salary_amount_label'])->toContain('₡ 225 000');
 });
 
 test('CP-02_EIF-26_QA2 - applies 2x salary multiplier for holiday hours', function () {
@@ -92,6 +92,6 @@ test('CP-06_EIF-26_QA2 - formats currency with Costa Rican convention', function
     $action = new CalculatePayrollSalaryAction;
     $result = $action->execute($employee, $timesheets);
 
-    // Then: formatted with ₡ symbol, thousands separator, and two decimals.
-    expect($result['total_salary_amount_label'])->toMatch('/^₡[\d ]+,\d{2}$/');
+    // Then: formatted with ₡ symbol, space as thousand separator, and no decimal places.
+    expect($result['total_salary_amount_label'])->toMatch('/^₡[\d ]+$/');
 });

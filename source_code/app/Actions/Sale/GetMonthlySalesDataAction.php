@@ -2,8 +2,7 @@
 
 namespace App\Actions\Sale;
 
-use App\Enums\PaymentStatus;
-use App\Models\Sale;
+use App\Models\Transaction;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 
@@ -20,15 +19,17 @@ class GetMonthlySalesDataAction
         $monthStartUtc = $monthStartLocal->copy()->timezone('UTC');
         $todayUtc = $todayLocal->copy()->endOfDay()->timezone('UTC');
 
-        $sales = Sale::whereBetween('date', [$monthStartUtc, $todayUtc])
-            ->where('payment_status', PaymentStatus::PAID)
-            ->get(['date', 'total']);
+        /**
+         * We fetch only the incomes from the transactions table.
+         * This includes: Paid sales, contract payments (installments), and manual cash register incomes.
+         */
+        $incomes = Transaction::incomes()
+            ->whereBetween('created_at', [$monthStartUtc, $todayUtc])
+            ->get(['created_at', 'amount']);
 
-        $salesByDate = $sales->groupBy(function ($sale) use ($timezone) {
-            return Carbon::parse($sale->date)->timezone($timezone)->format('Y-m-d');
-        })->map(function ($group) {
-            return $group->sum('total');
-        });
+        $incomesByDate = $incomes->groupBy(function ($income) use ($timezone) {
+            return Carbon::parse($income->created_at)->timezone($timezone)->format('Y-m-d');
+        })->map(fn ($group) => $group->sum('amount'));
 
         $monthlyTotal = 0;
         $labels = [];
@@ -40,11 +41,11 @@ class GetMonthlySalesDataAction
             $dateString = $date->format('Y-m-d');
             $dayLabel = ucfirst($date->translatedFormat('l, j \d\e F'));
 
-            $todaySale = $salesByDate->get($dateString, 0);
+            $totalOfDay = $incomesByDate->get($dateString, 0);
 
             $labels[] = $dayLabel;
-            $values[] = $todaySale;
-            $monthlyTotal += $todaySale;
+            $values[] = $totalOfDay;
+            $monthlyTotal += $totalOfDay;
         }
 
         return [

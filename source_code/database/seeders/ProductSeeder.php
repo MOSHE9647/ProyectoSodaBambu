@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\ProductType;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\ProductStock;
 use Illuminate\Database\Seeder;
 
 class ProductSeeder extends Seeder
@@ -15,48 +14,71 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed the database using the respective seeders
         $this->call(CategorySeeder::class);
 
-        // Get 3 Categories to assign to the Products
-        $catDesayuno = Category::where('name', 'Desayunos')->first()->id;
-        $catFuerte = Category::where('name', 'Platos Fuertes')->first()->id;
-        $catBebida = Category::where('name', 'Licores')->first()->id;
+        // Obtener IDs de categorías
+        $cats = Category::pluck('id', 'name');
 
         $products = [
-            // 5 Dishes
-            ['category_id' => $catDesayuno, 'name' => 'Gallo Pinto Especial', 'type' => ProductType::DISH->value],
-            ['category_id' => $catFuerte,   'name' => 'Casado con Carne en Salsa', 'type' => ProductType::DISH->value],
-            ['category_id' => $catFuerte,   'name' => 'Arroz con Pollo', 'type' => ProductType::DISH->value],
-            ['category_id' => $catFuerte,   'name' => 'Chifrijo Grande', 'type' => ProductType::DISH->value],
-            ['category_id' => $catFuerte,   'name' => 'Hamburguesa Artesanal', 'type' => ProductType::DISH->value],
+            // ARROCES
+            ['category_id' => $cats['Arroces'], 'name' => 'Arroz Cantonés', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Arroces'], 'name' => 'Arroz con Camarones', 'sale_price' => 4000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Arroces'], 'name' => 'Arroz con Pollo', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Arroces'], 'name' => 'Arroz con Carne', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
 
-            // 5 Drinks (prepared in-house)
-            ['category_id' => $catBebida,   'name' => 'Refresco Casero de Tamarindo', 'type' => ProductType::DRINK->value],
-            ['category_id' => $catBebida,   'name' => 'Horchata de Conquito', 'type' => ProductType::DRINK->value],
-            ['category_id' => $catBebida,   'name' => 'Fresco de Mora Natural', 'type' => ProductType::DRINK->value],
-            ['category_id' => $catBebida,   'name' => 'Agua de Sapo (Especial)', 'type' => ProductType::DRINK->value],
-            ['category_id' => $catBebida,   'name' => 'Cacao Caliente Casero', 'type' => ProductType::DRINK->value],
+            // ESPECIALES
+            ['category_id' => $cats['Especiales'], 'name' => 'Sopa Negra', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Especiales'], 'name' => 'Sopa de Pollo', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Especiales'], 'name' => 'Fajitas (Pollo, Cerdo, Res o Mixtas)', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Especiales'], 'name' => 'Filete de pollo o pescado', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Especiales'], 'name' => 'Espagueti en Salsa Blanca', 'sale_price' => 4000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
 
-            // 5 Common merchandises
-            ['category_id' => $catBebida,   'name' => 'Coca-Cola (350ml)', 'type' => ProductType::MERCHANDISE->value],
-            ['category_id' => $catBebida,   'name' => 'Sprite (350ml)', 'type' => ProductType::MERCHANDISE->value],
-            ['category_id' => $catBebida,   'name' => 'Fanta Naranja (350ml)', 'type' => ProductType::MERCHANDISE->value],
-            ['category_id' => $catBebida,   'name' => 'Agua Mineral (500ml)', 'type' => ProductType::MERCHANDISE->value],
-            ['category_id' => $catBebida,   'name' => 'Red Bull (250ml)', 'type' => ProductType::MERCHANDISE->value],
+            // BEBIDAS
+            ['category_id' => $cats['Bebidas'], 'name' => 'Café Negro', 'sale_price' => 750, 'type' => ProductType::DRINK->value, 'has_inventory' => false],
+            ['category_id' => $cats['Bebidas'], 'name' => 'Café con Leche', 'sale_price' => 1000, 'type' => ProductType::DRINK->value, 'has_inventory' => false],
+            ['category_id' => $cats['Bebidas'], 'name' => 'Naturales en Agua', 'sale_price' => 1000, 'type' => ProductType::DRINK->value, 'has_inventory' => false],
+            ['category_id' => $cats['Bebidas'], 'name' => 'Batidos en Leche', 'sale_price' => 1500, 'type' => ProductType::DRINK->value, 'has_inventory' => false],
+            ['category_id' => $cats['Bebidas'], 'name' => 'Fresco de la Casa', 'sale_price' => 500, 'type' => ProductType::DRINK->value, 'has_inventory' => false],
+            ['category_id' => $cats['Bebidas'], 'name' => 'Agua Dulce en Agua', 'sale_price' => 750, 'type' => ProductType::DRINK->value, 'has_inventory' => false],
+            ['category_id' => $cats['Bebidas'], 'name' => 'Agua Dulce en Leche', 'sale_price' => 1000, 'type' => ProductType::DRINK->value, 'has_inventory' => false],
+
+            // DESAYUNOS
+            ['category_id' => $cats['Desayunos'], 'name' => 'Gallo Pinto Económico', 'sale_price' => 2000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Desayunos'], 'name' => 'Gallo Pinto Completo', 'sale_price' => 3000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Desayunos'], 'name' => 'Empanadas (Pollo, queso o frijol)', 'sale_price' => 1200, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Desayunos'], 'name' => 'Empanada de carne', 'sale_price' => 1500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Desayunos'], 'name' => 'Totilla Alineada(Con refresco)', 'sale_price' => 1500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Desayunos'], 'name' => 'Sandwich (Pollo, Carne o jamon y queso)', 'sale_price' => 2000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+
+            // ALMUERZOS
+            // Variantes de Casado Económico
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Económico (Pollo en salsa)', 'sale_price' => 2000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Económico (Carne en salsa)', 'sale_price' => 2000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Económico (Bistec de res)', 'sale_price' => 2000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Económico (Bistec de cerdo)', 'sale_price' => 2000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Económico (Chuleta)', 'sale_price' => 2000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Económico (Filete de pollo)', 'sale_price' => 2000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            // Variantes de Casado Completo
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Completo (Pollo en salsa)', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Completo (Carne en salsa)', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Completo (Bistec de res)', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Completo (Bistec de cerdo)', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Completo (Chuleta)', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Completo (Filete de pollo)', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Almuerzos'], 'name' => 'Casado Completo (Filete de pescado)', 'sale_price' => 3500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+
+            // COMIDAS RÁPIDAS
+            ['category_id' => $cats['Comidas Rápidas'], 'name' => 'Hamburguesa (con papas y refresco)', 'sale_price' => 2500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Comidas Rápidas'], 'name' => 'Tacos (con papas y refresco)', 'sale_price' => 2500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Comidas Rápidas'], 'name' => 'Papas Fritas o Salchipapas(con refresco)', 'sale_price' => 1500, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+            ['category_id' => $cats['Comidas Rápidas'], 'name' => 'Empanada Arreglada(con refresco)', 'sale_price' => 2000, 'type' => ProductType::DISH->value, 'has_inventory' => false],
+
+            // EXTRAS
+            ['category_id' => $cats['Empaques'], 'name' => 'Empaque para llevar', 'sale_price' => 200, 'type' => ProductType::PACKAGED->value, 'has_inventory' => false],
         ];
 
         foreach ($products as $product) {
-            $productData = $product;
-            $createdProduct = Product::factory()->create($productData);
-
-            if (! $createdProduct->has_inventory) {
-                continue;
-            }
-
-            ProductStock::factory()->create([
-                'product_id' => $createdProduct->id,
-            ]);
+            Product::factory()->create($product);
         }
     }
 }

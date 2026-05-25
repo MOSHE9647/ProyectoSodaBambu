@@ -32,7 +32,8 @@ class CalculatePayrollSalaryAction
      */
     public function execute(Employee $employee, Collection $timesheets): array
     {
-        $hourlyWageCents = $this->toCents($employee->hourly_wage_raw);
+        $hourlyWageCents = $this->roundToNearestFiveCRC($this->toCents($employee->hourly_wage_raw));
+        $hourlyWageRoundedLabel = $this->formatCurrencyFromCents($hourlyWageCents).'/hr';
 
         $timesheetRows = $timesheets->map(function (Timesheet $timesheet) use ($hourlyWageCents): array {
             $hours = $timesheet->total_hours_raw;
@@ -69,6 +70,8 @@ class CalculatePayrollSalaryAction
             'total_salary_amount_cents' => $totalSalaryCents,
             'total_salary_amount_label' => $this->formatCurrencyFromCents($totalSalaryCents),
             'includes_holiday_days' => $timesheetRows->contains(fn (array $row) => $row['is_holiday']),
+            'hourly_wage_rounded' => $hourlyWageCents / 100,
+            'hourly_wage_rounded_label' => $hourlyWageRoundedLabel,
         ];
     }
 
@@ -90,8 +93,9 @@ class CalculatePayrollSalaryAction
     private function calculateDailySalaryCents(int $hourlyWageCents, float $hours, int $multiplier): int
     {
         $hoursHundredths = (int) round($hours * 100);
+        $rawCents = (int) round(($hourlyWageCents * $hoursHundredths * $multiplier) / 100);
 
-        return (int) round(($hourlyWageCents * $hoursHundredths * $multiplier) / 100);
+        return $this->roundToNearestFiveCRC($rawCents);
     }
 
     /**
@@ -144,22 +148,21 @@ class CalculatePayrollSalaryAction
     }
 
     /**
-     * Format an amount in cents as a Costa Rican currency display string.
+     * Format a cent amount into a currency string with CRC formatting.
      *
-     * Converts cent-based amounts back to decimal representation and formats with:
-     * - Currency symbol (₡)
-     * - Exactly 2 decimal places
-     * - Space as thousands separator
-     * - Comma as decimal separator (following Costa Rican locale conventions)
+     * Converts cents back to decimal format and applies Costa Rican currency
+     * formatting conventions, including the '₡' symbol and space as thousand
+     * separator with no decimal places. Ensures that all salary amounts are
+     * displayed in a consistent and user-friendly format in the UI.
      *
-     * Example: 1050 cents → "₡10,50"
+     * Example: 105000 → "₡ 1 050"
      *
-     * @param  int  $cents  Amount in cents (e.g., 1050 for ₡10.50)
-     * @return string Formatted currency display (e.g., "₡10,50" or "₡1 234,56")
+     * @param  int  $cents  Amount in cents (centavos) (e.g., 100 cents = ₡1)
+     * @return string Formatted currency string (e.g., "₡ 1 050")
      */
     public function formatCurrencyFromCents(int $cents): string
     {
-        return '₡'.number_format($cents / 100, 2, ',', ' ');
+        return format_crc($cents / 100);
     }
 
     /**
@@ -182,5 +185,11 @@ class CalculatePayrollSalaryAction
         $normalized = rtrim(rtrim(number_format($hours, 2, '.', ''), '0'), '.');
 
         return str_replace('.', ',', $normalized).'h';
+    }
+
+    private function roundToNearestFiveCRC(int $cents): int
+    {
+        // 5 colones = 500 cents, so we round to the nearest multiple of 500 cents
+        return (int) round($cents / 500) * 500;
     }
 }

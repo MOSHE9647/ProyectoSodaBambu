@@ -24,5 +24,11 @@
 @endsection
 
 @section('scripts')
+    <script type="text/javascript">
+        window.suppliersData = {
+            canEdit: @json(auth()->user()->hasRole(App\Enums\UserRole::ADMIN)),
+            canDelete: @json(auth()->user()->hasRole(App\Enums\UserRole::ADMIN)),
+        };
+    </script>
 	@vite(['resources/js/models/suppliers/main.js'])
 @endsection
