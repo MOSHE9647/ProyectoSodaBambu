@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -48,29 +49,46 @@ class SaleController extends Controller implements HasMiddleware
      */
     public function index(Request $request)
     {
-        if ($request->wantsJson() || $request->ajax()) {
-            $query = Sale::query()
-                ->when(
-                    $request->filled('user') && $request->user !== 'all',
-                    fn ($q) => $q->whereHas('user', fn ($q) => $q->where('id', $request->user))
-                )
-                ->when(
-                    $request->filled('date') && $request->date !== null,
-                    fn ($q) => $q->whereDate('date', $request->date)
-                )
-                ->with('user')
-                ->orderBy('date', 'desc');
+        /** @var User $currentUser */
+        $currentUser = auth()->user();
+        $isEmployee = $currentUser->hasRole(UserRole::EMPLOYEE->value);
 
-            return DataTables::of($query)->toJson();
+        // If the request expects JSON (for DataTables) or is an AJAX request, return the JSON response
+        if ($request->wantsJson() || $request->ajax()) {
+            return $this->getSalesDataTable($request, $currentUser, $isEmployee);
         }
 
-        $users = User::whereDoesntHave('employee')
-            ->orWhereHas('employee', function ($query) {
-                $query->where('status', '!=', EmployeeStatus::INACTIVE->value);
-            })
-            ->get(['id', 'name']);
+        $users = $isEmployee
+            ? collect([$currentUser])
+            : User::whereDoesntHave('employee')
+                ->orWhereHas('employee', function (Builder $query) {
+                    $query->where('status', '!=', EmployeeStatus::INACTIVE->value);
+                })
+                ->get(['id', 'name']);
 
         return view('pages.sales.history.index', compact('users'));
+    }
+
+    /**
+     * Get the sales data formatted for DataTables, applying filters based on the user's role and request parameters.
+     */
+    private function getSalesDataTable(Request $request, $currentUser, bool $isEmployee)
+    {
+        $query = Sale::query()
+            ->when($isEmployee, function (Builder $q) use ($currentUser) {
+                $q->where('user_id', $currentUser->id);
+            })
+            ->when(! $isEmployee && $request->filled('user') && $request->user !== 'all', function (Builder $q) use ($request) {
+                $q->whereHas('user', fn (Builder $subQuery) => $subQuery->where('id', $request->user));
+            })
+            ->when($request->filled('date'), function (Builder $q) use ($request) {
+                // filled() ya valida que no sea nulo, así que quitamos la doble validación
+                $q->whereDate('date', $request->date);
+            })
+            ->with('user')
+            ->orderBy('date', 'desc');
+
+        return DataTables::of($query)->toJson();
     }
 
     /**
