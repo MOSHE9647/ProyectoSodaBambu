@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Inventory\UpsertPurchaseAction;
 use App\Enums\ProductType;
+use App\Enums\UserRole;
 use App\Http\Requests\PurchaseRequest;
 use App\Models\Product;
 use App\Models\Purchase;
@@ -12,12 +13,28 @@ use App\Models\Supplier;
 use App\Models\Supply;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Arr;
+use Spatie\Permission\Middleware\RoleMiddleware;
 use Symfony\Component\HttpFoundation\Response as HttpStatus;
 use Yajra\DataTables\DataTables;
 
-class PurchaseController extends Controller
+class PurchaseController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        $allowedViewerRoles = UserRole::ADMIN->value.'|'.UserRole::EMPLOYEE->value;
+
+        return [
+            new Middleware(RoleMiddleware::using($allowedViewerRoles)),
+            new Middleware(
+                RoleMiddleware::using(UserRole::ADMIN->value),
+                only: ['create', 'store', 'edit', 'update', 'destroy']
+            ),
+        ];
+    }
+
     public function index(Request $request)
     {
         if ($request->wantsJson()) {

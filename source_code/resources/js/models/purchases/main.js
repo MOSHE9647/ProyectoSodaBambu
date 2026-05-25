@@ -6,7 +6,10 @@ import { SwalModal, SwalNotificationTypes, SwalToast } from "../../utils/sweetal
 // ======================== Constants ========================
 
 // Model Configuration
+const MODEL_DATA = window.purchasesData || {};
 const MODEL_NAME = 'compra';
+
+// String Constants
 const BTN_CLASS_PRIMARY = 'btn-primary';
 
 // Routes Configuration
@@ -42,9 +45,25 @@ window.deletePurchase = function (e) {
  */
 window.showSupplierItems = async function (supplierId, supplierName) {
     try {
+        const decodedSupplierName = (() => {
+            try {
+                return decodeURIComponent(supplierName);
+            } catch {
+                return supplierName;
+            }
+        })();
+
         // Trigger a native clean loading sequence inside SweetAlert
         SwalModal.fire({
-			title: `<i class="bi bi-truck me-2"></i> Productos/Insumos de <span class="ms-2" style="color: var(--bambu-logo-bg);">${supplierName}</span>`,
+			title: `
+                <div class="d-flex align-items-start gap-3 text-start w-100">
+                    <i class="bi bi-truck flex-shrink-0 mt-1"></i>
+                    <div class="d-flex flex-column gap-1">
+                        <span>Productos/Insumos</span>
+                        <span class="fs-5 text-break" style="color: var(--bambu-logo-bg);">${decodedSupplierName}</span>
+                    </div>
+                </div>
+            `.replace(/\n\s*/g, ''),
 			html: `
                 <div class="text-center py-4 h-100 my-auto" id="swal-loader-container">
                     <div class="spinner-border" style="color: var(--bambu-logo-bg);" role="status"></div>
@@ -203,7 +222,7 @@ $(() => {
 			name: "supplier.name",
 			title: "Proveedor",
 			render: (data, type, row) => `
-                <a href="javascript:void(0)" class="fw-bold text-decoration-none" onclick="showSupplierItems(${row.supplier_id}, '${escape(data)}')" style="color: var(--bambu-logo-bg);">
+                <a href="javascript:void(0)" class="fw-bold text-decoration-none" onclick="showSupplierItems(${row.supplier_id}, '${encodeURIComponent(data)}')" style="color: var(--bambu-logo-bg);">
                     <i class="bi bi-box-seam me-1"></i>${data}
                 </a>
             `,
@@ -236,32 +255,41 @@ $(() => {
             func: window.showPurchaseInfo,
             funcName: 'showPurchaseInfo',
             tooltip: 'Ver detalles'
-        },
-        edit: {
+        }
+    };
+
+    if (MODEL_DATA.canEdit) {
+        actions.edit = {
             route: MODEL_ROUTES.edit,
             func: toggleLoadingState,
             funcName: 'toggleLoadingState',
             tooltip: `Editar ${MODEL_NAME}`
-        },
-        delete: {
+        };
+    }
+
+    if (MODEL_DATA.canDelete) {
+        actions.delete = {
             route: MODEL_ROUTES.delete,
             tooltip: `Eliminar ${MODEL_NAME}`,
             func: window.deletePurchase,
             funcName: 'deletePurchase',
-        }
-    };
+        };
+    }
 
-    const customButtons = [
-        {
-            text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
-            href: MODEL_ROUTES.create,
-            class: `create-button ${BTN_CLASS_PRIMARY}`,
-            icon: 'bi-plus-circle-fill',
-            func: toggleLoadingState,
-            funcName: 'toggleLoadingState',
-            params: ['.create-button', 'create', true],
-        }
-    ];
+    let customButtons = [];
+    if (MODEL_DATA.canCreate) {
+        customButtons = [
+			{
+				text: `Crear ${capitalizeSentence(MODEL_NAME)}`,
+				href: MODEL_ROUTES.create,
+				class: `create-button ${BTN_CLASS_PRIMARY}`,
+				icon: "bi-plus-circle-fill",
+				func: toggleLoadingState,
+				funcName: "toggleLoadingState",
+				params: [".create-button", "create", true],
+			},
+		];
+    }
 
     CreateNewDataTable('purchases-table', MODEL_ROUTES.index, columns, actions, customButtons);
 });

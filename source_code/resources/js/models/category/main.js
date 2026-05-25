@@ -5,6 +5,7 @@ import { capitalizeSentence, formatDate, toggleLoadingState } from "../../utils/
 // ==================== Constants ====================
 
 // Model Configuration
+const MODEL_DATA = window.categoriesData || {};
 const MODEL_NAME = 'categoría';
 
 // String Constants
@@ -84,20 +85,26 @@ $(() => {
             func: window.showCategoryInfo,
             funcName: 'showCategoryInfo',
             tooltip: 'Ver detalles' 
-        },
-        edit: { 
+        }
+    };
+
+    if (MODEL_DATA.canEdit) {
+        actions.edit = { 
             route: MODEL_ROUTES.edit, 
             func: toggleLoadingState, 
             funcName: 'toggleLoadingState',
             tooltip: `Editar ${MODEL_NAME}` 
-        },
-        delete: {
+        };
+    }
+
+    if (MODEL_DATA.canDelete) {
+        actions.delete = {
             route: MODEL_ROUTES.delete,
             tooltip: `Eliminar ${MODEL_NAME}`,
             func: window.deleteCategory,
             funcName: 'deleteCategory',
-        }
-    };
+        };
+    }
 
     /**
      * Define custom buttons for the DataTable interface.

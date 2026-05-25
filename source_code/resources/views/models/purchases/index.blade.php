@@ -23,5 +23,12 @@
 @endsection
 
 @section('scripts')
+    <script type="text/javascript">
+        window.purchasesData = {
+            canCreate: @json(auth()->user()->hasRole(App\Enums\UserRole::ADMIN)),
+            canEdit: @json(auth()->user()->hasRole(App\Enums\UserRole::ADMIN)),
+            canDelete: @json(auth()->user()->hasRole(App\Enums\UserRole::ADMIN)),
+        };
+    </script>
     @vite(['resources/js/models/purchases/main.js'])
 @endsection

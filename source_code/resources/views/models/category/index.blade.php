@@ -23,5 +23,11 @@
 @endsection
 
 @section('scripts')
+    <script type="text/javascript">
+        window.categoriesData = {
+            canEdit: @json(auth()->user()->hasRole(App\Enums\UserRole::ADMIN)),
+            canDelete: @json(auth()->user()->hasRole(App\Enums\UserRole::ADMIN)),
+        };
+    </script>
     @vite(['resources/js/models/category/main.js'])
 @endsection
