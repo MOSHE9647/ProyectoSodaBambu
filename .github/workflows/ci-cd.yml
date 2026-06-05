@@ -93,6 +93,12 @@ jobs:
       - name: Run CI bootstrap
         run: composer run ci
 
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Build Frontend Assets
+        run: npm run build
+
       - name: Run Tests
         run: php artisan test --ci --parallel --compact
 

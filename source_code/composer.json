@@ -61,9 +61,7 @@
 			"@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
 			"@php artisan key:generate",
 			"@php -r \"is_dir('database') || mkdir('database', 0777, true); file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-			"npm ci",
-			"npx playwright install chromium --with-deps",
-			"npm run build"
+			"npm ci"
 		],
 		"workspace:setup": "@php scripts/setup-workspace.php --no-db",
 		"workspace:sqlite": "@php scripts/setup-workspace.php --db:sqlite --migrate",
