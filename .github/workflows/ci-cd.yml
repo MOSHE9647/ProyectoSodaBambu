@@ -153,9 +153,9 @@ jobs:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
-          env: ${{ steps.deployment.outputs.env }}
+          env: Preview
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: ${{ env.PREVIEW_URL }}
+          env_url: ${{ env.PREVIEW_URL || 'https://pending' }}
 
       # ---- GitHub Deployment Summary and Comments ----
       - name: Add Deployment Summary to GitHub (Push)
