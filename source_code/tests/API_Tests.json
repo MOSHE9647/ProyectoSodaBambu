@@ -1,0 +1,270 @@
+{
+  "info": {
+    "_postman_id": "e714d9c9-b8dd-49df-a17f-f7bd171f964c",
+    "name": "API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "33501077"
+  },
+  "item": [
+    {
+      "name": "AttendanceTest",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// 1. Validar que la petición fue exitosa\r",
+              "pm.test(\"El código de estado es 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "// 2. Validar estructura de datos y contenido (DataTables + Custom Logic)\r",
+              "pm.test(\"El historial devuelve el registro correcto y estructura esperada\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    \r",
+              "    // Validar que la respuesta tiene la estructura de DataTables\r",
+              "    pm.expect(jsonData).to.have.property('data').and.be.an('array');\r",
+              "    pm.expect(jsonData).to.have.property('employee_filters').and.be.an('array');\r",
+              "    \r",
+              "    // Si hay datos, validar que el primer registro coincida con lo que el controlador transforma\r",
+              "    if (jsonData.data.length > 0) {\r",
+              "        var record = jsonData.data[0];\r",
+              "        \r",
+              "        // Validar campos base\r",
+              "        pm.expect(record).to.have.property('work_date');\r",
+              "        pm.expect(record).to.have.property('is_holiday');\r",
+              "        \r",
+              "        // Validar el objeto 'employee' agregado mediante addColumn en AttendanceController\r",
+              "        pm.expect(record).to.have.property('employee');\r",
+              "        pm.expect(record.employee).to.have.property('name');\r",
+              "        pm.expect(record.employee).to.have.property('email');\r",
+              "        \r",
+              "        // Validar formato de total_hours_label (debe ser string con sufijo 'h' y coma decimal)\r",
+              "        // Ejemplo: \"8,5h\" o \"8h\" según el CP-12 de tus tests de unidad\r",
+              "        pm.expect(record.total_hours).to.match(/^\\d+(,\\d+)?h$/);\r",
+              "    }\r",
+              "});\r",
+              "\r",
+              "// 3. Validar que la respuesta no contiene errores de Laravel\r",
+              "pm.test(\"No hay errores de validación ni de servidor\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.not.have.property('errors');\r",
+              "    pm.expect(jsonData).to.not.have.property('exception');\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "name": "cache-control",
+            "sortOrder": 2,
+            "infoTitle": "We recommend using this header",
+            "info": "Postman added \"Cache-Control: no-cache\" as a precautionary measure to prevent the server from returning stale response when one makes repeated requests.\n\nYou can remove this header in the app settings or enter a new one with a different value.",
+            "allowedToToggle": false,
+            "disableEdit": true,
+            "previewSettingsLink": "Go to settings",
+            "key": "Cache-Control",
+            "value": "no-cache",
+            "system": true,
+            "type": "text",
+            "id": 0
+          },
+          {
+            "name": "postman-token",
+            "sortOrder": 3,
+            "infoTitle": "We recommend using this header",
+            "info": "The Postman-Token header appends a random UUID to every outgoing request. Postman adds this header for API developers to better debug requests sent and to ensure separate requests appear distinct to the receiving server.\n\nYou can remove this header in the app settings.",
+            "allowedToToggle": false,
+            "disableEdit": true,
+            "previewSettingsLink": "Go to settings",
+            "key": "Postman-Token",
+            "value": "<calculated when request is sent>",
+            "system": true,
+            "type": "text",
+            "id": 1
+          },
+          {
+            "name": "host",
+            "sortOrder": 6,
+            "infoTitle": "We recommend using this header",
+            "info": "The Host header is added to identify the domain name for which a request is being sent to the server. This header is implicitly sent by every HTTP client.\n\nYou can remove the header or enter a new one with a different value. It is most likely that without this header, your request will return an HTTP 400 error.",
+            "allowedToToggle": true,
+            "disableEdit": true,
+            "key": "Host",
+            "value": "<calculated when request is sent>",
+            "system": true,
+            "type": "text",
+            "id": 2
+          },
+          {
+            "name": "user-agent",
+            "sortOrder": 7,
+            "infoTitle": "We recommend using this header",
+            "info": "The User-Agent header is added to help the server identify Postman as the HTTP requesting application or client.\n\nIt is recommended that this header be sent, but you can remove the header or enter a new one with a different value.",
+            "allowedToToggle": true,
+            "disableEdit": true,
+            "key": "User-Agent",
+            "value": "PostmanRuntime/7.39.1",
+            "system": true,
+            "type": "text",
+            "id": 3
+          },
+          {
+            "name": "accept",
+            "sortOrder": 8,
+            "infoTitle": "We recommend using this header",
+            "info": "The \"Accept: */*\" header is added to tell the server that Postman can understand and process all forms of response content types.\n\nIt is recommended that this header be sent, but you can remove the header or enter a new one with a different value.",
+            "allowedToToggle": true,
+            "disableEdit": true,
+            "key": "Accept",
+            "value": "*/*",
+            "system": true,
+            "type": "text",
+            "id": 4,
+            "disabled": true
+          },
+          {
+            "name": "accept-encoding",
+            "sortOrder": 9,
+            "infoTitle": "We recommend using this header",
+            "info": "The Accept-Encoding header is added to indicate to the server that Postman HTTP client supports a defined list of content-encoding or compression algorithms as response.\n\nYou can remove the header or enter a new one with a different value. Doing that may not accurately render the response within the app.",
+            "allowedToToggle": true,
+            "disableEdit": true,
+            "key": "Accept-Encoding",
+            "value": "gzip, deflate, br",
+            "system": true,
+            "type": "text",
+            "id": 5
+          },
+          {
+            "name": "connection",
+            "sortOrder": 10,
+            "infoTitle": "We recommend using this header",
+            "info": "Postman added the Connection header to indicate the server to keep the underlying network connection open once the current response is received. This allows Postman to reuse the same connection for faster response times in subsequent requests to the same server.\n\nYou can remove this header or enter a new one with a different value, such as `Connection: Close` to control this behaviour.",
+            "allowedToToggle": true,
+            "disableEdit": true,
+            "key": "Connection",
+            "value": "keep-alive",
+            "system": true,
+            "type": "text",
+            "id": 6
+          },
+          {
+            "key": "X-Requested-With",
+            "value": "XMLHttpRequest",
+            "type": "text",
+            "id": 7
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text",
+            "id": 8
+          },
+          {
+            "key": "X-XSRF-TOKEN",
+            "value": "{{xsrf_token}}",
+            "type": "text",
+            "id": 9
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/attendance/data/history",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "attendance",
+            "data",
+            "history"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// 1. Definimos las variables\r",
+          "const baseUrl = pm.environment.get(\"base_url\");\r",
+          "const emailPrueba = pm.environment.get(\"test_email\") || \"admin@sodabambu.com\"; \r",
+          "const passwordPrueba = pm.environment.get(\"test_password\") || \"password123\";\r",
+          "\r",
+          "// Función auxiliar para extraer una cookie directamente de los headers (Evita el bug de Postman)\r",
+          "function extractCookie(response, cookieName) {\r",
+          "    const setCookieHeaders = response.headers.filter(h => h.key.toLowerCase() === 'set-cookie');\r",
+          "    for (let header of setCookieHeaders) {\r",
+          "        if (header.value.startsWith(cookieName + '=')) {\r",
+          "            return header.value.split(';')[0].substring(cookieName.length + 1);\r",
+          "        }\r",
+          "    }\r",
+          "    return null;\r",
+          "}\r",
+          "\r",
+          "// 2. Primera petición: GET a la raíz\r",
+          "pm.sendRequest({\r",
+          "    url: baseUrl + '/', \r",
+          "    method: 'GET'\r",
+          "}, function (err, res) {\r",
+          "    if (err) return console.log(\"Error obteniendo cookie inicial:\", err);\r",
+          "\r",
+          "    // EXTRAEMOS DIRECTAMENTE DE LA RESPUESTA\r",
+          "    let rawToken = extractCookie(res, 'XSRF-TOKEN');\r",
+          "    \r",
+          "    if (!rawToken) {\r",
+          "        return console.log(\"⚠️ No se encontró XSRF-TOKEN en los headers. Revisa la URL base.\");\r",
+          "    }\r",
+          "    \r",
+          "    let decodedCsrfToken = decodeURIComponent(rawToken);\r",
+          "\r",
+          "    // 3. Segunda petición: POST al login de Fortify\r",
+          "    const loginRequest = {\r",
+          "        url: baseUrl + '/login',\r",
+          "        method: 'POST',\r",
+          "        header: {\r",
+          "            'Accept': 'application/json', \r",
+          "            'Content-Type': 'application/json',\r",
+          "            'X-XSRF-TOKEN': decodedCsrfToken,\r",
+          "            'Referer': baseUrl \r",
+          "        },\r",
+          "        body: {\r",
+          "            mode: 'raw',\r",
+          "            raw: JSON.stringify({\r",
+          "                email: emailPrueba,\r",
+          "                password: passwordPrueba\r",
+          "            })\r",
+          "        }\r",
+          "    };\r",
+          "\r",
+          "    pm.sendRequest(loginRequest, function (err, res) {\r",
+          "        if (err) return console.log(\"Error en el login:\", err);\r",
+          "\r",
+          "        // Si el código es 2xx, el login fue exitoso\r",
+          "        if (res.code >= 200 && res.code < 300) {\r",
+          "            // Extraemos el nuevo token de la sesión autenticada\r",
+          "            let finalRawToken = extractCookie(res, 'XSRF-TOKEN') || rawToken;\r",
+          "            \r",
+          "            // Guardamos el token en las variables de entorno para que Postman lo inyecte en {{xsrf_token}}\r",
+          "            pm.environment.set('xsrf_token', decodeURIComponent(finalRawToken));\r",
+          "            console.log(\"✅ Login exitoso. Variable xsrf_token lista para usarse.\");\r",
+          "        } else {\r",
+          "            console.log(\"⚠️ Falló la autenticación. Código HTTP:\", res.code);\r",
+          "        }\r",
+          "    });\r",
+          "});"
+        ],
+        "type": "text/javascript",
+        "packages": {}
+      }
+    }
+  ]
+}

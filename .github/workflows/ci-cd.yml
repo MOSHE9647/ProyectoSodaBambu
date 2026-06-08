@@ -71,6 +71,10 @@ jobs:
         with:
           ref: ${{ needs.lint.outputs.new_sha || github.head_ref || github.ref }}
 
+      # ==========================================
+      # STEP 2.1: LARAVEL TESTS (Pest/PHPUnit)
+      # ==========================================
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -106,6 +110,29 @@ jobs:
 
       - name: Run Tests
         run: php artisan test --ci --parallel --compact
+
+      # ==========================================
+      # STEP 2.2: POSTMAN / NEWMAN API TESTS
+      # ==========================================
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run API Tests with Postman/Newman
+        run: |
+          # 1. Aseguramos que la BD SQLite temporal esté lista y migrada para el servidor web
+          php artisan migrate --force
+          php artisan db:seed --force
+
+          # 2. Levantamos el servidor de Laravel en segundo plano (&)
+          php artisan serve --host=127.0.0.1 --port=8000 &
+          
+          # 3. Damos 3 segundos para que el servidor arranque correctamente
+          sleep 3
+          
+          # 4. Ejecutamos la colección de pruebas de Postman con Newman, apuntando al servidor local
+          newman run tests/API_Tests.json \
+          --env-var "base_url=http://127.0.0.1:8000" \
+          --reporters cli
 
   # ==========================================
   # STEP 3: DEPLOY PREVIEW (Vercel)

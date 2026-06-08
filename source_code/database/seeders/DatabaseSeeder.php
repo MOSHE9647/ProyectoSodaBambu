@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         // Seed the database using the respective seeders
         $this->call(UserSeeder::class);
-        // $this->call(TimesheetSeeder::class);
+        $this->call(TimesheetSeeder::class);
         // $this->call(ProductSeeder::class);
         // $this->call(ClientSeeder::class);
         // $this->call(SupplySeeder::class);
