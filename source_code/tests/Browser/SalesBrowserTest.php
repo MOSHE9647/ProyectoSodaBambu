@@ -4,7 +4,6 @@ use App\Enums\CashRegisterStatus;
 use App\Enums\UserRole;
 use App\Models\CashRegister;
 use App\Models\Product;
-use App\Models\ProductStock;
 use App\Models\User;
 
 /**

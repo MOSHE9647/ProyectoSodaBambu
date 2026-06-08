@@ -141,9 +141,9 @@ test('API-02 - POST sales.store decrements product stock by the sold quantity', 
  */
 test('API-03 - each payment_detail generates one Payment and one Transaction record', function () {
     actingAsAdmin();
- 
+
     $jugo = apiProduct('Jugo Natural', 1500, 10);
- 
+
     $response = $this->postJson(route('sales.store'), salePayload([
         'total' => 1500,
         'sale_details' => [[
@@ -166,16 +166,16 @@ test('API-03 - each payment_detail generates one Payment and one Transaction rec
             ],
         ],
     ]))->assertCreated();
- 
+
     $saleId = (int) $response->json('data.id');
- 
+
     $payments = Payment::query()
         ->where('origin_type', Sale::class)
         ->where('origin_id', $saleId)
         ->get();
- 
+
     expect($payments)->toHaveCount(2);
- 
+
     foreach ($payments as $payment) {
         $this->assertDatabaseHas('transactions', [
             'payment_id' => $payment->id,
