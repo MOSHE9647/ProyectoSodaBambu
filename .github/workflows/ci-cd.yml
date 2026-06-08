@@ -94,6 +94,7 @@ jobs:
         run: composer run ci
 
       - name: Install Playwright Browsers
+        timeout-minutes: 5 # Control maximum time for browser installation to prevent hanging
         env:
           DEBIAN_FRONTEND: noninteractive
           NEEDRESTART_MODE: a # Avoids Ubuntu's needrestart from prompting for restarts during CI
