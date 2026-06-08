@@ -15,7 +15,7 @@ test('CP-BROWSER-01 - admin can enter the clients module, create a client and re
     // Given: an administrator user exists in the database.
     $adminPassword = 'adminpassword';
     $adminUser = User::factory()->withRole(UserRole::ADMIN)->create([
-        'email'    => 'admin@example.com',
+        'email' => 'admin@example.com',
         'password' => $adminPassword,
     ]);
 
@@ -38,9 +38,9 @@ test('CP-BROWSER-01 - admin can enter the clients module, create a client and re
     // which would block the native form submit via e.currentTarget.submit().
     $newClient = [
         'first_name' => 'María',
-        'last_name'  => 'García',
-        'email'      => 'maria.garcia@example.com',
-        'phone'      => '+506 8765 4321',
+        'last_name' => 'García',
+        'email' => 'maria.garcia@example.com',
+        'phone' => '+506 8765 4321',
     ];
 
     $page->fill('#first_name', $newClient['first_name'])
@@ -57,7 +57,7 @@ test('CP-BROWSER-01 - admin can enter the clients module, create a client and re
     // And: the client is persisted in the database with the correct data.
     $this->assertDatabaseHas('clients', [
         'first_name' => $newClient['first_name'],
-        'email'      => $newClient['email'],
+        'email' => $newClient['email'],
     ]);
 
     // And: the administrator logs out and is redirected to the login page.

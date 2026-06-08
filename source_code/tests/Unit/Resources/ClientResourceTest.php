@@ -171,9 +171,9 @@ test('CP-RES-17 - client request rejects phone longer than 20 characters', funct
     $validator = Validator::make(
         [
             'first_name' => 'Juan',
-            'last_name'  => 'García',
-            'email'      => 'juan@example.com',
-            'phone'      => str_repeat('9', 21),
+            'last_name' => 'García',
+            'email' => 'juan@example.com',
+            'phone' => str_repeat('9', 21),
         ],
         $request->rules()
     );

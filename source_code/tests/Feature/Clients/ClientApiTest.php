@@ -27,9 +27,9 @@ test('CP-API-01 - store endpoint returns JSON with success flag and client data 
     $response = $this->withHeaders(['Accept' => 'application/json'])
         ->post(route('clients.store'), [
             'first_name' => 'Ana',
-            'last_name'  => 'Torres',
-            'phone'      => '506-7777-8888',
-            'email'      => 'ana.torres@example.com',
+            'last_name' => 'Torres',
+            'phone' => '506-7777-8888',
+            'email' => 'ana.torres@example.com',
         ]);
 
     // Then: the response is 200 with the expected JSON structure.
@@ -73,8 +73,8 @@ test('CP-API-03 - store endpoint returns 422 when email already belongs to an ac
     $response = $this->withHeaders(['Accept' => 'application/json'])
         ->post(route('clients.store'), [
             'first_name' => 'Otro',
-            'last_name'  => 'Cliente',
-            'email'      => 'duplicate@example.com',
+            'last_name' => 'Cliente',
+            'email' => 'duplicate@example.com',
         ]);
 
     // Then: the request is rejected with a validation error on the email field.
@@ -92,8 +92,8 @@ test('CP-API-04 - store endpoint restores a soft-deleted client and returns the 
     $response = $this->withHeaders(['Accept' => 'application/json'])
         ->post(route('clients.store'), [
             'first_name' => 'Restaurado',
-            'last_name'  => 'Cliente',
-            'email'      => 'deleted@example.com',
+            'last_name' => 'Cliente',
+            'email' => 'deleted@example.com',
         ]);
 
     // Then: the response confirms the client was restored with the updated data.
