@@ -2,6 +2,7 @@
 
 use App\Enums\UserRole;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 /**
  * User Story: CP-BROWSER-01 - Navegación al módulo de clientes y creación desde el navegador.
@@ -13,7 +14,7 @@ use App\Models\User;
  */
 test('CP-BROWSER-01 - admin can enter the clients module, create a client and return to the listing', function () {
     // Given: an administrator user exists in the database.
-    $adminPassword = 'adminpassword';
+    $adminPassword = Str::random(16);
     $adminUser = User::factory()->withRole(UserRole::ADMIN)->create([
         'email' => 'admin@example.com',
         'password' => $adminPassword,
