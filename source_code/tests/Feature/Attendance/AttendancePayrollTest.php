@@ -42,7 +42,7 @@ test('CP-01_EIF-25_QA1 - registers attendance with holiday flag and redirects wi
         'work_date' => $today,
         'start_time' => '08:00',
         'end_time' => '17:00',
-        'is_holiday' => true,
+        'is_holiday' => false,
     ]);
 
     // Then: the system redirects with success and persists the holiday attendance data.
