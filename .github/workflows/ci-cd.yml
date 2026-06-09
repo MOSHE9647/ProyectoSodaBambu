@@ -71,6 +71,10 @@ jobs:
         with:
           ref: ${{ needs.lint.outputs.new_sha || github.head_ref || github.ref }}
 
+      # ==========================================
+      # STEP 2.1: LARAVEL TESTS (Pest/PHPUnit)
+      # ==========================================
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -94,6 +98,7 @@ jobs:
         run: composer run ci
 
       - name: Install Playwright Browsers
+        timeout-minutes: 5 # Control maximum time for browser installation to prevent hanging
         env:
           DEBIAN_FRONTEND: noninteractive
           NEEDRESTART_MODE: a # Avoids Ubuntu's needrestart from prompting for restarts during CI
@@ -152,9 +157,9 @@ jobs:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
-          env: ${{ steps.deployment.outputs.env }}
+          env: Preview
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: ${{ env.PREVIEW_URL }}
+          env_url: ${{ env.PREVIEW_URL || 'https://pending' }}
 
       # ---- GitHub Deployment Summary and Comments ----
       - name: Add Deployment Summary to GitHub (Push)
