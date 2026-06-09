@@ -93,11 +93,11 @@ test('CP-07_REPORTES_VENTAS - navega reportes cambia entre ventas productos y ap
             'period' => 'custom',
             'start_date' => '2026-06-01',
             'end_date' => '2026-06-07',
-            'product_type' => ProductType::DRINK->value,
+            'product_type' => 'drinks',
             'category_id' => $bebidas->id,
         ]))
         ->assertSee('Productos')
-        ->assertSelected('#product_type', ProductType::DRINK->value)
+        ->assertSelected('#product_type', 'drinks')
         ->assertSelected('#category_id', (string) $bebidas->id)
         ->assertSeeIn('#products-total-units', '3')
         ->assertSeeIn('#products-total-income', '6 000');
