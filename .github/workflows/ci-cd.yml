@@ -62,7 +62,7 @@ jobs:
         shell: bash
         working-directory: source_code
     env:
-      APP_ENV: local
+      APP_ENV: testing
       DB_CONNECTION: sqlite
       DB_DATABASE: database/database.sqlite
     steps:
@@ -127,7 +127,7 @@ jobs:
           sleep 5
           
           newman run tests/API_Tests.json \
-          --env-var "base_url=http://127.0.0.1:8000" \
+          --env-var "base_url=https://127.0.0.1:8000" \
           --reporters cli
 
   # ==========================================
