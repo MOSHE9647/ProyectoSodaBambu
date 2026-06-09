@@ -20,7 +20,7 @@ const IS_EDITING = document.querySelector('form[id^="edit-"]') !== null;
 const FORM_ID = IS_EDITING ? 'edit-category-form' : 'create-category-form';
 
 const fieldValidators = {
-    name: {
+    category_name: {
         validator: validateName,
         emptyMsg: 'El nombre es obligatorio.',
         invalidMsg: 'El nombre no puede exceder 255 caracteres.'
@@ -61,10 +61,10 @@ export function submitCategoryForm(customFieldId = null) {
     delete fieldValidators.description; // Description is optional, so we remove it from validation
 
     // Cache DOM elements
-    const $name = $(`${customFieldId ? `#${customFieldId}` : "#name"}`);
+    const $name = $(`#${customFieldId ?? 'category_name'}`);
 
     const values = {
-        name: $name.val().trim(),
+        category_name: String($name.val() ?? '').trim(),
     };
 
     return validateCategoryForm(values);
@@ -87,7 +87,7 @@ export const realTimeValidationHandler = (e, customFieldId = null) => {
 		return;
 	}
 
-	let value = $target.val().trim();
+    const value = String($target.val() ?? '').trim();
 	const { validator, emptyMsg, invalidMsg } = fieldValidators[fieldId];
 
     fieldId = $target.attr("id");
