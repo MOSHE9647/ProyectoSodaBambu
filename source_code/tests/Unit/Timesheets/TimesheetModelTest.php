@@ -130,3 +130,47 @@ test('CP-07_EIF-23_QA1 - timesheet work date is cast to date format', function (
     // Then: work_date is stored and retrieved as a date.
     expect($timesheet->work_date)->toEqual(Carbon::parse($workDate)->toDateString());
 });
+
+/**
+ * Epic: EIF-23_QA1 - Análisis Financiero (Payroll/Attendance entity)
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-23
+ */
+test('CP-08_EIF-23_QA1 - timesheet returns zero hours when checkout time is missing', function () {
+    // Given: a timesheet without a complete time range.
+    $timesheet = Timesheet::make([
+        'start_time' => '08:00',
+        'end_time' => null,
+    ]);
+
+    // Then: the computed worked hours are zero.
+    expect($timesheet->hours_worked)->toBe(0.0);
+})->group('s8-tests');
+
+/**
+ * Epic: EIF-23_QA1 - Análisis Financiero (Payroll/Attendance entity)
+ * Priority: Medium
+ * Jira Link: https://est-una.atlassian.net/browse/EIF-23
+ */
+test('CP-09_EIF-23_QA1 - timesheet accepts the base attendance payload', function () {
+    // Given: a valid attendance payload with all core fields.
+    $employee = Employee::factory()->create();
+    $workDate = Carbon::now('America/Costa_Rica')->toDateString();
+
+    $timesheet = Timesheet::make([
+        'employee_id' => $employee->id,
+        'work_date' => $workDate,
+        'start_time' => '08:00',
+        'end_time' => '17:00',
+        'total_hours' => 9.00,
+        'is_holiday' => true,
+    ]);
+
+    // Then: the model keeps the base data available for downstream calculations.
+    expect($timesheet->employee_id)->toBe($employee->id)
+        ->and(Carbon::parse($timesheet->work_date)->toDateString())->toBe($workDate)
+        ->and($timesheet->start_time)->not->toBeNull()
+        ->and($timesheet->end_time)->not->toBeNull()
+        ->and($timesheet->total_hours)->toBe(9.0)
+        ->and($timesheet->is_holiday)->toBeTrue();
+})->group('s8-tests');
