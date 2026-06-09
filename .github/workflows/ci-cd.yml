@@ -121,6 +121,8 @@ jobs:
         run: |
           php artisan migrate --force
           php artisan db:seed --force
+
+          echo "APP_FORCE_HTTPS=false" >> .env
           
           php artisan serve --host=127.0.0.1 --port=8000 &
           
