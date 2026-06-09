@@ -119,17 +119,16 @@ jobs:
 
       - name: Run API Tests with Postman/Newman
         run: |
-          # 1. Aseguramos que la BD SQLite temporal esté lista y migrada para el servidor web
           php artisan migrate --force
           php artisan db:seed --force
 
-          # 2. Levantamos el servidor de Laravel en segundo plano (&)
+          echo "APP_URL=http://127.0.0.1:8000" >> .env
+          echo "FORCE_HTTPS=false" >> .env
+          
           php artisan serve --host=127.0.0.1 --port=8000 &
           
-          # 3. Damos 3 segundos para que el servidor arranque correctamente
-          sleep 3
+          sleep 5
           
-          # 4. Ejecutamos la colección de pruebas de Postman con Newman, apuntando al servidor local
           newman run tests/API_Tests.json \
           --env-var "base_url=http://127.0.0.1:8000" \
           --reporters cli
