@@ -51,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
         Transaction::observe(TransactionObserver::class);
 
         // Force HTTPS in production
-        if (config('app.env') !== 'local') {
+        if (config('app.env') !== 'local' && config('app.env') !== 'testing') {
             URL::forceScheme('https');
         }
 
