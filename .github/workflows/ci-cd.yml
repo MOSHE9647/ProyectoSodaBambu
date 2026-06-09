@@ -62,7 +62,7 @@ jobs:
         shell: bash
         working-directory: source_code
     env:
-      APP_ENV: testing
+      APP_ENV: local
       DB_CONNECTION: sqlite
       DB_DATABASE: database/database.sqlite
     steps:
