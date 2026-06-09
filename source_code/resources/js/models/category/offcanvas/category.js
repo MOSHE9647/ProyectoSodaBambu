@@ -100,12 +100,7 @@ export function openCategoryModal(triggerElement) {
             $(document)
                 .off("input change", "#create-category-form")
                 .on("input change", "#create-category-form", function (e) {
-                    const $target = $(e.target);
-                    if ($target.attr("id") === "category_name") {
-                        realTimeValidationHandler(e, "name");
-                    } else {
-                        realTimeValidationHandler(e);
-                    }
+                    realTimeValidationHandler(e);
                 });
 
             // Handle form submission within the modal
