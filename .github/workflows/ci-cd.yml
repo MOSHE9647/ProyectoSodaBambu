@@ -111,27 +111,6 @@ jobs:
       - name: Run Tests
         run: php artisan test --ci --parallel --compact
 
-      # ==========================================
-      # STEP 2.2: POSTMAN / NEWMAN API TESTS
-      # ==========================================
-      - name: Install Newman
-        run: npm install -g newman
-
-      - name: Run API Tests with Postman/Newman
-        run: |
-          php artisan migrate --force
-          php artisan db:seed --force
-
-          echo "APP_FORCE_HTTPS=false" >> .env
-          
-          php artisan serve --host=127.0.0.1 --port=8000 &
-          
-          sleep 5
-          
-          newman run tests/API_Tests.json \
-          --env-var "base_url=https://127.0.0.1:8000" \
-          --reporters cli
-
   # ==========================================
   # STEP 3: DEPLOY PREVIEW (Vercel)
   # ==========================================

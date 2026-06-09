@@ -116,18 +116,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Force HTTPS
-    |--------------------------------------------------------------------------
-    |
-    | Indicates whether the application should force HTTPS URLs. This is typically
-    | enabled in production environments to ensure secure communication, but can be
-    | disabled in local development to avoid issues with self-signed certificates.
-    |
-    */
-    'force_https' => env('APP_FORCE_HTTPS', false),
-
-    /*
-    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
