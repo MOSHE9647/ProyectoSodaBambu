@@ -2,7 +2,7 @@
     use App\Enums\UserRole;
 
     $sidebarItems = [
-        'Dashboard' => [
+        'Inicio' => [
             'role' => [UserRole::ADMIN, UserRole::EMPLOYEE],
             'route' => 'dashboard',
             'svg' => '
