@@ -69,7 +69,7 @@ test('CP-01_EIF-25_QA1 - registers attendance with holiday flag and redirects wi
             'work_date' => $today,
             'is_holiday' => true,
         ]);
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
@@ -96,7 +96,7 @@ test('CP-02_EIF-25_QA1 - rejects attendance when end time is before start time',
         ->assertSessionHasErrors(['end_time']);
 
     $this->assertDatabaseCount('timesheets', 0);
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
@@ -122,7 +122,7 @@ test('CP-03_EIF-25_QA1 - denies attendance module access to non-admin users', fu
         ])
         // Then: access is denied for both read and write operations.
         ->assertForbidden();
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
@@ -166,7 +166,7 @@ test('CP-04_EIF-25_QA1 - updates an existing attendance record without creating 
     ]);
 
     expect(Timesheet::query()->where('employee_id', $employee->id)->whereDate('work_date', $today)->count())->toBe(1);
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
@@ -192,7 +192,7 @@ test('CP-05_EIF-25_QA1 - validates employee existence before storing attendance'
         ->assertSessionHasErrors(['employee_id']);
 
     $this->assertDatabaseCount('timesheets', 0);
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
@@ -219,7 +219,7 @@ test('CP-06_EIF-25_QA1 - rejects attendance registration for non-current dates',
         ->assertSessionHasErrors(['work_date']);
 
     $this->assertDatabaseCount('timesheets', 0);
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
@@ -267,7 +267,7 @@ test('CP-01_EIF-26_QA1 - calculates salary and shows payroll breakdown including
         ->assertSee('Feriado')
         ->assertSee('Total a Pagar:')
         ->assertSee('₡ 120 000', false);
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
@@ -314,7 +314,7 @@ test('CP-02_EIF-26_QA1 - calculates biweekly payroll using selected half window'
         ->assertSee('Total a Pagar:')
         ->assertSee('₡ 32 000', false)
         ->assertDontSee('₡ 64 000', false);
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
@@ -350,7 +350,7 @@ test('CP-04_EIF-26_QA1 - includes incomplete attendance rows and marks them as n
         ->assertSuccessful()
         ->assertSee('Desglose por Dia')
         ->assertSee('Hora de Salida No Registrada');
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
@@ -366,7 +366,7 @@ test('CP-06_EIF-26_QA1 - denies salary tab access to non-admin users', function 
         ->get(route('attendance.tabs', ['tab' => 'salary']))
         // Then: access is forbidden for non-admin users.
         ->assertForbidden();
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
@@ -384,7 +384,7 @@ test('CP-07_EIF-25_QA1 - displays attendance index page with navigation tabs', f
     $response
         ->assertSuccessful()
         ->assertSee('Registro de Asistencia');
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-25_QA1 - Register employee clock-in and clock-out times including holidays.
@@ -403,7 +403,7 @@ test('CP-08_EIF-25_QA1 - displays attendance creation form with employee dropdow
     $response
         ->assertSuccessful()
         ->assertSee('Registro de Asistencia');
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
@@ -436,7 +436,7 @@ test('CP-03_EIF-26_QA1 - payroll calculation excludes soft-deleted employees', f
     $response
         ->assertSuccessful()
         ->assertSee('Total a Pagar:');
-});
+})->group('s8-tests');
 
 /**
  * User Story: EIF-26_QA1 - Automatically calculate employee payroll with holiday double pay.
@@ -456,4 +456,4 @@ test('CP-05_EIF-26_QA1 - displays payroll form with employee and period selector
     $response
         ->assertSuccessful()
         ->assertSee('Calcular Salario por Colaborador');
-});
+})->group('s8-tests');

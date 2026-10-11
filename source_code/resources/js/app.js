@@ -5,12 +5,13 @@ import 'sweetalert2/themes/bootstrap-5.css'; //<- Import SweetAlert2 Bootstrap 5
 import $ from 'jquery';
 import ApexCharts from 'apexcharts';
 import * as bootstrap from 'bootstrap';
+import { inject } from "@vercel/analytics"; //<- Import Vercel Analytics
 import { applyTheme } from './utils/theme-toggler.js';
 import { SwalNotificationTypes, SwalToast } from "./utils/sweetalert.js";
 import { initializePageLoadingProgressBar } from './utils/progress-bar.js';
 import { scrollToItem, checkScrollbarVisibility } from './utils/scrollbar.js';
 import { checkConnectionStatus } from './utils/connection-status.js';
-import {initializeCashClosure} from './pages/sales/cash-closure.js';
+import { initializeCashClosure } from './pages/sales/cash-closure.js';
 
 // ==================== Global Functions ====================
 
@@ -23,6 +24,9 @@ window.SwalNotificationTypes = SwalNotificationTypes;
 // ==================== Main Initialization ====================
 
 $(document).ready(function () {
+	// Initialize Vercel Analytics
+	inject();
+
 	// Enable theme toggler button functionality
 	applyTheme('#themeTogglerBtn');
 

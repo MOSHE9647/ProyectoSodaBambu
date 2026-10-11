@@ -15,14 +15,15 @@ class TimesheetSeeder extends Seeder
     {
         // Fetch some employees to associate with timesheets
         $employees = Employee::take(10)->get();
-        $usedDates = [];
 
-        // Create 50 timesheet records using the factory
+        // Create at least 10 timesheet records per employee using the factory
         foreach ($employees as $employee) {
-            for ($i = 0; $i < 3; $i++) {
-                // Generate unique work date
+            $usedDates = [];
+
+            for ($i = 0; $i < 10; $i++) {
+                // Generate a unique work date for the employee within the last 30 days
                 do {
-                    $workDate = now()->subDays(rand(1, 30));
+                    $workDate = now()->subDays(rand(0, 30));
                     $dateKey = $workDate->format('Y-m-d');
                 } while (in_array($dateKey, $usedDates));
 

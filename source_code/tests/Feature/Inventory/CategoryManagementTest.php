@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Role;
 beforeEach(function (): void {
     Role::findOrCreate(UserRole::ADMIN->value, 'web');
     Role::findOrCreate(UserRole::EMPLOYEE->value, 'web');
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA1 - Gestión de Recursos e Inventario
@@ -35,7 +35,7 @@ test('CP-01_EIF-22_QA1 - allows admin to create a product category', function ()
         'name' => 'Bebidas Alcohólicas',
         'description' => 'Bebidas con contenido alcohólico',
     ]);
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA1 - Gestión de Recursos e Inventario
@@ -57,7 +57,7 @@ test('CP-02_EIF-22_QA1 - validates required category fields', function () {
         ->assertSessionHasErrors(['name']);
 
     $this->assertDatabaseCount('categories', 0);
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA1 - Gestión de Recursos e Inventario
@@ -88,7 +88,7 @@ test('CP-03_EIF-22_QA1 - allows admin to update an existing category', function 
         'name' => 'Updated Category',
         'description' => 'Updated description',
     ]);
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA1 - Gestión de Recursos e Inventario
@@ -111,7 +111,7 @@ test('CP-04_EIF-22_QA1 - allows admin to delete a category', function () {
     $this->assertSoftDeleted('categories', [
         'id' => $category->id,
     ]);
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA1 - Gestión de Recursos e Inventario
@@ -141,7 +141,7 @@ test('CP-05_EIF-22_QA1 - returns created category data as JSON when creating via
         ->assertJsonStructure([
             'category' => ['id', 'name'],
         ]);
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA1 - Gestión de Recursos e Inventario
@@ -161,7 +161,7 @@ test('CP-06_EIF-22_QA1 - non-admin users cannot access category management route
     $this->actingAs($employeeUser)
         ->get(route('categories.create'))
         ->assertSuccessful();
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA1 - Gestión de Recursos e Inventario
@@ -189,7 +189,7 @@ test('CP-07_EIF-22_QA1 - lists all categories in JSON format for DataTables', fu
         ]);
 
     expect(count($response->json('data')))->toBe(3);
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA1 - Gestión de Recursos e Inventario

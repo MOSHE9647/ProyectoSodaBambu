@@ -22,7 +22,7 @@ test('CP-01_EIF-22_QA2 - category model is soft-deletable', function () {
 
     // And: category is excluded from default queries.
     expect(Category::query()->find($category->id))->toBeNull();
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA2 - Gestión de Recursos e Inventario
@@ -42,7 +42,7 @@ test('CP-02_EIF-22_QA2 - soft-deleted category can be restored', function () {
 
     // And: category is included in default queries.
     expect(Category::query()->find($category->id))->not->toBeNull();
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA2 - Gestión de Recursos e Inventario
@@ -60,7 +60,7 @@ test('CP-03_EIF-22_QA2 - category has many products relationship', function () {
     // Then: all related products are returned.
     expect($products)->toHaveCount(3);
     expect($products->every(fn ($p) => $p->category_id === $category->id))->toBeTrue();
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA2 - Gestión de Recursos e Inventario
@@ -77,7 +77,7 @@ test('CP-04_EIF-22_QA2 - category model is mass-assignable for fillable attribut
     // Then: all attributes are persisted correctly.
     expect($category->name)->toBe('Test Category');
     expect($category->description)->toBe('Test Description');
-});
+})->group('s8-tests-melanie');
 
 /**
  * Epic: EIF-22_QA2 - Gestión de Recursos e Inventario
@@ -98,4 +98,4 @@ test('CP-05_EIF-22_QA2 - category timestamps are tracked', function () {
 
     // Then: updated_at is at or after created_at.
     expect($updatedAt->greaterThanOrEqualTo($createdAt))->toBeTrue();
-});
+})->group('s8-tests-melanie');

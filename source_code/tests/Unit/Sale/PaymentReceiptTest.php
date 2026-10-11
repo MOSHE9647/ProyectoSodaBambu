@@ -47,12 +47,13 @@ function makeSale(array $overrides = []): Sale
 /**
  * Adjunta un pago polimórfico a un modelo (Sale o Contract).
  */
-function attachPayment(Sale|Contract $model, int $amount, PaymentMethod $method, ?string $reference = null): Payment
+function attachPayment(Sale|Contract $model, int $amount, PaymentMethod $method, ?string $reference = null, int $changeAmount = 0): Payment
 {
     return Payment::factory()->create([
         'amount' => $amount,
         'method' => $method,
         'reference' => $reference,
+        'change_amount' => $changeAmount,
         'date' => now(),
         'origin_id' => $model->id,
         'origin_type' => get_class($model),
@@ -146,4 +147,47 @@ test('CB-05 - el total de la venta refleja la suma de todos sus métodos de pago
     // ENTONCES: La suma de pagos iguala el total de la venta (no solo el primero)
     expect($paymentsTotal)->toBe($sale->total)
         ->and($sale->payments)->toHaveCount(3);
+});
+
+// ─── CB-06: El cambio se calcula correctamente para pagos en efectivo ──────
+
+test('CB-06 - el cambio calculado es correcto cuando el cliente paga con más efectivo del necesario', function () {
+    // DADO: Una venta por ₡7.500
+    $sale = makeSale(['total' => 7500]);
+
+    // CUANDO: El cliente paga ₡10.000 en efectivo (₡2.500 de cambio esperado)
+    $payment = attachPayment($sale, 10000, PaymentMethod::CASH, null, changeAmount: 2500);
+
+    // ENTONCES: El cambio registrado en el pago es exactamente ₡2.500
+    expect($payment->change_amount)->toBe(2500)
+        ->and($payment->amount - $payment->change_amount)->toBe($sale->total)
+        ->and($payment->method)->toBe(PaymentMethod::CASH);
+});
+
+// ─── CB-07: El comprobante de venta tiene el formato de número correcto ─────
+
+test('CB-07 - el número de factura de la venta sigue el formato FAC-XXXXXXXXXX', function () {
+    // DADO: Una venta creada con número de factura en formato estándar
+    $sale = makeSale(['invoice_number' => 'FAC-0000000042']);
+
+    // CUANDO: Se consulta el número de recibo
+    $receiptNumber = $sale->getReceiptNumber();
+
+    // ENTONCES: El número sigue el formato esperado FAC- seguido de 10 dígitos
+    expect($receiptNumber)->toMatch('/^FAC-\d{10}$/')
+        ->and($receiptNumber)->toBe('FAC-0000000042');
+});
+
+// ─── CB-08: Un pago en efectivo exacto no genera cambio ───────────────────
+
+test('CB-08 - un pago en efectivo exacto registra cambio cero', function () {
+    // DADO: Una venta por ₡5.000
+    $sale = makeSale(['total' => 5000]);
+
+    // CUANDO: El cliente paga exactamente ₡5.000 en efectivo
+    $payment = attachPayment($sale, 5000, PaymentMethod::CASH, null, changeAmount: 0);
+
+    // ENTONCES: El cambio es cero y el monto neto iguala el total de la venta
+    expect($payment->change_amount)->toBe(0)
+        ->and($payment->amount)->toBe($sale->total);
 });
